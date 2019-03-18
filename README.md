@@ -6,6 +6,12 @@ A Kubernetes manifest and resource linter. Popeye cruises thru your Kubernetes c
 
 
 
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+
 ---
 
 <img src="assets/imhotep_logo.png" width="32" height="auto"/> © 2018 Imhotep Software LLC.
