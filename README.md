@@ -1,4 +1,4 @@
-<img style="float:right;" width="400" heigh="auto" src="assets/popeye_boat.png">
+<img src="assets/popeye_boat.png" align="right" width="400" heigh="auto">
 
 # Popeye - A Kubernetes manifest and resource linter...
 
