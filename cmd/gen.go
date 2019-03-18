@@ -52,7 +52,7 @@ func generate(cmd *cobra.Command, args []string) {
 		"title": strings.Title,
 	}
 
-	res, err := ioutil.ReadFile("../../assets/cluster.tpl")
+	res, err := ioutil.ReadFile("../../templates/cluster.tpl")
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
@@ -61,7 +61,7 @@ func generate(cmd *cobra.Command, args []string) {
 		log.Fatal().Msg(err.Error())
 	}
 
-	nsRes, err := ioutil.ReadFile("../../assets/namespaced.tpl")
+	nsRes, err := ioutil.ReadFile("../../templates/namespaced.tpl")
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
