@@ -1,9 +1,8 @@
 <img src="assets/popeye_boat.png" align="right" width="400" heigh="auto">
 
-# Popeye - A Kubernetes manifest and resource linter...
+# Popeye - Biff'em and Buff'em!
 
-Popeye cruises thru your Kubernetes cluster and identifies potential issues
-with your deployment manifests and configurations.
+A Kubernetes manifest and resource linter. Popeye cruises thru your Kubernetes cluster and identifies potential issues with your deployment manifests and configurations.
 
 
 
