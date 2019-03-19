@@ -99,7 +99,7 @@ func TestPoCheckContainers(t *testing.T) {
 		po := v1.Pod{
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
-					{Name: "c1"},
+					{Name: "c1", Image: "fred:1.2.3"},
 				},
 			},
 		}
@@ -167,4 +167,85 @@ func TestPoCheckProbes(t *testing.T) {
 			assert.Equal(t, u.severity, l.Issues()[0].Severity())
 		}
 	}
+}
+
+func TestPoCheckServiceAccount(t *testing.T) {
+	uu := []struct {
+		sa       string
+		issues   int
+		severity Level
+	}{
+		{issues: 1, severity: InfoLevel},
+		{sa: "fred", issues: 0},
+	}
+
+	for _, u := range uu {
+		po := v1.Pod{
+			Spec: v1.PodSpec{
+				ServiceAccountName: u.sa,
+			},
+		}
+
+		l := NewPod()
+		l.checkServiceAccount(po.Spec)
+		assert.Equal(t, u.issues, len(l.Issues()))
+		if len(l.Issues()) != 0 {
+			assert.Equal(t, u.severity, l.Issues()[0].Severity())
+		}
+	}
+}
+
+func TestPoLint(t *testing.T) {
+	po := v1.Pod{
+		Spec: v1.PodSpec{
+			ServiceAccountName: "fred",
+			Containers: []v1.Container{
+				{
+					Name:  "c1",
+					Image: "fred:1.2.3",
+					Resources: v1.ResourceRequirements{
+						Requests: v1.ResourceList{
+							v1.ResourceCPU: resource.Quantity{},
+						},
+					},
+					LivenessProbe:  &v1.Probe{},
+					ReadinessProbe: &v1.Probe{},
+				},
+			},
+			InitContainers: []v1.Container{
+				{
+					Name:  "ic1",
+					Image: "fred:1.2.3",
+					Resources: v1.ResourceRequirements{
+						Requests: v1.ResourceList{
+							v1.ResourceCPU: resource.Quantity{},
+						},
+					},
+				},
+			},
+		},
+		Status: v1.PodStatus{
+			Phase: v1.PodRunning,
+			ContainerStatuses: []v1.ContainerStatus{
+				{
+					Ready: true,
+					State: v1.ContainerState{
+						Running: &v1.ContainerStateRunning{},
+					},
+				},
+			},
+			InitContainerStatuses: []v1.ContainerStatus{
+				{
+					Ready: true,
+					State: v1.ContainerState{
+						Terminated: &v1.ContainerStateTerminated{},
+					},
+				},
+			},
+		},
+	}
+
+	l := NewPod()
+	l.Lint(po)
+	assert.True(t, l.NoIssues())
 }

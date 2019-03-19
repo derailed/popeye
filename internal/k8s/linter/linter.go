@@ -87,6 +87,10 @@ func (l *Linter) addIssues(issues ...Issue) {
 	l.issues = append(l.issues, issues...)
 }
 
+func (l *Linter) addIssue(level Level, msg string) {
+	l.issues = append(l.issues, NewError(level, msg))
+}
+
 func (l *Linter) addIssuef(level Level, format string, args ...interface{}) {
 	l.issues = append(l.issues, NewErrorf(level, format, args...))
 }

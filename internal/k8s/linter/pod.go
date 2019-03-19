@@ -15,13 +15,7 @@ func NewPod() *Pod {
 }
 
 // Pod checks
-// + Running?
-// + Restarts?
-// + Resources
-// + Probes
 // o Metrics current vs set
-// o Named ports
-// o check container image tags
 // o check for service accounts
 // o check for naked pod ie no dep, rs, sts, cron
 // o check for label existence
@@ -37,14 +31,19 @@ func NewPod() *Pod {
 func (p *Pod) Lint(po v1.Pod) {
 	p.checkStatus(po.Status)
 
-	// Check init containers status
 	if len(po.Spec.InitContainers) > 0 {
 		p.checkContainerStatus(po.Status.InitContainerStatuses, true)
 	}
 	p.checkContainerStatus(po.Status.ContainerStatuses, false)
 
-	// Check for resources and probes
 	p.checkContainers(po.Spec.Containers)
+	p.checkServiceAccount(po.Spec)
+}
+
+func (p *Pod) checkServiceAccount(spec v1.PodSpec) {
+	if len(spec.ServiceAccountName) == 0 {
+		p.addIssuef(InfoLevel, "No service account specified")
+	}
 }
 
 func (p *Pod) checkProbes(cc []v1.Container) {
@@ -77,7 +76,7 @@ func (p *Pod) checkContainerStatus(ss []v1.ContainerStatus, isInit bool) {
 		counts.rollup(s)
 	}
 
-	if issue := counts.diagnose(len(ss)); issue != nil {
+	if issue := counts.diagnose(len(ss), isInit); issue != nil {
 		p.addIssues(issue)
 	}
 }

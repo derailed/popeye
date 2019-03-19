@@ -65,3 +65,10 @@ func TestLinterNoIssues(t *testing.T) {
 		assert.Equal(t, u.flag, l.NoIssues())
 	}
 }
+
+func TestLinterAddIssue(t *testing.T) {
+	l := new(Linter)
+	l.addIssue(InfoLevel, "blee")
+	assert.Equal(t, false, l.NoIssues())
+	assert.Equal(t, "blee", l.Issues()[0].Description())
+}

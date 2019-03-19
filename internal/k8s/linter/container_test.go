@@ -77,3 +77,56 @@ func TestContainerCheckProbes(t *testing.T) {
 		}
 	}
 }
+
+func TestContainerCheckImageTags(t *testing.T) {
+	uu := []struct {
+		image    string
+		issues   int
+		severity Level
+	}{
+		{image: "cool:1.2.3", issues: 0},
+		{image: "fred", issues: 1, severity: WarnLevel},
+		{image: "fred:latest", issues: 1, severity: WarnLevel},
+	}
+
+	for _, u := range uu {
+		co := v1.Container{
+			Name:  "c1",
+			Image: u.image,
+		}
+
+		l := NewContainer()
+		l.checkImageTags(co)
+		assert.Equal(t, u.issues, len(l.Issues()))
+		if len(l.Issues()) != 0 {
+			assert.Equal(t, u.severity, l.Issues()[0].Severity())
+		}
+	}
+}
+
+func TestContainerCheckNamedPorts(t *testing.T) {
+	uu := []struct {
+		port     string
+		issues   int
+		severity Level
+	}{
+		{port: "cool", issues: 0},
+		{port: "", issues: 1, severity: InfoLevel},
+	}
+
+	for _, u := range uu {
+		co := v1.Container{
+			Name: "c1",
+			Ports: []v1.ContainerPort{
+				{Name: u.port},
+			},
+		}
+
+		l := NewContainer()
+		l.checkNamedPorts(co)
+		assert.Equal(t, u.issues, len(l.Issues()))
+		if len(l.Issues()) != 0 {
+			assert.Equal(t, u.severity, l.Issues()[0].Severity())
+		}
+	}
+}

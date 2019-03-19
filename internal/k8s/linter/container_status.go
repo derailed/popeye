@@ -28,8 +28,8 @@ func (c *containerStatusCount) rollup(s v1.ContainerStatus) {
 	c.restarts += int(s.RestartCount)
 }
 
-func (c *containerStatusCount) diagnose(total int) Issue {
-	if c.terminated > 0 {
+func (c *containerStatusCount) diagnose(total int, isInit bool) Issue {
+	if c.terminated > 0 && !isInit {
 		return NewErrorf(WarnLevel, "Pod is terminating (%d/%d)", c.terminated, total)
 	}
 
