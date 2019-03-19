@@ -36,6 +36,7 @@ func init() {
 
 func generators() []eugenConfig {
 	return []eugenConfig{
+		{"v1", "Node", false},
 		{"v1", "Pod", true},
 		{"v1", "Service", true},
 		{"v1", "Namespace", false},

@@ -4,10 +4,25 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-// Pod represents a Pod linter.
-type Pod struct {
-	*Linter
-}
+const (
+	// BOZO!! Set in a config file?
+	cpuPodLimit = 80
+	memPodLimit = 80
+)
+
+type (
+	// Pod represents a Pod linter.
+	Pod struct {
+		*Linter
+	}
+
+	// PodMetric tracks node metrics available and current range.
+	PodMetric interface {
+		CurrentCPU() int64
+		CurrentMEM() int64
+		Empty() bool
+	}
+)
 
 // NewPod returns a new pod linter.
 func NewPod() *Pod {
@@ -15,8 +30,6 @@ func NewPod() *Pod {
 }
 
 // Pod checks
-// o Metrics current vs set
-// o check for service accounts
 // o check for naked pod ie no dep, rs, sts, cron
 // o check for label existence
 // o Recommended labels
@@ -28,7 +41,7 @@ func NewPod() *Pod {
 // app.kubernetes.io/managed-by
 
 // Lint a Pod.
-func (p *Pod) Lint(po v1.Pod) {
+func (p *Pod) Lint(po v1.Pod, mx map[string]PodMetric) {
 	p.checkStatus(po.Status)
 
 	if len(po.Spec.InitContainers) > 0 {
@@ -38,6 +51,33 @@ func (p *Pod) Lint(po v1.Pod) {
 
 	p.checkContainers(po.Spec.Containers)
 	p.checkServiceAccount(po.Spec)
+	p.checkUtilization(po, mx)
+}
+
+func (p *Pod) checkUtilization(po v1.Pod, mx map[string]PodMetric) {
+	if mx == nil || len(mx) == 0 {
+		return
+	}
+
+	for _, co := range po.Spec.InitContainers {
+		cmx, ok := mx[co.Name]
+		if !ok {
+			continue
+		}
+		l := NewContainer()
+		l.checkUtilization(co, cmx)
+		p.addIssues(l.Issues()...)
+	}
+
+	for _, co := range po.Spec.Containers {
+		cmx, ok := mx[co.Name]
+		if !ok {
+			continue
+		}
+		l := NewContainer()
+		l.checkUtilization(co, cmx)
+		p.addIssues(l.Issues()...)
+	}
 }
 
 func (p *Pod) checkServiceAccount(spec v1.PodSpec) {

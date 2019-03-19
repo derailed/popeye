@@ -25,7 +25,7 @@ type popeyeConfig struct {
 func newPopeyeConfig() popeyeConfig {
 	return popeyeConfig{
 		logLevel:      "debug",
-		lintLevel:     "info",
+		lintLevel:     "",
 		allNamespaces: false,
 		outputWidth:   80,
 	}
@@ -82,8 +82,10 @@ func lint() {
 	c := k8s.NewClient(k8s.NewConfig(k8sConfig))
 	checkCluster(c)
 
+	lintNode("Node", c)
+
 	nss := getNamespacesOrDie(c)
-	lintNS("Namespace", nss)
+	lintNamespace("Namespace", nss)
 
 	nn := namespaceNames(nss)
 	lintPod("Pod", c, nn)
@@ -102,11 +104,31 @@ func checkCluster(c *k8s.Client) {
 	fmt.Println("")
 }
 
-func lintNS(section string, nn []v1.Namespace) {
+func lintNamespace(section string, nn []v1.Namespace) {
 	for _, n := range nn {
 		l := linter.NewNamespace()
 		l.Lint(n)
-		toConsole(l, section, n.Name)
+		printReport(l, section, n.Name)
+	}
+	fmt.Println("")
+}
+
+func lintNode(section string, c *k8s.Client) {
+	var gen generated.Node
+	nn, err := gen.List(c)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+	for _, n := range nn.Items {
+		l := linter.NewNode()
+		var mx k8s.NodeMetric
+		if c.ClusterHasMetrics() {
+			if mx, err = k8s.NodeMetrics(c, n); err != nil {
+				log.Debug().Err(err)
+			}
+		}
+		l.Lint(n, mx)
+		printReport(l, section, n.Name)
 	}
 	fmt.Println("")
 }
@@ -120,20 +142,19 @@ func lintPod(section string, c *k8s.Client, nn []string) {
 		}
 
 		for _, p := range pp.Items {
-			l := linter.NewPod()
+			mx := make(map[string]linter.PodMetric)
 			if c.ClusterHasMetrics() {
-				log.Debug().Msgf("Metrics for pod %s", namespaced(ns, p.Name))
-				mm, err := k8s.PodMetrics(c, ns, p.Name)
-				if err != nil {
-					log.Panic().Err(err)
-				}
-
-				for k, v := range mm {
-					log.Debug().Msgf("%s: cpu: %s -- mem: %s", k, v.CPU, v.MEM)
+				if mm, err := k8s.PodMetrics(c, ns, p.Name); err != nil {
+					log.Debug().Err(err)
+				} else {
+					for k, v := range mm {
+						mx[k] = v
+					}
 				}
 			}
-			l.Lint(p)
-			toConsole(l, section, namespaced(ns, p.Name))
+			l := linter.NewPod()
+			l.Lint(p, mx)
+			printReport(l, section, namespaced(ns, p.Name))
 		}
 	}
 	fmt.Println("")
@@ -150,13 +171,13 @@ func lintSvc(section string, c *k8s.Client, nn []string) {
 		for _, s := range ss.Items {
 			l := linter.NewService()
 			l.Lint(s)
-			toConsole(l, section, namespaced(ns, s.Name))
+			printReport(l, section, namespaced(ns, s.Name))
 		}
 	}
 	fmt.Println("")
 }
 
-func toConsole(l Linter, section, name string) {
+func printReport(l Linter, section, name string) {
 	level := parseLintLevel(popConfig.lintLevel)
 	if l.NoIssues() {
 		if level <= linter.OkLevel {
@@ -166,7 +187,7 @@ func toConsole(l Linter, section, name string) {
 	}
 
 	max := l.MaxSeverity()
-	if level >= max {
+	if level <= max {
 		output.Write(l.MaxSeverity(), section, name)
 	}
 	output.Dump(level, section, l.Issues()...)
@@ -367,6 +388,6 @@ func parseLintLevel(level string) linter.Level {
 	case "error":
 		return linter.ErrorLevel
 	default:
-		return linter.InfoLevel
+		return linter.OkLevel
 	}
 }

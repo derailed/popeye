@@ -1,6 +1,7 @@
 package linter
 
 import (
+	"math"
 	"regexp"
 
 	v1 "k8s.io/api/core/v1"
@@ -61,4 +62,54 @@ func (c *Container) checkNamedPorts(co v1.Container) {
 			c.addIssuef(InfoLevel, "Unamed port found on container `%s", co.Name)
 		}
 	}
+}
+
+func (c *Container) checkUtilization(co v1.Container, cmx PodMetric) {
+	cpu, mem := c.getLimits(co)
+	c.checkMetrics(co.Name, cpu, mem, cmx.CurrentCPU(), cmx.CurrentMEM())
+}
+
+func (c *Container) checkMetrics(co string, cpu, mem, ccpu, cmem int64) {
+	if cpu == 0 {
+		return
+	}
+	percCPU := math.Round(float64(ccpu) / float64(cpu) * 100)
+	if percCPU >= cpuPodLimit {
+		c.addIssuef(WarnLevel, "CPU threshold reached on container `%s (%0.f%%)", co, percCPU)
+	}
+
+	if cmem == 0 {
+		return
+	}
+	percMEM := math.Round(float64(cmem) / float64(mem) * 100)
+	if percMEM >= memPodLimit {
+		c.addIssuef(WarnLevel, "Memory threshold reached on container `%s (%0.f%%)", co, percMEM)
+	}
+}
+
+func (c *Container) getLimits(co v1.Container) (cpu int64, mem int64) {
+	req, limit := co.Resources.Requests, co.Resources.Limits
+	if len(req) == 0 && len(limit) == 0 {
+		return
+	}
+
+	if len(req) != 0 && len(limit) == 0 {
+		lcpu := req[v1.ResourceCPU]
+		cpu = lcpu.MilliValue()
+		lmem := req[v1.ResourceMemory]
+		if m, ok := lmem.AsInt64(); ok {
+			mem = m
+		}
+		return
+	}
+
+	if len(limit) != 0 {
+		lcpu := limit[v1.ResourceCPU]
+		cpu = lcpu.MilliValue()
+		lmem := limit[v1.ResourceMemory]
+		if m, ok := lmem.AsInt64(); ok {
+			mem = m
+		}
+	}
+	return
 }

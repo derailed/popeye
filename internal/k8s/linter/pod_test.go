@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestPoCheckStatus(t *testing.T) {
@@ -246,6 +247,125 @@ func TestPoLint(t *testing.T) {
 	}
 
 	l := NewPod()
-	l.Lint(po)
+	l.Lint(po, nil)
 	assert.True(t, l.NoIssues())
+}
+
+type podMetrics struct {
+	cpu, mem int64
+}
+
+func (n podMetrics) CurrentCPU() int64 {
+	return n.cpu
+}
+func (n podMetrics) CurrentMEM() int64 {
+	return n.mem
+}
+func (n podMetrics) Empty() bool {
+	return n.cpu == 0 && n.mem == 0
+}
+
+func TestPoUtilization(t *testing.T) {
+	type (
+		metrix struct {
+			cpu string
+			mem string
+		}
+		res struct {
+			requests *metrix
+			limits   *metrix
+		}
+	)
+	uu := []struct {
+		mx     podMetrics
+		res    res
+		issues int
+		level  Level
+	}{
+		// Under the request (Burstable)
+		{
+			mx: podMetrics{cpu: 50, mem: 15e6},
+			res: res{
+				requests: &metrix{cpu: "1", mem: "10Mi"},
+				limits:   &metrix{cpu: "200m", mem: "20Mi"},
+			},
+			issues: 0,
+		},
+		// Under the limit (Burstable)
+		{
+			mx: podMetrics{cpu: 200, mem: 5e6},
+			res: res{
+				requests: &metrix{cpu: "100m", mem: "10Mi"},
+				limits:   &metrix{cpu: "500m", mem: "20Mi"},
+			},
+			issues: 0,
+		},
+		// Over the request CPU
+		{
+			mx: podMetrics{cpu: 200, mem: 5e6},
+			res: res{
+				requests: &metrix{cpu: "100m", mem: "10Mi"},
+			},
+			issues: 1,
+		},
+		// Over the request MEM
+		{
+			mx: podMetrics{cpu: 50, mem: 15e6},
+			res: res{
+				requests: &metrix{cpu: "100m", mem: "10Mi"},
+			},
+			issues: 1,
+		},
+		// Over the limit CPU (Guaranteed)
+		{
+			mx: podMetrics{cpu: 200, mem: 5e6},
+			res: res{
+				limits: &metrix{cpu: "100m", mem: "20Mi"},
+			},
+			issues: 1,
+		},
+		// Over the limit MEM (Guaranteed)
+		{
+			mx: podMetrics{cpu: 50, mem: 40e6},
+			res: res{
+				limits: &metrix{cpu: "100m", mem: "20Mi"},
+			},
+			issues: 1,
+		},
+	}
+
+	for _, u := range uu {
+		po := v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{Name: "fred"},
+		}
+
+		co := v1.Container{
+			Name:  "c1",
+			Image: "fred:1.2.3",
+		}
+
+		var resReq v1.ResourceRequirements
+		if u.res.requests != nil {
+			cpu := resource.MustParse(u.res.requests.cpu)
+			mem := resource.MustParse(u.res.requests.mem)
+			resReq.Requests = v1.ResourceList{
+				v1.ResourceCPU:    cpu,
+				v1.ResourceMemory: mem,
+			}
+		}
+		if u.res.limits != nil {
+			cpu := resource.MustParse(u.res.limits.cpu)
+			mem := resource.MustParse(u.res.limits.mem)
+			resReq.Limits = v1.ResourceList{
+				v1.ResourceCPU:    cpu,
+				v1.ResourceMemory: mem,
+			}
+		}
+		co.Resources = resReq
+		po.Spec = v1.PodSpec{Containers: []v1.Container{co}}
+
+		l := NewPod()
+		l.checkUtilization(po, map[string]PodMetric{"c1": u.mx})
+		assert.Equal(t, u.issues, len(l.Issues()))
+	}
 }
