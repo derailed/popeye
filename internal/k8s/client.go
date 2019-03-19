@@ -11,39 +11,38 @@ var (
 	supportedMetricsAPIVersions = []string{"v1beta1"}
 )
 
-// Server represents a Kubernetes api server.
-type Server struct {
+// Client represents a Kubernetes api server client.
+type Client struct {
 	config *Config
 
-	client kubernetes.Interface
+	api kubernetes.Interface
 }
 
-// NewServer returns a dialable api server configuration.
-func NewServer(config *Config) *Server {
-	return &Server{config: config}
+// NewClient returns a dialable api server configuration.
+func NewClient(config *Config) *Client {
+	return &Client{config: config}
 }
 
 // Dial returns a handle to api server.
-func (s *Server) Dial() (kubernetes.Interface, error) {
-	if s.client != nil {
-		return s.client, nil
+func (c *Client) Dial() (kubernetes.Interface, error) {
+	if c.api != nil {
+		return c.api, nil
 	}
 
-	var err error
-	restCfg, err := s.config.RESTConfig()
+	cfg, err := c.config.RESTConfig()
 	if err != nil {
-		return nil, nil
-	}
-
-	if s.client, err = kubernetes.NewForConfig(restCfg); err != nil {
 		return nil, err
 	}
-	return s.client, nil
+
+	if c.api, err = kubernetes.NewForConfig(cfg); err != nil {
+		return nil, err
+	}
+	return c.api, nil
 }
 
-// ClusterHasMetrics checks if metrics server is on the cluster or not.
-func (s *Server) ClusterHasMetrics() bool {
-	srv, err := s.Dial()
+// ClusterHasMetrics checks if metrics server is available on the cluster.
+func (c *Client) ClusterHasMetrics() bool {
+	srv, err := c.Dial()
 	if err != nil {
 		return false
 	}

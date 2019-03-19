@@ -7,28 +7,16 @@ import (
 	"github.com/derailed/popeye/internal/k8s/linter"
 )
 
-// Defines basic ANSI colors.
+// Color ANSI palette (256!)
 const (
-	ColorBlack Color = 30 + iota
-	ColorRed
-	ColorGreen
-	ColorYellow
-	ColorBlue
-	ColorMagenta
-	ColorCyan
-	ColorWhite
-)
-
-// Brighter colors
-const (
-	ColorBriteBlack Color = 90 + iota
-	ColorBriteRed
-	ColorBriteGreen
-	ColorBriteYellow
-	ColorBriteBlue
-	ColorBriteMagenta
-	ColorBriteCyan
-	ColorBriteWhite
+	ColorOrangish = 220
+	ColorOrange   = 202
+	ColorGray     = 246
+	ColorWhite    = 15
+	ColorBlue     = 105
+	ColorRed      = 196
+	ColorCoolBlue = 99
+	ColorAqua     = 123
 )
 
 // FontBold style
@@ -42,9 +30,11 @@ type Color int
 const outputWidth = 80
 
 // Dump all errors output.
-func Dump(section string, issues ...linter.Issue) {
+func Dump(l linter.Level, section string, issues ...linter.Issue) {
 	for _, i := range issues {
-		Write(i.Severity(), "", i.Description())
+		if i.Severity() >= l {
+			Write(i.Severity(), "", i.Description())
+		}
 	}
 }
 
@@ -59,25 +49,25 @@ func Write(l linter.Level, prefix, msg string) {
 	dots := outputWidth - len(msg)
 	dots -= 10 + 1
 	msg = Colorize(msg+strings.Repeat(".", dots), colorForLevel(l))
-	fmt.Printf("%10s %s%s\n", prefix, msg, emojiForLevel(l))
+	fmt.Printf("%-10s %s%s\n", prefix, msg, emojiForLevel(l))
 	return
 }
 
 // Colorize a string based on given color.
 func Colorize(s string, c Color) string {
-	return fmt.Sprintf("\x1b[%dm%s\x1b[0m", c, s)
+	return fmt.Sprintf("\033[38;5;%d;m%s\033[0m", c, s)
 }
 
 func colorForLevel(l linter.Level) Color {
 	switch l {
 	case linter.ErrorLevel:
-		return ColorBriteRed
+		return ColorRed
 	case linter.WarnLevel:
-		return ColorYellow
+		return ColorOrangish
 	case linter.InfoLevel:
-		return ColorBlue
+		return ColorAqua
 	default:
-		return ColorBriteBlack
+		return ColorGray
 	}
 }
 
@@ -88,7 +78,7 @@ func emojiForLevel(l linter.Level) string {
 	case linter.WarnLevel:
 		return "️️⚠️"
 	case linter.InfoLevel:
-		return "🛠"
+		return "🔊"
 	default:
 		return "✅"
 	}

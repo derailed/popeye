@@ -10,9 +10,9 @@ import (
 type Pod struct{}
 
 // List all Pods.
-func (*Pod) List(conn *k8s.Server, ns string) (*v1.PodList, error) {
+func (*Pod) List(c *k8s.Client, ns string) (*v1.PodList, error) {
 	var list v1.PodList
-	dial, err := conn.Dial()
+	dial, err := c.Dial()
 	if err != nil {
 		return &list, err
 	}
@@ -21,9 +21,9 @@ func (*Pod) List(conn *k8s.Server, ns string) (*v1.PodList, error) {
 }
 
 // Get a Pod.
-func (*Pod) Get(conn *k8s.Server, name, ns string) (*v1.Pod, error) {
+func (*Pod) Get(c *k8s.Client, name, ns string) (*v1.Pod, error) {
 	var res v1.Pod
-	dial, err := conn.Dial()
+	dial, err := c.Dial()
 	if err != nil {
 		return &res, err
 	}

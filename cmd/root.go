@@ -11,21 +11,40 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-const (
-	defaultLogLevel = "debug"
-	outputWidth     = 80
-)
+type popeyeConfig struct {
+	logLevel      string
+	lintLevel     string
+	allNamespaces bool
+	outputWidth   int
+}
+
+func newPopeyeConfig() popeyeConfig {
+	return popeyeConfig{
+		logLevel:      "debug",
+		lintLevel:     "info",
+		allNamespaces: false,
+		outputWidth:   80,
+	}
+}
 
 var (
 	version   = "dev"
 	commit    = "dev"
-	logLevel  string
+	popConfig = newPopeyeConfig()
 	rootCmd   *cobra.Command
 	k8sConfig *genericclioptions.ConfigFlags
 )
+
+// Linter represents a resource linter.
+type Linter interface {
+	MaxSeverity() linter.Level
+	NoIssues() bool
+	Issues() linter.Issues
+}
 
 func init() {
 	rootCmd = &cobra.Command{
@@ -34,11 +53,10 @@ func init() {
 		Long:  `A Kubernetes resource linter`,
 		Run:   run,
 	}
-	rootCmd.AddCommand(genCmd)
 
 	initK8sFlags()
 	initPopeyeFlags()
-	zerolog.SetGlobalLevel(parseLevel(logLevel))
+	zerolog.SetGlobalLevel(parseLogLevel(popConfig.logLevel))
 }
 
 // Execute root command
@@ -53,11 +71,27 @@ func run(cmd *cobra.Command, args []string) {
 	clearScreen()
 	for _, s := range output.Logo {
 		fmt.Printf(strings.Repeat(" ", 62))
-		fmt.Println(output.Colorize(s, output.ColorBriteBlue))
+		fmt.Println(output.Colorize(s, output.ColorCoolBlue))
 	}
-	fmt.Println("Popeye Biffs'em and buff'em...\n")
-	conn := k8s.NewServer(k8s.NewConfig(k8sConfig))
-	mx := conn.ClusterHasMetrics()
+	fmt.Println("Popeye -- Biffs 'em and Buffs 'em!")
+	fmt.Println("")
+	lint()
+}
+
+func lint() {
+	c := k8s.NewClient(k8s.NewConfig(k8sConfig))
+	checkCluster(c)
+
+	nss := getNamespacesOrDie(c)
+	lintNS("Namespace", nss)
+
+	nn := namespaceNames(nss)
+	lintPod("Pod", c, nn)
+	lintSvc("Service", c, nn)
+}
+
+func checkCluster(c *k8s.Client) {
+	mx := c.ClusterHasMetrics()
 	output.Write(linter.OkLevel, "Kubernetes", "Connectivity")
 
 	if !mx {
@@ -65,75 +99,50 @@ func run(cmd *cobra.Command, args []string) {
 	} else {
 		output.Write(linter.OkLevel, "Cluster", "Metrics")
 	}
-
-	lint(conn)
+	fmt.Println("")
 }
 
-func lint(s *k8s.Server) {
-	lintNS(s)
-	lintPod(s)
-	lintSvc(s)
-}
-
-func lintNS(s *k8s.Server) {
-	section := "Namespace"
-	var gen generated.Namespace
-	nn, err := gen.List(s)
-	if err != nil {
-		log.Fatal().Err(err)
-	}
-
-	for _, n := range nn.Items {
+func lintNS(section string, nn []v1.Namespace) {
+	for _, n := range nn {
 		l := linter.NewNamespace()
 		l.Lint(n)
-		if l.NoIssues() {
-			output.Write(linter.OkLevel, section, n.Name)
-			continue
-		}
-		output.Write(l.MaxSeverity(), section, n.Name)
-		output.Dump(section, l.Issues()...)
+		toConsole(l, section, n.Name)
 	}
+	fmt.Println("")
 }
 
-func lintPod(srv *k8s.Server) {
-	section := "Pod"
-	var ns generated.Namespace
-	nn, err := ns.List(srv)
-	if err != nil {
-		log.Fatal().Err(err)
-	}
-
+func lintPod(section string, c *k8s.Client, nn []string) {
 	var gen generated.Pod
-	for _, n := range nn.Items {
-		pp, err := gen.List(srv, n.Name)
+	for _, ns := range nn {
+		pp, err := gen.List(c, ns)
 		if err != nil {
 			log.Error().Err(err)
 		}
 
 		for _, p := range pp.Items {
 			l := linter.NewPod()
-			l.Lint(p)
-			if l.NoIssues() {
-				output.Write(linter.OkLevel, section, n.Name+"/"+p.Name)
-				continue
+			if c.ClusterHasMetrics() {
+				log.Debug().Msgf("Metrics for pod %s", namespaced(ns, p.Name))
+				mm, err := k8s.PodMetrics(c, ns, p.Name)
+				if err != nil {
+					log.Panic().Err(err)
+				}
+
+				for k, v := range mm {
+					log.Debug().Msgf("%s: cpu: %s -- mem: %s", k, v.CPU, v.MEM)
+				}
 			}
-			output.Write(l.MaxSeverity(), section, n.Name+"/"+p.Name)
-			output.Dump(section, l.Issues()...)
+			l.Lint(p)
+			toConsole(l, section, namespaced(ns, p.Name))
 		}
 	}
+	fmt.Println("")
 }
 
-func lintSvc(srv *k8s.Server) {
-	section := "Service"
-	var ns generated.Namespace
-	nn, err := ns.List(srv)
-	if err != nil {
-		log.Fatal().Err(err)
-	}
-
+func lintSvc(section string, c *k8s.Client, nn []string) {
 	var gen generated.Service
-	for _, n := range nn.Items {
-		ss, err := gen.List(srv, n.Name)
+	for _, ns := range nn {
+		ss, err := gen.List(c, ns)
 		if err != nil {
 			log.Error().Err(err)
 		}
@@ -141,22 +150,94 @@ func lintSvc(srv *k8s.Server) {
 		for _, s := range ss.Items {
 			l := linter.NewService()
 			l.Lint(s)
-			if l.NoIssues() {
-				output.Write(linter.OkLevel, section, n.Name+"/"+s.Name)
-				continue
-			}
-			output.Write(l.MaxSeverity(), section, n.Name+"/"+s.Name)
-			output.Dump(section, l.Issues()...)
+			toConsole(l, section, namespaced(ns, s.Name))
 		}
 	}
+	fmt.Println("")
+}
+
+func toConsole(l Linter, section, name string) {
+	level := parseLintLevel(popConfig.lintLevel)
+	if l.NoIssues() {
+		if level <= linter.OkLevel {
+			output.Write(linter.OkLevel, section, name)
+		}
+		return
+	}
+
+	max := l.MaxSeverity()
+	if level >= max {
+		output.Write(l.MaxSeverity(), section, name)
+	}
+	output.Dump(level, section, l.Issues()...)
+}
+
+var systemNS = []string{"kube-system", "kube-public"}
+
+func isSystemNS(ns string) bool {
+	for _, n := range systemNS {
+		if n == ns {
+			return true
+		}
+	}
+	return false
+}
+
+func isSet(s *string) bool {
+	return s != nil && *s != ""
+}
+
+func getNamespacesOrDie(c *k8s.Client) []v1.Namespace {
+	var ns generated.Namespace
+
+	if isSet(k8sConfig.Namespace) {
+		n, err := ns.Get(c, *k8sConfig.Namespace)
+		if err != nil {
+			log.Fatal().Err(err)
+		}
+		return []v1.Namespace{*n}
+	}
+
+	nn, err := ns.List(c)
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
+	ll := make([]v1.Namespace, 0, len(nn.Items))
+	for _, n := range nn.Items {
+		if !popConfig.allNamespaces && isSystemNS(n.Name) {
+			continue
+		}
+		ll = append(ll, n)
+	}
+	return ll
+}
+
+func namespaceNames(nn []v1.Namespace) []string {
+	ll := make([]string, 0, len(nn))
+	for _, n := range nn {
+		ll = append(ll, n.Name)
+	}
+	return ll
+}
+
+func namespaced(ns, n string) string {
+	return ns + "/" + n
 }
 
 func initPopeyeFlags() {
 	rootCmd.Flags().StringVarP(
-		&logLevel,
-		"logLevel", "l",
-		defaultLogLevel,
-		"Specify a log level (info, warn, debug, error, fatal, panic, trace)",
+		&popConfig.lintLevel,
+		"lintLevel", "l",
+		popConfig.lintLevel,
+		"Specify a lint level (info, warn, error)",
+	)
+
+	rootCmd.Flags().BoolVarP(
+		&popConfig.allNamespaces,
+		"all-namespaces", "",
+		popConfig.allNamespaces,
+		"Includes system namespaces",
 	)
 }
 
@@ -262,7 +343,7 @@ func clearScreen() {
 	fmt.Print("\033[H\033[2J")
 }
 
-func parseLevel(level string) zerolog.Level {
+func parseLogLevel(level string) zerolog.Level {
 	switch level {
 	case "debug":
 		return zerolog.DebugLevel
@@ -274,5 +355,18 @@ func parseLevel(level string) zerolog.Level {
 		return zerolog.FatalLevel
 	default:
 		return zerolog.InfoLevel
+	}
+}
+
+func parseLintLevel(level string) linter.Level {
+	switch level {
+	case "info":
+		return linter.InfoLevel
+	case "warn":
+		return linter.WarnLevel
+	case "error":
+		return linter.ErrorLevel
+	default:
+		return linter.InfoLevel
 	}
 }

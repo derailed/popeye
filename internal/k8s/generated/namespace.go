@@ -10,9 +10,9 @@ import (
 type Namespace struct{}
 
 // List all Namespaces.
-func (*Namespace) List(conn *k8s.Server) (*v1.NamespaceList, error) {
+func (*Namespace) List(c *k8s.Client) (*v1.NamespaceList, error) {
 	var list v1.NamespaceList
-	dial, err := conn.Dial()
+	dial, err := c.Dial()
 	if err != nil {
 		return &list, err
 	}
@@ -21,9 +21,9 @@ func (*Namespace) List(conn *k8s.Server) (*v1.NamespaceList, error) {
 }
 
 // Get a Namespace.
-func (*Namespace) Get(conn *k8s.Server, name string) (*v1.Namespace, error) {
+func (*Namespace) Get(c *k8s.Client, name string) (*v1.Namespace, error) {
 	var res v1.Namespace
-	dial, err := conn.Dial()
+	dial, err := c.Dial()
 	if err != nil {
 		return &res, err
 	}

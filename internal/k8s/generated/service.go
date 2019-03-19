@@ -10,9 +10,9 @@ import (
 type Service struct{}
 
 // List all Services.
-func (*Service) List(conn *k8s.Server, ns string) (*v1.ServiceList, error) {
+func (*Service) List(c *k8s.Client, ns string) (*v1.ServiceList, error) {
 	var list v1.ServiceList
-	dial, err := conn.Dial()
+	dial, err := c.Dial()
 	if err != nil {
 		return &list, err
 	}
@@ -21,9 +21,9 @@ func (*Service) List(conn *k8s.Server, ns string) (*v1.ServiceList, error) {
 }
 
 // Get a Service.
-func (*Service) Get(conn *k8s.Server, name, ns string) (*v1.Service, error) {
+func (*Service) Get(c *k8s.Client, name, ns string) (*v1.Service, error) {
 	var res v1.Service
-	dial, err := conn.Dial()
+	dial, err := c.Dial()
 	if err != nil {
 		return &res, err
 	}

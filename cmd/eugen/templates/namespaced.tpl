@@ -10,9 +10,9 @@ import (
 type {{ .Resource }} struct{}
 
 // List all {{ .Resource }}s.
-func (*{{ .Resource }}) List(conn *k8s.Server, ns string) (*{{ .Version }}.{{ .Resource }}List, error) {
+func (*{{ .Resource }}) List(c *k8s.Client, ns string) (*{{ .Version }}.{{ .Resource }}List, error) {
 	var list {{ .Version }}.{{ .Resource }}List
-	dial, err := conn.Dial()
+	dial, err := c.Dial()
 	if err != nil {
 		return &list, err
 	}
@@ -21,9 +21,9 @@ func (*{{ .Resource }}) List(conn *k8s.Server, ns string) (*{{ .Version }}.{{ .R
 }
 
 // Get a {{ .Resource }}.
-func (*{{ .Resource }}) Get(conn *k8s.Server, name, ns string) (*{{ .Version }}.{{ .Resource }}, error) {
+func (*{{ .Resource }}) Get(c *k8s.Client, name, ns string) (*{{ .Version }}.{{ .Resource }}, error) {
 	var res {{ .Version }}.{{ .Resource }}
-	dial, err := conn.Dial()
+	dial, err := c.Dial()
 	if err != nil {
 		return &res, err
 	}
