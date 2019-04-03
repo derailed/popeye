@@ -1,356 +1,270 @@
 package cmd
 
 import (
+	"bufio"
+	"context"
 	"fmt"
+	"os"
 	"strings"
 
+	"github.com/derailed/popeye/internal/config"
 	"github.com/derailed/popeye/internal/k8s"
-	"github.com/derailed/popeye/internal/k8s/generated"
-	"github.com/derailed/popeye/internal/k8s/linter"
-	"github.com/derailed/popeye/internal/output"
+	"github.com/derailed/popeye/internal/linter"
+	"github.com/derailed/popeye/internal/report"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-type popeyeConfig struct {
-	logLevel      string
-	lintLevel     string
-	allNamespaces bool
-	outputWidth   int
-}
-
-func newPopeyeConfig() popeyeConfig {
-	return popeyeConfig{
-		logLevel:      "debug",
-		lintLevel:     "",
-		allNamespaces: false,
-		outputWidth:   80,
+type (
+	// Reporter obtains lint reports
+	Reporter interface {
+		MaxSeverity(res string) linter.Level
+		Issues() linter.Issues
 	}
-}
+
+	// Linter represents a resource linter.
+	Linter interface {
+		Reporter
+		Lint(context.Context) error
+	}
+
+	// Linters a collection of linters.
+	Linters map[string]Linter
+)
 
 var (
 	version   = "dev"
 	commit    = "dev"
-	popConfig = newPopeyeConfig()
+	popConfig = config.New()
 	rootCmd   *cobra.Command
-	k8sConfig *genericclioptions.ConfigFlags
+	k8sFlags  *genericclioptions.ConfigFlags
 )
-
-// Linter represents a resource linter.
-type Linter interface {
-	MaxSeverity() linter.Level
-	NoIssues() bool
-	Issues() linter.Issues
-}
 
 func init() {
 	rootCmd = &cobra.Command{
-		Use:   "Popeye",
-		Short: "A Kubernetes resource linter",
-		Long:  `A Kubernetes resource linter`,
-		Run:   run,
+		Use:   "popeye",
+		Short: "A Kubernetes Cluster Linter and issues Scanner",
+		Long:  `Popeye scans your Kubernetes clusters and reports potential issues.`,
+		Run:   doIt,
 	}
 
 	initK8sFlags()
 	initPopeyeFlags()
-	zerolog.SetGlobalLevel(parseLogLevel(popConfig.logLevel))
+}
+
+func linters(c *k8s.Client) Linters {
+	return Linters{
+		"NODE":      linter.NewNode(c, &log.Logger),
+		"NAMESPACE": linter.NewNamespace(c, &log.Logger),
+		"POD":       linter.NewPod(c, &log.Logger),
+		"SERVICE":   linter.NewService(c, &log.Logger),
+	}
+}
+
+func bomb(msg string) {
+	fmt.Printf("💥 %s\n", report.Colorize(msg, report.ColorRed))
+	os.Exit(1)
 }
 
 // Execute root command
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		log.Panic().Err(err)
+		bomb(fmt.Sprintf("Exec failed %s", err))
 	}
 }
 
-// run the linter based on cli args
-func run(cmd *cobra.Command, args []string) {
-	clearScreen()
-	for _, s := range output.Logo {
-		fmt.Printf(strings.Repeat(" ", 62))
-		fmt.Println(output.Colorize(s, output.ColorCoolBlue))
+// Doit runs the scans and lints pass over the specified cluster.
+func doIt(cmd *cobra.Command, args []string) {
+	if err := popConfig.Init(k8sFlags); err != nil {
+		bomb(fmt.Sprintf("Spinach load failed %s", popConfig.Spinach))
 	}
-	fmt.Println("Popeye -- Biffs 'em and Buffs 'em!")
-	fmt.Println("")
+
+	zerolog.SetGlobalLevel(popConfig.Popeye.LogLevel)
+	clearScreen()
+	printHeader()
 	lint()
 }
 
 func lint() {
-	c := k8s.NewClient(k8s.NewConfig(k8sConfig))
-	checkCluster(c)
+	c := k8s.NewClient(popConfig)
 
-	lintNode("Node", c)
-
-	nss := getNamespacesOrDie(c)
-	lintNamespace("Namespace", nss)
-
-	nn := namespaceNames(nss)
-	lintPod("Pod", c, nn)
-	lintSvc("Service", c, nn)
-}
-
-func checkCluster(c *k8s.Client) {
-	mx := c.ClusterHasMetrics()
-	output.Write(linter.OkLevel, "Kubernetes", "Connectivity")
-
-	if !mx {
-		output.Write(linter.OkLevel, "Cluster", "Metrics")
-	} else {
-		output.Write(linter.OkLevel, "Cluster", "Metrics")
-	}
-	fmt.Println("")
-}
-
-func lintNamespace(section string, nn []v1.Namespace) {
-	for _, n := range nn {
-		l := linter.NewNamespace()
-		l.Lint(n)
-		printReport(l, section, n.Name)
-	}
-	fmt.Println("")
-}
-
-func lintNode(section string, c *k8s.Client) {
-	var gen generated.Node
-	nn, err := gen.List(c)
-	if err != nil {
-		log.Fatal().Err(err)
-	}
-	for _, n := range nn.Items {
-		l := linter.NewNode()
-		var mx k8s.NodeMetric
-		if c.ClusterHasMetrics() {
-			if mx, err = k8s.NodeMetrics(c, n); err != nil {
-				log.Debug().Err(err)
+	clusterInfo(c)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for k, v := range linters(c) {
+		if err := v.Lint(ctx); err != nil {
+			w := bufio.NewWriter(os.Stdout)
+			defer w.Flush()
+			report.Open(w, k)
+			{
+				report.Error(w, "Scan failed! %v", err)
 			}
-		}
-		l.Lint(n, mx)
-		printReport(l, section, n.Name)
-	}
-	fmt.Println("")
-}
-
-func lintPod(section string, c *k8s.Client, nn []string) {
-	var gen generated.Pod
-	for _, ns := range nn {
-		pp, err := gen.List(c, ns)
-		if err != nil {
-			log.Error().Err(err)
-		}
-
-		for _, p := range pp.Items {
-			mx := make(map[string]linter.PodMetric)
-			if c.ClusterHasMetrics() {
-				if mm, err := k8s.PodMetrics(c, ns, p.Name); err != nil {
-					log.Debug().Err(err)
-				} else {
-					for k, v := range mm {
-						mx[k] = v
-					}
-				}
-			}
-			l := linter.NewPod()
-			l.Lint(p, mx)
-			printReport(l, section, namespaced(ns, p.Name))
-		}
-	}
-	fmt.Println("")
-}
-
-func lintSvc(section string, c *k8s.Client, nn []string) {
-	var gen generated.Service
-	for _, ns := range nn {
-		ss, err := gen.List(c, ns)
-		if err != nil {
-			log.Error().Err(err)
-		}
-
-		for _, s := range ss.Items {
-			l := linter.NewService()
-			l.Lint(s)
-			printReport(l, section, namespaced(ns, s.Name))
-		}
-	}
-	fmt.Println("")
-}
-
-func printReport(l Linter, section, name string) {
-	level := parseLintLevel(popConfig.lintLevel)
-	if l.NoIssues() {
-		if level <= linter.OkLevel {
-			output.Write(linter.OkLevel, section, name)
-		}
-		return
-	}
-
-	max := l.MaxSeverity()
-	if level <= max {
-		output.Write(l.MaxSeverity(), section, name)
-	}
-	output.Dump(level, section, l.Issues()...)
-}
-
-var systemNS = []string{"kube-system", "kube-public"}
-
-func isSystemNS(ns string) bool {
-	for _, n := range systemNS {
-		if n == ns {
-			return true
-		}
-	}
-	return false
-}
-
-func isSet(s *string) bool {
-	return s != nil && *s != ""
-}
-
-func getNamespacesOrDie(c *k8s.Client) []v1.Namespace {
-	var ns generated.Namespace
-
-	if isSet(k8sConfig.Namespace) {
-		n, err := ns.Get(c, *k8sConfig.Namespace)
-		if err != nil {
-			log.Fatal().Err(err)
-		}
-		return []v1.Namespace{*n}
-	}
-
-	nn, err := ns.List(c)
-	if err != nil {
-		log.Fatal().Err(err)
-	}
-
-	ll := make([]v1.Namespace, 0, len(nn.Items))
-	for _, n := range nn.Items {
-		if !popConfig.allNamespaces && isSystemNS(n.Name) {
+			report.Close(w)
 			continue
 		}
-		ll = append(ll, n)
+		printReport(v, k)
 	}
-	return ll
 }
 
-func namespaceNames(nn []v1.Namespace) []string {
-	ll := make([]string, 0, len(nn))
-	for _, n := range nn {
-		ll = append(ll, n.Name)
+func printReport(r Reporter, section string) {
+	w := bufio.NewWriter(os.Stdout)
+	defer w.Flush()
+
+	level := linter.Level(popConfig.Popeye.LintLevel)
+	var wrote bool
+	report.Open(w, section)
+	{
+		for res, issues := range r.Issues() {
+			if len(issues) == 0 {
+				if level <= linter.OkLevel {
+					wrote = true
+					report.Write(w, linter.OkLevel, 1, res)
+				}
+				continue
+			}
+			max := r.MaxSeverity(res)
+			if level <= max {
+				wrote = true
+				report.Write(w, max, 1, res)
+			}
+			report.Dump(w, level, issues...)
+		}
+		if !wrote {
+			report.Comment(w, report.Colorize("Section excluded from report.", report.ColorOrangish))
+		}
 	}
-	return ll
+
+	report.Close(w)
 }
 
-func namespaced(ns, n string) string {
-	return ns + "/" + n
+func clusterInfo(c *k8s.Client) {
+	report.Open(os.Stdout, fmt.Sprintf("CLUSTER [%s]", strings.ToUpper(c.Config.ActiveCluster())))
+	{
+		report.Write(os.Stdout, linter.OkLevel, 1, "Connectivity")
+
+		if !c.ClusterHasMetrics() {
+			report.Write(os.Stdout, linter.OkLevel, 1, "Metrics")
+		} else {
+			report.Write(os.Stdout, linter.OkLevel, 1, "Metrics")
+		}
+	}
+	report.Close(os.Stdout)
 }
 
 func initPopeyeFlags() {
 	rootCmd.Flags().StringVarP(
-		&popConfig.lintLevel,
+		&popConfig.LintLevel,
 		"lintLevel", "l",
-		popConfig.lintLevel,
+		popConfig.LintLevel,
 		"Specify a lint level (info, warn, error)",
 	)
 
 	rootCmd.Flags().BoolVarP(
-		&popConfig.allNamespaces,
+		&popConfig.AllNamespaces,
 		"all-namespaces", "",
-		popConfig.allNamespaces,
+		popConfig.AllNamespaces,
 		"Includes system namespaces",
+	)
+
+	rootCmd.Flags().StringVarP(
+		&popConfig.Spinach,
+		"file", "f",
+		"",
+		"Use this spinach configuration file",
 	)
 }
 
 func initK8sFlags() {
-	k8sConfig = genericclioptions.NewConfigFlags(false)
+	k8sFlags = genericclioptions.NewConfigFlags(false)
 
 	rootCmd.Flags().StringVar(
-		k8sConfig.KubeConfig,
+		k8sFlags.KubeConfig,
 		"kubeconfig",
 		"",
 		"Path to the kubeconfig file to use for CLI requests",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sConfig.Timeout,
+		k8sFlags.Timeout,
 		"request-timeout",
 		"",
 		"The length of time to wait before giving up on a single server request",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sConfig.Context,
+		k8sFlags.Context,
 		"context",
 		"",
 		"The name of the kubeconfig context to use",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sConfig.ClusterName,
+		k8sFlags.ClusterName,
 		"cluster",
 		"",
 		"The name of the kubeconfig cluster to use",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sConfig.AuthInfoName,
+		k8sFlags.AuthInfoName,
 		"user",
 		"",
 		"The name of the kubeconfig user to use",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sConfig.Impersonate,
+		k8sFlags.Impersonate,
 		"as",
 		"",
 		"Username to impersonate for the operation",
 	)
 
 	rootCmd.Flags().StringArrayVar(
-		k8sConfig.ImpersonateGroup,
+		k8sFlags.ImpersonateGroup,
 		"as-group",
 		[]string{},
 		"Group to impersonate for the operation",
 	)
 
 	rootCmd.Flags().BoolVar(
-		k8sConfig.Insecure,
+		k8sFlags.Insecure,
 		"insecure-skip-tls-verify",
 		false,
 		"If true, the server's caCertFile will not be checked for validity",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sConfig.CAFile,
+		k8sFlags.CAFile,
 		"certificate-authority",
 		"",
 		"Path to a cert file for the certificate authority",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sConfig.KeyFile,
+		k8sFlags.KeyFile,
 		"client-key",
 		"",
 		"Path to a client key file for TLS",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sConfig.CertFile,
+		k8sFlags.CertFile,
 		"client-certificate",
 		"",
 		"Path to a client certificate file for TLS",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sConfig.BearerToken,
+		k8sFlags.BearerToken,
 		"token",
 		"",
 		"Bearer token for authentication to the API server",
 	)
 
 	rootCmd.Flags().StringVarP(
-		k8sConfig.Namespace,
+		k8sFlags.Namespace,
 		"namespace",
 		"n",
 		"",
@@ -361,33 +275,26 @@ func initK8sFlags() {
 // Helpers...
 
 func clearScreen() {
-	fmt.Print("\033[H\033[2J")
-}
-
-func parseLogLevel(level string) zerolog.Level {
-	switch level {
-	case "debug":
-		return zerolog.DebugLevel
-	case "warn":
-		return zerolog.WarnLevel
-	case "error":
-		return zerolog.ErrorLevel
-	case "fatal":
-		return zerolog.FatalLevel
-	default:
-		return zerolog.InfoLevel
+	if popConfig.ClearScreen {
+		fmt.Print("\033[H\033[2J")
 	}
 }
 
-func parseLintLevel(level string) linter.Level {
-	switch level {
-	case "info":
-		return linter.InfoLevel
-	case "warn":
-		return linter.WarnLevel
-	case "error":
-		return linter.ErrorLevel
-	default:
-		return linter.OkLevel
+func printHeader() {
+	fmt.Println()
+	for i, s := range report.Logo {
+		if i < len(report.Popeye) {
+			fmt.Printf(report.Colorize(report.Popeye[i], report.ColorAqua))
+			fmt.Printf(strings.Repeat(" ", 35))
+		} else {
+			if i == 4 {
+				fmt.Printf(report.Colorize("  Biffs`em and Buffs`em!", report.ColorLighSlate))
+				fmt.Printf(strings.Repeat(" ", 38))
+			} else {
+				fmt.Printf(strings.Repeat(" ", 62))
+			}
+		}
+		fmt.Println(report.Colorize(s, report.ColorLighSlate))
 	}
+	fmt.Println("")
 }

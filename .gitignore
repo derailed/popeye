@@ -1,2 +1,5 @@
 /k8s
-cov.out
+*.out
+popeye
+*.test
+notes

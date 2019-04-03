@@ -1,0 +1,21 @@
+popeye:
+  namespace:
+    exclude:
+      - kube-system
+      - kube-public
+      - monitoring
+
+  node:
+    limits:
+      cpu:    5
+      memory: 20
+    exclude:
+    - n1
+
+  pod:
+    labels:
+    - app
+    - env
+    exclude:
+    - p1
+    - p2

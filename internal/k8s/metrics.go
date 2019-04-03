@@ -1,141 +1,127 @@
 package k8s
 
 import (
-	"fmt"
-	"strings"
-
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	mapi "k8s.io/metrics/pkg/apis/metrics"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	versioned "k8s.io/metrics/pkg/client/clientset/versioned"
 )
 
-// ----------------------------------------------------------------------------
+const megaByte = 1024 * 1024
 
-// PodMetric records a pod core metrics.
-type PodMetric struct {
-	CPU, MEM int64
+type (
+	// NodeMetrics describes raw node metrics.
+	NodeMetrics struct {
+		CurrentCPU int64
+		CurrentMEM float64
+		AvailCPU   int64
+		AvailMEM   float64
+		TotalCPU   int64
+		TotalMEM   float64
+	}
+
+	// NodesMetrics tracks usage metrics per nodes.
+	NodesMetrics map[string]NodeMetrics
+
+	// Metrics represent an aggregation of all pod containers metrics.
+	Metrics struct {
+		CurrentCPU int64
+		CurrentMEM float64
+	}
+
+	// PodsMetrics tracks usage metrics per pods.
+	PodsMetrics map[string]ContainerMetrics
+
+	// ContainerMetrics tracks container metrics
+	ContainerMetrics map[string]Metrics
+)
+
+// Empty checks if we have any metrics.
+func (n NodeMetrics) Empty() bool {
+	return n == NodeMetrics{}
 }
 
-// CurrentCPU returns the current CPU reading.
-func (p PodMetric) CurrentCPU() int64 {
-	return p.CPU
+// Empty checks if we have any metrics.
+func (m Metrics) Empty() bool {
+	return m == Metrics{}
 }
 
-// CurrentMEM returns the current MEM reading.
-func (p PodMetric) CurrentMEM() int64 {
-	return p.MEM
+// GetNodesMetrics retrieves metrics for a given set of nodes.
+func GetNodesMetrics(nodes []v1.Node, metrics []mv1beta1.NodeMetrics, mmx NodesMetrics) {
+	for _, n := range nodes {
+		mmx[n.Name] = NodeMetrics{
+			AvailCPU: n.Status.Allocatable.Cpu().MilliValue(),
+			AvailMEM: asMi(n.Status.Allocatable.Memory().Value()),
+			TotalCPU: n.Status.Capacity.Cpu().MilliValue(),
+			TotalMEM: asMi(n.Status.Capacity.Memory().Value()),
+		}
+	}
+
+	for _, c := range metrics {
+		if mx, ok := mmx[c.Name]; ok {
+			mx.CurrentCPU = c.Usage.Cpu().MilliValue()
+			mx.CurrentMEM = asMi(c.Usage.Memory().Value())
+			mmx[c.Name] = mx
+		}
+	}
 }
 
-// Empty return true if no metrics are present.
-func (p PodMetric) Empty() bool {
-	return p.CPU == 0 && p.MEM == 0
-}
-
-// ----------------------------------------------------------------------------
-
-// NodeMetric records a node core metrics.
-type NodeMetric struct {
-	PodMetric
-	AvailCPU, AvailMEM int64
-}
-
-// MaxCPU returns the max available CPU on this node.
-func (n NodeMetric) MaxCPU() int64 {
-	return n.AvailCPU
-}
-
-// MaxMEM returns the max available memory on this node.
-func (n NodeMetric) MaxMEM() int64 {
-	return n.AvailMEM
-}
-
-// Empty return true if no metrics are present.
-func (n NodeMetric) Empty() bool {
-	return n.PodMetric.Empty() && n.AvailCPU == 0 && n.AvailMEM == 0
-}
-
-// ----------------------------------------------------------------------------
-
-// NodeMetrics retrieves a given node metrics from metrics-server.
-func NodeMetrics(c *Client, no v1.Node) (NodeMetric, error) {
-	var mx NodeMetric
-
+// FetchNodesMetrics retrieve metrics from metrics server.
+func FetchNodesMetrics(c *Client) ([]mv1beta1.NodeMetrics, error) {
 	vClient, err := vClient(c)
 	if err != nil {
-		return mx, err
+		return nil, err
 	}
 
-	vmx, err := vClient.Metrics().NodeMetricses().List(metav1.ListOptions{
-		FieldSelector: "metadata.name=" + no.Name,
-	})
+	list, err := vClient.Metrics().NodeMetricses().List(metav1.ListOptions{})
 	if err != nil {
-		return mx, err
+		return nil, err
 	}
-
-	var mmx mapi.NodeMetricsList
-	if err = mv1beta1.Convert_v1beta1_NodeMetricsList_To_metrics_NodeMetricsList(vmx, &mmx, nil); err != nil {
-		return mx, err
-	}
-
-	if len(mmx.Items) == 0 {
-		return mx, fmt.Errorf("no metrics found for node %s", no)
-	}
-
-	metrics := mmx.Items[0]
-	mx.CPU = metrics.Usage.Cpu().MilliValue()
-	mx.MEM = metrics.Usage.Memory().Value() / (1024 * 1024)
-
-	cpuQty := no.Status.Allocatable["cpu"]
-	if cpu, ok := cpuQty.AsInt64(); ok {
-		mx.AvailCPU = cpu * 1000 // unit of millicores
-	}
-
-	memQty := no.Status.Allocatable["memory"]
-	if mem, ok := memQty.AsInt64(); ok {
-		mx.AvailMEM = mem / (1024 * 1024)
-	}
-
-	return mx, nil
+	return list.Items, nil
 }
 
-// PodMetrics retrieves a given pod metrics from metrics-server.
-func PodMetrics(c *Client, ns, pod string) (map[string]PodMetric, error) {
-	mx := make(map[string]PodMetric)
-
-	vClient, err := vClient(c)
+// FetchPodsMetrics return all metrics for pods in a given namespace.
+func FetchPodsMetrics(c *Client, ns string) ([]mv1beta1.PodMetrics, error) {
+	client, err := vClient(c)
 	if err != nil {
-		return mx, err
+		return nil, err
 	}
 
-	fields := []string{"metadata.namespace=" + ns, "metadata.name=" + pod}
-	vmx, err := vClient.Metrics().PodMetricses(ns).List(metav1.ListOptions{
-		FieldSelector: strings.Join(fields, ","),
-	})
+	list, err := client.Metrics().PodMetricses(ns).List(metav1.ListOptions{})
 	if err != nil {
-		return mx, err
+		return nil, err
 	}
+	return list.Items, nil
+}
 
-	var mmx mapi.PodMetricsList
-	if err = mv1beta1.Convert_v1beta1_PodMetricsList_To_metrics_PodMetricsList(vmx, &mmx, nil); err != nil {
-		return mx, err
+// GetPodsMetrics retrieves metrics for all pods in a given namespace.
+func GetPodsMetrics(pods []mv1beta1.PodMetrics, mmx PodsMetrics) {
+	// Compute all pod's containers metrics.
+	for _, p := range pods {
+		mx := make(ContainerMetrics, len(p.Containers))
+		for _, c := range p.Containers {
+			mx[c.Name] = Metrics{
+				CurrentCPU: c.Usage.Cpu().MilliValue(),
+				CurrentMEM: asMi(c.Usage.Memory().Value()),
+			}
+		}
+		mmx[namespacedName(p)] = mx
 	}
+}
 
-	if len(mmx.Items) == 0 {
-		return mx, fmt.Errorf("no metrics found for pod %s/%s", ns, pod)
-	}
+// ----------------------------------------------------------------------------
+// Helpers...
 
-	for _, c := range mmx.Items[0].Containers {
-		cpuVal := c.Usage.Cpu().MilliValue()
-		memVal := c.Usage.Memory().Value() / (1024 * 1024)
-		mx[c.Name] = PodMetric{CPU: cpuVal, MEM: memVal}
-	}
-	return mx, nil
+func asMi(v int64) float64 {
+	return float64(v) / megaByte
+}
+
+func namespacedName(mx mv1beta1.PodMetrics) string {
+	return mx.Namespace + "/" + mx.Name
 }
 
 func vClient(c *Client) (*versioned.Clientset, error) {
-	restCfg, err := c.config.RESTConfig()
+	restCfg, err := c.Config.RESTConfig()
 	if err != nil {
 		return nil, err
 	}

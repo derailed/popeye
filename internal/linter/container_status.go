@@ -29,6 +29,10 @@ func (c *containerStatusCount) rollup(s v1.ContainerStatus) {
 }
 
 func (c *containerStatusCount) diagnose(total int, isInit bool) Issue {
+	if total == 0 {
+		return nil
+	}
+
 	if c.terminated > 0 && !isInit {
 		return NewErrorf(WarnLevel, "Pod is terminating (%d/%d)", c.terminated, total)
 	}

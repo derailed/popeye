@@ -18,14 +18,16 @@ require (
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
+	github.com/pkg/profile v1.2.1
 	github.com/rs/zerolog v1.12.0
 	github.com/sirupsen/logrus v1.3.0
 	github.com/spf13/cobra v0.0.3
 	github.com/stretchr/testify v1.2.2
-	golang.org/x/net v0.0.0-20190301231341-16b79f2e4e95 // indirect
 	golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421 // indirect
+	golang.org/x/perf v0.0.0-20190312170614-0655857e383f // indirect
 	golang.org/x/time v0.0.0-20181108054448-85acf8d2951c // indirect
 	google.golang.org/api v0.0.0-20181220000619-583d854617af
+	gopkg.in/yaml.v2 v2.2.2
 	k8s.io/api v0.0.0-20190202010724-74b699b93c15
 	k8s.io/apimachinery v0.0.0-20190207091153-095b9d203467
 	k8s.io/cli-runtime v0.0.0-20190207094101-a32b78e5dd0a

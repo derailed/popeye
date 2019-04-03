@@ -7,7 +7,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-func TestSummarizeCounts(t *testing.T) {
+func TestContainerStatusRollup(t *testing.T) {
 	uu := []struct {
 		ready, waiting, terminated bool
 		restarts                   int32
