@@ -18,6 +18,9 @@ const (
 	WarnLevel
 	// ErrorLevel denotes a serious issue.
 	ErrorLevel
+
+	// Delimiter indicates a sub section.
+	Delimiter = "||"
 )
 
 type (
@@ -107,7 +110,7 @@ func (l *Linter) addIssuesMap(res string, issues Issues) {
 		for _, i := range v {
 			err := Error{
 				severity:    i.Severity(),
-				description: fmt.Sprintf("%-15s %s", k+":", i.Description()),
+				description: fmt.Sprintf("%s%s%s", k, Delimiter, i.Description()),
 			}
 			l.issues[res] = append(l.issues[res], err)
 		}

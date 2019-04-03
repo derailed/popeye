@@ -28,7 +28,7 @@ func (c *containerStatusCount) rollup(s v1.ContainerStatus) {
 	c.restarts += int(s.RestartCount)
 }
 
-func (c *containerStatusCount) diagnose(total int, isInit bool) Issue {
+func (c *containerStatusCount) diagnose(total int, restartsLimit int, isInit bool) Issue {
 	if total == 0 {
 		return nil
 	}
@@ -45,7 +45,7 @@ func (c *containerStatusCount) diagnose(total int, isInit bool) Issue {
 		return NewErrorf(ErrorLevel, "Pod is not ready (%d/%d)", c.ready, total)
 	}
 
-	if c.restarts > 0 {
+	if c.restarts > restartsLimit {
 		return NewErrorf(WarnLevel, "Pod was restarted (%d) %s", c.restarts, pluralOf("time", c.restarts))
 	}
 

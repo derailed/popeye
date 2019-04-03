@@ -5,4 +5,5 @@ var emojis = map[string]string{
 	"farfromfok": "💥",
 	"warn":       "😱",
 	"fyi":        "🔊",
+	"container":  "🐳",
 }

@@ -1,11 +1,13 @@
 package linter
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/rs/zerolog"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // Docker image latest tag.
@@ -43,33 +45,50 @@ func (c *Container) checkImageTags(co v1.Container) {
 
 func (c *Container) checkProbes(co v1.Container) {
 	if co.LivenessProbe == nil && co.ReadinessProbe == nil {
-		c.addIssue(co.Name, ErrorLevel, "No probes found")
+		c.addIssue(co.Name, ErrorLevel, "No probes defined")
 		return
 	}
 
 	if co.LivenessProbe == nil {
 		c.addIssue(co.Name, WarnLevel, "No liveness probe")
 	}
+	c.checkNamedProbe(co.Name, co.LivenessProbe, true)
+
 	if co.ReadinessProbe == nil {
 		c.addIssue(co.Name, WarnLevel, "No readiness probe")
+	}
+	c.checkNamedProbe(co.Name, co.ReadinessProbe, false)
+}
+
+func (c *Container) checkNamedProbe(co string, p *v1.Probe, liveness bool) {
+	if p == nil || p.Handler.HTTPGet == nil {
+		return
+	}
+
+	kind := "Readiness"
+	if liveness {
+		kind = "Liveness"
+	}
+	if p.Handler.HTTPGet != nil && p.Handler.HTTPGet.Port.Type == intstr.Int {
+		c.addIssue(co, InfoLevel, fmt.Sprintf("%sProbe uses a port#, prefer a named port", kind))
 	}
 }
 
 func (c *Container) checkResources(co v1.Container) {
 	if len(co.Resources.Limits) == 0 && len(co.Resources.Requests) == 0 {
-		c.addIssue(co.Name, ErrorLevel, "No resources requests/limits found")
+		c.addIssue(co.Name, ErrorLevel, "No resources defined")
 		return
 	}
 
 	if len(co.Resources.Requests) > 0 && len(co.Resources.Limits) == 0 {
-		c.addIssue(co.Name, WarnLevel, "No resource limits found")
+		c.addIssue(co.Name, WarnLevel, "No resource limits defined")
 	}
 }
 
 func (c *Container) checkNamedPorts(co v1.Container) {
 	for _, p := range co.Ports {
 		if len(p.Name) == 0 {
-			c.addIssuef(co.Name, WarnLevel, "Unamed port %d found", p.ContainerPort)
+			c.addIssuef(co.Name, WarnLevel, "Unamed port `%d", p.ContainerPort)
 		}
 	}
 }
@@ -83,13 +102,13 @@ func (c *Container) checkMetrics(co string, cpu, ccpu, mem, cmem int64) {
 	percCPU := toPerc(float64(ccpu), float64(cpu))
 	cpuLimit := c.client.Config.PodCPULimit()
 	if percCPU >= cpuLimit {
-		c.addIssuef(co, ErrorLevel, "CPU threshold reached %0.f%% (%0.f%%)", percCPU, cpuLimit)
+		c.addIssuef(co, ErrorLevel, "CPU threshold (%0.f%%) reached `%0.f%%", cpuLimit, percCPU)
 	}
 
 	percMEM := toPerc(float64(cmem), float64(mem))
 	memLimit := c.client.Config.PodMEMLimit()
 	if percMEM >= memLimit {
-		c.addIssuef(co, ErrorLevel, "Memory threshold reached %0.f%% (%0.f%%)", percMEM, memLimit)
+		c.addIssuef(co, ErrorLevel, "Memory threshold (%0.f%%) reached `%0.f%%", memLimit, percMEM)
 	}
 }
 

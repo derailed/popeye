@@ -32,8 +32,8 @@ const (
 type Color int
 
 const (
-	outputWidth = 80
-	tabSize     = 4
+	reportWidth = 80
+	tabSize     = 2
 )
 
 // Open begins a new report section.
@@ -52,8 +52,8 @@ func Close(w io.Writer) {
 func Error(w io.Writer, fmat string, args ...interface{}) {
 	fmt.Fprintln(w)
 	msg := fmt.Sprintf(fmat, args...)
-	buff := make([]string, 0, len(msg)%outputWidth)
-	width := outputWidth - 3
+	buff := make([]string, 0, len(msg)%reportWidth)
+	width := reportWidth - 3
 	for i := 0; len(msg) > width; i += width {
 		buff = append(buff, msg[i:i+width])
 		msg = msg[i+width:]
@@ -68,26 +68,38 @@ func Comment(w io.Writer, msg string) {
 	fmt.Fprintf(w, "  · "+msg+"\n")
 }
 
-// Dump all errors output.
+// Dump all errors to output.
 func Dump(w io.Writer, l linter.Level, issues ...linter.Issue) {
+	var current string
 	for _, i := range issues {
 		if i.Severity() >= l {
-			Write(w, i.Severity(), 2, i.Description())
+			tokens := strings.Split(i.Description(), linter.Delimiter)
+			if len(tokens) == 1 {
+				Write(w, i.Severity(), 2, i.Description()+".")
+			} else {
+				if current != tokens[0] {
+					Write(w, containerLevel, 2, tokens[0])
+					current = tokens[0]
+				}
+				Write(w, i.Severity(), 3, tokens[1]+".")
+			}
 		}
 	}
 }
 
 // Write a colorized message to stdout.
 func Write(w io.Writer, l linter.Level, indent int, msg string) {
+	spacer := strings.Repeat(" ", tabSize*indent)
+
 	if indent == 1 {
-		dots := outputWidth - len(msg) - tabSize - 2
+		dots := reportWidth - len(msg) - tabSize*indent - 3
 		msg = Colorize(msg, colorForLevel(l)) + Colorize(strings.Repeat(".", dots), ColorGray)
-		fmt.Fprintf(w, "  · "+msg+emojiForLevel(l)+"\n")
+		fmt.Fprintf(w, "%s· %s%s\n", spacer, msg, emojiForLevel(l))
 		return
 	}
 
 	msg = Colorize(msg, ColorWhite)
-	fmt.Fprintf(w, "      %s %s\n", emojiForLevel(l), msg)
+	fmt.Fprintf(w, "%s%s %s\n", spacer, emojiForLevel(l), msg)
 }
 
 // Colorize a string based on given color.
@@ -108,8 +120,12 @@ func colorForLevel(l linter.Level) Color {
 	}
 }
 
+const containerLevel linter.Level = 100
+
 func emojiForLevel(l linter.Level) string {
 	switch l {
+	case containerLevel:
+		return emojis["container"]
 	case linter.ErrorLevel:
 		return emojis["farfromfok"]
 	case linter.WarnLevel:

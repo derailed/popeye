@@ -11,6 +11,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var skipServices = []string{"default/kubernetes"}
+
 // Check port mappings
 // Check endpoints
 // Check LoadBalancer type
@@ -27,7 +29,8 @@ func NewService(c *k8s.Client, l *zerolog.Logger) *Service {
 
 // Lint a service.
 func (s *Service) Lint(ctx context.Context) error {
-	list, err := s.client.DialOrDie().CoreV1().
+	list, err := s.client.DialOrDie().
+		CoreV1().
 		Services(s.client.Config.ActiveNamespace()).
 		List(metav1.ListOptions{})
 	if err != nil {
@@ -35,10 +38,16 @@ func (s *Service) Lint(ctx context.Context) error {
 	}
 
 	for _, svc := range list.Items {
-		s.initIssues(svcFQName(svc))
+		// Skip internal services...
+		if in(skipServices, svcFQN(svc)) {
+			continue
+		}
+
+		s.initIssues(svcFQN(svc))
 		po, err := s.findPod(svc)
 		if err != nil {
-			return err
+			s.addError(svcFQN(svc), err)
+			continue
 		}
 		s.lint(svc, po)
 	}
@@ -54,7 +63,7 @@ func (s *Service) checkPorts(svc v1.Service, po v1.Pod) {
 	for _, p := range svc.Spec.Ports {
 		errs := checkServicePort(svc.Name, po, p)
 		if errs != nil {
-			s.addErrors(svcFQName(svc), errs)
+			s.addErrors(svcFQN(svc), errs)
 			continue
 		}
 	}
@@ -63,7 +72,9 @@ func (s *Service) checkPorts(svc v1.Service, po v1.Pod) {
 func (s *Service) findPod(svc v1.Service) (v1.Pod, error) {
 	var pod v1.Pod
 
-	pods, err := s.client.DialOrDie().CoreV1().Pods("").List(metav1.ListOptions{})
+	pods, err := s.client.DialOrDie().CoreV1().Pods("").List(metav1.ListOptions{
+		LabelSelector: toSelector(svc.Spec.Selector),
+	})
 	if err != nil {
 		return pod, err
 	}
@@ -99,14 +110,46 @@ func checkServicePort(svc string, pod v1.Pod, port v1.ServicePort) []error {
 	return errs
 }
 
-func svcFQName(s v1.Service) string {
+// CheckEndpoints runs a sanity check on all endpoints in a given namespace.
+func (s *Service) checkEndpoints(svc v1.Service) *v1.Endpoints {
+	ep, err := s.client.DialOrDie().CoreV1().Endpoints(svc.Namespace).Get(svc.Name, metav1.GetOptions{})
+	if err != nil {
+		s.addError(svcFQN(svc), err)
+		return ep
+	}
+
+	s.log.Debug().Msgf("Checking ep %s", ep.Name)
+	if len(ep.Subsets) == 0 {
+		s.addError(svcFQN(svc), fmt.Errorf("No associated endpoints"))
+	}
+
+	return ep
+}
+
+func svcFQN(s v1.Service) string {
 	return s.Namespace + "/" + s.Name
 }
 
 func toSelector(labels map[string]string) string {
+	// Ensure no matches!
+	if len(labels) == 0 {
+		return "bozo=xxx"
+	}
+
 	ss := make([]string, 0, len(labels))
 	for k, v := range labels {
 		ss = append(ss, k+"="+v)
 	}
 	return strings.Join(ss, ",")
+}
+
+// In checks if an item is in a list of items.
+func in(ll []string, s string) bool {
+	for _, l := range ll {
+		if l == s {
+			return true
+		}
+	}
+
+	return false
 }

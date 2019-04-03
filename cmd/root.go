@@ -132,7 +132,7 @@ func printReport(r Reporter, section string) {
 			report.Dump(w, level, issues...)
 		}
 		if !wrote {
-			report.Comment(w, report.Colorize("Section excluded from report.", report.ColorOrangish))
+			report.Comment(w, report.Colorize("Nothing to report.", report.ColorOrangish))
 		}
 	}
 

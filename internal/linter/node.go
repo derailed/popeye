@@ -138,12 +138,12 @@ func (n *Node) checkUtilization(no string, mx k8s.NodeMetrics) {
 	percCPU := toPerc(float64(mx.CurrentCPU), float64(mx.AvailCPU))
 	cpuLimit := n.client.Config.NodeCPULimit()
 	if math.Round(percCPU) > cpuLimit {
-		n.addIssuef(no, WarnLevel, "CPU threshold exceeded %0.f%% (%0.f%%)", percCPU, cpuLimit)
+		n.addIssuef(no, WarnLevel, "CPU threshold (%0.f%%) reached %0.f%%", cpuLimit, percCPU)
 	}
 
 	percMEM := toPerc(float64(mx.CurrentMEM), float64(mx.AvailMEM))
 	memLimit := n.client.Config.NodeMEMLimit()
 	if math.Round(percMEM) > memLimit {
-		n.addIssuef(no, WarnLevel, "Memory threshold exceeded %0.f%% (%0.f%%)", percMEM, memLimit)
+		n.addIssuef(no, WarnLevel, "Memory threshold (%0.f%%) reached %0.f%%", memLimit, percMEM)
 	}
 }

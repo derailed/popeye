@@ -59,6 +59,15 @@ func (c *Config) PodCPULimit() float64 {
 	return l
 }
 
+// RestartsLimit returns pod restarts limit.
+func (c *Config) RestartsLimit() int {
+	l := c.Popeye.Pod.Restarts
+	if l == 0 {
+		return defaultRestarts
+	}
+	return l
+}
+
 // PodMEMLimit returns the pod mem threshold if set otherwise the default.
 func (c *Config) PodMEMLimit() float64 {
 	l := c.Popeye.Pod.Limits.Memory

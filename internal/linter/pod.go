@@ -44,10 +44,6 @@ func NewPod(c *k8s.Client, l *zerolog.Logger) *Pod {
 	return &Pod{newLinter(c, l)}
 }
 
-func namespacedName(po v1.Pod) string {
-	return po.Namespace + "/" + po.Name
-}
-
 // Lint a Pod.
 func (p *Pod) Lint(ctx context.Context) error {
 	ll, err := p.client.ListPods()
@@ -65,7 +61,7 @@ func (p *Pod) Lint(ctx context.Context) error {
 	}
 
 	for _, po := range ll {
-		nsed := namespacedName(po)
+		nsed := nsFQN(po)
 		p.initIssues(nsed)
 		p.lint(po, pmx[nsed])
 	}
@@ -93,13 +89,13 @@ func (p *Pod) checkUtilization(po v1.Pod, mx k8s.ContainerMetrics) {
 		}
 		c := NewContainer(p.client, p.log)
 		c.checkUtilization(co, cmx)
-		p.addIssuesMap(namespacedName(po), c.Issues())
+		p.addIssuesMap(nsFQN(po), c.Issues())
 	}
 }
 
 func (p *Pod) checkServiceAccount(po v1.Pod) {
 	if len(po.Spec.ServiceAccountName) == 0 {
-		p.addIssuef(namespacedName(po), InfoLevel, "No service account specified")
+		p.addIssuef(nsFQN(po), InfoLevel, "No service account specified")
 	}
 }
 
@@ -107,18 +103,20 @@ func (p *Pod) checkContainers(po v1.Pod) {
 	for _, c := range po.Spec.Containers {
 		l := NewContainer(p.client, p.log)
 		l.lint(c)
-		p.addIssuesMap(namespacedName(po), l.Issues())
+		p.addIssuesMap(nsFQN(po), l.Issues())
 	}
 }
 
 func (p *Pod) checkContainerStatus(po v1.Pod) {
+	limit := p.client.Config.RestartsLimit()
+
 	if len(po.Status.InitContainerStatuses) != 0 {
 		counts := new(containerStatusCount)
 		for _, s := range po.Status.InitContainerStatuses {
 			counts.rollup(s)
 		}
-		if issue := counts.diagnose(len(po.Status.InitContainerStatuses), true); issue != nil {
-			p.addIssues(namespacedName(po), issue)
+		if issue := counts.diagnose(len(po.Status.InitContainerStatuses), limit, true); issue != nil {
+			p.addIssues(nsFQN(po), issue)
 			return
 		}
 	}
@@ -127,8 +125,8 @@ func (p *Pod) checkContainerStatus(po v1.Pod) {
 	for _, s := range po.Status.ContainerStatuses {
 		counts.rollup(s)
 	}
-	if issue := counts.diagnose(len(po.Status.ContainerStatuses), false); issue != nil {
-		p.addIssues(namespacedName(po), issue)
+	if issue := counts.diagnose(len(po.Status.ContainerStatuses), limit, false); issue != nil {
+		p.addIssues(nsFQN(po), issue)
 	}
 }
 
@@ -137,6 +135,13 @@ func (p *Pod) checkStatus(po v1.Pod) {
 	case v1.PodRunning:
 	case v1.PodSucceeded:
 	default:
-		p.addIssuef(namespacedName(po), ErrorLevel, "Pod is in an unhappy phase (%s)", po.Status.Phase)
+		p.addIssuef(nsFQN(po), ErrorLevel, "Pod is in an unhappy phase (%s)", po.Status.Phase)
 	}
+}
+
+// ----------------------------------------------------------------------------
+// Helpers...
+
+func nsFQN(po v1.Pod) string {
+	return po.Namespace + "/" + po.Name
 }

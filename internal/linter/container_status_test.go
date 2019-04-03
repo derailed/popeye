@@ -54,6 +54,6 @@ func TestContainerStatusDiagnose(t *testing.T) {
 	}
 
 	for _, u := range uu {
-		assert.Equal(t, u.issue, u.counts.diagnose(1, false))
+		assert.Equal(t, u.issue, u.counts.diagnose(1, 0, false))
 	}
 }

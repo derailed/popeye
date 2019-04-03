@@ -33,7 +33,7 @@ func TestPoCheckStatus(t *testing.T) {
 		l := NewPod(nil, nil)
 		l.checkStatus(po)
 
-		nsed := namespacedName(po)
+		nsed := nsFQN(po)
 		assert.Equal(t, u.issues, len(l.Issues()[nsed]))
 		if len(l.Issues()[nsed]) != 0 {
 			assert.Equal(t, u.severity, l.MaxSeverity(nsed))
@@ -68,7 +68,7 @@ func TestPoCheckContainerStatus(t *testing.T) {
 		l := NewPod(k8s.NewClient(config.New()), nil)
 		l.checkContainerStatus(po)
 
-		nsed := namespacedName(po)
+		nsed := nsFQN(po)
 		assert.Equal(t, u.issues, len(l.Issues()[nsed]))
 		if len(l.Issues()[nsed]) != 0 {
 			assert.Equal(t, u.severity, l.Issues()[nsed][0].Severity())
@@ -132,7 +132,7 @@ func TestPoCheckContainers(t *testing.T) {
 		l := NewPod(nil, nil)
 		l.checkContainers(po)
 
-		nsed := namespacedName(po)
+		nsed := nsFQN(po)
 		assert.Equal(t, u.issues, len(l.Issues()[nsed]))
 		if len(l.Issues()[nsed]) != 0 {
 			assert.Equal(t, u.severity, l.MaxSeverity(nsed))
@@ -155,7 +155,7 @@ func TestPoCheckServiceAccount(t *testing.T) {
 		if u.sa != "" {
 			po.Spec.ServiceAccountName = u.sa
 		}
-		nsed := namespacedName(po)
+		nsed := nsFQN(po)
 
 		l := NewPod(nil, nil)
 		l.checkServiceAccount(po)
@@ -217,7 +217,7 @@ func TestPoLint(t *testing.T) {
 		},
 	}
 
-	l := NewPod(nil, nil)
+	l := NewPod(k8s.NewClient(config.New()), nil)
 	l.lint(po, nil)
 	assert.True(t, l.NoIssues("p1"))
 }

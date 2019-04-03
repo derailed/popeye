@@ -13,6 +13,8 @@ popeye:
     - n1
 
   pod:
+    restarts:
+      3
     labels:
     - app
     - env

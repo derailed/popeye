@@ -56,7 +56,7 @@ func TestSvcLint(t *testing.T) {
 		s := NewService(nil, nil)
 		s.lint(svc, po)
 
-		assert.Equal(t, 0, len(s.Issues()[svcFQName(svc)]))
+		assert.Equal(t, 0, len(s.Issues()[svcFQN(svc)]))
 	}
 }
 
@@ -106,7 +106,7 @@ func TestSvcCheckServicePort(t *testing.T) {
 		s := NewService(nil, nil)
 		s.checkPorts(svc, po)
 
-		assert.Equal(t, 0, len(s.Issues()[svcFQName(svc)]))
+		assert.Equal(t, 0, len(s.Issues()[svcFQN(svc)]))
 	}
 }
 

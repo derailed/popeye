@@ -26,12 +26,12 @@ func TestWrite(t *testing.T) {
 		{
 			"Yo mama",
 			1,
-			"  · \x1b[38;5;122;mYo mama\x1b[0m\x1b[38;5;250;m...................................................................\x1b[0m✅\n",
+			"  · \x1b[38;5;122;mYo mama\x1b[0m\x1b[38;5;250;m....................................................................\x1b[0m✅\n",
 		},
 		{
 			"Yo mama",
 			2,
-			"      ✅ \x1b[38;5;15;mYo mama\x1b[0m\n",
+			"    ✅ \x1b[38;5;15;mYo mama\x1b[0m\n",
 		},
 	}
 
@@ -51,7 +51,7 @@ func TestDump(t *testing.T) {
 			linter.Issues{
 				"fred": []linter.Issue{linter.NewError(linter.WarnLevel, "Yo Mama!")},
 			},
-			"      😱 \x1b[38;5;15;mYo Mama!\x1b[0m\n",
+			"    😱 \x1b[38;5;15;mYo Mama!.\x1b[0m\n",
 		},
 	}
 
