@@ -1,14 +1,52 @@
 <img src="assets/popeye_boat.png" align="right" width="400" heigh="auto">
 
-# Popeye - Biffs 'em and Buffs 'em!
-
-A Kubernetes manifest and resource linter. Popeye cruises thru your Kubernetes cluster and identifies potential issues with your deployment manifests and configurations.
+# Popeye - A Kubernetes linter and scanner
 
 
+Popeye is a utility that lints a K8s cluster and reports potential issues with
+various Kubernetes resources. It cruises thru deployed resources for potential misconfigurations and scans a cluster to ensure best practices are in place thus
+preventing potential future headaches. It aim at reducing the cognitive *over*load
+that one faces when managing and operating a Kubernetes cluster in the wild.
 
-<br/>
-<br/>
-<br/>
+When it comes to Kubernetes cluster management, Popeye is all about `Biffing'em and Buffing'em!`
+
+---
+
+## Installation
+
+---
+
+## The Command Line
+
+---
+
+## Support Resources
+
+---
+
+## RBAC POW
+
+---
+
+## Disclaimer
+
+---
+
+## ATTA Girls/Boys!
+
+Popeye sits on top of many of opensource projects and libraries. Our *sincere*
+appreciations to all the OSS contributors that work nights and weekends
+to make this project a reality!
+
+
+---
+
+## Contact Info
+
+1. **Email**:   fernand@imhotep.io
+2. **Twitter**: [@kitesurfer](https://twitter.com/kitesurfer?lang=en)
+
+
 <br/>
 <br/>
 
