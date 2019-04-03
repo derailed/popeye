@@ -44,22 +44,35 @@ func (s *Service) Lint(ctx context.Context) error {
 		}
 
 		s.initIssues(svcFQN(svc))
+
 		po, err := s.findPod(svc)
 		if err != nil {
 			s.addError(svcFQN(svc), err)
-			continue
 		}
-		s.lint(svc, po)
+
+		ep, err := s.client.DialOrDie().
+			CoreV1().
+			Endpoints(svc.Namespace).
+			Get(svc.Name, metav1.GetOptions{})
+		if err != nil {
+			s.addError(svcFQN(svc), err)
+		}
+		s.lint(svc, po, ep)
 	}
 
 	return nil
 }
 
-func (s *Service) lint(svc v1.Service, po v1.Pod) {
-	s.checkPorts(svc, po)
+func (s *Service) lint(svc v1.Service, po *v1.Pod, ep *v1.Endpoints) {
+	if po != nil {
+		s.checkPorts(svc, po)
+	}
+	if ep != nil {
+		s.checkEndpoints(svc, ep)
+	}
 }
 
-func (s *Service) checkPorts(svc v1.Service, po v1.Pod) {
+func (s *Service) checkPorts(svc v1.Service, po *v1.Pod) {
 	for _, p := range svc.Spec.Ports {
 		errs := checkServicePort(svc.Name, po, p)
 		if errs != nil {
@@ -69,27 +82,36 @@ func (s *Service) checkPorts(svc v1.Service, po v1.Pod) {
 	}
 }
 
-func (s *Service) findPod(svc v1.Service) (v1.Pod, error) {
-	var pod v1.Pod
+// CheckEndpoints runs a sanity check on all endpoints in a given namespace.
+func (s *Service) checkEndpoints(svc v1.Service, ep *v1.Endpoints) {
+	if svc.Spec.Type == v1.ClusterIPNone {
+		return
+	}
 
+	if len(ep.Subsets) == 0 {
+		s.addError(svcFQN(svc), fmt.Errorf("No associated endpoints"))
+	}
+}
+
+func (s *Service) findPod(svc v1.Service) (*v1.Pod, error) {
 	pods, err := s.client.DialOrDie().CoreV1().Pods("").List(metav1.ListOptions{
 		LabelSelector: toSelector(svc.Spec.Selector),
 	})
 	if err != nil {
-		return pod, err
+		return nil, err
 	}
 
 	if len(pods.Items) == 0 {
-		return pod, fmt.Errorf("No pods match service selector")
+		return nil, fmt.Errorf("No pods match service selector")
 	}
 
-	return pods.Items[0], nil
+	return &pods.Items[0], nil
 }
 
 // ----------------------------------------------------------------------------
 // Helpers...
 
-func checkServicePort(svc string, pod v1.Pod, port v1.ServicePort) []error {
+func checkServicePort(svc string, pod *v1.Pod, port v1.ServicePort) []error {
 	sPort := port.TargetPort.IntVal
 	if sPort == 0 {
 		sPort = port.Port
@@ -108,22 +130,6 @@ func checkServicePort(svc string, pod v1.Pod, port v1.ServicePort) []error {
 	}
 
 	return errs
-}
-
-// CheckEndpoints runs a sanity check on all endpoints in a given namespace.
-func (s *Service) checkEndpoints(svc v1.Service) *v1.Endpoints {
-	ep, err := s.client.DialOrDie().CoreV1().Endpoints(svc.Namespace).Get(svc.Name, metav1.GetOptions{})
-	if err != nil {
-		s.addError(svcFQN(svc), err)
-		return ep
-	}
-
-	s.log.Debug().Msgf("Checking ep %s", ep.Name)
-	if len(ep.Subsets) == 0 {
-		s.addError(svcFQN(svc), fmt.Errorf("No associated endpoints"))
-	}
-
-	return ep
 }
 
 func svcFQN(s v1.Service) string {

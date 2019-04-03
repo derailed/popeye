@@ -54,7 +54,8 @@ func TestSvcLint(t *testing.T) {
 			},
 		}
 		s := NewService(nil, nil)
-		s.lint(svc, po)
+		ep := makeEp(svc.Name, "1.1.1.1")
+		s.lint(svc, &po, &ep)
 
 		assert.Equal(t, 0, len(s.Issues()[svcFQN(svc)]))
 	}
@@ -104,7 +105,7 @@ func TestSvcCheckServicePort(t *testing.T) {
 			},
 		}
 		s := NewService(nil, nil)
-		s.checkPorts(svc, po)
+		s.checkPorts(svc, &po)
 
 		assert.Equal(t, 0, len(s.Issues()[svcFQN(svc)]))
 	}
@@ -131,4 +132,22 @@ func makePorts(ports ...int) []v1.ContainerPort {
 		})
 	}
 	return pp
+}
+
+func makeEp(s string, ips ...string) v1.Endpoints {
+	ep := v1.Endpoints{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      s,
+			Namespace: "default",
+		},
+	}
+
+	var add []v1.EndpointAddress
+	for _, ip := range ips {
+		add = append(add, v1.EndpointAddress{IP: ip})
+	}
+	ep.Subsets = []v1.EndpointSubset{
+		{Addresses: add},
+	}
+	return ep
 }
