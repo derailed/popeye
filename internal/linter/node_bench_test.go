@@ -8,7 +8,7 @@ import (
 )
 
 func BenchmarkNodeTaints(b *testing.B) {
-	no := makeTaintedNode(makeNode("n1"))
+	no := makeTaintedNode("n1")
 	tt := tolerations{
 		"duh:f1":  struct{}{},
 		"blee:f2": struct{}{},
@@ -23,7 +23,7 @@ func BenchmarkNodeTaints(b *testing.B) {
 }
 
 func BenchmarkNodeLint(b *testing.B) {
-	no := makeCondNode(makeNode("n1"), v1.NodeReady, v1.ConditionFalse)
+	no := makeCondNode("n1", v1.NodeReady, v1.ConditionFalse)
 	tt := tolerations{
 		"duh:f1":  struct{}{},
 		"blee:f2": struct{}{},

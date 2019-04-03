@@ -1,15 +1,41 @@
 package linter
 
 import (
+	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/config"
 	"github.com/derailed/popeye/internal/k8s"
+	m "github.com/petergtz/pegomock"
+	pegomock "github.com/petergtz/pegomock"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
+
+func TestPoLinter(t *testing.T) {
+	mks := NewMockClient()
+	m.When(mks.ListPods()).ThenReturn([]v1.Pod{
+		makePod("p1"),
+		makePod("p2"),
+	}, nil)
+	m.When(mks.ClusterHasMetrics()).ThenReturn(true)
+	m.When(mks.FetchPodsMetrics("default")).ThenReturn([]mv1beta1.PodMetrics{
+		makeMxPod("p1", "50m", "1Mi"),
+		makeMxPod("p2", "50m", "1Mi"),
+	}, nil)
+
+	l := NewPod(mks, nil)
+	l.Lint(context.Background())
+
+	assert.Equal(t, 2, len(l.Issues()))
+	assert.Equal(t, 0, len(l.Issues()["p1"]))
+	assert.Equal(t, 0, len(l.Issues()["p2"]))
+
+	mks.VerifyWasCalled(pegomock.Times(1)).ListPods()
+}
 
 func TestPoCheckStatus(t *testing.T) {
 	uu := []struct {
@@ -319,4 +345,18 @@ func makePod(n string) v1.Pod {
 	}
 
 	return po
+}
+
+func makeMxPod(name, cpu, mem string) mv1beta1.PodMetrics {
+	return mv1beta1.PodMetrics{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: "default",
+		},
+		Containers: []mv1beta1.ContainerMetrics{
+			{Usage: makeRes(cpu, mem)},
+			{Usage: makeRes(cpu, mem)},
+			{Usage: makeRes(cpu, mem)},
+		},
+	}
 }

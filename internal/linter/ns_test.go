@@ -1,12 +1,31 @@
 package linter
 
 import (
+	"context"
 	"testing"
 
+	m "github.com/petergtz/pegomock"
+	pegomock "github.com/petergtz/pegomock"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+func TestNsLinter(t *testing.T) {
+	mks := NewMockClient()
+	m.When(mks.ListNS()).ThenReturn([]v1.Namespace{
+		makeNS("ns1", true),
+		makeNS("ns2", false),
+	}, nil)
+
+	l := NewNamespace(mks, nil)
+	l.Lint(context.Background())
+	assert.Equal(t, 2, len(l.Issues()))
+	assert.Equal(t, 0, len(l.Issues()["ns1"]))
+	assert.Equal(t, 1, len(l.Issues()["ns2"]))
+
+	mks.VerifyWasCalled(pegomock.Times(1)).ListNS()
+}
 
 func TestNsLint(t *testing.T) {
 	uu := []struct {

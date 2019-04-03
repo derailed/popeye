@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func TestContainerCheckUtilization(t *testing.T) {
@@ -64,6 +65,7 @@ func TestContainerCheckProbes(t *testing.T) {
 	uu := []struct {
 		liveness  bool
 		readiness bool
+		namedPort bool
 		issues    int
 		severity  Level
 	}{
@@ -71,19 +73,25 @@ func TestContainerCheckProbes(t *testing.T) {
 		{liveness: true, readiness: false, issues: 1, severity: WarnLevel},
 		{liveness: false, readiness: true, issues: 1, severity: WarnLevel},
 		{liveness: false, readiness: false, issues: 1, severity: ErrorLevel},
+		{liveness: true, readiness: true, namedPort: true, issues: 2, severity: InfoLevel},
 	}
 
 	for _, u := range uu {
 		co := makeContainer("c1", false, false)
+		probe := &v1.Probe{}
+		if u.namedPort {
+			probe.Handler = v1.Handler{HTTPGet: &v1.HTTPGetAction{Port: intstr.Parse("80")}}
+		}
 		if u.liveness {
-			co.LivenessProbe = &v1.Probe{}
+			co.LivenessProbe = probe
 		}
 		if u.readiness {
-			co.ReadinessProbe = &v1.Probe{}
+			co.ReadinessProbe = probe
 		}
 
 		l := NewContainer(nil, nil)
 		l.checkProbes(co)
+
 		assert.Equal(t, u.issues, len(l.Issues()["c1"]))
 		if len(l.Issues()["c1"]) != 0 {
 			assert.Equal(t, u.severity, l.Issues()["c1"][0].Severity())

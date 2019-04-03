@@ -17,6 +17,7 @@ require (
 	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc // indirect
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
+	github.com/petergtz/pegomock v0.0.0-20181206220228-b113d17a7e81
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/pkg/profile v1.2.1
 	github.com/rs/zerolog v1.12.0

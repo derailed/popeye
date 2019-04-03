@@ -64,7 +64,7 @@ func (s *Service) checkPorts(svc v1.Service, po *v1.Pod) {
 	for _, p := range svc.Spec.Ports {
 		errs := checkServicePort(svc.Name, po, p)
 		if errs != nil {
-			s.addErrors(svcFQN(svc), errs)
+			s.addErrors(svcFQN(svc), errs...)
 			continue
 		}
 	}
@@ -80,21 +80,6 @@ func (s *Service) checkEndpoints(svc v1.Service, ep *v1.Endpoints) {
 		s.addError(svcFQN(svc), fmt.Errorf("No associated endpoints"))
 	}
 }
-
-// func (s *Service) findPod(svc v1.Service) (*v1.Pod, error) {
-// 	pods, err := s.client.DialOrDie().CoreV1().Pods("").List(metav1.ListOptions{
-// 		LabelSelector: toSelector(svc.Spec.Selector),
-// 	})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	if len(pods.Items) == 0 {
-// 		return nil, fmt.Errorf("No pods match service selector")
-// 	}
-
-// 	return &pods.Items[0], nil
-// }
 
 // ----------------------------------------------------------------------------
 // Helpers...

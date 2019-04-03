@@ -145,7 +145,7 @@ func (l *Linter) addIssuesMap(res string, issues Issues) {
 	}
 }
 
-func (l *Linter) addErrors(res string, errs []error) {
+func (l *Linter) addErrors(res string, errs ...error) {
 	for _, e := range errs {
 		l.addIssue(res, ErrorLevel, e.Error())
 	}

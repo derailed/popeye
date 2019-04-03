@@ -1,14 +1,39 @@
 package linter
 
 import (
+	"context"
 	"strconv"
 	"testing"
 
+	m "github.com/petergtz/pegomock"
+	pegomock "github.com/petergtz/pegomock"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
+
+func TestSvcLinter(t *testing.T) {
+	po, ep := makePod("p1"), makeEp("ep1")
+	mks := NewMockClient()
+	m.When(mks.ActiveNamespace()).ThenReturn("default")
+	m.When(mks.ListServices("default")).ThenReturn([]v1.Service{
+		makeSvc("s1"),
+		makeSvc("s2"),
+	}, nil)
+	m.When(mks.GetPod("default")).ThenReturn(&po, nil)
+	m.When(mks.GetEndpoints("default", "s1")).ThenReturn(&ep, nil)
+	m.When(mks.GetEndpoints("default", "s2")).ThenReturn(&ep, nil)
+
+	l := NewService(mks, nil)
+	l.Lint(context.Background())
+
+	assert.Equal(t, 2, len(l.Issues()))
+	assert.Equal(t, 0, len(l.Issues()["n1"]))
+	assert.Equal(t, 0, len(l.Issues()["n2"]))
+
+	mks.VerifyWasCalled(pegomock.Times(1)).ListServices("default")
+}
 
 func TestSvcLint(t *testing.T) {
 	uu := []struct {
