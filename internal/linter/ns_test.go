@@ -31,7 +31,7 @@ func TestNsLint(t *testing.T) {
 
 	for _, u := range uu {
 		l := NewNamespace(nil, nil)
-		l.lint(u.nn)
+		l.lint(u.nn, nil)
 		assert.Equal(t, len(u.nn), len(l.Issues()))
 		var tissue int
 		for _, ns := range u.nn {
@@ -43,21 +43,35 @@ func TestNsLint(t *testing.T) {
 
 func TestNsCheckActive(t *testing.T) {
 	uu := []struct {
-		phase  v1.NamespacePhase
+		active bool
 		issues int
 	}{
-		{v1.NamespaceActive, 0},
-		{v1.NamespaceTerminating, 1},
+		{true, 0},
+		{false, 1},
 	}
 
 	for _, u := range uu {
-		ns := v1.Namespace{
-			Status: v1.NamespaceStatus{
-				Phase: u.phase,
-			},
-		}
+		ns := makeNS("ns1", u.active)
 		l := NewNamespace(nil, nil)
 		l.checkActive(ns)
+
+		assert.Equal(t, u.issues, len(l.Issues()))
+	}
+}
+
+func TestNsCheckInUse(t *testing.T) {
+	uu := []struct {
+		name   string
+		issues int
+	}{
+		{"ns1", 0},
+		{"ns2", 1},
+	}
+
+	for _, u := range uu {
+		ns := makeNS(u.name, true)
+		l := NewNamespace(nil, nil)
+		l.checkInUse(ns.Name, []string{"ns1"})
 
 		assert.Equal(t, u.issues, len(l.Issues()))
 	}

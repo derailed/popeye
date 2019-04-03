@@ -40,7 +40,7 @@ type (
 )
 
 // NewPod returns a new pod linter.
-func NewPod(c *k8s.Client, l *zerolog.Logger) *Pod {
+func NewPod(c Client, l *zerolog.Logger) *Pod {
 	return &Pod{newLinter(c, l)}
 }
 
@@ -54,7 +54,7 @@ func (p *Pod) Lint(ctx context.Context) error {
 	var mx []mv1beta1.PodMetrics
 	pmx := make(k8s.PodsMetrics)
 	if p.client.ClusterHasMetrics() {
-		if mx, err = k8s.FetchPodsMetrics(p.client, ""); err != nil {
+		if mx, err = p.client.FetchPodsMetrics(""); err != nil {
 			return err
 		}
 		k8s.GetPodsMetrics(mx, pmx)
@@ -108,7 +108,7 @@ func (p *Pod) checkContainers(po v1.Pod) {
 }
 
 func (p *Pod) checkContainerStatus(po v1.Pod) {
-	limit := p.client.Config.RestartsLimit()
+	limit := p.client.RestartsLimit()
 
 	if len(po.Status.InitContainerStatuses) != 0 {
 		counts := new(containerStatusCount)

@@ -3,11 +3,14 @@ package k8s
 //go:generate popeye gen
 
 import (
+	"fmt"
+
 	"github.com/derailed/popeye/internal/config"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	metricsapi "k8s.io/metrics/pkg/apis/metrics"
+	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
 var (
@@ -17,7 +20,7 @@ var (
 
 // Client represents a Kubernetes api server client.
 type Client struct {
-	Config *config.Config
+	*config.Config
 
 	api        kubernetes.Interface
 	pods       []v1.Pod
@@ -79,6 +82,79 @@ func (c *Client) ClusterHasMetrics() bool {
 		}
 	}
 	return false
+}
+
+// FetchNodesMetrics fetch all node metrics.
+func (c *Client) FetchNodesMetrics() ([]mv1beta1.NodeMetrics, error) {
+	return FetchNodesMetrics(c)
+}
+
+// FetchPodsMetrics fetch all pods metrics in a given namespace.
+func (c *Client) FetchPodsMetrics(ns string) ([]mv1beta1.PodMetrics, error) {
+	return FetchPodsMetrics(c, ns)
+}
+
+// InUseNamespaces returns a list of namespaces referenced by pods.
+func (c *Client) InUseNamespaces(nss []string) {
+	pods, err := c.ListPods()
+	if err != nil {
+		return
+	}
+
+	ll := make(map[string]struct{})
+	for _, p := range pods {
+		ll[p.Namespace] = struct{}{}
+	}
+
+	for k := range ll {
+		nss = append(nss, k)
+	}
+}
+
+// GetEndpoints returns a endpoint by name.
+func (c *Client) GetEndpoints(ns, n string) (*v1.Endpoints, error) {
+	ep, err := c.DialOrDie().CoreV1().Endpoints(ns).Get(n, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return ep, nil
+}
+
+// ListServices list all available services in a given namespace.
+func (c *Client) ListServices(ns string) ([]v1.Service, error) {
+	ll, err := c.DialOrDie().CoreV1().Services(ns).List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return ll.Items, nil
+}
+
+// ListNodes list all available nodes on the cluster.
+func (c *Client) ListNodes() ([]v1.Node, error) {
+	ll, err := c.DialOrDie().CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return ll.Items, nil
+}
+
+// GetPod returns a pod via a label query.
+func (c *Client) GetPod(sel string) (*v1.Pod, error) {
+	pods, err := c.DialOrDie().CoreV1().Pods("").List(metav1.ListOptions{
+		LabelSelector: sel,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pods.Items) == 0 {
+		return nil, fmt.Errorf("No pods match service selector")
+	}
+
+	return &pods.Items[0], nil
 }
 
 // ListPods list all available pods.

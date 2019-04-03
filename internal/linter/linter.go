@@ -3,8 +3,9 @@ package linter
 import (
 	"fmt"
 
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/rs/zerolog"
+	v1 "k8s.io/api/core/v1"
+	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
 const (
@@ -63,19 +64,46 @@ type (
 		Description() string
 	}
 
+	// Client represents a Kubernetes Client.
+	Client interface {
+		Config
+
+		ClusterHasMetrics() bool
+		FetchNodesMetrics() ([]mv1beta1.NodeMetrics, error)
+		FetchPodsMetrics(ns string) ([]mv1beta1.PodMetrics, error)
+		GetEndpoints(ns, n string) (*v1.Endpoints, error)
+		ListServices(ns string) ([]v1.Service, error)
+		ListNodes() ([]v1.Node, error)
+		GetPod(sel string) (*v1.Pod, error)
+		ListPods() ([]v1.Pod, error)
+		ListNS() ([]v1.Namespace, error)
+		InUseNamespaces(used []string)
+	}
+
+	// Config represents a Popeye configuration.
+	Config interface {
+		PodCPULimit() float64
+		PodMEMLimit() float64
+		NodeCPULimit() float64
+		NodeMEMLimit() float64
+
+		RestartsLimit() int
+		ActiveNamespace() string
+	}
+
 	// Issues a collection of linter issues.
 	Issues map[string][]Issue
 
 	// Linter describes a lint resource.
 	Linter struct {
-		client *k8s.Client
+		client Client
 		log    *zerolog.Logger
 		issues Issues
 	}
 )
 
 // NewLinter returns a new linter.
-func newLinter(c *k8s.Client, l *zerolog.Logger) *Linter {
+func newLinter(c Client, l *zerolog.Logger) *Linter {
 	return &Linter{client: c, log: l, issues: Issues{}}
 }
 

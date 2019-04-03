@@ -7,7 +7,6 @@ import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/rs/zerolog"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
@@ -27,13 +26,13 @@ type (
 )
 
 // NewNode returns a new Node linter.
-func NewNode(c *k8s.Client, l *zerolog.Logger) *Node {
+func NewNode(c Client, l *zerolog.Logger) *Node {
 	return &Node{newLinter(c, l)}
 }
 
 // Lint a Node.
 func (n *Node) Lint(ctx context.Context) error {
-	list, err := n.client.DialOrDie().CoreV1().Nodes().List(metav1.ListOptions{})
+	nodes, err := n.client.ListNodes()
 	if err != nil {
 		return err
 	}
@@ -43,13 +42,13 @@ func (n *Node) Lint(ctx context.Context) error {
 	var mx []mv1beta1.NodeMetrics
 	nmx := make(k8s.NodesMetrics)
 	if n.client.ClusterHasMetrics() {
-		if mx, err = k8s.FetchNodesMetrics(n.client); err != nil {
+		if mx, err = n.client.FetchNodesMetrics(); err != nil {
 			return err
 		}
-		k8s.GetNodesMetrics(list.Items, mx, nmx)
+		k8s.GetNodesMetrics(nodes, mx, nmx)
 	}
 
-	for _, no := range list.Items {
+	for _, no := range nodes {
 		n.initIssues(no.Name)
 		n.lint(no, nmx[no.Name], tt)
 	}
@@ -136,13 +135,13 @@ func (n *Node) checkUtilization(no string, mx k8s.NodeMetrics) {
 	}
 
 	percCPU := toPerc(float64(mx.CurrentCPU), float64(mx.AvailCPU))
-	cpuLimit := n.client.Config.NodeCPULimit()
+	cpuLimit := n.client.NodeCPULimit()
 	if math.Round(percCPU) > cpuLimit {
 		n.addIssuef(no, WarnLevel, "CPU threshold (%0.f%%) reached %0.f%%", cpuLimit, percCPU)
 	}
 
 	percMEM := toPerc(float64(mx.CurrentMEM), float64(mx.AvailMEM))
-	memLimit := n.client.Config.NodeMEMLimit()
+	memLimit := n.client.NodeMEMLimit()
 	if math.Round(percMEM) > memLimit {
 		n.addIssuef(no, WarnLevel, "Memory threshold (%0.f%%) reached %0.f%%", memLimit, percMEM)
 	}

@@ -5,17 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/rs/zerolog"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var skipServices = []string{"default/kubernetes"}
-
-// Check port mappings
-// Check endpoints
-// Check LoadBalancer type
 
 // Service represents a service linter.
 type Service struct {
@@ -23,21 +17,18 @@ type Service struct {
 }
 
 // NewService returns a new service linter.
-func NewService(c *k8s.Client, l *zerolog.Logger) *Service {
+func NewService(c Client, l *zerolog.Logger) *Service {
 	return &Service{newLinter(c, l)}
 }
 
 // Lint a service.
 func (s *Service) Lint(ctx context.Context) error {
-	list, err := s.client.DialOrDie().
-		CoreV1().
-		Services(s.client.Config.ActiveNamespace()).
-		List(metav1.ListOptions{})
+	services, err := s.client.ListServices(s.client.ActiveNamespace())
 	if err != nil {
 		return err
 	}
 
-	for _, svc := range list.Items {
+	for _, svc := range services {
 		// Skip internal services...
 		if in(skipServices, svcFQN(svc)) {
 			continue
@@ -45,15 +36,12 @@ func (s *Service) Lint(ctx context.Context) error {
 
 		s.initIssues(svcFQN(svc))
 
-		po, err := s.findPod(svc)
+		po, err := s.client.GetPod(toSelector(svc.Spec.Selector))
 		if err != nil {
 			s.addError(svcFQN(svc), err)
 		}
 
-		ep, err := s.client.DialOrDie().
-			CoreV1().
-			Endpoints(svc.Namespace).
-			Get(svc.Name, metav1.GetOptions{})
+		ep, err := s.client.GetEndpoints(svc.Namespace, svc.Name)
 		if err != nil {
 			s.addError(svcFQN(svc), err)
 		}
@@ -93,20 +81,20 @@ func (s *Service) checkEndpoints(svc v1.Service, ep *v1.Endpoints) {
 	}
 }
 
-func (s *Service) findPod(svc v1.Service) (*v1.Pod, error) {
-	pods, err := s.client.DialOrDie().CoreV1().Pods("").List(metav1.ListOptions{
-		LabelSelector: toSelector(svc.Spec.Selector),
-	})
-	if err != nil {
-		return nil, err
-	}
+// func (s *Service) findPod(svc v1.Service) (*v1.Pod, error) {
+// 	pods, err := s.client.DialOrDie().CoreV1().Pods("").List(metav1.ListOptions{
+// 		LabelSelector: toSelector(svc.Spec.Selector),
+// 	})
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	if len(pods.Items) == 0 {
-		return nil, fmt.Errorf("No pods match service selector")
-	}
+// 	if len(pods.Items) == 0 {
+// 		return nil, fmt.Errorf("No pods match service selector")
+// 	}
 
-	return &pods.Items[0], nil
-}
+// 	return &pods.Items[0], nil
+// }
 
 // ----------------------------------------------------------------------------
 // Helpers...

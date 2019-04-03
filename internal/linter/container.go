@@ -19,7 +19,7 @@ type Container struct {
 }
 
 // NewContainer returns a new container linter.
-func NewContainer(c *k8s.Client, l *zerolog.Logger) *Container {
+func NewContainer(c Client, l *zerolog.Logger) *Container {
 	return &Container{newLinter(c, l)}
 }
 
@@ -100,13 +100,13 @@ func (c *Container) checkUtilization(co v1.Container, cmx k8s.Metrics) {
 
 func (c *Container) checkMetrics(co string, cpu, ccpu, mem, cmem int64) {
 	percCPU := toPerc(float64(ccpu), float64(cpu))
-	cpuLimit := c.client.Config.PodCPULimit()
+	cpuLimit := c.client.PodCPULimit()
 	if percCPU >= cpuLimit {
 		c.addIssuef(co, ErrorLevel, "CPU threshold (%0.f%%) reached `%0.f%%", cpuLimit, percCPU)
 	}
 
 	percMEM := toPerc(float64(cmem), float64(mem))
-	memLimit := c.client.Config.PodMEMLimit()
+	memLimit := c.client.PodMEMLimit()
 	if percMEM >= memLimit {
 		c.addIssuef(co, ErrorLevel, "Memory threshold (%0.f%%) reached `%0.f%%", memLimit, percMEM)
 	}
