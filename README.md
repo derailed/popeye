@@ -1,6 +1,6 @@
 <img src="assets/popeye_boat.png" align="right" width="250" heigh="auto">
 
-# Popeye -A Kubernetes Linter
+# Popeye - A Kubernetes Cluster Linter
 
 
 Popeye is a utility that lints a K8s cluster and reports potential issues with
