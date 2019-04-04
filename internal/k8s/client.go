@@ -106,8 +106,10 @@ func (c *Client) InUseNamespaces(nss []string) {
 		ll[p.Namespace] = struct{}{}
 	}
 
+	var i int
 	for k := range ll {
-		nss = append(nss, k)
+		nss[i] = k
+		i++
 	}
 }
 
@@ -138,7 +140,14 @@ func (c *Client) ListNodes() ([]v1.Node, error) {
 		return nil, err
 	}
 
-	return ll.Items, nil
+	nodes := make([]v1.Node, 0, len(ll.Items))
+	for _, no := range ll.Items {
+		if !c.Config.ExcludedNode(no.Name) {
+			nodes = append(nodes, no)
+		}
+	}
+
+	return nodes, nil
 }
 
 // GetPod returns a pod via a label query.
@@ -163,18 +172,18 @@ func (c *Client) ListPods() ([]v1.Pod, error) {
 		return c.pods, nil
 	}
 
-	ns := c.Config.ActiveNamespace()
-	ll, err := c.DialOrDie().CoreV1().Pods(ns).List(metav1.ListOptions{})
+	ll, err := c.DialOrDie().CoreV1().
+		Pods(c.Config.ActiveNamespace()).
+		List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	c.pods = make([]v1.Pod, 0, len(ll.Items))
 	for _, po := range ll.Items {
-		if c.Config.ExcludedNS(po.Namespace) {
-			continue
+		if !c.Config.ExcludedNS(po.Namespace) {
+			c.pods = append(c.pods, po)
 		}
-		c.pods = append(c.pods, po)
 	}
 
 	return c.pods, nil
@@ -186,28 +195,27 @@ func (c *Client) ListNS() ([]v1.Namespace, error) {
 		return c.namespaces, nil
 	}
 
-	ns := c.Config.ActiveNamespace()
-	var nn *v1.NamespaceList
-	var err error
-	if ns == "" {
+	var (
+		nn  *v1.NamespaceList
+		err error
+	)
+	if ns := c.Config.ActiveNamespace(); ns == "" {
 		nn, err = c.DialOrDie().CoreV1().Namespaces().List(metav1.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
 	} else {
-		n, err := c.DialOrDie().CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
-		if err != nil {
-			return nil, err
-		}
+		var n *v1.Namespace
+		n, err = c.DialOrDie().CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
 		nn = &v1.NamespaceList{Items: []v1.Namespace{*n}}
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	c.namespaces = make([]v1.Namespace, 0, len(nn.Items))
 	for _, ns := range nn.Items {
-		if c.Config.ExcludedNS(ns.Name) {
-			continue
+		if !c.Config.ExcludedNS(ns.Name) {
+			c.namespaces = append(c.namespaces, ns)
 		}
-		c.namespaces = append(c.namespaces, ns)
 	}
 
 	return c.namespaces, nil

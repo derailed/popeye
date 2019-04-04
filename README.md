@@ -6,7 +6,9 @@
 Popeye is a utility that lints a K8s cluster and reports potential issues with
 various Kubernetes resources. It cruises thru deployed resources for potential misconfigurations and scans a cluster to ensure best practices are in place thus
 preventing potential future headaches. It aim at reducing the cognitive *over*load
-that one faces when managing and operating a Kubernetes cluster in the wild.
+that one faces when managing and operating a Kubernetes cluster in the wild. Popeye
+is a readonly tool it does not change or update any of our Kubernetes resources or
+configurations.
 
 <br/>
 <br/>
@@ -15,11 +17,88 @@ that one faces when managing and operating a Kubernetes cluster in the wild.
 
 ## Installation
 
+Popeye is available on Linux, OSX and Windows platforms.
+
+* Binaries for Linux, Windows and Mac are available as tarballs in the [release](https://github.com/derailed/k9s/releases) page or via SnapCraft.
+
+* For OSX using Homebrew
+
+   ```shell
+   brew tap derailed/popeye && brew install popeye
+   ```
+
+* Building from source
+   Popeye was built using go 1.12+. In order to build Popeye from source you must:
+   1. Clone the repo
+   2. Set env var *GO111MODULE=on*
+   3. Add the following command in your go.mod file
+
+      ```text
+      replace (
+        github.com/derailed/popeye => MY_K9S_CLONED_GIT_REPO
+      )
+      ```
+
+   4. Build and run the executable
+
+        ```shell
+        go run main.go
+        ```
+
 ---
 
 ## The Command Line
 
+You can use popeye standalone or using a spinach yaml config to tune the linter.
+Details of the spinach yaml are below.
+
+```shell
+# Popey a cluster using your current kubeconfig environment.
+popeye
+# Popeye using a spinach config file
+popeye -f spinach.yml
+# Popeye a cluster using a kubeconfig context
+popeye --cluster fred
+# Stuck?
+popeye help
 ---
+
+## Spinach YAML
+
+NOTE: This file will change as Popeye matures
+
+```yaml
+# A Popeye sample configuration file
+popeye:
+  # Configure node resources.
+  node:
+    # Limits set a cpu/mem threshold in % ie if cpu|mem > limit a lint warning is triggered.
+    limits:
+      # CPU checks if current CPU utilization on a node is greater than 80%.
+      cpu:    80
+      # Memory checks if current Memory utilization on a node is greater than 70%.
+      memory: 70
+    # Exclude lists node names to exclude from the scan.
+    exclude:
+    - n1
+
+  # Configure namespace resources
+  namespace:
+    # Exclude list out namespaces to be excluded from the scan.
+    exclude:
+      - kube-system
+      - kube-public
+
+  # Configure pod resources
+  pod:
+    # Restarts check the restarts count and triggers a lint warning if above threshold.
+    restarts:
+      3
+    # Labels NYI!! This would enforce the presence of certain labels on pods.
+    labels:
+    - app
+    - env
+```
 
 ## Supported Resources
 

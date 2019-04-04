@@ -20,11 +20,11 @@ func TestNsLinter(t *testing.T) {
 
 	l := NewNamespace(mks, nil)
 	l.Lint(context.Background())
-	assert.Equal(t, 2, len(l.Issues()))
-	assert.Equal(t, 0, len(l.Issues()["ns1"]))
-	assert.Equal(t, 1, len(l.Issues()["ns2"]))
 
 	mks.VerifyWasCalled(pegomock.Times(1)).ListNS()
+	assert.Equal(t, 2, len(l.Issues()))
+	assert.Equal(t, 1, len(l.Issues()["ns1"]))
+	assert.Equal(t, 1, len(l.Issues()["ns2"]))
 }
 
 func TestNsLint(t *testing.T) {

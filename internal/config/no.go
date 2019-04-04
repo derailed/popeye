@@ -5,9 +5,6 @@ const (
 	defaultMEMLimit = 80 // percentage
 )
 
-// Excludes track resource exclusions.
-type Excludes []string
-
 // Limits tracks cpu and mem limits.
 type Limits struct {
 	CPU    float64 `yaml:"cpu"`
@@ -16,8 +13,9 @@ type Limits struct {
 
 // Node tracks node configurations.
 type Node struct {
-	Limits  Limits   `yaml:"limits`
-	Exclude []string `yaml:"exclude,flow"`
+	Excludes `yaml:"exclude"`
+
+	Limits Limits `yaml:"limits`
 }
 
 // NewNode create a new node configuration.

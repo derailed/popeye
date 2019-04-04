@@ -9,6 +9,7 @@ type Popeye struct {
 	Namespace Namespace `yaml:"namespace"`
 	Node      Node      `yaml:"node"`
 	Pod       Pod       `yaml:"pod"`
+	Service   Service   `yaml:"service"`
 
 	LogLevel  zerolog.Level
 	LintLevel int
@@ -22,5 +23,6 @@ func NewPopeye() Popeye {
 		Namespace: newNamespace(),
 		Node:      newNode(),
 		Pod:       newPod(),
+		Service:   newService(),
 	}
 }

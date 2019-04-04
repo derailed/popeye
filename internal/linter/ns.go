@@ -24,9 +24,8 @@ func (n *Namespace) Lint(ctx context.Context) error {
 		return err
 	}
 
-	used := make([]string, 0, len(available))
+	used := make([]string, len(available))
 	n.client.InUseNamespaces(used)
-
 	n.lint(available, used)
 
 	return nil
@@ -59,5 +58,5 @@ func (n *Namespace) checkInUse(name string, used []string) {
 			return
 		}
 	}
-	n.addIssuef(name, InfoLevel, "Might no longer be used??")
+	n.addIssuef(name, InfoLevel, "Used?")
 }

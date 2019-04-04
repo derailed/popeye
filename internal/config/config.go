@@ -59,6 +59,21 @@ func (c *Config) PodCPULimit() float64 {
 	return l
 }
 
+// ExcludedNode returns excluded nodes if any.
+func (c *Config) ExcludedNode(n string) bool {
+	return c.Popeye.Node.excluded(n)
+}
+
+// ExcludedService returns excluded services if any.
+func (c *Config) ExcludedService(s string) bool {
+	return c.Popeye.Service.excluded(s)
+}
+
+// ExcludedNS checks if a namespace should be excluded from the scan.
+func (c *Config) ExcludedNS(n string) bool {
+	return c.Popeye.Namespace.excluded(n)
+}
+
 // RestartsLimit returns pod restarts limit.
 func (c *Config) RestartsLimit() int {
 	l := c.Popeye.Pod.Restarts
@@ -84,11 +99,6 @@ func (c *Config) NodeMEMLimit() float64 {
 		return defaultMEMLimit
 	}
 	return l
-}
-
-// ExcludedNS checks if a namespace should be excluded from the scan.
-func (c *Config) ExcludedNS(n string) bool {
-	return c.Popeye.Namespace.excluded(n)
 }
 
 // Init a popeye configuration from file or default if no file given.
