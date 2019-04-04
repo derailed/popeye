@@ -71,11 +71,12 @@ type (
 		ClusterHasMetrics() bool
 		FetchNodesMetrics() ([]mv1beta1.NodeMetrics, error)
 		FetchPodsMetrics(ns string) ([]mv1beta1.PodMetrics, error)
-		GetEndpoints(ns, n string) (*v1.Endpoints, error)
-		ListServices(ns string) ([]v1.Service, error)
+		ListServices() ([]v1.Service, error)
 		ListNodes() ([]v1.Node, error)
-		GetPod(sel string) (*v1.Pod, error)
-		ListPods() ([]v1.Pod, error)
+		ListEndpoints() (map[string]v1.Endpoints, error)
+		GetEndpoints(fqn string) (*v1.Endpoints, error)
+		GetPod(map[string]string) (*v1.Pod, error)
+		ListPods() (map[string]v1.Pod, error)
 		ListNS() ([]v1.Namespace, error)
 		InUseNamespaces(used []string)
 	}

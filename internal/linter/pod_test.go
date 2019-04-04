@@ -17,9 +17,9 @@ import (
 
 func TestPoLinter(t *testing.T) {
 	mks := NewMockClient()
-	m.When(mks.ListPods()).ThenReturn([]v1.Pod{
-		makePod("p1"),
-		makePod("p2"),
+	m.When(mks.ListPods()).ThenReturn(map[string]v1.Pod{
+		"default/p1": makePod("p1"),
+		"default/p2": makePod("p2"),
 	}, nil)
 	m.When(mks.ClusterHasMetrics()).ThenReturn(true)
 	m.When(mks.FetchPodsMetrics("default")).ThenReturn([]mv1beta1.PodMetrics{

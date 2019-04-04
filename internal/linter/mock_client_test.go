@@ -87,11 +87,11 @@ func (mock *MockClient) FetchPodsMetrics(_param0 string) ([]v1beta1.PodMetrics, 
 	return ret0, ret1
 }
 
-func (mock *MockClient) GetEndpoints(_param0 string, _param1 string) (*v1.Endpoints, error) {
+func (mock *MockClient) GetEndpoints(_param0 string) (*v1.Endpoints, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockClient().")
 	}
-	params := []pegomock.Param{_param0, _param1}
+	params := []pegomock.Param{_param0}
 	result := pegomock.GetGenericMockFrom(mock).Invoke("GetEndpoints", params, []reflect.Type{reflect.TypeOf((**v1.Endpoints)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
 	var ret0 *v1.Endpoints
 	var ret1 error
@@ -106,7 +106,7 @@ func (mock *MockClient) GetEndpoints(_param0 string, _param1 string) (*v1.Endpoi
 	return ret0, ret1
 }
 
-func (mock *MockClient) GetPod(_param0 string) (*v1.Pod, error) {
+func (mock *MockClient) GetPod(_param0 map[string]string) (*v1.Pod, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockClient().")
 	}
@@ -131,6 +131,25 @@ func (mock *MockClient) InUseNamespaces(_param0 []string) {
 	}
 	params := []pegomock.Param{_param0}
 	pegomock.GetGenericMockFrom(mock).Invoke("InUseNamespaces", params, []reflect.Type{})
+}
+
+func (mock *MockClient) ListEndpoints() (map[string]v1.Endpoints, error) {
+	if mock == nil {
+		panic("mock must not be nil. Use myMock := NewMockClient().")
+	}
+	params := []pegomock.Param{}
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListEndpoints", params, []reflect.Type{reflect.TypeOf((*map[string]v1.Endpoints)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.Endpoints
+	var ret1 error
+	if len(result) != 0 {
+		if result[0] != nil {
+			ret0 = result[0].(map[string]v1.Endpoints)
+		}
+		if result[1] != nil {
+			ret1 = result[1].(error)
+		}
+	}
+	return ret0, ret1
 }
 
 func (mock *MockClient) ListNS() ([]v1.Namespace, error) {
@@ -171,17 +190,17 @@ func (mock *MockClient) ListNodes() ([]v1.Node, error) {
 	return ret0, ret1
 }
 
-func (mock *MockClient) ListPods() ([]v1.Pod, error) {
+func (mock *MockClient) ListPods() (map[string]v1.Pod, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockClient().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListPods", params, []reflect.Type{reflect.TypeOf((*[]v1.Pod)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 []v1.Pod
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListPods", params, []reflect.Type{reflect.TypeOf((*map[string]v1.Pod)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.Pod
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].([]v1.Pod)
+			ret0 = result[0].(map[string]v1.Pod)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -190,11 +209,11 @@ func (mock *MockClient) ListPods() ([]v1.Pod, error) {
 	return ret0, ret1
 }
 
-func (mock *MockClient) ListServices(_param0 string) ([]v1.Service, error) {
+func (mock *MockClient) ListServices() ([]v1.Service, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockClient().")
 	}
-	params := []pegomock.Param{_param0}
+	params := []pegomock.Param{}
 	result := pegomock.GetGenericMockFrom(mock).Invoke("ListServices", params, []reflect.Type{reflect.TypeOf((*[]v1.Service)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
 	var ret0 []v1.Service
 	var ret1 error
@@ -399,8 +418,8 @@ func (c *Client_FetchPodsMetrics_OngoingVerification) GetAllCapturedArguments() 
 	return
 }
 
-func (verifier *VerifierClient) GetEndpoints(_param0 string, _param1 string) *Client_GetEndpoints_OngoingVerification {
-	params := []pegomock.Param{_param0, _param1}
+func (verifier *VerifierClient) GetEndpoints(_param0 string) *Client_GetEndpoints_OngoingVerification {
+	params := []pegomock.Param{_param0}
 	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "GetEndpoints", params, verifier.timeout)
 	return &Client_GetEndpoints_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
@@ -410,27 +429,23 @@ type Client_GetEndpoints_OngoingVerification struct {
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Client_GetEndpoints_OngoingVerification) GetCapturedArguments() (string, string) {
-	_param0, _param1 := c.GetAllCapturedArguments()
-	return _param0[len(_param0)-1], _param1[len(_param1)-1]
+func (c *Client_GetEndpoints_OngoingVerification) GetCapturedArguments() string {
+	_param0 := c.GetAllCapturedArguments()
+	return _param0[len(_param0)-1]
 }
 
-func (c *Client_GetEndpoints_OngoingVerification) GetAllCapturedArguments() (_param0 []string, _param1 []string) {
+func (c *Client_GetEndpoints_OngoingVerification) GetAllCapturedArguments() (_param0 []string) {
 	params := pegomock.GetGenericMockFrom(c.mock).GetInvocationParams(c.methodInvocations)
 	if len(params) > 0 {
 		_param0 = make([]string, len(params[0]))
 		for u, param := range params[0] {
 			_param0[u] = param.(string)
 		}
-		_param1 = make([]string, len(params[1]))
-		for u, param := range params[1] {
-			_param1[u] = param.(string)
-		}
 	}
 	return
 }
 
-func (verifier *VerifierClient) GetPod(_param0 string) *Client_GetPod_OngoingVerification {
+func (verifier *VerifierClient) GetPod(_param0 map[string]string) *Client_GetPod_OngoingVerification {
 	params := []pegomock.Param{_param0}
 	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "GetPod", params, verifier.timeout)
 	return &Client_GetPod_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
@@ -441,17 +456,17 @@ type Client_GetPod_OngoingVerification struct {
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Client_GetPod_OngoingVerification) GetCapturedArguments() string {
+func (c *Client_GetPod_OngoingVerification) GetCapturedArguments() map[string]string {
 	_param0 := c.GetAllCapturedArguments()
 	return _param0[len(_param0)-1]
 }
 
-func (c *Client_GetPod_OngoingVerification) GetAllCapturedArguments() (_param0 []string) {
+func (c *Client_GetPod_OngoingVerification) GetAllCapturedArguments() (_param0 []map[string]string) {
 	params := pegomock.GetGenericMockFrom(c.mock).GetInvocationParams(c.methodInvocations)
 	if len(params) > 0 {
-		_param0 = make([]string, len(params[0]))
+		_param0 = make([]map[string]string, len(params[0]))
 		for u, param := range params[0] {
-			_param0[u] = param.(string)
+			_param0[u] = param.(map[string]string)
 		}
 	}
 	return
@@ -482,6 +497,23 @@ func (c *Client_InUseNamespaces_OngoingVerification) GetAllCapturedArguments() (
 		}
 	}
 	return
+}
+
+func (verifier *VerifierClient) ListEndpoints() *Client_ListEndpoints_OngoingVerification {
+	params := []pegomock.Param{}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListEndpoints", params, verifier.timeout)
+	return &Client_ListEndpoints_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+}
+
+type Client_ListEndpoints_OngoingVerification struct {
+	mock              *MockClient
+	methodInvocations []pegomock.MethodInvocation
+}
+
+func (c *Client_ListEndpoints_OngoingVerification) GetCapturedArguments() {
+}
+
+func (c *Client_ListEndpoints_OngoingVerification) GetAllCapturedArguments() {
 }
 
 func (verifier *VerifierClient) ListNS() *Client_ListNS_OngoingVerification {
@@ -535,8 +567,8 @@ func (c *Client_ListPods_OngoingVerification) GetCapturedArguments() {
 func (c *Client_ListPods_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierClient) ListServices(_param0 string) *Client_ListServices_OngoingVerification {
-	params := []pegomock.Param{_param0}
+func (verifier *VerifierClient) ListServices() *Client_ListServices_OngoingVerification {
+	params := []pegomock.Param{}
 	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListServices", params, verifier.timeout)
 	return &Client_ListServices_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
@@ -546,20 +578,10 @@ type Client_ListServices_OngoingVerification struct {
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Client_ListServices_OngoingVerification) GetCapturedArguments() string {
-	_param0 := c.GetAllCapturedArguments()
-	return _param0[len(_param0)-1]
+func (c *Client_ListServices_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Client_ListServices_OngoingVerification) GetAllCapturedArguments() (_param0 []string) {
-	params := pegomock.GetGenericMockFrom(c.mock).GetInvocationParams(c.methodInvocations)
-	if len(params) > 0 {
-		_param0 = make([]string, len(params[0]))
-		for u, param := range params[0] {
-			_param0[u] = param.(string)
-		}
-	}
-	return
+func (c *Client_ListServices_OngoingVerification) GetAllCapturedArguments() {
 }
 
 func (verifier *VerifierClient) NodeCPULimit() *Client_NodeCPULimit_OngoingVerification {

@@ -60,8 +60,7 @@ func (p *Pod) Lint(ctx context.Context) error {
 		k8s.GetPodsMetrics(mx, pmx)
 	}
 
-	for _, po := range ll {
-		nsed := nsFQN(po)
+	for nsed, po := range ll {
 		p.initIssues(nsed)
 		p.lint(po, pmx[nsed])
 	}

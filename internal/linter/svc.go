@@ -23,28 +23,29 @@ func NewService(c Client, l *zerolog.Logger) *Service {
 
 // Lint a service.
 func (s *Service) Lint(ctx context.Context) error {
-	services, err := s.client.ListServices(s.client.ActiveNamespace())
+	services, err := s.client.ListServices()
 	if err != nil {
 		return err
 	}
 
 	for _, svc := range services {
+		fqn := svcFQN(svc)
+
 		// Skip internal services...
 		if in(skipServices, svcFQN(svc)) {
 			continue
 		}
 
-		s.initIssues(svcFQN(svc))
-
-		po, err := s.client.GetPod(toSelector(svc.Spec.Selector))
+		s.initIssues(fqn)
+		po, err := s.client.GetPod(svc.Spec.Selector)
 		if err != nil {
 			s.addError(svcFQN(svc), err)
 		}
-
-		ep, err := s.client.GetEndpoints(svc.Namespace, svc.Name)
+		ep, err := s.client.GetEndpoints(fqn)
 		if err != nil {
-			s.addError(svcFQN(svc), err)
+			s.addError(fqn, err)
 		}
+
 		s.lint(svc, po, ep)
 	}
 
