@@ -156,7 +156,7 @@ func TestContainerLint(t *testing.T) {
 
 	for _, u := range uu {
 		l := NewContainer(nil, nil)
-		l.lint(u.co)
+		l.lint(u.co, false)
 		assert.Equal(t, u.issues, len(l.Issues()["c1"]))
 	}
 }

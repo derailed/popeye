@@ -101,7 +101,7 @@ func (p *Pod) checkServiceAccount(po v1.Pod) {
 func (p *Pod) checkContainers(po v1.Pod) {
 	for _, c := range po.Spec.Containers {
 		l := NewContainer(p.client, p.log)
-		l.lint(c)
+		l.lint(c, isPartOfJob(po))
 		p.addIssuesMap(nsFQN(po), l.Issues())
 	}
 }
@@ -143,4 +143,13 @@ func (p *Pod) checkStatus(po v1.Pod) {
 
 func nsFQN(po v1.Pod) string {
 	return po.Namespace + "/" + po.Name
+}
+
+func isPartOfJob(po v1.Pod) bool {
+	for _, o := range po.OwnerReferences {
+		if o.Kind == "Job" {
+			return true
+		}
+	}
+	return false
 }

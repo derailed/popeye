@@ -24,10 +24,13 @@ func NewContainer(c Client, l *zerolog.Logger) *Container {
 }
 
 // Lint a Container.
-func (c *Container) lint(co v1.Container) {
+func (c *Container) lint(co v1.Container, isJob bool) {
 	c.checkImageTags(co)
-	c.checkProbes(co)
 	c.checkResources(co)
+	// If this is a container job, lax on the probes
+	if !isJob {
+		c.checkProbes(co)
+	}
 	c.checkNamedPorts(co)
 }
 
@@ -99,13 +102,13 @@ func (c *Container) checkUtilization(co v1.Container, cmx k8s.Metrics) {
 }
 
 func (c *Container) checkMetrics(co string, cpu, ccpu, mem, cmem int64) {
-	percCPU := toPerc(float64(ccpu), float64(cpu))
+	percCPU := ToPerc(float64(ccpu), float64(cpu))
 	cpuLimit := c.client.PodCPULimit()
 	if percCPU >= cpuLimit {
 		c.addIssuef(co, ErrorLevel, "CPU threshold (%0.f%%) reached `%0.f%%", cpuLimit, percCPU)
 	}
 
-	percMEM := toPerc(float64(cmem), float64(mem))
+	percMEM := ToPerc(float64(cmem), float64(mem))
 	memLimit := c.client.PodMEMLimit()
 	if percMEM >= memLimit {
 		c.addIssuef(co, ErrorLevel, "Memory threshold (%0.f%%) reached `%0.f%%", memLimit, percMEM)

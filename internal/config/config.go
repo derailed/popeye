@@ -19,12 +19,12 @@ const (
 
 // Config tracks Popeye configuration options.
 type Config struct {
-	Popeye        Popeye `yaml:"popeye`
-	Spinach       string
-	ClearScreen   bool
-	LogLevel      string
-	LintLevel     string
-	AllNamespaces bool
+	Popeye      Popeye `yaml:"popeye`
+	Spinach     string
+	ClearScreen bool
+	LogLevel    string
+	LintLevel   string
+	Sections    []string
 
 	flags        *genericclioptions.ConfigFlags
 	clientConfig clientcmd.ClientConfig
@@ -39,6 +39,31 @@ func New() *Config {
 		LogLevel:  defaultLogLevel,
 		LintLevel: defaultLintLevel,
 	}
+}
+
+// Init a popeye configuration from file or default if no file given.
+func (c *Config) Init(f *genericclioptions.ConfigFlags) error {
+	var cfg Config
+
+	if len(c.Spinach) != 0 {
+		f, err := ioutil.ReadFile(c.Spinach)
+		if err != nil {
+			return err
+		}
+
+		if err := yaml.Unmarshal(f, &cfg); err != nil {
+			return err
+		}
+	}
+
+	cfg.Popeye.LogLevel = ToLogLevel(c.LogLevel)
+	cfg.Popeye.LintLevel = ToLintLevel(c.LintLevel)
+	cfg.Sections = c.Sections
+	cfg.ClearScreen = c.ClearScreen
+	cfg.flags = f
+	*c = cfg
+
+	return nil
 }
 
 // NodeCPULimit returns the node cpu threshold if set otherwise the default.
@@ -99,29 +124,6 @@ func (c *Config) NodeMEMLimit() float64 {
 		return defaultMEMLimit
 	}
 	return l
-}
-
-// Init a popeye configuration from file or default if no file given.
-func (c *Config) Init(f *genericclioptions.ConfigFlags) error {
-	var cfg Config
-
-	if len(c.Spinach) != 0 {
-		f, err := ioutil.ReadFile(c.Spinach)
-		if err != nil {
-			return err
-		}
-
-		if err := yaml.Unmarshal(f, &cfg); err != nil {
-			return err
-		}
-	}
-
-	cfg.Popeye.LogLevel = toLogLevel(c.LogLevel)
-	cfg.Popeye.LintLevel = toLintLevel(c.LintLevel)
-	cfg.flags = f
-	*c = cfg
-
-	return nil
 }
 
 // ActiveNamespace returns the desired namespace if set or all if not.
@@ -214,7 +216,8 @@ func (c *Config) ensureClientConfig() error {
 	return nil
 }
 
-func toLogLevel(level string) zerolog.Level {
+// ToLogLevel convert a string to a level.
+func ToLogLevel(level string) zerolog.Level {
 	switch level {
 	case "debug":
 		return zerolog.DebugLevel
@@ -229,18 +232,33 @@ func toLogLevel(level string) zerolog.Level {
 	}
 }
 
-func toLintLevel(level string) int {
+// Level tracks lint check level.
+type Level int
+
+const (
+	// OkLevel denotes no linting issues.
+	OkLevel Level = iota
+	// InfoLevel denotes FIY linting issues.
+	InfoLevel
+	// WarnLevel denotes a warning issue.
+	WarnLevel
+	// ErrorLevel denotes a serious issue.
+	ErrorLevel
+)
+
+// ToLintLevel convert a string to a level.
+func ToLintLevel(level string) Level {
 	switch level {
 	case "ok":
-		return 1
+		return OkLevel
 	case "info":
-		return 2
+		return InfoLevel
 	case "warn":
-		return 3
+		return WarnLevel
 	case "error":
-		return 4
+		return ErrorLevel
 	default:
-		return 0
+		return OkLevel
 	}
 }
 

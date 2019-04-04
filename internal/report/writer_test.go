@@ -2,19 +2,28 @@ package report
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"testing"
-	"unicode/utf8"
 
 	"github.com/derailed/popeye/internal/linter"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestOpenClose(t *testing.T) {
+func TestComment(t *testing.T) {
 	w := bytes.NewBufferString("")
-	Open(w, "fred")
-	Close(w)
-	assert.Equal(t, "\n\x1b[38;5;75;mfred\x1b[0m\n\x1b[38;5;75;m┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅\x1b[0m\n\n\n", w.String())
+
+	Comment(w, "blee")
+
+	assert.Equal(t, "  · blee\n", w.String())
+}
+
+func TestError(t *testing.T) {
+	w := bytes.NewBufferString("")
+
+	Error(w, "blee", fmt.Errorf("crapola"))
+
+	assert.Equal(t, "\n💥 \x1b[38;5;202;mblee: crapola\x1b[0m\n", w.String())
 }
 
 func TestWrite(t *testing.T) {
@@ -26,7 +35,7 @@ func TestWrite(t *testing.T) {
 		{
 			"Yo mama",
 			1,
-			"  · \x1b[38;5;122;mYo mama\x1b[0m\x1b[38;5;250;m....................................................................\x1b[0m✅\n",
+			"  · \x1b[38;5;155;mYo mama\x1b[0m\x1b[38;5;250;m....................................................................\x1b[0m✅\n",
 		},
 		{
 			"Yo mama",
@@ -38,6 +47,7 @@ func TestWrite(t *testing.T) {
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
 		Write(w, linter.OkLevel, u.indent, u.m)
+
 		assert.Equal(t, u.e, w.String())
 	}
 }
@@ -53,11 +63,21 @@ func TestDump(t *testing.T) {
 			},
 			"    😱 \x1b[38;5;15;mYo Mama!.\x1b[0m\n",
 		},
+		{
+			linter.Issues{
+				"fred": []linter.Issue{
+					linter.NewError(linter.WarnLevel, "c1||Yo Mama!"),
+					linter.NewError(linter.WarnLevel, "c1||Yo!"),
+				},
+			},
+			"    🐳 \x1b[38;5;15;mc1\x1b[0m\n      😱 \x1b[38;5;15;mYo Mama!.\x1b[0m\n      😱 \x1b[38;5;15;mYo!.\x1b[0m\n",
+		},
 	}
 
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
 		Dump(w, linter.OkLevel, u.issues["fred"]...)
+
 		assert.Equal(t, u.e, w.String())
 	}
 }
@@ -68,14 +88,31 @@ func BenchmarkWrite(b *testing.B) {
 	}
 }
 
-func TestEmojiForLevel(t *testing.T) {
-	for k, v := range map[int]int{0: 1, 1: 1, 2: 1, 3: 1, 4: 1} {
-		assert.Equal(t, v, utf8.RuneCountInString(emojiForLevel(linter.Level(k))))
+func TestOpen(t *testing.T) {
+	uu := []struct {
+		issues linter.Issues
+		e      string
+	}{
+		{
+			linter.Issues{
+				"fred": []linter.Issue{linter.NewError(linter.WarnLevel, "Yo Mama!")},
+			},
+			"\n\x1b[38;5;75;mblee\x1b[0m                                                       💥 0 😱 1 🔊 0 ✅ 0 \x1b[38;5;202;m0\x1b[0m٪\n\x1b[38;5;75;m┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅\x1b[0m\n",
+		},
+	}
+
+	for _, u := range uu {
+		w := bytes.NewBufferString("")
+		Open(w, "blee", u.issues)
+
+		assert.Equal(t, u.e, w.String())
 	}
 }
 
-func TestColorForLevel(t *testing.T) {
-	for k, v := range map[int]Color{0: ColorAqua, 1: ColorAqua, 2: ColorAqua, 3: ColorOrangish, 4: ColorRed} {
-		assert.Equal(t, v, colorForLevel(linter.Level(k)))
-	}
+func TestOpenClose(t *testing.T) {
+	w := bytes.NewBufferString("")
+	Open(w, "fred", nil)
+	Close(w)
+
+	assert.Equal(t, "\n\x1b[38;5;75;mfred\x1b[0m\n\x1b[38;5;75;m┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅\x1b[0m\n\n", w.String())
 }

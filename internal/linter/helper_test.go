@@ -16,6 +16,6 @@ func TestToPerc(t *testing.T) {
 	}
 
 	for _, u := range uu {
-		assert.Equal(t, u.e, toPerc(u.v1, u.v2))
+		assert.Equal(t, u.e, ToPerc(u.v1, u.v2))
 	}
 }

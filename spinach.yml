@@ -1,12 +1,11 @@
 # A Sample Popeye configuration.
 popeye:
-
   # Node...
   node:
     # Check nodes resource utilization in percent against these thresholds.
     limits:
-      cpu:    5
-      memory: 20
+      cpu:    90
+      memory: 80
     exclude:
     - n1
 
@@ -16,15 +15,15 @@ popeye:
     exclude:
       - kube-system
       - kube-public
-      - monitoring
+      # - monitoring
 
   # Pod...
   pod:
     # Check container resource utilization in percent.
     # Issues a lint warning if about these threshold.
     limits:
-      cpu:    5
-      memory: 20
+      cpu:    80
+      memory: 75
     # Warn if more than 3 restarts.
     restarts:
       3

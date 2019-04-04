@@ -1,37 +1,16 @@
 package cmd
 
 import (
-	"bufio"
-	"context"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/derailed/popeye/internal/config"
-	"github.com/derailed/popeye/internal/k8s"
-	"github.com/derailed/popeye/internal/linter"
 	"github.com/derailed/popeye/internal/report"
+	"github.com/derailed/popeye/pkg"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-)
-
-type (
-	// Reporter obtains lint reports
-	Reporter interface {
-		MaxSeverity(res string) linter.Level
-		Issues() linter.Issues
-	}
-
-	// Linter represents a resource linter.
-	Linter interface {
-		Reporter
-		Lint(context.Context) error
-	}
-
-	// Linters a collection of linters.
-	Linters map[string]Linter
 )
 
 var (
@@ -45,22 +24,13 @@ var (
 func init() {
 	rootCmd = &cobra.Command{
 		Use:   "popeye",
-		Short: "A Kubernetes Cluster Linter and issues Scanner",
-		Long:  `Popeye scans your Kubernetes clusters and reports potential issues.`,
+		Short: "A Kubernetes Cluster sanitizer and linter",
+		Long:  `Popeye scans your Kubernetes clusters and reports potential resource issues.`,
 		Run:   doIt,
 	}
 
 	initK8sFlags()
 	initPopeyeFlags()
-}
-
-func linters(c *k8s.Client) Linters {
-	return Linters{
-		"NODE":      linter.NewNode(c, &log.Logger),
-		"NAMESPACE": linter.NewNamespace(c, &log.Logger),
-		"POD":       linter.NewPod(c, &log.Logger),
-		"SERVICE":   linter.NewService(c, &log.Logger),
-	}
 }
 
 func bomb(msg string) {
@@ -84,73 +54,7 @@ func doIt(cmd *cobra.Command, args []string) {
 	zerolog.SetGlobalLevel(popConfig.Popeye.LogLevel)
 	clearScreen()
 	printHeader()
-	lint()
-}
-
-func lint() {
-	c := k8s.NewClient(popConfig)
-
-	clusterInfo(c)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	for k, v := range linters(c) {
-		if err := v.Lint(ctx); err != nil {
-			w := bufio.NewWriter(os.Stdout)
-			defer w.Flush()
-			report.Open(w, k)
-			{
-				report.Error(w, "Scan failed! %v", err)
-			}
-			report.Close(w)
-			continue
-		}
-		printReport(v, k)
-	}
-}
-
-func printReport(r Reporter, section string) {
-	w := bufio.NewWriter(os.Stdout)
-	defer w.Flush()
-
-	level := linter.Level(popConfig.Popeye.LintLevel)
-	var wrote bool
-	report.Open(w, section)
-	{
-		for res, issues := range r.Issues() {
-			if len(issues) == 0 {
-				if level <= linter.OkLevel {
-					wrote = true
-					report.Write(w, linter.OkLevel, 1, res)
-				}
-				continue
-			}
-			max := r.MaxSeverity(res)
-			if level <= max {
-				wrote = true
-				report.Write(w, max, 1, res)
-			}
-			report.Dump(w, level, issues...)
-		}
-		if !wrote {
-			report.Comment(w, report.Colorize("Nothing to report.", report.ColorOrangish))
-		}
-	}
-
-	report.Close(w)
-}
-
-func clusterInfo(c *k8s.Client) {
-	report.Open(os.Stdout, fmt.Sprintf("CLUSTER [%s]", strings.ToUpper(c.Config.ActiveCluster())))
-	{
-		report.Write(os.Stdout, linter.OkLevel, 1, "Connectivity")
-
-		if !c.ClusterHasMetrics() {
-			report.Write(os.Stdout, linter.OkLevel, 1, "Metrics")
-		} else {
-			report.Write(os.Stdout, linter.OkLevel, 1, "Metrics")
-		}
-	}
-	report.Close(os.Stdout)
+	pkg.New(popConfig).Sanitize()
 }
 
 func initPopeyeFlags() {
@@ -158,21 +62,28 @@ func initPopeyeFlags() {
 		&popConfig.LintLevel,
 		"lintLevel", "l",
 		popConfig.LintLevel,
-		"Specify a lint level (info, warn, error)",
+		"Specify a lint level (ok, info, warn, error)",
 	)
 
 	rootCmd.Flags().BoolVarP(
-		&popConfig.AllNamespaces,
-		"all-namespaces", "",
-		popConfig.AllNamespaces,
-		"Includes system namespaces",
+		&popConfig.ClearScreen,
+		"clear", "c",
+		popConfig.ClearScreen,
+		"Clears the screen before a run",
 	)
 
 	rootCmd.Flags().StringVarP(
 		&popConfig.Spinach,
 		"file", "f",
 		"",
-		"Use this spinach configuration file",
+		"Use a spinach YAML configuration file",
+	)
+
+	rootCmd.Flags().StringSliceVarP(
+		&popConfig.Sections,
+		"sections", "s",
+		popConfig.Sections,
+		"Specifies which resources to include in the scan ie -s po,svc",
 	)
 }
 

@@ -12,14 +12,13 @@ type Popeye struct {
 	Service   Service   `yaml:"service"`
 
 	LogLevel  zerolog.Level
-	LintLevel int
+	LintLevel Level
 }
 
 // NewPopeye create a new Popeye configuration.
 func NewPopeye() Popeye {
 	return Popeye{
 		LogLevel:  zerolog.DebugLevel,
-		LintLevel: 1,
 		Namespace: newNamespace(),
 		Node:      newNode(),
 		Pod:       newPod(),

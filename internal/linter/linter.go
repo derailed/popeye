@@ -9,10 +9,8 @@ import (
 )
 
 const (
-	// NoLevel describes an unclassified lint issue.
-	NoLevel Level = iota
 	// OkLevel denotes no linting issues.
-	OkLevel
+	OkLevel Level = iota
 	// InfoLevel denotes FIY linting issues.
 	InfoLevel
 	// WarnLevel denotes a warning issue.

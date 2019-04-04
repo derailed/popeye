@@ -3,43 +3,30 @@ package report
 import (
 	"fmt"
 	"io"
-	"strconv"
 	"strings"
 
 	"github.com/derailed/popeye/internal/linter"
 )
 
-// Color ANSI palette (256!)
 const (
-	ColorOrangish  = 220
-	ColorOrange    = 208
-	ColorGray      = 250
-	ColorWhite     = 15
-	ColorBlue      = 105
-	ColorRed       = 202
-	ColorCoolBlue  = 99
-	ColorAqua      = 122
-	ColorDarkOlive = 155
-	ColorLighSlate = 75 // 105
-)
-
-// FontBold style
-const (
+	// FontBold style
 	FontBold = 1
-)
 
-// Color tracks the output color.
-type Color int
-
-const (
 	reportWidth = 80
 	tabSize     = 2
 )
 
 // Open begins a new report section.
-func Open(w io.Writer, s string) {
-	fmt.Fprintf(w, "\n%s\n", Colorize(s, ColorLighSlate))
-	fmt.Fprintf(w, "%s\n", Colorize(strings.Repeat("┅", 80), ColorLighSlate))
+func Open(w io.Writer, s string, issues linter.Issues) {
+	fmt.Fprintf(w, "\n%s", Colorize(s, ColorLighSlate))
+	if issues != nil {
+		t := NewTally()
+		t.Rollup(issues)
+		indent := reportWidth - len(s) - t.Width() + 13
+		fmt.Fprintf(w, "%s", strings.Repeat(" ", indent))
+		t.Dump(w)
+	}
+	fmt.Fprintf(w, "\n%s", Colorize(strings.Repeat("┅", 80), ColorLighSlate))
 	fmt.Fprintln(w)
 }
 
@@ -49,9 +36,9 @@ func Close(w io.Writer) {
 }
 
 // Error prints out error out.
-func Error(w io.Writer, fmat string, args ...interface{}) {
+func Error(w io.Writer, msg string, err error) {
 	fmt.Fprintln(w)
-	msg := fmt.Sprintf(fmat, args...)
+	msg = msg + ": " + err.Error()
 	buff := make([]string, 0, len(msg)%reportWidth)
 	width := reportWidth - 3
 	for i := 0; len(msg) > width; i += width {
@@ -94,64 +81,10 @@ func Write(w io.Writer, l linter.Level, indent int, msg string) {
 	if indent == 1 {
 		dots := reportWidth - len(msg) - tabSize*indent - 3
 		msg = Colorize(msg, colorForLevel(l)) + Colorize(strings.Repeat(".", dots), ColorGray)
-		fmt.Fprintf(w, "%s· %s%s\n", spacer, msg, emojiForLevel(l))
+		fmt.Fprintf(w, "%s· %s%s\n", spacer, msg, EmojiForLevel(l))
 		return
 	}
 
 	msg = Colorize(msg, ColorWhite)
-	fmt.Fprintf(w, "%s%s %s\n", spacer, emojiForLevel(l), msg)
-}
-
-// Colorize a string based on given color.
-func Colorize(s string, c Color) string {
-	return "\033[38;5;" + strconv.Itoa(int(c)) + ";m" + s + "\033[0m"
-}
-
-func colorForLevel(l linter.Level) Color {
-	switch l {
-	case linter.ErrorLevel:
-		return ColorRed
-	case linter.WarnLevel:
-		return ColorOrangish
-	case linter.InfoLevel:
-		return ColorAqua
-	default:
-		return ColorAqua
-	}
-}
-
-const containerLevel linter.Level = 100
-
-func emojiForLevel(l linter.Level) string {
-	switch l {
-	case containerLevel:
-		return emojis["container"]
-	case linter.ErrorLevel:
-		return emojis["farfromfok"]
-	case linter.WarnLevel:
-		return emojis["warn"]
-	case linter.InfoLevel:
-		return emojis["fyi"]
-	default:
-		return emojis["peachy"]
-	}
-}
-
-// Logo popeye
-var Logo = []string{
-	"K          .-'-.     ",
-	" 8     __|      `\\  ",
-	"  s   `-,-`--._   `\\",
-	" []  .->'  a     `|-'",
-	"  `=/ (__/_       /  ",
-	"    \\_,    `    _)  ",
-	"       `----;  |     ",
-}
-
-// Popeye title
-var Popeye = []string{
-	` ___     ___ _____   _____ `,
-	`| _ \___| _ \ __\ \ / / __|`,
-	`|  _/ _ \  _/ _| \ V /| _| `,
-	`|_| \___/_| |___| |_| |___|`,
+	fmt.Fprintf(w, "%s%s %s\n", spacer, EmojiForLevel(l), msg)
 }
