@@ -23,7 +23,7 @@ func TestTallyRollup(t *testing.T) {
 				},
 				"c": {},
 			},
-			&Tally{counts: []int{1, 1, 1, 1}},
+			&Tally{counts: []int{1, 1, 1, 1}, score: 50, valid: true},
 		},
 	}
 

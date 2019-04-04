@@ -46,7 +46,7 @@ func TestContainerCheckResources(t *testing.T) {
 		{request: true, limit: true, issues: 0},
 		{request: true, limit: false, issues: 1, severity: WarnLevel},
 		{request: false, limit: true, issues: 0},
-		{request: false, limit: false, issues: 1, severity: ErrorLevel},
+		{request: false, limit: false, issues: 1, severity: WarnLevel},
 	}
 
 	for _, u := range uu {
@@ -72,7 +72,7 @@ func TestContainerCheckProbes(t *testing.T) {
 		{liveness: true, readiness: true, issues: 0},
 		{liveness: true, readiness: false, issues: 1, severity: WarnLevel},
 		{liveness: false, readiness: true, issues: 1, severity: WarnLevel},
-		{liveness: false, readiness: false, issues: 1, severity: ErrorLevel},
+		{liveness: false, readiness: false, issues: 1, severity: WarnLevel},
 		{liveness: true, readiness: true, namedPort: true, issues: 2, severity: InfoLevel},
 	}
 

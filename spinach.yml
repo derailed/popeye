@@ -15,7 +15,7 @@ popeye:
     exclude:
       - kube-system
       - kube-public
-      # - monitoring
+      - monitoring
 
   # Pod...
   pod:

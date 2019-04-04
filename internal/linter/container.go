@@ -48,7 +48,7 @@ func (c *Container) checkImageTags(co v1.Container) {
 
 func (c *Container) checkProbes(co v1.Container) {
 	if co.LivenessProbe == nil && co.ReadinessProbe == nil {
-		c.addIssue(co.Name, ErrorLevel, "No probes defined")
+		c.addIssue(co.Name, WarnLevel, "No probes defined")
 		return
 	}
 
@@ -79,7 +79,7 @@ func (c *Container) checkNamedProbe(co string, p *v1.Probe, liveness bool) {
 
 func (c *Container) checkResources(co v1.Container) {
 	if len(co.Resources.Limits) == 0 && len(co.Resources.Requests) == 0 {
-		c.addIssue(co.Name, ErrorLevel, "No resources defined")
+		c.addIssue(co.Name, WarnLevel, "No resources defined")
 		return
 	}
 

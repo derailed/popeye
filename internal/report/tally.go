@@ -14,6 +14,8 @@ import (
 // Tally tracks lint section scores.
 type Tally struct {
 	counts []int
+	score  int
+	valid  bool
 }
 
 // NewTally returns a new tally.
@@ -21,8 +23,23 @@ func NewTally() *Tally {
 	return &Tally{counts: make([]int, 4)}
 }
 
+// Score returns the tally computed score.
+func (t *Tally) Score() int {
+	return t.score
+}
+
+// IsValid checks if tally is valid.
+func (t *Tally) IsValid() bool {
+	return t.valid
+}
+
 // Rollup tallies up the report scores.
-func (t *Tally) Rollup(run linter.Issues) {
+func (t *Tally) Rollup(run linter.Issues) *Tally {
+	if run == nil || len(run) == 0 {
+		return t
+	}
+
+	t.valid = true
 	for _, issues := range run {
 		if len(issues) == 0 {
 			t.counts[linter.OkLevel]++
@@ -31,10 +48,13 @@ func (t *Tally) Rollup(run linter.Issues) {
 			t.counts[issue.Severity()]++
 		}
 	}
+	t.computeScore()
+
+	return t
 }
 
-// Score computes the total tally score.
-func (t *Tally) Score() int {
+// ComputeScore calculates the completed run score.
+func (t *Tally) computeScore() int {
 	var total, ok int
 	for i, v := range t.counts {
 		if i < 2 {
@@ -42,7 +62,9 @@ func (t *Tally) Score() int {
 		}
 		total += v
 	}
-	return int(math.Round(linter.ToPerc(float64(ok), float64(total))))
+	t.score = int(math.Round(linter.ToPerc(float64(ok), float64(total))))
+
+	return t.score
 }
 
 // Dump prints out a tally.
@@ -51,11 +73,12 @@ func (t *Tally) Dump(w io.Writer) {
 		emoji := EmojiForLevel(linter.Level(i))
 		fmt.Fprintf(w, "%s %d ", emoji, t.counts[i])
 	}
-	perc, color := t.Score(), ColorAqua
-	if perc < 80 {
+
+	score, color := t.score, ColorAqua
+	if score < 80 {
 		color = ColorRed
 	}
-	fmt.Fprintf(w, "%s٪", Colorize(strconv.Itoa(perc), color))
+	fmt.Fprintf(w, "%s٪", Colorize(strconv.Itoa(score), color))
 }
 
 // Width computes the tally width.

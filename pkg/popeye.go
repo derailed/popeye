@@ -32,7 +32,9 @@ type (
 
 	// Popeye a kubernetes sanitizer.
 	Popeye struct {
-		config *config.Config
+		config       *config.Config
+		totalScore   int
+		sectionCount int
 	}
 )
 
@@ -74,8 +76,25 @@ func (p *Popeye) Sanitize() {
 			continue
 		}
 
+		p.sectionCount++
 		p.printReport(v, report.TitleForRes(k))
 	}
+	p.printSummary()
+}
+
+func (p *Popeye) printSummary() {
+	w := bufio.NewWriter(os.Stdout)
+	defer w.Flush()
+
+	report.Open(w, "SUMMARY", nil)
+	{
+		s := p.totalScore / p.sectionCount
+		fmt.Fprintf(w, "Your cluster score: %d -- %s\n", s, report.Grade(s))
+		for _, l := range strings.Split(report.Badge(s), "\n") {
+			fmt.Fprintf(w, "%s%s\n", strings.Repeat(" ", 60), l)
+		}
+	}
+	report.Close(w)
 }
 
 func (p *Popeye) printReport(r Reporter, section string) {
@@ -83,8 +102,8 @@ func (p *Popeye) printReport(r Reporter, section string) {
 	defer w.Flush()
 
 	level := linter.Level(p.config.Popeye.LintLevel)
-	var any bool
-	report.Open(w, section, r.Issues())
+	t, any := report.NewTally().Rollup(r.Issues()), false
+	report.Open(w, section, t)
 	{
 		w.Flush()
 		for res, issues := range r.Issues() {
@@ -107,6 +126,10 @@ func (p *Popeye) printReport(r Reporter, section string) {
 		}
 	}
 	report.Close(w)
+
+	if t.IsValid() {
+		p.totalScore += t.Score()
+	}
 }
 
 func (p *Popeye) clusterInfo(c *k8s.Client) {

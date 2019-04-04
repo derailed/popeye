@@ -76,7 +76,7 @@ func TestPoCheckContainerStatus(t *testing.T) {
 	}{
 		{ready: true, state: v1.ContainerState{Running: new(v1.ContainerStateRunning)}, issues: 0},
 		{ready: false, state: v1.ContainerState{Running: new(v1.ContainerStateRunning)}, issues: 1, severity: ErrorLevel},
-		{ready: false, state: v1.ContainerState{Waiting: new(v1.ContainerStateWaiting)}, issues: 1, severity: WarnLevel},
+		{ready: false, state: v1.ContainerState{Waiting: new(v1.ContainerStateWaiting)}, issues: 1, severity: ErrorLevel},
 		{ready: false, state: v1.ContainerState{Terminated: new(v1.ContainerStateTerminated)}, issues: 1, severity: WarnLevel},
 	}
 
@@ -109,19 +109,19 @@ func TestPoCheckContainers(t *testing.T) {
 		issues              int
 		severity            Level
 	}{
-		{issues: 2, severity: ErrorLevel},
-		{issues: 2, readiness: true, severity: ErrorLevel},
-		{issues: 2, liveness: true, severity: ErrorLevel},
-		{issues: 1, liveness: true, readiness: true, severity: ErrorLevel},
-		{issues: 1, limit: true, severity: ErrorLevel},
+		{issues: 2, severity: WarnLevel},
+		{issues: 2, readiness: true, severity: WarnLevel},
+		{issues: 2, liveness: true, severity: WarnLevel},
+		{issues: 1, liveness: true, readiness: true, severity: WarnLevel},
+		{issues: 1, limit: true, severity: WarnLevel},
 		{issues: 1, limit: true, readiness: true, severity: WarnLevel},
 		{issues: 1, limit: true, liveness: true, severity: WarnLevel},
 		{issues: 0, limit: true, liveness: true, readiness: true},
-		{issues: 2, request: true, severity: ErrorLevel},
+		{issues: 2, request: true, severity: WarnLevel},
 		{issues: 2, request: true, readiness: true, severity: WarnLevel},
 		{issues: 2, request: true, liveness: true, severity: WarnLevel},
 		{issues: 1, request: true, liveness: true, readiness: true, severity: WarnLevel},
-		{issues: 1, request: true, limit: true, severity: ErrorLevel},
+		{issues: 1, request: true, limit: true, severity: WarnLevel},
 		{issues: 1, request: true, limit: true, readiness: true, severity: WarnLevel},
 		{issues: 1, request: true, limit: true, liveness: true, severity: WarnLevel},
 		{issues: 0, request: true, limit: true, liveness: true, readiness: true},

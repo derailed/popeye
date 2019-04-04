@@ -23,7 +23,7 @@ func TestError(t *testing.T) {
 
 	Error(w, "blee", fmt.Errorf("crapola"))
 
-	assert.Equal(t, "\n💥 \x1b[38;5;202;mblee: crapola\x1b[0m\n", w.String())
+	assert.Equal(t, "\n💥 \x1b[38;5;196;mblee: crapola\x1b[0m\n", w.String())
 }
 
 func TestWrite(t *testing.T) {
@@ -40,7 +40,7 @@ func TestWrite(t *testing.T) {
 		{
 			"Yo mama",
 			2,
-			"    ✅ \x1b[38;5;15;mYo mama\x1b[0m\n",
+			"    ✅ \x1b[38;5;155;mYo mama\x1b[0m\n",
 		},
 	}
 
@@ -61,7 +61,7 @@ func TestDump(t *testing.T) {
 			linter.Issues{
 				"fred": []linter.Issue{linter.NewError(linter.WarnLevel, "Yo Mama!")},
 			},
-			"    😱 \x1b[38;5;15;mYo Mama!.\x1b[0m\n",
+			"    😱 \x1b[38;5;220;mYo Mama!.\x1b[0m\n",
 		},
 		{
 			linter.Issues{
@@ -70,7 +70,7 @@ func TestDump(t *testing.T) {
 					linter.NewError(linter.WarnLevel, "c1||Yo!"),
 				},
 			},
-			"    🐳 \x1b[38;5;15;mc1\x1b[0m\n      😱 \x1b[38;5;15;mYo Mama!.\x1b[0m\n      😱 \x1b[38;5;15;mYo!.\x1b[0m\n",
+			"    🐳 \x1b[38;5;155;mc1\x1b[0m\n      😱 \x1b[38;5;220;mYo Mama!.\x1b[0m\n      😱 \x1b[38;5;220;mYo!.\x1b[0m\n",
 		},
 	}
 
@@ -97,13 +97,14 @@ func TestOpen(t *testing.T) {
 			linter.Issues{
 				"fred": []linter.Issue{linter.NewError(linter.WarnLevel, "Yo Mama!")},
 			},
-			"\n\x1b[38;5;75;mblee\x1b[0m                                                       💥 0 😱 1 🔊 0 ✅ 0 \x1b[38;5;202;m0\x1b[0m٪\n\x1b[38;5;75;m┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅\x1b[0m\n",
+			"\n\x1b[38;5;75;mblee\x1b[0m                                                       💥 0 😱 1 🔊 0 ✅ 0 \x1b[38;5;196;m0\x1b[0m٪\n\x1b[38;5;75;m┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅\x1b[0m\n",
 		},
 	}
 
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
-		Open(w, "blee", u.issues)
+		ta := NewTally().Rollup(u.issues)
+		Open(w, "blee", ta)
 
 		assert.Equal(t, u.e, w.String())
 	}

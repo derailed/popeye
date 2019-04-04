@@ -10,6 +10,7 @@ type containerStatusCount struct {
 	waiting    int
 	terminated int
 	restarts   int
+	reason     string
 }
 
 func (c *containerStatusCount) rollup(s v1.ContainerStatus) {
@@ -19,10 +20,12 @@ func (c *containerStatusCount) rollup(s v1.ContainerStatus) {
 
 	if s.State.Waiting != nil {
 		c.waiting++
+		c.reason = s.State.Waiting.Reason
 	}
 
 	if s.State.Terminated != nil {
 		c.terminated++
+		c.reason = s.State.Terminated.Reason
 	}
 
 	c.restarts += int(s.RestartCount)
@@ -34,15 +37,21 @@ func (c *containerStatusCount) diagnose(total int, restartsLimit int, isInit boo
 	}
 
 	if c.terminated > 0 && !isInit {
-		return NewErrorf(WarnLevel, "Pod is terminating (%d/%d)", c.terminated, total)
+		if c.reason == "" {
+			return NewErrorf(WarnLevel, "Pod is terminated [%d/%d]", c.ready, total)
+		}
+		return NewErrorf(WarnLevel, "Pod is terminated [%d/%d] %s", c.ready, total, c.reason)
 	}
 
 	if c.waiting > 0 {
-		return NewErrorf(WarnLevel, "Pod is waiting (%d/%d)", c.waiting, total)
+		if c.reason == "" {
+			return NewErrorf(ErrorLevel, "Pod is waiting [%d/%d]", c.ready, total)
+		}
+		return NewErrorf(ErrorLevel, "Pod is waiting [%d/%d] %s", c.ready, total, c.reason)
 	}
 
 	if c.ready == 0 {
-		return NewErrorf(ErrorLevel, "Pod is not ready (%d/%d)", c.ready, total)
+		return NewErrorf(ErrorLevel, "Pod is not ready [%d/%d]", c.ready, total)
 	}
 
 	if c.restarts > restartsLimit {

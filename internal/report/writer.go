@@ -17,11 +17,9 @@ const (
 )
 
 // Open begins a new report section.
-func Open(w io.Writer, s string, issues linter.Issues) {
+func Open(w io.Writer, s string, t *Tally) {
 	fmt.Fprintf(w, "\n%s", Colorize(s, ColorLighSlate))
-	if issues != nil {
-		t := NewTally()
-		t.Rollup(issues)
+	if t != nil && t.IsValid() {
 		indent := reportWidth - len(s) - t.Width() + 13
 		fmt.Fprintf(w, "%s", strings.Repeat(" ", indent))
 		t.Dump(w)
@@ -85,6 +83,6 @@ func Write(w io.Writer, l linter.Level, indent int, msg string) {
 		return
 	}
 
-	msg = Colorize(msg, ColorWhite)
+	msg = Colorize(msg, colorForLevel(l))
 	fmt.Fprintf(w, "%s%s %s\n", spacer, EmojiForLevel(l), msg)
 }

@@ -110,22 +110,23 @@ func (p *Pod) checkContainerStatus(po v1.Pod) {
 	limit := p.client.RestartsLimit()
 
 	if len(po.Status.InitContainerStatuses) != 0 {
-		counts := new(containerStatusCount)
+
 		for _, s := range po.Status.InitContainerStatuses {
+			counts := new(containerStatusCount)
 			counts.rollup(s)
-		}
-		if issue := counts.diagnose(len(po.Status.InitContainerStatuses), limit, true); issue != nil {
-			p.addIssues(nsFQN(po), issue)
-			return
+			if issue := counts.diagnose(len(po.Status.InitContainerStatuses), limit, true); issue != nil {
+				p.addIssues(nsFQN(po), issue)
+				return
+			}
 		}
 	}
 
-	counts := new(containerStatusCount)
 	for _, s := range po.Status.ContainerStatuses {
+		counts := new(containerStatusCount)
 		counts.rollup(s)
-	}
-	if issue := counts.diagnose(len(po.Status.ContainerStatuses), limit, false); issue != nil {
-		p.addIssues(nsFQN(po), issue)
+		if issue := counts.diagnose(len(po.Status.ContainerStatuses), limit, false); issue != nil {
+			p.addIssues(nsFQN(po), issue)
+		}
 	}
 }
 
