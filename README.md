@@ -1,6 +1,6 @@
-<img src="assets/popeye_boat.png" align="right" width="400" heigh="auto">
+<img src="assets/popeye_boat.png" align="right" width="250" heigh="auto">
 
-# Popeye - A Kubernetes linter and scanner
+# Popeye -A Kubernetes Linter
 
 
 Popeye is a utility that lints a K8s cluster and reports potential issues with
@@ -8,7 +8,8 @@ various Kubernetes resources. It cruises thru deployed resources for potential m
 preventing potential future headaches. It aim at reducing the cognitive *over*load
 that one faces when managing and operating a Kubernetes cluster in the wild.
 
-When it comes to Kubernetes cluster management, Popeye is all about `Biffing'em and Buffing'em!`
+<br/>
+<br/>
 
 ---
 
@@ -20,15 +21,41 @@ When it comes to Kubernetes cluster management, Popeye is all about `Biffing'em 
 
 ---
 
-## Support Resources
+## Supported Resources
+
+This initial drop only supports a handful of resources at this time. More to come soon...
+
+- Node
+- Namespace
+- Pod
+- Service
+
+---
+
+## Known Issues
+
+This initial drop is brittle. Popeye will most likely blow up...
+
+- You're running older versions of Kubernetes. Popeye works best Kubernetes 1.13+.
+- You don't have enough RBAC fu to manage your cluster (see RBAC section below)
+- Your cluster does not run a metric server.
 
 ---
 
 ## RBAC POW
 
+In order for Popeye to do his work, the signed in user must have enough oomph to
+list and get the resources mentioned above as well as metrics-server get/list access.
+
 ---
 
+
+
 ## Disclaimer
+
+This is work in progress! If there is enough interest in the Kubernetes
+community, we will enhance per your recommendations/contributions. Also if you
+dig this effort, please let us know that too!
 
 ---
 
