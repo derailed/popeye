@@ -1,14 +1,14 @@
 <img src="assets/popeye_boat.png" align="right" width="250" heigh="auto">
 
-# Popeye - A Kubernetes Cluster Linter
+# Popeye - A Kubernetes Cluster Sanitizer
 
-
-Popeye is a utility that lints a K8s cluster and reports potential issues with
-various Kubernetes resources. It cruises thru deployed resources for potential misconfigurations and scans a cluster to ensure best practices are in place thus
+Popeye is a utility that cruises a K8s cluster resources and reports potential
+issues with your deployment manifests and configurations. By scanning your
+clusters, it detects misconfigurations and ensure best practices are in place thus
 preventing potential future headaches. It aim at reducing the cognitive *over*load
 that one faces when managing and operating a Kubernetes cluster in the wild. Popeye
 is a readonly tool it does not change or update any of our Kubernetes resources or
-configurations.
+configurations in any ways.
 
 <br/>
 <br/>
@@ -19,7 +19,7 @@ configurations.
 
 Popeye is available on Linux, OSX and Windows platforms.
 
-* Binaries for Linux, Windows and Mac are available as tarballs in the [release](https://github.com/derailed/k9s/releases) page or via the SnapCraft link above.
+* Binaries for Linux, Windows and Mac are available as tarballs in the [release](https://github.com/derailed/popeye/releases) page or via the SnapCraft link above.
 
 * For OSX using Homebrew
 
@@ -102,12 +102,12 @@ popeye:
 
 ## Supported Resources
 
-This initial drop only supports a handful of resources at this time. More to come soon...
+This initial drop only supports a handful of resources. More will be added soon...
 
-- Node
-- Namespace
-- Pod
-- Service
+* Node
+* Namespace
+* Pod
+* Service
 
 ---
 
@@ -115,20 +115,18 @@ This initial drop only supports a handful of resources at this time. More to com
 
 This initial drop is brittle. Popeye will most likely blow up...
 
-- You're running older versions of Kubernetes. Popeye works best Kubernetes 1.13+.
-- You don't have enough RBAC fu to manage your cluster (see RBAC section below)
-- Your cluster does not run a metric server.
+* You're running older versions of Kubernetes. Popeye works best Kubernetes 1.13+.
+* You don't have enough RBAC fu to manage your cluster (see RBAC section below)
+* Your cluster does not run a metric server.
 
 ---
 
-## RBAC POW
+## RBAC POW!
 
 In order for Popeye to do his work, the signed in user must have enough oomph to
-list and get the resources mentioned above as well as metrics-server get/list access.
+get/list the resources mentioned above as well as metrics-server get/list access.
 
 ---
-
-
 
 ## Disclaimer
 
