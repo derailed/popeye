@@ -19,7 +19,7 @@ configurations.
 
 Popeye is available on Linux, OSX and Windows platforms.
 
-* Binaries for Linux, Windows and Mac are available as tarballs in the [release](https://github.com/derailed/k9s/releases) page or via SnapCraft.
+* Binaries for Linux, Windows and Mac are available as tarballs in the [release](https://github.com/derailed/k9s/releases) page or via the SnapCraft link above.
 
 * For OSX using Homebrew
 

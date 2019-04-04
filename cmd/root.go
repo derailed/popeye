@@ -16,18 +16,19 @@ import (
 var (
 	version   = "dev"
 	commit    = "dev"
+	date      = "n/a"
 	popConfig = config.New()
-	rootCmd   *cobra.Command
 	k8sFlags  *genericclioptions.ConfigFlags
-)
-
-func init() {
-	rootCmd = &cobra.Command{
+	rootCmd   = &cobra.Command{
 		Use:   "popeye",
 		Short: "A Kubernetes Cluster sanitizer and linter",
 		Long:  `Popeye scans your Kubernetes clusters and reports potential resource issues.`,
 		Run:   doIt,
 	}
+)
+
+func init() {
+	rootCmd.AddCommand(versionCmd())
 
 	initK8sFlags()
 	initPopeyeFlags()
