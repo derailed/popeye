@@ -55,7 +55,7 @@ func doIt(cmd *cobra.Command, args []string) {
 	zerolog.SetGlobalLevel(popConfig.Popeye.LogLevel)
 	clearScreen()
 	printHeader()
-	pkg.New(popConfig).Sanitize()
+	pkg.New(popConfig, os.Stdout).Sanitize()
 }
 
 func initPopeyeFlags() {

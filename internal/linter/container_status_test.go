@@ -49,7 +49,7 @@ func TestContainerStatusDiagnose(t *testing.T) {
 		{containerStatusCount{0, 0, 0, 0, ""}, 1, NewError(ErrorLevel, "Pod is not ready [0/1]")},
 		{containerStatusCount{1, 0, 0, 0, ""}, 1, nil},
 		{containerStatusCount{0, 1, 0, 0, ""}, 1, NewError(ErrorLevel, "Pod is waiting [0/1]")},
-		{containerStatusCount{0, 0, 1, 0, ""}, 1, NewError(WarnLevel, "Pod is terminated [0/1]")},
+		{containerStatusCount{1, 0, 1, 0, ""}, 1, NewError(WarnLevel, "Pod is terminating [1/1]")},
 		{containerStatusCount{1, 0, 0, 1, ""}, 1, NewError(WarnLevel, "Pod was restarted (1) time")},
 		{containerStatusCount{1, 0, 0, 10, ""}, 1, NewError(WarnLevel, "Pod was restarted (10) times")},
 		{containerStatusCount{1, 0, 0, 0, ""}, 0, nil},

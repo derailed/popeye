@@ -36,11 +36,15 @@ func (c *containerStatusCount) diagnose(total int, restartsLimit int, isInit boo
 		return nil
 	}
 
-	if c.terminated > 0 && !isInit {
+	if c.terminated > 0 && c.ready != 0 && !isInit {
 		if c.reason == "" {
-			return NewErrorf(WarnLevel, "Pod is terminated [%d/%d]", c.ready, total)
+			return NewErrorf(WarnLevel, "Pod is terminating [%d/%d]", c.ready, total)
 		}
-		return NewErrorf(WarnLevel, "Pod is terminated [%d/%d] %s", c.ready, total, c.reason)
+		return NewErrorf(WarnLevel, "Pod is terminating [%d/%d] %s", c.ready, total, c.reason)
+	}
+
+	if c.terminated > 0 && c.ready == 0 {
+		return nil
 	}
 
 	if c.waiting > 0 {

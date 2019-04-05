@@ -27,7 +27,7 @@ popeye:
     # Warn if more than 3 restarts.
     restarts:
       3
-    # Enforce this label presence on pods.
+    # NYI!! Enforce this label presence on pods.
     labels:
     - app
     - env

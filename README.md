@@ -5,9 +5,9 @@
 Popeye is a utility that cruises Kubernetes cluster resources and reports potential
 issues with your deployment manifests and configurations. By scanning your
 clusters, it detects misconfigurations and ensure best practices are in place thus
-preventing potential future headaches. It aim at reducing the cognitive *over*load
-that one faces when managing and operating a Kubernetes cluster in the wild. Popeye
-is a readonly tool it does not change or update any of your Kubernetes resources or
+preventing potential future headaches. It aims at reducing the cognitive *over*load
+one faces when managing and operating a Kubernetes cluster in the wild. Popeye
+is a readonly tool, it does not change or update any of your Kubernetes resources or
 configurations in any way!
 
 <br/>
@@ -49,18 +49,27 @@ Popeye is available on Linux, OSX and Windows platforms.
 
 ## The Command Line
 
-You can use popeye standalone or using a spinach yaml config to tune the linter.
+You can use Popeye standalone or using a spinach yaml config to tune the sanitizer.
 Details of the spinach yaml are below.
 
 ```shell
-# Popey a cluster using your current kubeconfig environment.
+# Popeye a cluster using your current kubeconfig environment.
 popeye
-# Popeye using a spinach config file
+# Popeye using a spinach config file.
 popeye -f spinach.yml
-# Popeye a cluster using a kubeconfig context
+# Popeye a cluster using a kubeconfig context.
 popeye --cluster fred
 # Stuck?
 popeye help
+```
+
+## Screenshots
+
+1. Cluster D Score
+   <img src="assets/d_score.png"/>
+2. Cluster A Score
+   <img src="assets/screen_logs.png"/>
+
 ---
 
 ## Spinach YAML
@@ -74,13 +83,13 @@ popeye:
   node:
     # Limits set a cpu/mem threshold in % ie if cpu|mem > limit a lint warning is triggered.
     limits:
-      # CPU checks if current CPU utilization on a node is greater than 80%.
-      cpu:    80
-      # Memory checks if current Memory utilization on a node is greater than 70%.
-      memory: 70
+      # CPU checks if current CPU utilization on a node is greater than 90%.
+      cpu:    90
+      # Memory checks if current Memory utilization on a node is greater than 80%.
+      memory: 80
     # Exclude lists node names to exclude from the scan.
     exclude:
-    - n1
+    - master
 
   # Configure namespace resources
   namespace:
@@ -94,10 +103,18 @@ popeye:
     # Restarts check the restarts count and triggers a lint warning if above threshold.
     restarts:
       3
-    # Labels NYI!! This would enforce the presence of certain labels on pods.
-    labels:
-    - app
-    - env
+    # Check container resource utilization in percent.
+    # Issues a lint warning if about these threshold.
+    limits:
+      cpu:    80
+      memory: 75
+
+  # Service ...
+  service:
+    # Excludes these services from the scan.
+    exclude:
+      - default/kubernetes
+      - blee/fred
 ```
 
 ## Supported Resources

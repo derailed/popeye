@@ -4,7 +4,8 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"os"
+	"io"
+	"sort"
 	"strings"
 
 	"github.com/derailed/popeye/internal/config"
@@ -35,12 +36,13 @@ type (
 		config       *config.Config
 		totalScore   int
 		sectionCount int
+		out          io.Writer
 	}
 )
 
 // New returns a new sanitizer.
-func New(c *config.Config) *Popeye {
-	return &Popeye{config: c}
+func New(c *config.Config, out io.Writer) *Popeye {
+	return &Popeye{config: c, out: out}
 }
 
 func linters(c *k8s.Client) Linters {
@@ -66,7 +68,7 @@ func (p *Popeye) Sanitize() {
 		}
 
 		if err := v.Lint(ctx); err != nil {
-			w := bufio.NewWriter(os.Stdout)
+			w := bufio.NewWriter(p.out)
 			defer w.Flush()
 			report.Open(w, report.TitleForRes(k), nil)
 			{
@@ -83,7 +85,7 @@ func (p *Popeye) Sanitize() {
 }
 
 func (p *Popeye) printSummary() {
-	w := bufio.NewWriter(os.Stdout)
+	w := bufio.NewWriter(p.out)
 	defer w.Flush()
 
 	report.Open(w, "SUMMARY", nil)
@@ -98,7 +100,7 @@ func (p *Popeye) printSummary() {
 }
 
 func (p *Popeye) printReport(r Reporter, section string) {
-	w := bufio.NewWriter(os.Stdout)
+	w := bufio.NewWriter(p.out)
 	defer w.Flush()
 
 	level := linter.Level(p.config.Popeye.LintLevel)
@@ -106,7 +108,13 @@ func (p *Popeye) printReport(r Reporter, section string) {
 	report.Open(w, section, t)
 	{
 		w.Flush()
-		for res, issues := range r.Issues() {
+		keys := make([]string, 0, len(r.Issues()))
+		for k := range r.Issues() {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, res := range keys {
+			issues := r.Issues()[res]
 			if len(issues) == 0 {
 				if level <= linter.OkLevel {
 					any = true
@@ -133,18 +141,21 @@ func (p *Popeye) printReport(r Reporter, section string) {
 }
 
 func (p *Popeye) clusterInfo(c *k8s.Client) {
+	w := bufio.NewWriter(p.out)
+	defer w.Flush()
+
 	t := fmt.Sprintf("CLUSTER [%s]", strings.ToUpper(c.Config.ActiveCluster()))
-	report.Open(os.Stdout, t, nil)
+	report.Open(w, t, nil)
 	{
-		report.Write(os.Stdout, linter.OkLevel, 1, "Connectivity")
+		report.Write(w, linter.OkLevel, 1, "Connectivity")
 
 		if !c.ClusterHasMetrics() {
-			report.Write(os.Stdout, linter.OkLevel, 1, "Metrics")
+			report.Write(w, linter.OkLevel, 1, "Metrics")
 		} else {
-			report.Write(os.Stdout, linter.OkLevel, 1, "Metrics")
+			report.Write(w, linter.OkLevel, 1, "Metrics")
 		}
 	}
-	report.Close(os.Stdout)
+	report.Close(w)
 }
 
 func in(list []string, member string) bool {

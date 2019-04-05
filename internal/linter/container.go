@@ -37,12 +37,12 @@ func (c *Container) lint(co v1.Container, isJob bool) {
 func (c *Container) checkImageTags(co v1.Container) {
 	tokens := strings.Split(co.Image, ":")
 	if len(tokens) < 2 {
-		c.addIssue(co.Name, ErrorLevel, "Non tagged image in use")
+		c.addIssue(co.Name, ErrorLevel, "Untagged docker image in use")
 		return
 	}
 
 	if tokens[1] == imageTagLatest {
-		c.addIssue(co.Name, WarnLevel, "Image tagged :latest in use")
+		c.addIssue(co.Name, WarnLevel, "Image tagged `latest in use")
 	}
 }
 
@@ -73,7 +73,7 @@ func (c *Container) checkNamedProbe(co string, p *v1.Probe, liveness bool) {
 		kind = "Liveness"
 	}
 	if p.Handler.HTTPGet != nil && p.Handler.HTTPGet.Port.Type == intstr.Int {
-		c.addIssue(co, InfoLevel, fmt.Sprintf("%sProbe uses a port#, prefer a named port", kind))
+		c.addIssue(co, InfoLevel, fmt.Sprintf("%s probe uses a port#, prefer a named port", kind))
 	}
 }
 
