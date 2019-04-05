@@ -6,3 +6,4 @@ notes
 eugen1
 *.txt
 /dist
+.envrc
