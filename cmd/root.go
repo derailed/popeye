@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/derailed/popeye/internal/config"
 	"github.com/derailed/popeye/internal/report"
 	"github.com/derailed/popeye/pkg"
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"

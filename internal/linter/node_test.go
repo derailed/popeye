@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/derailed/popeye/internal/config"
 	"github.com/derailed/popeye/internal/k8s"
+	"github.com/derailed/popeye/pkg/config"
 	m "github.com/petergtz/pegomock"
 	pegomock "github.com/petergtz/pegomock"
 	"github.com/stretchr/testify/assert"

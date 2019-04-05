@@ -3,8 +3,8 @@ package linter
 import (
 	"testing"
 
-	"github.com/derailed/popeye/internal/config"
 	"github.com/derailed/popeye/internal/k8s"
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"

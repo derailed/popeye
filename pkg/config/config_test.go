@@ -5,8 +5,8 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/derailed/popeye/internal/config"
 	"github.com/derailed/popeye/internal/linter"
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )

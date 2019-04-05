@@ -8,10 +8,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/derailed/popeye/internal/config"
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/linter"
 	"github.com/derailed/popeye/internal/report"
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/rs/zerolog/log"
 )
 
