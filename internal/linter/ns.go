@@ -7,6 +7,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+var excludedSystemNS = []string{"kube-public"}
+
 // Namespace represents a Namespace linter.
 type Namespace struct {
 	*Linter
@@ -34,7 +36,7 @@ func (n *Namespace) Lint(ctx context.Context) error {
 func (n *Namespace) lint(nn []v1.Namespace, used []string) {
 	for _, ns := range nn {
 		n.initIssues(ns.Name)
-		if n.checkActive(ns) {
+		if n.checkActive(ns) && !in(excludedSystemNS, ns.Name) {
 			n.checkInUse(ns.Name, used)
 		}
 	}
@@ -58,5 +60,6 @@ func (n *Namespace) checkInUse(name string, used []string) {
 			return
 		}
 	}
+
 	n.addIssuef(name, InfoLevel, "Used?")
 }

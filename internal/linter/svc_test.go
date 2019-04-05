@@ -89,6 +89,40 @@ func TestSvcLint(t *testing.T) {
 	}
 }
 
+func TestSvcType(t *testing.T) {
+	uu := []struct {
+		kind   v1.ServiceType
+		issues int
+	}{
+		{
+			v1.ServiceTypeClusterIP,
+			0,
+		},
+		{
+			v1.ServiceTypeNodePort,
+			0,
+		},
+		{
+			v1.ServiceTypeExternalName,
+			0,
+		},
+		{
+			v1.ServiceTypeLoadBalancer,
+			1,
+		},
+	}
+
+	for _, u := range uu {
+		svc := makeSvc("s1")
+		svc.Spec.Type = u.kind
+
+		s := NewService(nil, nil)
+		s.checkType(svc)
+
+		assert.Equal(t, u.issues, len(s.Issues()[svcFQN(svc)]))
+	}
+}
+
 func TestSvcCheckServicePort(t *testing.T) {
 	uu := []struct {
 		name   string

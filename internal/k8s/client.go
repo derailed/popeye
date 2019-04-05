@@ -7,6 +7,7 @@ import (
 
 	"github.com/derailed/popeye/pkg/config"
 	v1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	metricsapi "k8s.io/metrics/pkg/apis/metrics"
@@ -27,6 +28,8 @@ type Client struct {
 	allPods       map[string]v1.Pod
 	allNamespaces map[string]v1.Namespace
 	eps           map[string]v1.Endpoints
+	allCRBs       map[string]rbacv1.ClusterRoleBinding
+	allRBs        map[string]rbacv1.RoleBinding
 }
 
 // NewClient returns a dialable api server configuration.
@@ -113,6 +116,44 @@ func (c *Client) InUseNamespaces(nss []string) {
 		nss[i] = k
 		i++
 	}
+}
+
+// ListRBs returns all RoleBindings.
+func (c *Client) ListRBs() (map[string]rbacv1.RoleBinding, error) {
+	if c.allRBs != nil {
+		return c.allRBs, nil
+	}
+
+	ll, err := c.DialOrDie().RbacV1().RoleBindings("").List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	c.allRBs = make(map[string]rbacv1.RoleBinding, len(ll.Items))
+	for _, rb := range ll.Items {
+		c.allRBs[rb.Namespace+"/"+rb.Name] = rb
+	}
+
+	return c.allRBs, nil
+}
+
+// ListCRBs returns a ClusterRoleBindings.
+func (c *Client) ListCRBs() (map[string]rbacv1.ClusterRoleBinding, error) {
+	if c.allCRBs != nil {
+		return c.allCRBs, nil
+	}
+
+	ll, err := c.DialOrDie().RbacV1().ClusterRoleBindings().List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	c.allCRBs = make(map[string]rbacv1.ClusterRoleBinding, len(ll.Items))
+	for _, crb := range ll.Items {
+		c.allCRBs[crb.Name] = crb
+	}
+
+	return c.allCRBs, nil
 }
 
 // ListEndpoints returns a endpoint by name.

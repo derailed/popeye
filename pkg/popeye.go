@@ -82,6 +82,7 @@ func linters(c *k8s.Client) Linters {
 		"ns":  linter.NewNamespace(c, &log.Logger),
 		"po":  linter.NewPod(c, &log.Logger),
 		"svc": linter.NewService(c, &log.Logger),
+		"sa":  linter.NewSA(c, &log.Logger),
 	}
 }
 

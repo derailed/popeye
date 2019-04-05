@@ -14,6 +14,8 @@ func TitleForRes(r string) string {
 		t = "node"
 	case "ns":
 		t = "namespace"
+	case "sa":
+		t = "serviceaccount"
 	default:
 		t = r
 	}

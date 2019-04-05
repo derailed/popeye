@@ -67,24 +67,31 @@ probes, container images, RBAC rules, naked resources, etc...
 
 Here is a list of sanitizers in place for the current release.
 
-| Resource  | Sanitizers                                                                          |
-|-----------|-------------------------------------------------------------------------------------|
-| Node      | Ready for node conditions ie ready, out of mem/disk, network, pids                  |
-|           | Pod's labels for tolerations on node taints                                         |
-|           | CPU/MEM utilization metrics, trips if over limits (default 80% CPU/MEM)             |
-| Namespace | Inactive or potentially unused namespaces                                           |
-| Pod       | Pod status and containers run counts                                                |
-|           | ServiceAccount presence                                                             |
-|           | CPU/MEM on container for CPU/MEM metrics, trip if over limits (default 80% CPU/MEM) |
-|           | Container missing tags or latest tag                                                |
-|           | Resources request/limits existence                                                  |
-|           | Probes liveness/readiness existence                                                 |
-|           | Named ports and their references                                                    |
-| Service   |                                                                                     |
-|           | Endpoints presence                                                                  |
-|           | Matching pods labels                                                                |
-|           | Named ports and references                                                          |
-
+| Resource       | Sanitizers                                                              |
+|----------------|-------------------------------------------------------------------------|
+| Node           |                                                                         |
+|                | Conditions ie not ready, out of mem/disk, network, pids, etc            |
+|                | Pod tolerations referencing node taints                                 |
+|                | CPU/MEM utilization metrics, trips if over limits (default 80% CPU/MEM) |
+| Namespace      |                                                                         |
+|                | Inactive                                                                |
+|                | Dead namespaces                                                         |
+| Pod            |                                                                         |
+|                | Pod status                                                              |
+|                | Containers statuses                                                     |
+|                | ServiceAccount presence                                                 |
+|                | CPU/MEM on containers over a set CPU/MEM limit (default 80% CPU/MEM)    |
+|                | Container image with no tags                                            |
+|                | Container image using `latest` tag                                      |
+|                | Resources request/limits presence                                       |
+|                | Probes liveness/readiness presence                                      |
+|                | Named ports and their references                                        |
+| Service        |                                                                         |
+|                | Endpoints presence                                                      |
+|                | Matching pods labels                                                    |
+|                | Named ports and their references                                        |
+| ServiceAccount |                                                                         |
+|                | Dead SA ie used by CRB/RB but no matching pod ServiceAccount reference  |
 
 ## The Command Line
 
@@ -113,7 +120,6 @@ popeye help
 ### Cluster A Score
 
 <img src="assets/a_score.png"/>
-
 
 ## The SpinchYAML Configuration
 

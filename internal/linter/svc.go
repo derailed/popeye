@@ -59,6 +59,13 @@ func (s *Service) lint(svc v1.Service, po *v1.Pod, ep *v1.Endpoints) {
 	if ep != nil {
 		s.checkEndpoints(svc, ep)
 	}
+	s.checkType(svc)
+}
+
+func (s *Service) checkType(svc v1.Service) {
+	if svc.Spec.Type == v1.ServiceTypeLoadBalancer {
+		s.addIssue(svcFQN(svc), InfoLevel, "Type Loadbalancer detected. Could be expensive!")
+	}
 }
 
 func (s *Service) checkPorts(svc v1.Service, po *v1.Pod) {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/rs/zerolog"
 	v1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
@@ -78,6 +79,8 @@ type (
 		ListAllPods() (map[string]v1.Pod, error)
 		ListNS() ([]v1.Namespace, error)
 		InUseNamespaces(used []string)
+		ListRBs() (map[string]rbacv1.RoleBinding, error)
+		ListCRBs() (map[string]rbacv1.ClusterRoleBinding, error)
 	}
 
 	// Config represents a Popeye configuration.

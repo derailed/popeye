@@ -6,6 +6,7 @@ package linter
 import (
 	pegomock "github.com/petergtz/pegomock"
 	v1 "k8s.io/api/core/v1"
+	v10 "k8s.io/api/rbac/v1"
 	v1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"reflect"
 	"time"
@@ -152,6 +153,25 @@ func (mock *MockClient) ListAllPods() (map[string]v1.Pod, error) {
 	return ret0, ret1
 }
 
+func (mock *MockClient) ListCRBs() (map[string]v10.ClusterRoleBinding, error) {
+	if mock == nil {
+		panic("mock must not be nil. Use myMock := NewMockClient().")
+	}
+	params := []pegomock.Param{}
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListCRBs", params, []reflect.Type{reflect.TypeOf((*map[string]v10.ClusterRoleBinding)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v10.ClusterRoleBinding
+	var ret1 error
+	if len(result) != 0 {
+		if result[0] != nil {
+			ret0 = result[0].(map[string]v10.ClusterRoleBinding)
+		}
+		if result[1] != nil {
+			ret1 = result[1].(error)
+		}
+	}
+	return ret0, ret1
+}
+
 func (mock *MockClient) ListEndpoints() (map[string]v1.Endpoints, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockClient().")
@@ -220,6 +240,25 @@ func (mock *MockClient) ListPods() (map[string]v1.Pod, error) {
 	if len(result) != 0 {
 		if result[0] != nil {
 			ret0 = result[0].(map[string]v1.Pod)
+		}
+		if result[1] != nil {
+			ret1 = result[1].(error)
+		}
+	}
+	return ret0, ret1
+}
+
+func (mock *MockClient) ListRBs() (map[string]v10.RoleBinding, error) {
+	if mock == nil {
+		panic("mock must not be nil. Use myMock := NewMockClient().")
+	}
+	params := []pegomock.Param{}
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListRBs", params, []reflect.Type{reflect.TypeOf((*map[string]v10.RoleBinding)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v10.RoleBinding
+	var ret1 error
+	if len(result) != 0 {
+		if result[0] != nil {
+			ret0 = result[0].(map[string]v10.RoleBinding)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -535,6 +574,23 @@ func (c *Client_ListAllPods_OngoingVerification) GetCapturedArguments() {
 func (c *Client_ListAllPods_OngoingVerification) GetAllCapturedArguments() {
 }
 
+func (verifier *VerifierClient) ListCRBs() *Client_ListCRBs_OngoingVerification {
+	params := []pegomock.Param{}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListCRBs", params, verifier.timeout)
+	return &Client_ListCRBs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+}
+
+type Client_ListCRBs_OngoingVerification struct {
+	mock              *MockClient
+	methodInvocations []pegomock.MethodInvocation
+}
+
+func (c *Client_ListCRBs_OngoingVerification) GetCapturedArguments() {
+}
+
+func (c *Client_ListCRBs_OngoingVerification) GetAllCapturedArguments() {
+}
+
 func (verifier *VerifierClient) ListEndpoints() *Client_ListEndpoints_OngoingVerification {
 	params := []pegomock.Param{}
 	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListEndpoints", params, verifier.timeout)
@@ -601,6 +657,23 @@ func (c *Client_ListPods_OngoingVerification) GetCapturedArguments() {
 }
 
 func (c *Client_ListPods_OngoingVerification) GetAllCapturedArguments() {
+}
+
+func (verifier *VerifierClient) ListRBs() *Client_ListRBs_OngoingVerification {
+	params := []pegomock.Param{}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListRBs", params, verifier.timeout)
+	return &Client_ListRBs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+}
+
+type Client_ListRBs_OngoingVerification struct {
+	mock              *MockClient
+	methodInvocations []pegomock.MethodInvocation
+}
+
+func (c *Client_ListRBs_OngoingVerification) GetCapturedArguments() {
+}
+
+func (c *Client_ListRBs_OngoingVerification) GetAllCapturedArguments() {
 }
 
 func (verifier *VerifierClient) ListServices() *Client_ListServices_OngoingVerification {

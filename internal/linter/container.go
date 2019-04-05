@@ -97,11 +97,11 @@ func (c *Container) checkNamedPorts(co v1.Container) {
 }
 
 func (c *Container) checkUtilization(co v1.Container, cmx k8s.Metrics) {
-	cpu, mem := c.getLimits(co)
-	c.checkMetrics(co.Name, cpu, cmx.CurrentCPU, mem, int64(cmx.CurrentMEM))
+	cpu, mem, limited := c.getLimits(co)
+	c.checkMetrics(co.Name, cpu, cmx.CurrentCPU, mem, int64(cmx.CurrentMEM), limited)
 }
 
-func (c *Container) checkMetrics(co string, cpu, ccpu, mem, cmem int64) {
+func (c *Container) checkMetrics(co string, cpu, ccpu, mem, cmem int64, hard bool) {
 	percCPU := ToPerc(float64(ccpu), float64(cpu))
 	cpuLimit := c.client.PodCPULimit()
 	if percCPU >= cpuLimit {
@@ -115,7 +115,7 @@ func (c *Container) checkMetrics(co string, cpu, ccpu, mem, cmem int64) {
 	}
 }
 
-func (c *Container) getLimits(co v1.Container) (cpu, mem int64) {
+func (c *Container) getLimits(co v1.Container) (cpu, mem int64, limited bool) {
 	req, limit := co.Resources.Requests, co.Resources.Limits
 
 	switch {
@@ -134,6 +134,7 @@ func (c *Container) getLimits(co v1.Container) (cpu, mem int64) {
 		if m, ok := lmem.AsInt64(); ok {
 			mem = m
 		}
+		limited = true
 	}
 	return
 }
