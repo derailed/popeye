@@ -52,6 +52,33 @@ Popeye is available on Linux, OSX and Windows platforms.
         go run main.go
         ```
 
+## Sanitizers
+
+Popeye scans your cluster for best practices and potential issues. Currently, Popeye only looks at nodes, namespaces, pods and services. More will come soon! We are hoping Kubernetes friends will pitch'in to make Popeye even better.
+
+The aim of the sanitizers is to pick up on misconfigurations ie things like ports mismatch, dead or unused resources, metrics utilization, probes, container images, RBAC rules, naked resources, etc...
+
+Here is a list of sanitizers in place for the current release.
+
+| Resource  | Sanitizers                                                                          |
+|-----------|-------------------------------------------------------------------------------------|
+| Node      | Ready for node conditions ie ready, out of mem/disk, network, pids                  |
+|           | Pod's labels for tolerations on node taints                                         |
+|           | CPU/MEM utilization metrics, trips if over limits (default 80% CPU/MEM)             |
+| Namespace | Inactive or potentially unused namespaces                                           |
+| Pod       | Pod status and containers run counts                                                |
+|           | ServiceAccount presence                                                             |
+|           | CPU/MEM on container for CPU/MEM metrics, trip if over limits (default 80% CPU/MEM) |
+|           | Container missing tags or latest tag                                                |
+|           | Resources request/limits existence                                                  |
+|           | Probes liveness/readiness existence                                                 |
+|           | Named ports and their references                                                    |
+| Service   |                                                                                     |
+|           | Endpoints presence                                                                  |
+|           | Matching pods labels                                                                |
+|           | Named ports and references                                                          |
+
+
 ## The Command Line
 
 You can use Popeye standalone or using a spinach yaml config to tune the sanitizer.
