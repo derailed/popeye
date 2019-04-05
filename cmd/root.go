@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/derailed/popeye/internal/report"
 	"github.com/derailed/popeye/pkg"
@@ -54,8 +53,7 @@ func doIt(cmd *cobra.Command, args []string) {
 
 	zerolog.SetGlobalLevel(popConfig.Popeye.LogLevel)
 	clearScreen()
-	printHeader()
-	pkg.New(popConfig, os.Stdout).Sanitize()
+	pkg.NewPopeye(popConfig, os.Stdout).Sanitize()
 }
 
 func initPopeyeFlags() {
@@ -190,23 +188,4 @@ func clearScreen() {
 	if popConfig.ClearScreen {
 		fmt.Print("\033[H\033[2J")
 	}
-}
-
-func printHeader() {
-	fmt.Println()
-	for i, s := range report.Logo {
-		if i < len(report.Popeye) {
-			fmt.Printf(report.Colorize(report.Popeye[i], report.ColorAqua))
-			fmt.Printf(strings.Repeat(" ", 35))
-		} else {
-			if i == 4 {
-				fmt.Printf(report.Colorize("  Biffs`em and Buffs`em!", report.ColorLighSlate))
-				fmt.Printf(strings.Repeat(" ", 38))
-			} else {
-				fmt.Printf(strings.Repeat(" ", 62))
-			}
-		}
-		fmt.Println(report.Colorize(s, report.ColorLighSlate))
-	}
-	fmt.Println("")
 }

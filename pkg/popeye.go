@@ -40,24 +40,16 @@ type (
 	}
 )
 
-// New returns a new sanitizer.
-func New(c *config.Config, out io.Writer) *Popeye {
+// NewPopeye returns a new sanitizer.
+func NewPopeye(c *config.Config, out io.Writer) *Popeye {
 	return &Popeye{config: c, out: out}
-}
-
-func linters(c *k8s.Client) Linters {
-	return Linters{
-		"no":  linter.NewNode(c, &log.Logger),
-		"ns":  linter.NewNamespace(c, &log.Logger),
-		"po":  linter.NewPod(c, &log.Logger),
-		"svc": linter.NewService(c, &log.Logger),
-	}
 }
 
 // Sanitize scans a cluster for potential issues.
 func (p *Popeye) Sanitize() {
 	c := k8s.NewClient(p.config)
 
+	p.printHeader()
 	p.clusterInfo(c)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -82,6 +74,15 @@ func (p *Popeye) Sanitize() {
 		p.printReport(v, report.TitleForRes(k))
 	}
 	p.printSummary()
+}
+
+func linters(c *k8s.Client) Linters {
+	return Linters{
+		"no":  linter.NewNode(c, &log.Logger),
+		"ns":  linter.NewNamespace(c, &log.Logger),
+		"po":  linter.NewPod(c, &log.Logger),
+		"svc": linter.NewService(c, &log.Logger),
+	}
 }
 
 func (p *Popeye) printSummary() {
@@ -156,6 +157,28 @@ func (p *Popeye) clusterInfo(c *k8s.Client) {
 		}
 	}
 	report.Close(w)
+}
+
+func (p *Popeye) printHeader() {
+	w := bufio.NewWriter(p.out)
+	defer w.Flush()
+
+	fmt.Fprintln(w)
+	for i, s := range report.Logo {
+		if i < len(report.Popeye) {
+			fmt.Fprintf(w, report.Colorize(report.Popeye[i], report.ColorAqua))
+			fmt.Fprintf(w, strings.Repeat(" ", 35))
+		} else {
+			if i == 4 {
+				fmt.Fprintf(w, report.Colorize("  Biffs`em and Buffs`em!", report.ColorLighSlate))
+				fmt.Fprintf(w, strings.Repeat(" ", 38))
+			} else {
+				fmt.Fprintf(w, strings.Repeat(" ", 62))
+			}
+		}
+		fmt.Fprintln(w, report.Colorize(s, report.ColorLighSlate))
+	}
+	fmt.Fprintln(w, "")
 }
 
 func in(list []string, member string) bool {
