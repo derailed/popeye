@@ -15,6 +15,13 @@ configurations in any way!
 
 ---
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/derailed/popeye?)](https://goreportcard.com/report/github.com/derailed/popeye)
+[![Build Status](https://travis-ci.com/derailed/popeye.svg?branch=master)](https://travis-ci.com/derailed/popeye)
+[![release](https://img.shields.io/github/release-pre/derailed/popeye.svg)](https://github.com/derailed/popeye/releases)
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/popeye)
+
+---
+
 ## Installation
 
 Popeye is available on Linux, OSX and Windows platforms.
