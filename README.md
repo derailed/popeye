@@ -63,10 +63,13 @@ popeye help
 
 ## Screenshots
 
-1. Cluster D Score
-      <img src="assets/d_score.png"/>
-1. Cluster A Score
-      <img src="assets/screen_logs.png"/>
+### Cluster D Score
+
+<img src="assets/d_score.png"/>
+
+### Cluster A Score
+
+<img src="assets/a_score.png"/>
 
 
 ## Spinach YAML
