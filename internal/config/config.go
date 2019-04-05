@@ -19,7 +19,7 @@ const (
 
 // Config tracks Popeye configuration options.
 type Config struct {
-	Popeye      Popeye `yaml:"popeye`
+	Popeye      Popeye `yaml:"popeye"`
 	Spinach     string
 	ClearScreen bool
 	LogLevel    string

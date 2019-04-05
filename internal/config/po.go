@@ -4,8 +4,8 @@ const defaultRestarts = 5
 
 // Pod tracks pod configurations.
 type Pod struct {
-	Restarts int      `yaml:"restarts`
-	Limits   Limits   `yaml:"limits`
+	Restarts int      `yaml:"restarts"`
+	Limits   Limits   `yaml:"limits"`
 	Exclude  Excludes `yaml:"exclude"`
 }
 

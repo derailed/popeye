@@ -15,7 +15,7 @@ type Limits struct {
 type Node struct {
 	Excludes `yaml:"exclude"`
 
-	Limits Limits `yaml:"limits`
+	Limits Limits `yaml:"limits"`
 }
 
 // NewNode create a new node configuration.
