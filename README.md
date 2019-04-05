@@ -26,7 +26,9 @@ configurations in any way!
 
 Popeye is available on Linux, OSX and Windows platforms.
 
-* Binaries for Linux, Windows and Mac are available as tarballs in the [release](https://github.com/derailed/popeye/releases) page or via the SnapCraft link above.
+* Binaries for Linux, Windows and Mac are available as tarballs in
+  the [release](https://github.com/derailed/popeye/releases) page or
+  via the SnapCraft link above.
 
 * For OSX using Homebrew
 
@@ -54,9 +56,14 @@ Popeye is available on Linux, OSX and Windows platforms.
 
 ## Sanitizers
 
-Popeye scans your cluster for best practices and potential issues. Currently, Popeye only looks at nodes, namespaces, pods and services. More will come soon! We are hoping Kubernetes friends will pitch'in to make Popeye even better.
+Popeye scans your cluster for best practices and potential issues.
+Currently, Popeye only looks at nodes, namespaces, pods and services.
+More will come soon! We are hoping Kubernetes friends will pitch'in
+to make Popeye even better.
 
-The aim of the sanitizers is to pick up on misconfigurations ie things like ports mismatch, dead or unused resources, metrics utilization, probes, container images, RBAC rules, naked resources, etc...
+The aim of the sanitizers is to pick up on misconfigurations ie things
+like ports mismatch, dead or unused resources, metrics utilization,
+probes, container images, RBAC rules, naked resources, etc...
 
 Here is a list of sanitizers in place for the current release.
 
@@ -81,8 +88,8 @@ Here is a list of sanitizers in place for the current release.
 
 ## The Command Line
 
-You can use Popeye standalone or using a spinach yaml config to tune the sanitizer.
-Details of the spinach yaml are below.
+You can use Popeye standalone or using a spinach yaml config to
+tune the sanitizer. Details about the Popeye configuration file are below.
 
 ```shell
 # Dump version info
@@ -110,7 +117,7 @@ popeye help
 
 ## The SpinchYAML Configuration
 
-NOTE: This file will change as Popeye matures
+NOTE: This file will change as Popeye matures!
 
 ```yaml
 # A Popeye sample configuration file
@@ -150,7 +157,7 @@ popeye:
     # Excludes these services from the scan.
     exclude:
       - default/kubernetes
-      - blee/fred
+      - blee-ns/fred
 ```
 
 ## Supported Resources
