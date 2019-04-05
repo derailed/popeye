@@ -1,4 +1,4 @@
-<img src="assets/popeye_boat.png" align="right" width="250" heigh="auto">
+<img src="assets/popeye.png" align="right" width="250" heigh="auto">
 
 # Popeye - A Kubernetes Cluster Sanitizer
 
