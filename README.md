@@ -85,12 +85,14 @@ You can use Popeye standalone or using a spinach yaml config to tune the sanitiz
 Details of the spinach yaml are below.
 
 ```shell
+# Dump version info
+popeye version
 # Popeye a cluster using your current kubeconfig environment.
 popeye
-# Popeye using a spinach config file.
+# Popeye uses a spinach config file of course! aka spinchyaml!
 popeye -f spinach.yml
 # Popeye a cluster using a kubeconfig context.
-popeye --cluster fred
+popeye --context olive
 # Stuck?
 popeye help
 ```
@@ -106,7 +108,7 @@ popeye help
 <img src="assets/a_score.png"/>
 
 
-## Spinach YAML
+## The SpinchYAML Configuration
 
 NOTE: This file will change as Popeye matures
 
