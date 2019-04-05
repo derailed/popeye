@@ -75,6 +75,7 @@ type (
 		GetEndpoints(fqn string) (*v1.Endpoints, error)
 		GetPod(map[string]string) (*v1.Pod, error)
 		ListPods() (map[string]v1.Pod, error)
+		ListAllPods() (map[string]v1.Pod, error)
 		ListNS() ([]v1.Namespace, error)
 		InUseNamespaces(used []string)
 	}

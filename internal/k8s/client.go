@@ -24,9 +24,9 @@ type Client struct {
 
 	api kubernetes.Interface
 
-	pos map[string]v1.Pod
-	nss []v1.Namespace
-	eps map[string]v1.Endpoints
+	allPods       map[string]v1.Pod
+	allNamespaces map[string]v1.Namespace
+	eps           map[string]v1.Endpoints
 }
 
 // NewClient returns a dialable api server configuration.
@@ -209,56 +209,79 @@ func (c *Client) GetPod(sel map[string]string) (*v1.Pod, error) {
 
 // ListPods list all available pods.
 func (c *Client) ListPods() (map[string]v1.Pod, error) {
-	if len(c.pos) != 0 {
-		return c.pos, nil
-	}
-
-	ll, err := c.DialOrDie().CoreV1().Pods(c.Config.ActiveNamespace()).List(metav1.ListOptions{})
+	pods, err := c.ListAllPods()
 	if err != nil {
 		return nil, err
 	}
 
-	c.pos = make(map[string]v1.Pod, len(ll.Items))
-	for _, po := range ll.Items {
+	res := make(map[string]v1.Pod, len(pods))
+	for fqn, po := range pods {
 		if !c.Config.ExcludedNS(po.Namespace) {
-			fqn := po.Namespace + "/" + po.Name
-			c.pos[fqn] = po
+			res[fqn] = po
 		}
 	}
 
-	return c.pos, nil
+	return res, nil
+}
+
+// ListAllPods fetch all pods on the cluster.
+func (c *Client) ListAllPods() (map[string]v1.Pod, error) {
+	if len(c.allPods) != 0 {
+		return c.allPods, nil
+	}
+
+	ll, err := c.DialOrDie().CoreV1().Pods("").List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	c.allPods = make(map[string]v1.Pod, len(ll.Items))
+	for _, po := range ll.Items {
+		fqn := po.Namespace + "/" + po.Name
+		c.allPods[fqn] = po
+	}
+
+	return c.allPods, nil
 }
 
 // ListNS lists all available namespaces.
 func (c *Client) ListNS() ([]v1.Namespace, error) {
-	if len(c.nss) != 0 {
-		return c.nss, nil
+	nss, err := c.ListAllNS()
+	if err != nil {
+		return nil, nil
 	}
 
-	var (
-		nn  *v1.NamespaceList
-		err error
-	)
-	if ns := c.Config.ActiveNamespace(); ns == "" {
-		nn, err = c.DialOrDie().CoreV1().Namespaces().List(metav1.ListOptions{})
-	} else {
-		var n *v1.Namespace
-		n, err = c.DialOrDie().CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
-		nn = &v1.NamespaceList{Items: []v1.Namespace{*n}}
+	if c.Config.ActiveNamespace() != "" {
+		return []v1.Namespace{nss[c.Config.ActiveNamespace()]}, nil
 	}
 
+	res := make([]v1.Namespace, 0, len(nss))
+	for n, ns := range nss {
+		if !c.Config.ExcludedNS(n) {
+			res = append(res, ns)
+		}
+	}
+
+	return res, nil
+}
+
+// ListAllNS fetch all namespaces on this cluster.
+func (c *Client) ListAllNS() (map[string]v1.Namespace, error) {
+	if len(c.allNamespaces) != 0 {
+		return c.allNamespaces, nil
+	}
+
+	nn, err := c.DialOrDie().CoreV1().Namespaces().List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	c.nss = make([]v1.Namespace, 0, len(nn.Items))
+	c.allNamespaces = make(map[string]v1.Namespace, len(nn.Items))
 	for _, ns := range nn.Items {
-		if !c.Config.ExcludedNS(ns.Name) {
-			c.nss = append(c.nss, ns)
-		}
+		c.allNamespaces[ns.Name] = ns
 	}
 
-	return c.nss, nil
+	return c.allNamespaces, nil
 }
 
 func isSystemNS(ns string) bool {

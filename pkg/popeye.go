@@ -93,7 +93,7 @@ func (p *Popeye) printSummary() {
 	{
 		s := p.totalScore / p.sectionCount
 		fmt.Fprintf(w, "Your cluster score: %d -- %s\n", s, report.Grade(s))
-		for _, l := range strings.Split(report.Badge(s), "\n") {
+		for _, l := range report.Badge(s) {
 			fmt.Fprintf(w, "%s%s\n", strings.Repeat(" ", 60), l)
 		}
 	}

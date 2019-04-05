@@ -133,6 +133,25 @@ func (mock *MockClient) InUseNamespaces(_param0 []string) {
 	pegomock.GetGenericMockFrom(mock).Invoke("InUseNamespaces", params, []reflect.Type{})
 }
 
+func (mock *MockClient) ListAllPods() (map[string]v1.Pod, error) {
+	if mock == nil {
+		panic("mock must not be nil. Use myMock := NewMockClient().")
+	}
+	params := []pegomock.Param{}
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListAllPods", params, []reflect.Type{reflect.TypeOf((*map[string]v1.Pod)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.Pod
+	var ret1 error
+	if len(result) != 0 {
+		if result[0] != nil {
+			ret0 = result[0].(map[string]v1.Pod)
+		}
+		if result[1] != nil {
+			ret1 = result[1].(error)
+		}
+	}
+	return ret0, ret1
+}
+
 func (mock *MockClient) ListEndpoints() (map[string]v1.Endpoints, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockClient().")
@@ -497,6 +516,23 @@ func (c *Client_InUseNamespaces_OngoingVerification) GetAllCapturedArguments() (
 		}
 	}
 	return
+}
+
+func (verifier *VerifierClient) ListAllPods() *Client_ListAllPods_OngoingVerification {
+	params := []pegomock.Param{}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListAllPods", params, verifier.timeout)
+	return &Client_ListAllPods_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+}
+
+type Client_ListAllPods_OngoingVerification struct {
+	mock              *MockClient
+	methodInvocations []pegomock.MethodInvocation
+}
+
+func (c *Client_ListAllPods_OngoingVerification) GetCapturedArguments() {
+}
+
+func (c *Client_ListAllPods_OngoingVerification) GetAllCapturedArguments() {
 }
 
 func (verifier *VerifierClient) ListEndpoints() *Client_ListEndpoints_OngoingVerification {

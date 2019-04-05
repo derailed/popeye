@@ -21,7 +21,7 @@ const (
 	ColorYellow    Color = 226
 	ColorYellow2   Color = 190
 	ColorGreenPale Color = 114
-	ColorGreen     Color = 46
+	ColorGreen     Color = 82
 )
 
 // Color tracks the output color.

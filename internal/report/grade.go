@@ -21,15 +21,25 @@ func Grade(score int) string {
 }
 
 // Badge returns a popeye grade.
-func Badge(score int) string {
-	b := strings.Join(grader, "\n")
-
-	if score < 70 {
-		b = strings.Replace(b, "a", "O", 1)
-		b = strings.Replace(b, "o", "X", 3)
+func Badge(score int) []string {
+	ic := make([]string, len(grader))
+	for i, l := range grader {
+		switch i {
+		case 0, 2:
+			if score < 70 {
+				l = strings.Replace(l, "o", "S", 1)
+			}
+		case 1:
+			l = strings.Replace(l, "K", Grade(score), 1)
+		case 3:
+			if score < 70 {
+				l = strings.Replace(l, "a", "O", 1)
+			}
+		}
+		ic[i] = Colorize(l, colorForScore(score))
 	}
 
-	return Colorize(strings.Replace(b, "K", Grade(score), 1), colorForScore(score))
+	return ic
 }
 
 var grader = []string{

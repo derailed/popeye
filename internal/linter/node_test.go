@@ -7,7 +7,6 @@ import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
 	m "github.com/petergtz/pegomock"
-	pegomock "github.com/petergtz/pegomock"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +19,10 @@ func TestNoLinter(t *testing.T) {
 	m.When(mks.ListNodes()).ThenReturn([]v1.Node{
 		makeCondNode("n1", v1.NodeReady, v1.ConditionFalse),
 		makeNode("n2"),
+	}, nil)
+	m.When(mks.ListAllPods()).ThenReturn(map[string]v1.Pod{
+		"p1": makePod("p1"),
+		"p2": makePod("p2"),
 	}, nil)
 	m.When(mks.ClusterHasMetrics()).ThenReturn(true)
 	m.When(mks.FetchNodesMetrics()).ThenReturn([]mv1beta1.NodeMetrics{
@@ -34,7 +37,8 @@ func TestNoLinter(t *testing.T) {
 	assert.Equal(t, 1, len(l.Issues()["n1"]))
 	assert.Equal(t, 0, len(l.Issues()["n2"]))
 
-	mks.VerifyWasCalled(pegomock.Times(1)).ListNodes()
+	mks.VerifyWasCalledOnce().ListNodes()
+	mks.VerifyWasCalledOnce().ListAllPods()
 }
 
 func TestNodeLint(t *testing.T) {
@@ -166,15 +170,10 @@ func TestNodeCheckTaints(t *testing.T) {
 		},
 	}
 
-	mks := NewMockClient()
-	m.When(mks.ListPods()).ThenReturn(map[string]v1.Pod{
-		"default/p1": makePod("p1"),
-		"default/p2": makePod("p2"),
-	}, nil)
-
 	for _, u := range uu {
-		l := NewNode(mks, nil)
+		l := NewNode(nil, nil)
 		l.checkTaints(u.no, u.tt)
+
 		assert.Equal(t, u.issues, len(l.Issues()[u.no.Name]))
 	}
 }

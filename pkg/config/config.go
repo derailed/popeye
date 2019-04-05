@@ -43,14 +43,14 @@ func New() *Config {
 
 // Init a popeye configuration from file or default if no file given.
 func (c *Config) Init(f *genericclioptions.ConfigFlags) error {
-	var cfg Config
+	c.flags = f
 
+	var cfg Config
 	if len(c.Spinach) != 0 {
 		f, err := ioutil.ReadFile(c.Spinach)
 		if err != nil {
 			return err
 		}
-
 		if err := yaml.Unmarshal(f, &cfg); err != nil {
 			return err
 		}
