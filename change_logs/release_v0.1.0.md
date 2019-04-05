@@ -12,14 +12,15 @@ Also if you dig this tool, please make some noise on social! [@kitesurfer](https
 
 ## Change Logs
 
-### Initial Drop!
 
+### Initial Release
+
+Popeye is now in town! What's your cluster score?
 
 ---
 
 ## Resolved Bugs
 
-+
 
 ---
 
