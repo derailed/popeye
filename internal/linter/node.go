@@ -2,7 +2,6 @@ package linter
 
 import (
 	"context"
-	"fmt"
 	"math"
 
 	"github.com/derailed/popeye/internal/k8s"
@@ -79,7 +78,7 @@ func (n *Node) fetchPodTolerations() tolerations {
 	if err != nil {
 		n.addIssuef("", ErrorLevel, "Unable to list all pods %s", err)
 	}
-	fmt.Println(len(pods))
+
 	for _, po := range pods {
 		for _, t := range po.Spec.Tolerations {
 			tt[mkKey(t.Key, t.Value)] = struct{}{}
