@@ -78,6 +78,9 @@ func Write(w io.Writer, l linter.Level, indent int, msg string) {
 
 	if indent == 1 {
 		dots := reportWidth - len(msg) - tabSize*indent - 3
+		if dots < 0 {
+			dots = 1
+		}
 		msg = Colorize(msg, colorForLevel(l)) + Colorize(strings.Repeat(".", dots), ColorGray)
 		fmt.Fprintf(w, "%s· %s%s\n", spacer, msg, EmojiForLevel(l))
 		return
