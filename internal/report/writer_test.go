@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"testing"
 
 	"github.com/derailed/popeye/internal/linter"
@@ -36,6 +37,11 @@ func TestWrite(t *testing.T) {
 			"Yo mama",
 			1,
 			"  · \x1b[38;5;155;mYo mama\x1b[0m\x1b[38;5;250;m....................................................................\x1b[0m✅\n",
+		},
+		{
+			strings.Repeat("#", reportWidth),
+			1,
+			"  · \x1b[38;5;155;m" + strings.Repeat("#", reportWidth) + "\x1b[0m\x1b[38;5;250;m.\x1b[0m✅\n",
 		},
 		{
 			"Yo mama",
