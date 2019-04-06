@@ -78,6 +78,7 @@ type (
 		ListPods() (map[string]v1.Pod, error)
 		ListAllPods() (map[string]v1.Pod, error)
 		ListNS() ([]v1.Namespace, error)
+		ListAllNS() (map[string]v1.Namespace, error)
 		InUseNamespaces(used []string)
 		ListRBs() (map[string]rbacv1.RoleBinding, error)
 		ListCRBs() (map[string]rbacv1.ClusterRoleBinding, error)

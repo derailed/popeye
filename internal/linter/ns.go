@@ -21,7 +21,7 @@ func NewNamespace(c Client, l *zerolog.Logger) *Namespace {
 
 // Lint a namespace
 func (n *Namespace) Lint(ctx context.Context) error {
-	available, err := n.client.ListNS()
+	available, err := n.client.ListAllNS()
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func (n *Namespace) Lint(ctx context.Context) error {
 	return nil
 }
 
-func (n *Namespace) lint(nn []v1.Namespace, used []string) {
+func (n *Namespace) lint(nn map[string]v1.Namespace, used []string) {
 	for _, ns := range nn {
 		n.initIssues(ns.Name)
 		if n.checkActive(ns) && !in(excludedSystemNS, ns.Name) {

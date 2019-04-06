@@ -13,9 +13,9 @@ import (
 
 func TestNsLinter(t *testing.T) {
 	mks := NewMockClient()
-	m.When(mks.ListNS()).ThenReturn([]v1.Namespace{
-		makeNS("ns1", true),
-		makeNS("ns2", false),
+	m.When(mks.ListAllNS()).ThenReturn(map[string]v1.Namespace{
+		"ns1": makeNS("ns1", true),
+		"ns2": makeNS("ns2", false),
 	}, nil)
 
 	l := NewNamespace(mks, nil)
@@ -29,20 +29,20 @@ func TestNsLinter(t *testing.T) {
 
 func TestNsLint(t *testing.T) {
 	uu := []struct {
-		nn     []v1.Namespace
+		nn     map[string]v1.Namespace
 		issues int
 	}{
 		{
-			[]v1.Namespace{
-				makeNS("ns1", true),
-				makeNS("ns2", true),
+			map[string]v1.Namespace{
+				"ns1": makeNS("ns1", true),
+				"ns2": makeNS("ns2", true),
 			},
 			0,
 		},
 		{
-			[]v1.Namespace{
-				makeNS("ns1", true),
-				makeNS("ns2", false),
+			map[string]v1.Namespace{
+				"ns1": makeNS("ns1", true),
+				"ns2": makeNS("ns2", false),
 			},
 			1,
 		},
