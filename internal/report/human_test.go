@@ -12,6 +12,8 @@ func TestTitleForRes(t *testing.T) {
 		"no":   "NODES",
 		"svc":  "SERVICES",
 		"blee": "BLEES",
+		"sa":   "SERVICEACCOUNTS",
+		"ns":   "NAMESPACES",
 	}
 
 	for k, e := range uu {

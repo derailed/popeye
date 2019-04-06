@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/derailed/popeye/internal/linter"
+	runewidth "github.com/mattn/go-runewidth"
 )
 
 const (
@@ -37,11 +38,12 @@ func Close(w io.Writer) {
 func Error(w io.Writer, msg string, err error) {
 	fmt.Fprintln(w)
 	msg = msg + ": " + err.Error()
-	buff := make([]string, 0, len(msg)%reportWidth)
+
 	width := reportWidth - 3
-	for i := 0; len(msg) > width; i += width {
-		buff = append(buff, msg[i:i+width])
-		msg = msg[i+width:]
+	buff := make([]string, 0, len(msg)/width)
+	for i := 0; len(msg) > width; i++ {
+		buff = append(buff, msg[:width])
+		msg = msg[width:]
 	}
 	buff = append(buff, msg)
 	fmt.Fprintf(w, "💥 "+Colorize(strings.Join(buff, "\n"), ColorRed))
@@ -77,10 +79,9 @@ func Write(w io.Writer, l linter.Level, indent int, msg string) {
 	spacer := strings.Repeat(" ", tabSize*indent)
 
 	if indent == 1 {
-		dots := reportWidth - len(msg) - tabSize*indent - 3
-		if dots < 0 {
-			dots = 1
-		}
+		maxWidth := reportWidth - tabSize*indent - 3
+		msg = truncate(msg, maxWidth)
+		dots := maxWidth - len(msg)
 		msg = Colorize(msg, colorForLevel(l)) + Colorize(strings.Repeat(".", dots), ColorGray)
 		fmt.Fprintf(w, "%s· %s%s\n", spacer, msg, EmojiForLevel(l))
 		return
@@ -88,4 +89,9 @@ func Write(w io.Writer, l linter.Level, indent int, msg string) {
 
 	msg = Colorize(msg, colorForLevel(l))
 	fmt.Fprintf(w, "%s%s %s\n", spacer, EmojiForLevel(l), msg)
+}
+
+// Truncate a string to the given l and suffix ellipsis if needed.
+func truncate(str string, width int) string {
+	return runewidth.Truncate(str, width, "...")
 }

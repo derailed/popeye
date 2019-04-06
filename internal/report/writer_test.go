@@ -20,11 +20,26 @@ func TestComment(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
-	w := bytes.NewBufferString("")
+	uu := []struct {
+		err error
+		e   string
+	}{
+		{
+			fmt.Errorf("crapola"),
+			"\n💥 \x1b[38;5;196;mblee: crapola\x1b[0m\n",
+		},
+		{
+			fmt.Errorf(strings.Repeat("#", 200)),
+			"\n💥 \x1b[38;5;196;mblee: #######################################################################\n#############################################################################\n####################################################\x1b[0m\n",
+		},
+	}
 
-	Error(w, "blee", fmt.Errorf("crapola"))
+	for _, u := range uu {
+		w := bytes.NewBufferString("")
+		Error(w, "blee", u.err)
 
-	assert.Equal(t, "\n💥 \x1b[38;5;196;mblee: crapola\x1b[0m\n", w.String())
+		assert.Equal(t, u.e, w.String())
+	}
 }
 
 func TestWrite(t *testing.T) {
@@ -41,7 +56,7 @@ func TestWrite(t *testing.T) {
 		{
 			strings.Repeat("#", reportWidth),
 			1,
-			"  · \x1b[38;5;155;m" + strings.Repeat("#", reportWidth) + "\x1b[0m\x1b[38;5;250;m.\x1b[0m✅\n",
+			"  · \x1b[38;5;155;m" + strings.Repeat("#", reportWidth-8) + "...\x1b[0m\x1b[38;5;250;m\x1b[0m✅\n",
 		},
 		{
 			"Yo mama",
@@ -122,4 +137,20 @@ func TestOpenClose(t *testing.T) {
 	Close(w)
 
 	assert.Equal(t, "\n\x1b[38;5;75;mfred\x1b[0m\n\x1b[38;5;75;m┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅\x1b[0m\n\n", w.String())
+}
+
+func TestTruncate(t *testing.T) {
+	uu := []struct {
+		s string
+		l int
+		e string
+	}{
+		{"fred", 3, "..."},
+		{"freddy", 5, "fr..."},
+		{"fred", 10, "fred"},
+	}
+
+	for _, u := range uu {
+		assert.Equal(t, u.e, truncate(u.s, u.l))
+	}
 }
