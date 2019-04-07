@@ -8,6 +8,7 @@ import (
 	"github.com/derailed/popeye/pkg"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -53,7 +54,7 @@ func doIt(cmd *cobra.Command, args []string) {
 
 	zerolog.SetGlobalLevel(popConfig.Popeye.LogLevel)
 	clearScreen()
-	pkg.NewPopeye(popConfig, os.Stdout).Sanitize()
+	pkg.NewPopeye(popConfig, &log.Logger, os.Stdout).Sanitize(true)
 }
 
 func initPopeyeFlags() {

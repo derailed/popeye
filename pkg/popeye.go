@@ -12,7 +12,7 @@ import (
 	"github.com/derailed/popeye/internal/linter"
 	"github.com/derailed/popeye/internal/report"
 	"github.com/derailed/popeye/pkg/config"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 )
 
 type (
@@ -37,24 +37,27 @@ type (
 		totalScore   int
 		sectionCount int
 		out          io.Writer
+		log          *zerolog.Logger
 	}
 )
 
 // NewPopeye returns a new sanitizer.
-func NewPopeye(c *config.Config, out io.Writer) *Popeye {
-	return &Popeye{config: c, out: out}
+func NewPopeye(c *config.Config, log *zerolog.Logger, out io.Writer) *Popeye {
+	return &Popeye{config: c, out: out, log: log}
 }
 
 // Sanitize scans a cluster for potential issues.
-func (p *Popeye) Sanitize() {
+func (p *Popeye) Sanitize(showHeader bool) {
 	c := k8s.NewClient(p.config)
 
-	p.printHeader()
-	p.clusterInfo(c)
+	if showHeader {
+		p.printHeader()
+		p.clusterInfo(c)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	for k, v := range linters(c) {
+	for k, v := range linters(c, p.log) {
 		if !in(p.config.Sections, k) {
 			continue
 		}
@@ -76,13 +79,13 @@ func (p *Popeye) Sanitize() {
 	p.printSummary()
 }
 
-func linters(c *k8s.Client) Linters {
+func linters(c *k8s.Client, log *zerolog.Logger) Linters {
 	return Linters{
-		"no":  linter.NewNode(c, &log.Logger),
-		"ns":  linter.NewNamespace(c, &log.Logger),
-		"po":  linter.NewPod(c, &log.Logger),
-		"svc": linter.NewService(c, &log.Logger),
-		"sa":  linter.NewSA(c, &log.Logger),
+		"no":  linter.NewNode(c, log),
+		"ns":  linter.NewNamespace(c, log),
+		"po":  linter.NewPod(c, log),
+		"svc": linter.NewService(c, log),
+		"sa":  linter.NewSA(c, log),
 	}
 }
 
