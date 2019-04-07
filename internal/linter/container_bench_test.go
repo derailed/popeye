@@ -1,19 +1,10 @@
 package linter
 
 import (
-	"fmt"
 	"testing"
 
-	m "github.com/petergtz/pegomock"
 	v1 "k8s.io/api/core/v1"
 )
-
-func TestSetup(t *testing.T) {
-	m.RegisterMockTestingT(t)
-	m.RegisterMockFailHandler(func(m string, i ...int) {
-		fmt.Println("Boom!", m, i)
-	})
-}
 
 func BenchmarkContainerCheckImageTag(b *testing.B) {
 	co := v1.Container{

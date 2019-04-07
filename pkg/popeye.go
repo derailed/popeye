@@ -57,12 +57,17 @@ func (p *Popeye) Sanitize(showHeader bool) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	for k, v := range linters(c, p.log) {
+	for k, l := range linters(c, p.log) {
 		if !in(p.config.Sections, k) {
 			continue
 		}
 
-		if err := v.Lint(ctx); err != nil {
+		// Skip no check if active namespace is set.
+		if k == "no" && p.config.ActiveNamespace() != "" {
+			continue
+		}
+
+		if err := l.Lint(ctx); err != nil {
 			w := bufio.NewWriter(p.out)
 			defer w.Flush()
 			report.Open(w, report.TitleForRes(k), nil)
@@ -72,9 +77,7 @@ func (p *Popeye) Sanitize(showHeader bool) {
 			report.Close(w)
 			continue
 		}
-
-		p.sectionCount++
-		p.printReport(v, report.TitleForRes(k))
+		p.printReport(l, report.TitleForRes(k))
 	}
 	p.printSummary()
 }
@@ -86,6 +89,7 @@ func linters(c *k8s.Client, log *zerolog.Logger) Linters {
 		"po":  linter.NewPod(c, log),
 		"svc": linter.NewService(c, log),
 		"sa":  linter.NewSA(c, log),
+		"cm":  linter.NewCM(c, log),
 	}
 }
 
@@ -122,6 +126,7 @@ func (p *Popeye) printReport(r Reporter, section string) {
 			issues := r.Issues()[res]
 			if len(issues) == 0 {
 				if level <= linter.OkLevel {
+					p.sectionCount++
 					any = true
 					report.Write(w, linter.OkLevel, 1, res)
 				}
@@ -130,6 +135,7 @@ func (p *Popeye) printReport(r Reporter, section string) {
 			max := r.MaxSeverity(res)
 			if level <= max {
 				any = true
+				p.sectionCount++
 				report.Write(w, max, 1, res)
 			}
 			report.Dump(w, level, issues...)

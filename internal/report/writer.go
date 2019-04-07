@@ -38,15 +38,15 @@ func Close(w io.Writer) {
 func Error(w io.Writer, msg string, err error) {
 	fmt.Fprintln(w)
 	msg = msg + ": " + err.Error()
-
 	width := reportWidth - 3
-	buff := make([]string, 0, len(msg)/width)
+	fmt.Fprintf(w, "💥 ")
 	for i := 0; len(msg) > width; i++ {
-		buff = append(buff, msg[:width])
+		fmt.Fprintln(w, Colorize(msg[:width], ColorRed))
 		msg = msg[width:]
 	}
-	buff = append(buff, msg)
-	fmt.Fprintf(w, "💥 "+Colorize(strings.Join(buff, "\n"), ColorRed))
+	if len(msg) > 0 {
+		fmt.Fprint(w, Colorize(msg, ColorRed))
+	}
 	fmt.Fprintln(w)
 }
 
@@ -78,9 +78,9 @@ func Dump(w io.Writer, l linter.Level, issues ...linter.Issue) {
 func Write(w io.Writer, l linter.Level, indent int, msg string) {
 	spacer := strings.Repeat(" ", tabSize*indent)
 
+	maxWidth := reportWidth - tabSize*indent - 3
+	msg = truncate(msg, maxWidth)
 	if indent == 1 {
-		maxWidth := reportWidth - tabSize*indent - 3
-		msg = truncate(msg, maxWidth)
 		dots := maxWidth - len(msg)
 		msg = Colorize(msg, colorForLevel(l)) + Colorize(strings.Repeat(".", dots), ColorGray)
 		fmt.Fprintf(w, "%s· %s%s\n", spacer, msg, EmojiForLevel(l))

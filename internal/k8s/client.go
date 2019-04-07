@@ -25,11 +25,12 @@ type Client struct {
 
 	api kubernetes.Interface
 
-	allPods       map[string]v1.Pod
-	allNamespaces map[string]v1.Namespace
-	eps           map[string]v1.Endpoints
-	allCRBs       map[string]rbacv1.ClusterRoleBinding
-	allRBs        map[string]rbacv1.RoleBinding
+	allPods map[string]v1.Pod
+	allNSs  map[string]v1.Namespace
+	eps     map[string]v1.Endpoints
+	allCRBs map[string]rbacv1.ClusterRoleBinding
+	allRBs  map[string]rbacv1.RoleBinding
+	allCMs  map[string]v1.ConfigMap
 }
 
 // NewClient returns a dialable api server configuration.
@@ -118,8 +119,8 @@ func (c *Client) InUseNamespaces(nss []string) {
 	}
 }
 
-// ListRBs returns all RoleBindings.
-func (c *Client) ListRBs() (map[string]rbacv1.RoleBinding, error) {
+// ListAllRBs returns all RoleBindings.
+func (c *Client) ListAllRBs() (map[string]rbacv1.RoleBinding, error) {
 	if c.allRBs != nil {
 		return c.allRBs, nil
 	}
@@ -131,14 +132,31 @@ func (c *Client) ListRBs() (map[string]rbacv1.RoleBinding, error) {
 
 	c.allRBs = make(map[string]rbacv1.RoleBinding, len(ll.Items))
 	for _, rb := range ll.Items {
-		c.allRBs[rb.Namespace+"/"+rb.Name] = rb
+		c.allRBs[fqn(rb.Namespace, rb.Name)] = rb
 	}
 
 	return c.allRBs, nil
 }
 
-// ListCRBs returns a ClusterRoleBindings.
-func (c *Client) ListCRBs() (map[string]rbacv1.ClusterRoleBinding, error) {
+// ListRBs lists all available RBs in a given namespace.
+func (c *Client) ListRBs() (map[string]rbacv1.RoleBinding, error) {
+	rbs, err := c.ListAllRBs()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[string]rbacv1.RoleBinding, len(rbs))
+	for fqn, rb := range rbs {
+		if c.matchActiveNS(rb.Namespace) && !c.Config.ExcludedNS(rb.Namespace) {
+			res[fqn] = rb
+		}
+	}
+
+	return res, nil
+}
+
+// ListAllCRBs returns a ClusterRoleBindings.
+func (c *Client) ListAllCRBs() (map[string]rbacv1.ClusterRoleBinding, error) {
 	if c.allCRBs != nil {
 		return c.allCRBs, nil
 	}
@@ -170,8 +188,7 @@ func (c *Client) ListEndpoints() (map[string]v1.Endpoints, error) {
 	c.eps = make(map[string]v1.Endpoints, len(ll.Items))
 	for _, ep := range ll.Items {
 		if !c.Config.ExcludedNS(ep.Namespace) {
-			fqn := ep.Namespace + "/" + ep.Name
-			c.eps[fqn] = ep
+			c.eps[fqn(ep.Namespace, ep.Name)] = ep
 		}
 	}
 
@@ -201,7 +218,7 @@ func (c *Client) ListServices() ([]v1.Service, error) {
 
 	svcs := make([]v1.Service, 0, len(ll.Items))
 	for _, svc := range ll.Items {
-		if !c.Config.ExcludedNS(svc.Namespace) {
+		if c.matchActiveNS(svc.Namespace) && !c.Config.ExcludedNS(svc.Namespace) {
 			svcs = append(svcs, svc)
 		}
 	}
@@ -257,7 +274,7 @@ func (c *Client) ListPods() (map[string]v1.Pod, error) {
 
 	res := make(map[string]v1.Pod, len(pods))
 	for fqn, po := range pods {
-		if !c.Config.ExcludedNS(po.Namespace) {
+		if c.matchActiveNS(po.Namespace) && !c.Config.ExcludedNS(po.Namespace) {
 			res[fqn] = po
 		}
 	}
@@ -278,28 +295,66 @@ func (c *Client) ListAllPods() (map[string]v1.Pod, error) {
 
 	c.allPods = make(map[string]v1.Pod, len(ll.Items))
 	for _, po := range ll.Items {
-		fqn := po.Namespace + "/" + po.Name
-		c.allPods[fqn] = po
+		c.allPods[fqn(po.Namespace, po.Name)] = po
 	}
 
 	return c.allPods, nil
 }
 
+// ListCMs list all included ConfigMaps.
+func (c *Client) ListCMs() (map[string]v1.ConfigMap, error) {
+	cms, err := c.ListAllCMs()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[string]v1.ConfigMap, len(cms))
+	for fqn, cm := range cms {
+		if c.matchActiveNS(cm.Namespace) && !c.Config.ExcludedNS(cm.Namespace) {
+			res[fqn] = cm
+		}
+	}
+
+	return res, nil
+}
+
+func (c *Client) matchActiveNS(ns string) bool {
+	if c.Config.ActiveNamespace() == "" {
+		return true
+	}
+	return ns == c.Config.ActiveNamespace()
+}
+
+// ListAllCMs fetch all configmaps on the cluster.
+func (c *Client) ListAllCMs() (map[string]v1.ConfigMap, error) {
+	if len(c.allCMs) != 0 {
+		return c.allCMs, nil
+	}
+
+	ll, err := c.DialOrDie().CoreV1().ConfigMaps("").List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	c.allCMs = make(map[string]v1.ConfigMap, len(ll.Items))
+	for _, cm := range ll.Items {
+		c.allCMs[fqn(cm.Namespace, cm.Name)] = cm
+	}
+
+	return c.allCMs, nil
+}
+
 // ListNS lists all available namespaces.
-func (c *Client) ListNS() ([]v1.Namespace, error) {
+func (c *Client) ListNS() (map[string]v1.Namespace, error) {
 	nss, err := c.ListAllNS()
 	if err != nil {
 		return nil, nil
 	}
 
-	if c.Config.ActiveNamespace() != "" {
-		return []v1.Namespace{nss[c.Config.ActiveNamespace()]}, nil
-	}
-
-	res := make([]v1.Namespace, 0, len(nss))
+	res := make(map[string]v1.Namespace, len(nss))
 	for n, ns := range nss {
-		if !c.Config.ExcludedNS(n) {
-			res = append(res, ns)
+		if c.matchActiveNS(n) && !c.Config.ExcludedNS(n) {
+			res[n] = ns
 		}
 	}
 
@@ -308,8 +363,8 @@ func (c *Client) ListNS() ([]v1.Namespace, error) {
 
 // ListAllNS fetch all namespaces on this cluster.
 func (c *Client) ListAllNS() (map[string]v1.Namespace, error) {
-	if len(c.allNamespaces) != 0 {
-		return c.allNamespaces, nil
+	if len(c.allNSs) != 0 {
+		return c.allNSs, nil
 	}
 
 	nn, err := c.DialOrDie().CoreV1().Namespaces().List(metav1.ListOptions{})
@@ -317,12 +372,19 @@ func (c *Client) ListAllNS() (map[string]v1.Namespace, error) {
 		return nil, err
 	}
 
-	c.allNamespaces = make(map[string]v1.Namespace, len(nn.Items))
+	c.allNSs = make(map[string]v1.Namespace, len(nn.Items))
 	for _, ns := range nn.Items {
-		c.allNamespaces[ns.Name] = ns
+		c.allNSs[ns.Name] = ns
 	}
 
-	return c.allNamespaces, nil
+	return c.allNSs, nil
+}
+
+// ----------------------------------------------------------------------------
+// Helpers...
+
+func fqn(ns, n string) string {
+	return ns + "/" + n
 }
 
 func isSystemNS(ns string) bool {

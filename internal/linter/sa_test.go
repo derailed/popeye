@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	m "github.com/petergtz/pegomock"
+	pegomock "github.com/petergtz/pegomock"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -13,8 +14,8 @@ import (
 
 func TestSALint(t *testing.T) {
 	mkc := NewMockClient()
-	m.When(mkc.ActiveNamespace()).ThenReturn("default")
-	m.When(mkc.ListCRBs()).ThenReturn(map[string]rbacv1.ClusterRoleBinding{
+	m.When(mkc.ActiveNamespace()).ThenReturn("")
+	m.When(mkc.ListAllCRBs()).ThenReturn(map[string]rbacv1.ClusterRoleBinding{
 		"crb1": makeCrb("crb1", "sa1"),
 	}, nil)
 	m.When(mkc.ListRBs()).ThenReturn(map[string]rbacv1.RoleBinding{
@@ -29,7 +30,7 @@ func TestSALint(t *testing.T) {
 	s.Lint(context.Background())
 
 	assert.Equal(t, 1, len(s.Issues()["default/sa1"]))
-	mkc.VerifyWasCalledOnce().ListCRBs()
+	mkc.VerifyWasCalledOnce().ListAllCRBs()
 	mkc.VerifyWasCalledOnce().ListRBs()
 	mkc.VerifyWasCalledOnce().ListAllPods()
 }
@@ -57,13 +58,19 @@ func TestSACheckDead(t *testing.T) {
 		},
 	}
 
+	mks := NewMockClient()
+	m.When(mks.ExcludedNS("default")).ThenReturn(false)
 	for _, u := range uu {
-		s := NewSA(nil, nil)
+		s := NewSA(mks, nil)
 		s.checkDead(u.pods, u.crbs, u.rbs)
 
 		assert.Equal(t, u.issue, len(s.Issues()["default/sa2"]))
 	}
+	mks.VerifyWasCalled(pegomock.Times(6)).ExcludedNS("default")
 }
+
+// ----------------------------------------------------------------------------
+// Helpers...
 
 func makePodSa(s, sa string) v1.Pod {
 	po := makePod(s)

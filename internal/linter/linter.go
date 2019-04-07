@@ -77,11 +77,14 @@ type (
 		GetPod(map[string]string) (*v1.Pod, error)
 		ListPods() (map[string]v1.Pod, error)
 		ListAllPods() (map[string]v1.Pod, error)
-		ListNS() ([]v1.Namespace, error)
+		ListNS() (map[string]v1.Namespace, error)
 		ListAllNS() (map[string]v1.Namespace, error)
 		InUseNamespaces(used []string)
 		ListRBs() (map[string]rbacv1.RoleBinding, error)
-		ListCRBs() (map[string]rbacv1.ClusterRoleBinding, error)
+		ListAllRBs() (map[string]rbacv1.RoleBinding, error)
+		ListAllCRBs() (map[string]rbacv1.ClusterRoleBinding, error)
+		ListCMs() (map[string]v1.ConfigMap, error)
+		ListAllCMs() (map[string]v1.ConfigMap, error)
 	}
 
 	// Config represents a Popeye configuration.
@@ -93,6 +96,7 @@ type (
 
 		RestartsLimit() int
 		ActiveNamespace() string
+		ExcludedNS(string) bool
 	}
 
 	// Issues a collection of linter issues.

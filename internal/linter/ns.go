@@ -7,8 +7,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-var excludedSystemNS = []string{"kube-public"}
-
 // Namespace represents a Namespace linter.
 type Namespace struct {
 	*Linter
@@ -21,7 +19,7 @@ func NewNamespace(c Client, l *zerolog.Logger) *Namespace {
 
 // Lint a namespace
 func (n *Namespace) Lint(ctx context.Context) error {
-	available, err := n.client.ListAllNS()
+	available, err := n.client.ListNS()
 	if err != nil {
 		return err
 	}
@@ -35,8 +33,11 @@ func (n *Namespace) Lint(ctx context.Context) error {
 
 func (n *Namespace) lint(nn map[string]v1.Namespace, used []string) {
 	for _, ns := range nn {
+		if n.client.ExcludedNS(ns.Name) {
+			continue
+		}
 		n.initIssues(ns.Name)
-		if n.checkActive(ns) && !in(excludedSystemNS, ns.Name) {
+		if n.checkActive(ns) {
 			n.checkInUse(ns.Name, used)
 		}
 	}

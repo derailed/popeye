@@ -14,8 +14,9 @@ popeye:
     # Excludes these namespaces from the scan.
     exclude:
       - kube-system
+      - kube-node-lease
       - kube-public
-      - monitoring
+      - istio-system
 
   # Pod...
   pod:

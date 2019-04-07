@@ -16,6 +16,8 @@ func TitleForRes(r string) string {
 		t = "namespace"
 	case "sa":
 		t = "serviceaccount"
+	case "cm":
+		t = "configmap"
 	default:
 		t = r
 	}

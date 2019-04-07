@@ -17,7 +17,7 @@ const (
 	ColorCoolBlue  Color = 99
 	ColorAqua      Color = 122
 	ColorDarkOlive Color = 155
-	ColorLighSlate Color = 75 // 105
+	ColorLighSlate Color = 75
 	ColorYellow    Color = 226
 	ColorYellow2   Color = 190
 	ColorGreenPale Color = 114
