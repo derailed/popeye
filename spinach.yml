@@ -20,7 +20,7 @@ popeye:
   # Pod...
   pod:
     # Check container resource utilization in percent.
-    # Issues a lint warning if about these threshold.
+    # Issues a lint warning if above these thresholds.
     limits:
       cpu:    80
       memory: 75
