@@ -103,7 +103,7 @@ tune the sanitizer. Details about the Popeye configuration file are below.
 popeye version
 # Popeye a cluster using your current kubeconfig environment.
 popeye
-# Popeye uses a spinach config file of course! aka spinchyaml!
+# Popeye uses a spinach config file of course! aka spinachyaml!
 popeye -f spinach.yml
 # Popeye a cluster using a kubeconfig context.
 popeye --context olive
@@ -121,7 +121,7 @@ popeye help
 
 <img src="assets/a_score.png"/>
 
-## The SpinchYAML Configuration
+## The SpinachYAML Configuration
 
 NOTE: This file will change as Popeye matures!
 

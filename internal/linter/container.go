@@ -91,7 +91,7 @@ func (c *Container) checkResources(co v1.Container) {
 func (c *Container) checkNamedPorts(co v1.Container) {
 	for _, p := range co.Ports {
 		if len(p.Name) == 0 {
-			c.addIssuef(co.Name, WarnLevel, "Unamed port `%d", p.ContainerPort)
+			c.addIssuef(co.Name, WarnLevel, "Unnamed port `%d", p.ContainerPort)
 		}
 	}
 }
