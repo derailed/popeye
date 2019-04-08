@@ -3,7 +3,6 @@ package linter
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/rs/zerolog"
 	v1 "k8s.io/api/core/v1"
@@ -115,19 +114,6 @@ func checkServicePort(svc string, pod *v1.Pod, port v1.ServicePort) []error {
 
 func svcFQN(s v1.Service) string {
 	return s.Namespace + "/" + s.Name
-}
-
-func toSelector(labels map[string]string) string {
-	// Ensure no matches!
-	if len(labels) == 0 {
-		return "bozo=xxx"
-	}
-
-	ss := make([]string, 0, len(labels))
-	for k, v := range labels {
-		ss = append(ss, k+"="+v)
-	}
-	return strings.Join(ss, ",")
 }
 
 // In checks if an item is in a list of items.

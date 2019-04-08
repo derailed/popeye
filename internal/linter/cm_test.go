@@ -1,31 +1,33 @@
 package linter
 
 import (
+	"context"
 	"testing"
 
+	m "github.com/petergtz/pegomock"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// func TestCMLint(t *testing.T) {
-// 	mkc := NewMockClient()
-// 	m.When(mkc.ActiveNamespace()).ThenReturn("default")
-// 	m.When(mkc.ListCMs()).ThenReturn(map[string]v1.ConfigMap{
-// 		"default/cm1": makeCM("cm1"),
-// 	}, nil)
-// 	m.When(mkc.ListPods()).ThenReturn(map[string]v1.Pod{
-// 		"default/p1": makePodEnv("p1", "cm1", "fred", false),
-// 	}, nil)
+func TestCMLint(t *testing.T) {
+	mkc := NewMockClient()
+	m.When(mkc.ActiveNamespace()).ThenReturn("default")
+	m.When(mkc.ListCMs()).ThenReturn(map[string]v1.ConfigMap{
+		"default/cm1": makeCM("cm1"),
+	}, nil)
+	m.When(mkc.ListPods()).ThenReturn(map[string]v1.Pod{
+		"default/p1": makePodEnv("p1", "cm1", "fred", false),
+	}, nil)
 
-// 	s := NewCM(mkc, nil)
-// 	s.Lint(context.Background())
+	s := NewCM(mkc, nil)
+	s.Lint(context.Background())
 
-// 	assert.Equal(t, 0, len(s.Issues()["default/cm1"]))
+	assert.Equal(t, 0, len(s.Issues()["default/cm1"]))
 
-// 	mkc.VerifyWasCalledOnce().ListCMs()
-// 	mkc.VerifyWasCalledOnce().ListPods()
-// }
+	mkc.VerifyWasCalledOnce().ListCMs()
+	mkc.VerifyWasCalledOnce().ListPods()
+}
 
 func TestCMLintCMS(t *testing.T) {
 	uu := []struct {

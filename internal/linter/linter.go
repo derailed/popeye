@@ -70,21 +70,35 @@ type (
 		ClusterHasMetrics() bool
 		FetchNodesMetrics() ([]mv1beta1.NodeMetrics, error)
 		FetchPodsMetrics(ns string) ([]mv1beta1.PodMetrics, error)
+
 		ListServices() ([]v1.Service, error)
+
 		ListNodes() ([]v1.Node, error)
+
 		ListEndpoints() (map[string]v1.Endpoints, error)
 		GetEndpoints(fqn string) (*v1.Endpoints, error)
+
 		GetPod(map[string]string) (*v1.Pod, error)
 		ListPods() (map[string]v1.Pod, error)
 		ListAllPods() (map[string]v1.Pod, error)
+
 		ListNS() (map[string]v1.Namespace, error)
 		ListAllNS() (map[string]v1.Namespace, error)
+
 		InUseNamespaces(used []string)
+
 		ListRBs() (map[string]rbacv1.RoleBinding, error)
 		ListAllRBs() (map[string]rbacv1.RoleBinding, error)
 		ListAllCRBs() (map[string]rbacv1.ClusterRoleBinding, error)
+
 		ListCMs() (map[string]v1.ConfigMap, error)
 		ListAllCMs() (map[string]v1.ConfigMap, error)
+
+		ListSecs() (map[string]v1.Secret, error)
+		ListAllSecs() (map[string]v1.Secret, error)
+
+		ListSAs() (map[string]v1.ServiceAccount, error)
+		ListAllSAs() (map[string]v1.ServiceAccount, error)
 	}
 
 	// Config represents a Popeye configuration.

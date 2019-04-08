@@ -244,6 +244,44 @@ func (mock *MockClient) ListAllRBs() (map[string]v10.RoleBinding, error) {
 	return ret0, ret1
 }
 
+func (mock *MockClient) ListAllSAs() (map[string]v1.ServiceAccount, error) {
+	if mock == nil {
+		panic("mock must not be nil. Use myMock := NewMockClient().")
+	}
+	params := []pegomock.Param{}
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListAllSAs", params, []reflect.Type{reflect.TypeOf((*map[string]v1.ServiceAccount)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.ServiceAccount
+	var ret1 error
+	if len(result) != 0 {
+		if result[0] != nil {
+			ret0 = result[0].(map[string]v1.ServiceAccount)
+		}
+		if result[1] != nil {
+			ret1 = result[1].(error)
+		}
+	}
+	return ret0, ret1
+}
+
+func (mock *MockClient) ListAllSecs() (map[string]v1.Secret, error) {
+	if mock == nil {
+		panic("mock must not be nil. Use myMock := NewMockClient().")
+	}
+	params := []pegomock.Param{}
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListAllSecs", params, []reflect.Type{reflect.TypeOf((*map[string]v1.Secret)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.Secret
+	var ret1 error
+	if len(result) != 0 {
+		if result[0] != nil {
+			ret0 = result[0].(map[string]v1.Secret)
+		}
+		if result[1] != nil {
+			ret1 = result[1].(error)
+		}
+	}
+	return ret0, ret1
+}
+
 func (mock *MockClient) ListCMs() (map[string]v1.ConfigMap, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockClient().")
@@ -350,6 +388,44 @@ func (mock *MockClient) ListRBs() (map[string]v10.RoleBinding, error) {
 	if len(result) != 0 {
 		if result[0] != nil {
 			ret0 = result[0].(map[string]v10.RoleBinding)
+		}
+		if result[1] != nil {
+			ret1 = result[1].(error)
+		}
+	}
+	return ret0, ret1
+}
+
+func (mock *MockClient) ListSAs() (map[string]v1.ServiceAccount, error) {
+	if mock == nil {
+		panic("mock must not be nil. Use myMock := NewMockClient().")
+	}
+	params := []pegomock.Param{}
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListSAs", params, []reflect.Type{reflect.TypeOf((*map[string]v1.ServiceAccount)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.ServiceAccount
+	var ret1 error
+	if len(result) != 0 {
+		if result[0] != nil {
+			ret0 = result[0].(map[string]v1.ServiceAccount)
+		}
+		if result[1] != nil {
+			ret1 = result[1].(error)
+		}
+	}
+	return ret0, ret1
+}
+
+func (mock *MockClient) ListSecs() (map[string]v1.Secret, error) {
+	if mock == nil {
+		panic("mock must not be nil. Use myMock := NewMockClient().")
+	}
+	params := []pegomock.Param{}
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListSecs", params, []reflect.Type{reflect.TypeOf((*map[string]v1.Secret)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.Secret
+	var ret1 error
+	if len(result) != 0 {
+		if result[0] != nil {
+			ret0 = result[0].(map[string]v1.Secret)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -760,6 +836,40 @@ func (c *Client_ListAllRBs_OngoingVerification) GetCapturedArguments() {
 func (c *Client_ListAllRBs_OngoingVerification) GetAllCapturedArguments() {
 }
 
+func (verifier *VerifierClient) ListAllSAs() *Client_ListAllSAs_OngoingVerification {
+	params := []pegomock.Param{}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListAllSAs", params, verifier.timeout)
+	return &Client_ListAllSAs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+}
+
+type Client_ListAllSAs_OngoingVerification struct {
+	mock              *MockClient
+	methodInvocations []pegomock.MethodInvocation
+}
+
+func (c *Client_ListAllSAs_OngoingVerification) GetCapturedArguments() {
+}
+
+func (c *Client_ListAllSAs_OngoingVerification) GetAllCapturedArguments() {
+}
+
+func (verifier *VerifierClient) ListAllSecs() *Client_ListAllSecs_OngoingVerification {
+	params := []pegomock.Param{}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListAllSecs", params, verifier.timeout)
+	return &Client_ListAllSecs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+}
+
+type Client_ListAllSecs_OngoingVerification struct {
+	mock              *MockClient
+	methodInvocations []pegomock.MethodInvocation
+}
+
+func (c *Client_ListAllSecs_OngoingVerification) GetCapturedArguments() {
+}
+
+func (c *Client_ListAllSecs_OngoingVerification) GetAllCapturedArguments() {
+}
+
 func (verifier *VerifierClient) ListCMs() *Client_ListCMs_OngoingVerification {
 	params := []pegomock.Param{}
 	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListCMs", params, verifier.timeout)
@@ -860,6 +970,40 @@ func (c *Client_ListRBs_OngoingVerification) GetCapturedArguments() {
 }
 
 func (c *Client_ListRBs_OngoingVerification) GetAllCapturedArguments() {
+}
+
+func (verifier *VerifierClient) ListSAs() *Client_ListSAs_OngoingVerification {
+	params := []pegomock.Param{}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListSAs", params, verifier.timeout)
+	return &Client_ListSAs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+}
+
+type Client_ListSAs_OngoingVerification struct {
+	mock              *MockClient
+	methodInvocations []pegomock.MethodInvocation
+}
+
+func (c *Client_ListSAs_OngoingVerification) GetCapturedArguments() {
+}
+
+func (c *Client_ListSAs_OngoingVerification) GetAllCapturedArguments() {
+}
+
+func (verifier *VerifierClient) ListSecs() *Client_ListSecs_OngoingVerification {
+	params := []pegomock.Param{}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListSecs", params, verifier.timeout)
+	return &Client_ListSecs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+}
+
+type Client_ListSecs_OngoingVerification struct {
+	mock              *MockClient
+	methodInvocations []pegomock.MethodInvocation
+}
+
+func (c *Client_ListSecs_OngoingVerification) GetCapturedArguments() {
+}
+
+func (c *Client_ListSecs_OngoingVerification) GetAllCapturedArguments() {
 }
 
 func (verifier *VerifierClient) ListServices() *Client_ListServices_OngoingVerification {

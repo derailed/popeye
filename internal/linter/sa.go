@@ -89,6 +89,9 @@ func (s *SA) checkDead(pods map[string]v1.Pod, crbs map[string]rbacv1.ClusterRol
 	}
 }
 
+// ----------------------------------------------------------------------------
+// Refs...
+
 func namespaced(s string) (string, string) {
 	tokens := strings.Split(s, "/")
 	if len(tokens) == 2 {

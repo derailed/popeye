@@ -31,6 +31,8 @@ type Client struct {
 	allCRBs map[string]rbacv1.ClusterRoleBinding
 	allRBs  map[string]rbacv1.RoleBinding
 	allCMs  map[string]v1.ConfigMap
+	allSecs map[string]v1.Secret
+	allSAs  map[string]v1.ServiceAccount
 }
 
 // NewClient returns a dialable api server configuration.
@@ -318,13 +320,6 @@ func (c *Client) ListCMs() (map[string]v1.ConfigMap, error) {
 	return res, nil
 }
 
-func (c *Client) matchActiveNS(ns string) bool {
-	if c.Config.ActiveNamespace() == "" {
-		return true
-	}
-	return ns == c.Config.ActiveNamespace()
-}
-
 // ListAllCMs fetch all configmaps on the cluster.
 func (c *Client) ListAllCMs() (map[string]v1.ConfigMap, error) {
 	if len(c.allCMs) != 0 {
@@ -342,6 +337,78 @@ func (c *Client) ListAllCMs() (map[string]v1.ConfigMap, error) {
 	}
 
 	return c.allCMs, nil
+}
+
+// ListSecs list all included Secrets.
+func (c *Client) ListSecs() (map[string]v1.Secret, error) {
+	secs, err := c.ListAllSecs()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[string]v1.Secret, len(secs))
+	for fqn, sec := range secs {
+		if c.matchActiveNS(sec.Namespace) && !c.Config.ExcludedNS(sec.Namespace) {
+			res[fqn] = sec
+		}
+	}
+
+	return res, nil
+}
+
+// ListAllSecs fetch all secrets on the cluster.
+func (c *Client) ListAllSecs() (map[string]v1.Secret, error) {
+	if len(c.allSecs) != 0 {
+		return c.allSecs, nil
+	}
+
+	ll, err := c.DialOrDie().CoreV1().Secrets("").List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	c.allSecs = make(map[string]v1.Secret, len(ll.Items))
+	for _, sec := range ll.Items {
+		c.allSecs[fqn(sec.Namespace, sec.Name)] = sec
+	}
+
+	return c.allSecs, nil
+}
+
+// ListSAs list all included ConfigMaps.
+func (c *Client) ListSAs() (map[string]v1.ServiceAccount, error) {
+	sas, err := c.ListAllSAs()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[string]v1.ServiceAccount, len(sas))
+	for fqn, sa := range sas {
+		if c.matchActiveNS(sa.Namespace) && !c.Config.ExcludedNS(sa.Namespace) {
+			res[fqn] = sa
+		}
+	}
+
+	return res, nil
+}
+
+// ListAllSAs fetch all ServiceAccount on the cluster.
+func (c *Client) ListAllSAs() (map[string]v1.ServiceAccount, error) {
+	if len(c.allSAs) != 0 {
+		return c.allSAs, nil
+	}
+
+	ll, err := c.DialOrDie().CoreV1().ServiceAccounts("").List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	c.allSAs = make(map[string]v1.ServiceAccount, len(ll.Items))
+	for _, sa := range ll.Items {
+		c.allSAs[fqn(sa.Namespace, sa.Name)] = sa
+	}
+
+	return c.allSAs, nil
 }
 
 // ListNS lists all available namespaces.
@@ -378,6 +445,13 @@ func (c *Client) ListAllNS() (map[string]v1.Namespace, error) {
 	}
 
 	return c.allNSs, nil
+}
+
+func (c *Client) matchActiveNS(ns string) bool {
+	if c.Config.ActiveNamespace() == "" {
+		return true
+	}
+	return ns == c.Config.ActiveNamespace()
 }
 
 // ----------------------------------------------------------------------------
