@@ -7,6 +7,13 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+// BOZO!! Refactor with Secrets
+type usedCM struct {
+	name string
+	keys map[string]struct{}
+}
+type usedCMs map[string]*usedCM
+
 // CM represents a ConfigMap linter.
 type CM struct {
 	*Linter
@@ -34,12 +41,6 @@ func (c *CM) Lint(ctx context.Context) error {
 	return nil
 }
 
-type usedCM struct {
-	name string
-	keys map[string]struct{}
-}
-type usedCMs map[string]*usedCM
-
 func (c *CM) lint(pods map[string]v1.Pod, cms map[string]v1.ConfigMap) {
 	refs := make(map[string]usedCMs, len(cms))
 
@@ -53,7 +54,7 @@ func (c *CM) lint(pods map[string]v1.Pod, cms map[string]v1.ConfigMap) {
 		c.initIssues(fqn)
 		ref, ok := refs[fqn]
 		if !ok {
-			c.addIssuef(fqn, WarnLevel, "Used?")
+			c.addIssuef(fqn, InfoLevel, "Used?")
 			continue
 		}
 
@@ -61,8 +62,12 @@ func (c *CM) lint(pods map[string]v1.Pod, cms map[string]v1.ConfigMap) {
 		for key := range cm.Data {
 			victims[key] = false
 			if used, ok := ref["volume"]; ok {
-				for k := range used.keys {
-					victims[key] = k == key
+				if len(used.keys) != 0 {
+					for k := range used.keys {
+						victims[key] = k == key
+					}
+				} else {
+					victims[key] = true
 				}
 			}
 
@@ -78,7 +83,7 @@ func (c *CM) lint(pods map[string]v1.Pod, cms map[string]v1.ConfigMap) {
 
 			for k, v := range victims {
 				if !v {
-					c.addIssuef(fqn, WarnLevel, "Found unused key `%s", k)
+					c.addIssuef(fqn, InfoLevel, "Found unused key `%s", k)
 				}
 			}
 		}

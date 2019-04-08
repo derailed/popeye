@@ -59,7 +59,7 @@ func (s *Sec) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map[st
 	for _, sa := range sas {
 		used := usedSec{name: sa.Name}
 		for _, s := range sa.Secrets {
-			fqn := fqn(s.Namespace, s.Name)
+			fqn := fqn(sa.Namespace, s.Name)
 			if v, ok := refs[fqn]; ok {
 				v["sasec"] = &used
 			} else {
@@ -81,7 +81,7 @@ func (s *Sec) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map[st
 		s.initIssues(fqn)
 		ref, ok := refs[fqn]
 		if !ok {
-			s.addIssuef(fqn, WarnLevel, "Used?")
+			s.addIssuef(fqn, InfoLevel, "Used?")
 			continue
 		}
 
@@ -110,7 +110,7 @@ func (s *Sec) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map[st
 
 			for k, v := range victims {
 				if !v {
-					s.addIssuef(fqn, WarnLevel, "Found unused key `%s", k)
+					s.addIssuef(fqn, InfoLevel, "Found unused key `%s", k)
 				}
 			}
 		}

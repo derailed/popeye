@@ -18,6 +18,8 @@ func TitleForRes(r string) string {
 		t = "serviceaccount"
 	case "cm":
 		t = "configmap"
+	case "sec":
+		t = "Secret"
 	default:
 		t = r
 	}

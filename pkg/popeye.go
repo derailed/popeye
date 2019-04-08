@@ -90,6 +90,7 @@ func linters(c *k8s.Client, log *zerolog.Logger) Linters {
 		"svc": linter.NewService(c, log),
 		"sa":  linter.NewSA(c, log),
 		"cm":  linter.NewCM(c, log),
+		"sec": linter.NewSec(c, log),
 	}
 }
 
@@ -114,6 +115,9 @@ func (p *Popeye) printReport(r Reporter, section string) {
 
 	level := linter.Level(p.config.Popeye.LintLevel)
 	t, any := report.NewTally().Rollup(r.Issues()), false
+
+	p.sectionCount++
+
 	report.Open(w, section, t)
 	{
 		w.Flush()
@@ -126,7 +130,6 @@ func (p *Popeye) printReport(r Reporter, section string) {
 			issues := r.Issues()[res]
 			if len(issues) == 0 {
 				if level <= linter.OkLevel {
-					p.sectionCount++
 					any = true
 					report.Write(w, linter.OkLevel, 1, res)
 				}
@@ -135,7 +138,6 @@ func (p *Popeye) printReport(r Reporter, section string) {
 			max := r.MaxSeverity(res)
 			if level <= max {
 				any = true
-				p.sectionCount++
 				report.Write(w, max, 1, res)
 			}
 			report.Dump(w, level, issues...)
