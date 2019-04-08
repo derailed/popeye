@@ -188,6 +188,16 @@ func (c *Client) GetEndpoints(svcFQN string) (*v1.Endpoints, error) {
 	if ep, ok := eps[svcFQN]; ok {
 		return &ep, nil
 	}
+	svcs, err := c.ListServices()
+	if err != nil {
+		return nil, err
+	}
+	for _, svc := range svcs {
+		// ExternalName does not use Endpoints
+		if svc.Namespace+"/"+svc.Name == svcFQN && svc.Spec.Type == v1.ServiceTypeExternalName {
+			return nil, nil
+		}
+	}
 
 	return nil, fmt.Errorf("Unable to find ep for service %s", svcFQN)
 }
