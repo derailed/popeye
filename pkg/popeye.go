@@ -94,29 +94,12 @@ func linters(c *k8s.Client, log *zerolog.Logger) Linters {
 	}
 }
 
-func (p *Popeye) printSummary() {
-	w := bufio.NewWriter(p.out)
-	defer w.Flush()
-
-	report.Open(w, "SUMMARY", nil)
-	{
-		s := p.totalScore / p.sectionCount
-		fmt.Fprintf(w, "Your cluster score: %d -- %s\n", s, report.Grade(s))
-		for _, l := range report.Badge(s) {
-			fmt.Fprintf(w, "%s%s\n", strings.Repeat(" ", 60), l)
-		}
-	}
-	report.Close(w)
-}
-
 func (p *Popeye) printReport(r Reporter, section string) {
 	w := bufio.NewWriter(p.out)
 	defer w.Flush()
 
 	level := linter.Level(p.config.Popeye.LintLevel)
 	t, any := report.NewTally().Rollup(r.Issues()), false
-
-	p.sectionCount++
 
 	report.Open(w, section, t)
 	{
@@ -143,29 +126,27 @@ func (p *Popeye) printReport(r Reporter, section string) {
 			report.Dump(w, level, issues...)
 		}
 		if !any {
-			report.Comment(w, report.Colorize("Nothing to report.", report.ColorOrangish))
+			report.Comment(w, report.Colorize("Nothing to report.", report.ColorAqua))
 		}
 	}
 	report.Close(w)
 
 	if t.IsValid() {
+		p.sectionCount++
 		p.totalScore += t.Score()
 	}
 }
 
-func (p *Popeye) clusterInfo(c *k8s.Client) {
+func (p *Popeye) printSummary() {
 	w := bufio.NewWriter(p.out)
 	defer w.Flush()
 
-	t := fmt.Sprintf("CLUSTER [%s]", strings.ToUpper(c.Config.ActiveCluster()))
-	report.Open(w, t, nil)
+	report.Open(w, "SUMMARY", nil)
 	{
-		report.Write(w, linter.OkLevel, 1, "Connectivity")
-
-		if !c.ClusterHasMetrics() {
-			report.Write(w, linter.OkLevel, 1, "Metrics")
-		} else {
-			report.Write(w, linter.OkLevel, 1, "Metrics")
+		s := p.totalScore / p.sectionCount
+		fmt.Fprintf(w, "Your cluster score: %d -- %s\n", s, report.Grade(s))
+		for _, l := range report.Badge(s) {
+			fmt.Fprintf(w, "%s%s\n", strings.Repeat(" ", report.Width-20), l)
 		}
 	}
 	report.Close(w)
@@ -192,6 +173,27 @@ func (p *Popeye) printHeader() {
 	}
 	fmt.Fprintln(w, "")
 }
+
+func (p *Popeye) clusterInfo(c *k8s.Client) {
+	w := bufio.NewWriter(p.out)
+	defer w.Flush()
+
+	t := fmt.Sprintf("CLUSTER [%s]", strings.ToUpper(c.Config.ActiveCluster()))
+	report.Open(w, t, nil)
+	{
+		report.Write(w, linter.OkLevel, 1, "Connectivity")
+
+		if !c.ClusterHasMetrics() {
+			report.Write(w, linter.OkLevel, 1, "Metrics")
+		} else {
+			report.Write(w, linter.OkLevel, 1, "Metrics")
+		}
+	}
+	report.Close(w)
+}
+
+// ----------------------------------------------------------------------------
+// Helpers...
 
 func in(list []string, member string) bool {
 	if len(list) == 0 {

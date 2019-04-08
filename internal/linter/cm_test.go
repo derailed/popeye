@@ -65,12 +65,12 @@ func TestCMCheckContainerRefs(t *testing.T) {
 		po      v1.Pod
 		key     string
 		present bool
-		e       *usedCM
+		e       *Reference
 	}{
 		{makePod("v1"), "envFrom", false, nil},
-		{makePodEnvFrom("p1", "cm1", true), "envFrom", true, &usedCM{}},
-		{makePodEnvFrom("p1", "cm1", false), "envFrom", true, &usedCM{}},
-		{makePodEnv("p1", "cm1", "fred", false), "keyRef", true, &usedCM{
+		{makePodEnvFrom("p1", "cm1", true), "envFrom", true, &Reference{}},
+		{makePodEnvFrom("p1", "cm1", false), "envFrom", true, &Reference{}},
+		{makePodEnv("p1", "cm1", "fred", false), "keyRef", true, &Reference{
 			name: "cm1",
 			keys: map[string]struct{}{
 				"fred": struct{}{},
@@ -80,7 +80,7 @@ func TestCMCheckContainerRefs(t *testing.T) {
 	}
 
 	for _, u := range uu {
-		refs := map[string]usedCMs{}
+		refs := References{}
 		checkContainerRefs("default", u.po.Spec.Containers, refs)
 
 		v, ok := refs["default/cm1"][u.key]
@@ -96,13 +96,13 @@ func TestCMCheckVolumes(t *testing.T) {
 		po      v1.Pod
 		key     string
 		present bool
-		e       *usedCM
+		e       *Reference
 	}{
 		{
 			makePod("p1"), "volume", false, nil,
 		},
 		{
-			makePodVolume("p1", "cm1", "fred", false), "volume", true, &usedCM{
+			makePodVolume("p1", "cm1", "fred", false), "volume", true, &Reference{
 				name: "v1",
 				keys: map[string]struct{}{"fred": struct{}{}},
 			},
@@ -113,7 +113,7 @@ func TestCMCheckVolumes(t *testing.T) {
 	}
 
 	for _, u := range uu {
-		refs := map[string]usedCMs{}
+		refs := References{}
 		checkVolumes("default", u.po.Spec.Volumes, refs)
 
 		v, ok := refs["default/cm1"][u.key]

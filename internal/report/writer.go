@@ -13,19 +13,20 @@ const (
 	// FontBold style
 	FontBold = 1
 
-	reportWidth = 80
-	tabSize     = 2
+	// Width denotes the maximum width of the sanitizer report.
+	Width   = 100
+	tabSize = 2
 )
 
 // Open begins a new report section.
 func Open(w io.Writer, s string, t *Tally) {
 	fmt.Fprintf(w, "\n%s", Colorize(s, ColorLighSlate))
 	if t != nil && t.IsValid() {
-		indent := reportWidth - len(s) - t.Width() + 13
+		indent := Width - len(s) - t.Width() + 13
 		fmt.Fprintf(w, "%s", strings.Repeat(" ", indent))
 		t.Dump(w)
 	}
-	fmt.Fprintf(w, "\n%s", Colorize(strings.Repeat("┅", 80), ColorLighSlate))
+	fmt.Fprintf(w, "\n%s", Colorize(strings.Repeat("┅", Width), ColorLighSlate))
 	fmt.Fprintln(w)
 }
 
@@ -34,20 +35,24 @@ func Close(w io.Writer) {
 	fmt.Fprintln(w)
 }
 
+func lineBreaks(w io.Writer, s string, width int, color Color) {
+	for i := 0; len(s) > width; i++ {
+		fmt.Fprintln(w, Colorize(s[:width], color))
+		s = s[width:]
+	}
+	if len(s) > 0 {
+		fmt.Fprint(w, Colorize(s, color))
+	}
+	fmt.Fprintln(w)
+}
+
 // Error prints out error out.
 func Error(w io.Writer, msg string, err error) {
 	fmt.Fprintln(w)
 	msg = msg + ": " + err.Error()
-	width := reportWidth - 3
+	width := Width - 3
 	fmt.Fprintf(w, "💥 ")
-	for i := 0; len(msg) > width; i++ {
-		fmt.Fprintln(w, Colorize(msg[:width], ColorRed))
-		msg = msg[width:]
-	}
-	if len(msg) > 0 {
-		fmt.Fprint(w, Colorize(msg, ColorRed))
-	}
-	fmt.Fprintln(w)
+	lineBreaks(w, msg, width, ColorRed)
 }
 
 // Comment writes a comment line.
@@ -78,7 +83,7 @@ func Dump(w io.Writer, l linter.Level, issues ...linter.Issue) {
 func Write(w io.Writer, l linter.Level, indent int, msg string) {
 	spacer := strings.Repeat(" ", tabSize*indent)
 
-	maxWidth := reportWidth - tabSize*indent - 3
+	maxWidth := Width - tabSize*indent - 3
 	msg = truncate(msg, maxWidth)
 	if indent == 1 {
 		dots := maxWidth - len(msg)

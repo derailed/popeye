@@ -7,13 +7,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-// BOZO!! Refactor with Secrets
-type usedCM struct {
-	name string
-	keys map[string]struct{}
-}
-type usedCMs map[string]*usedCM
-
 // CM represents a ConfigMap linter.
 type CM struct {
 	*Linter
@@ -42,7 +35,7 @@ func (c *CM) Lint(ctx context.Context) error {
 }
 
 func (c *CM) lint(pods map[string]v1.Pod, cms map[string]v1.ConfigMap) {
-	refs := make(map[string]usedCMs, len(cms))
+	refs := make(References, len(cms))
 
 	for _, po := range pods {
 		checkVolumes(po.Namespace, po.Spec.Volumes, refs)
@@ -83,14 +76,14 @@ func (c *CM) lint(pods map[string]v1.Pod, cms map[string]v1.ConfigMap) {
 
 			for k, v := range victims {
 				if !v {
-					c.addIssuef(fqn, InfoLevel, "Found unused key `%s", k)
+					c.addIssuef(fqn, InfoLevel, "Used key `%s?", k)
 				}
 			}
 		}
 	}
 }
 
-func checkVolumes(ns string, vols []v1.Volume, refs map[string]usedCMs) {
+func checkVolumes(ns string, vols []v1.Volume, refs References) {
 	for _, v := range vols {
 		cm := v.VolumeSource.ConfigMap
 		if cm == nil {
@@ -98,11 +91,11 @@ func checkVolumes(ns string, vols []v1.Volume, refs map[string]usedCMs) {
 		}
 
 		fqn := fqn(ns, cm.Name)
-		u := &usedCM{name: v.Name, keys: map[string]struct{}{}}
+		u := Reference{name: v.Name, keys: map[string]struct{}{}}
 		if r, ok := refs[fqn]; ok {
-			r["volume"] = u
+			r["volume"] = &u
 		} else {
-			refs[fqn] = usedCMs{"volume": u}
+			refs[fqn] = TypedReferences{"volume": &u}
 		}
 
 		for _, k := range cm.Items {
@@ -111,7 +104,7 @@ func checkVolumes(ns string, vols []v1.Volume, refs map[string]usedCMs) {
 	}
 }
 
-func checkContainerRefs(ns string, cos []v1.Container, refs map[string]usedCMs) {
+func checkContainerRefs(ns string, cos []v1.Container, refs References) {
 	for _, co := range cos {
 		for _, e := range co.EnvFrom {
 			ref := e.ConfigMapRef
@@ -121,11 +114,11 @@ func checkContainerRefs(ns string, cos []v1.Container, refs map[string]usedCMs) 
 
 			// Check EnvFrom refs...
 			fqn := fqn(ns, ref.Name)
-			used := usedCM{}
+			used := Reference{}
 			if v, ok := refs[fqn]; ok {
 				v["envFrom"] = &used
 			} else {
-				refs[fqn] = map[string]*usedCM{"envFrom": &used}
+				refs[fqn] = TypedReferences{"envFrom": &used}
 			}
 		}
 
@@ -145,8 +138,8 @@ func checkContainerRefs(ns string, cos []v1.Container, refs map[string]usedCMs) 
 			if v, ok := refs[fqn]; ok {
 				v["keyRef"].keys[kref.Name] = struct{}{}
 			} else {
-				refs[fqn] = map[string]*usedCM{
-					"keyRef": &usedCM{
+				refs[fqn] = map[string]*Reference{
+					"keyRef": &Reference{
 						name: kref.Name,
 						keys: map[string]struct{}{
 							kref.Key: struct{}{},

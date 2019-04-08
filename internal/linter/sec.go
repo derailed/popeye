@@ -7,17 +7,24 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-// Sec represents a Secret linter.
-type Sec struct {
-	*Linter
-}
+type (
+	// Sec represents a Secret linter.
+	Sec struct {
+		*Linter
+	}
 
-type usedSec struct {
-	name string
-	keys map[string]struct{}
-}
+	// Reference tracks a config reference.
+	Reference struct {
+		name string
+		keys map[string]struct{}
+	}
 
-type usedSecs map[string]*usedSec
+	// TypedReferences tracks configuration type references.
+	TypedReferences map[string]*Reference
+
+	// References tracks configuration references.
+	References map[string]TypedReferences
+)
 
 // NewSec returns a new Secret linter.
 func NewSec(c Client, l *zerolog.Logger) *Sec {
@@ -47,7 +54,7 @@ func (s *Sec) Lint(ctx context.Context) error {
 }
 
 func (s *Sec) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map[string]v1.ServiceAccount) {
-	refs := make(map[string]usedSecs, len(pods)+len(sas))
+	refs := make(References, len(pods)+len(sas))
 
 	for _, po := range pods {
 		checkSecVolumes(po.Namespace, po.Spec.Volumes, refs)
@@ -57,22 +64,22 @@ func (s *Sec) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map[st
 	}
 
 	for _, sa := range sas {
-		used := usedSec{name: sa.Name}
+		Reference := Reference{name: sa.Name}
 		for _, s := range sa.Secrets {
 			fqn := fqn(sa.Namespace, s.Name)
 			if v, ok := refs[fqn]; ok {
-				v["sasec"] = &used
+				v["sasec"] = &Reference
 			} else {
-				refs[fqn] = usedSecs{"sasec": &used}
+				refs[fqn] = TypedReferences{"sasec": &Reference}
 			}
 		}
 
 		for _, s := range sa.ImagePullSecrets {
 			fqn := fqn(sa.Namespace, s.Name)
 			if v, ok := refs[fqn]; ok {
-				v["sapullsec"] = &used
+				v["sapullsec"] = &Reference
 			} else {
-				refs[fqn] = usedSecs{"sapullsec": &used}
+				refs[fqn] = TypedReferences{"sapullsec": &Reference}
 			}
 		}
 	}
@@ -81,15 +88,15 @@ func (s *Sec) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map[st
 		s.initIssues(fqn)
 		ref, ok := refs[fqn]
 		if !ok {
-			s.addIssuef(fqn, InfoLevel, "Used?")
+			s.addIssuef(fqn, InfoLevel, "Reference?")
 			continue
 		}
 
 		victims := map[string]bool{}
 		for key := range sec.Data {
 			victims[key] = false
-			if used, ok := ref["volume"]; ok {
-				for k := range used.keys {
+			if Reference, ok := ref["volume"]; ok {
+				for k := range Reference.keys {
 					victims[key] = k == key
 				}
 			}
@@ -102,15 +109,15 @@ func (s *Sec) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map[st
 				victims[key] = true
 			}
 
-			if used, ok := ref["keyRef"]; ok {
-				for k := range used.keys {
+			if Reference, ok := ref["keyRef"]; ok {
+				for k := range Reference.keys {
 					victims[key] = k == key
 				}
 			}
 
 			for k, v := range victims {
 				if !v {
-					s.addIssuef(fqn, InfoLevel, "Found unused key `%s", k)
+					s.addIssuef(fqn, InfoLevel, "Reference `%s?", k)
 				}
 			}
 		}
@@ -120,19 +127,20 @@ func (s *Sec) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map[st
 // ----------------------------------------------------------------------------
 // Helpers...
 
-func checkPullImageSecrets(po v1.Pod, refs map[string]usedSecs) {
+func checkPullImageSecrets(po v1.Pod, refs map[string]TypedReferences) {
 	for _, s := range po.Spec.ImagePullSecrets {
 		fqn := fqn(po.Namespace, s.Name)
-		u := &usedSec{name: s.Name}
+
+		u := Reference{name: s.Name}
 		if r, ok := refs[fqn]; ok {
-			r["pull"] = u
+			r["pull"] = &u
 		} else {
-			refs[fqn] = usedSecs{"pull": u}
+			refs[fqn] = TypedReferences{"pull": &u}
 		}
 	}
 }
 
-func checkSecVolumes(ns string, vols []v1.Volume, refs map[string]usedSecs) {
+func checkSecVolumes(ns string, vols []v1.Volume, refs map[string]TypedReferences) {
 	for _, v := range vols {
 		sec := v.VolumeSource.Secret
 		if sec == nil {
@@ -140,11 +148,11 @@ func checkSecVolumes(ns string, vols []v1.Volume, refs map[string]usedSecs) {
 		}
 
 		fqn := fqn(ns, sec.SecretName)
-		u := &usedSec{name: v.Name, keys: map[string]struct{}{}}
+		u := &Reference{name: v.Name, keys: map[string]struct{}{}}
 		if r, ok := refs[fqn]; ok {
 			r["volume"] = u
 		} else {
-			refs[fqn] = usedSecs{"volume": u}
+			refs[fqn] = TypedReferences{"volume": u}
 		}
 
 		for _, k := range sec.Items {
@@ -153,7 +161,7 @@ func checkSecVolumes(ns string, vols []v1.Volume, refs map[string]usedSecs) {
 	}
 }
 
-func checkSecContainerRefs(ns string, cos []v1.Container, refs map[string]usedSecs) {
+func checkSecContainerRefs(ns string, cos []v1.Container, refs map[string]TypedReferences) {
 	for _, co := range cos {
 		// Check envs...
 		for _, e := range co.Env {
@@ -171,8 +179,8 @@ func checkSecContainerRefs(ns string, cos []v1.Container, refs map[string]usedSe
 			if v, ok := refs[fqn]; ok {
 				v["keyRef"].keys[kref.Name] = struct{}{}
 			} else {
-				refs[fqn] = map[string]*usedSec{
-					"keyRef": &usedSec{
+				refs[fqn] = map[string]*Reference{
+					"keyRef": &Reference{
 						name: kref.Name,
 						keys: map[string]struct{}{
 							kref.Key: struct{}{},

@@ -69,13 +69,13 @@ func TestPullImageSecrets(t *testing.T) {
 		po      v1.Pod
 		key     string
 		present bool
-		e       *usedSec
+		e       *Reference
 	}{
 		{makePodPullSec("v1", "s1"), "pull", false, nil},
 	}
 
 	for _, u := range uu {
-		refs := map[string]usedSecs{}
+		refs := References{}
 		checkPullImageSecrets(u.po, refs)
 
 		v, ok := refs["default/s1"][u.key]
@@ -91,10 +91,10 @@ func TestCheckSecContainerRefs(t *testing.T) {
 		po      v1.Pod
 		key     string
 		present bool
-		e       *usedSec
+		e       *Reference
 	}{
 		{makePod("v1"), "envFrom", false, nil},
-		{makePodSecEnv("p1", "s1", "fred", false), "keyRef", true, &usedSec{
+		{makePodSecEnv("p1", "s1", "fred", false), "keyRef", true, &Reference{
 			name: "s1",
 			keys: map[string]struct{}{
 				"fred": struct{}{},
@@ -104,7 +104,7 @@ func TestCheckSecContainerRefs(t *testing.T) {
 	}
 
 	for _, u := range uu {
-		refs := map[string]usedSecs{}
+		refs := References{}
 		checkSecContainerRefs("default", u.po.Spec.Containers, refs)
 
 		v, ok := refs["default/s1"][u.key]
@@ -120,13 +120,13 @@ func TestCheckSecVolumes(t *testing.T) {
 		po      v1.Pod
 		key     string
 		present bool
-		e       *usedSec
+		e       *Reference
 	}{
 		{
 			makePod("p1"), "volume", false, nil,
 		},
 		{
-			makePodSecVol("p1", "s1", "fred", false), "volume", true, &usedSec{
+			makePodSecVol("p1", "s1", "fred", false), "volume", true, &Reference{
 				name: "v1",
 				keys: map[string]struct{}{"fred": struct{}{}},
 			},
@@ -137,7 +137,7 @@ func TestCheckSecVolumes(t *testing.T) {
 	}
 
 	for _, u := range uu {
-		refs := map[string]usedSecs{}
+		refs := References{}
 		checkSecVolumes("default", u.po.Spec.Volumes, refs)
 
 		v, ok := refs["default/s1"][u.key]

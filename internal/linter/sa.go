@@ -81,9 +81,9 @@ func (s *SA) checkDead(pods map[string]v1.Pod, crbs map[string]rbacv1.ClusterRol
 		if _, ok := psas[sa]; !ok {
 			ns, n := namespaced(b)
 			if ns == "" {
-				s.addIssuef(sa, ErrorLevel, "Used? Referenced by CRB `%s", n)
+				s.addIssuef(sa, InfoLevel, "Used? Referenced by CRB `%s", n)
 			} else {
-				s.addIssuef(sa, ErrorLevel, "Used? Referenced by RB `%s", n)
+				s.addIssuef(sa, InfoLevel, "Used? Referenced by RB `%s", n)
 			}
 		}
 	}

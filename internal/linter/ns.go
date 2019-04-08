@@ -7,6 +7,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+var specialNS = []string{"default", "kube-public", "kube-node-lease"}
+
 // Namespace represents a Namespace linter.
 type Namespace struct {
 	*Linter
@@ -62,5 +64,7 @@ func (n *Namespace) checkInUse(name string, used []string) {
 		}
 	}
 
-	n.addIssuef(name, InfoLevel, "Used?")
+	if !in(specialNS, name) {
+		n.addIssuef(name, InfoLevel, "Used?")
+	}
 }

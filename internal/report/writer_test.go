@@ -30,7 +30,7 @@ func TestError(t *testing.T) {
 		},
 		{
 			fmt.Errorf(strings.Repeat("#", 200)),
-			"\n💥 \x1b[38;5;196;mblee: #######################################################################\x1b[0m\n\x1b[38;5;196;m#############################################################################\x1b[0m\n\x1b[38;5;196;m####################################################\x1b[0m\n",
+			"\n💥 \x1b[38;5;196;mblee: " + strings.Repeat("#", Width-9) + "\x1b[0m\n\x1b[38;5;196;m" + strings.Repeat("#", Width-3) + "\x1b[0m\n\x1b[38;5;196;m" + strings.Repeat("#", Width-88) + "\x1b[0m\n",
 		},
 	}
 
@@ -51,12 +51,12 @@ func TestWrite(t *testing.T) {
 		{
 			"Yo mama",
 			1,
-			"  · \x1b[38;5;155;mYo mama\x1b[0m\x1b[38;5;250;m....................................................................\x1b[0m✅\n",
+			"  · \x1b[38;5;155;mYo mama\x1b[0m\x1b[38;5;250;m" + strings.Repeat(".", Width-12) + "\x1b[0m✅\n",
 		},
 		{
-			strings.Repeat("#", reportWidth),
+			strings.Repeat("#", Width),
 			1,
-			"  · \x1b[38;5;155;m" + strings.Repeat("#", reportWidth-8) + "...\x1b[0m\x1b[38;5;250;m\x1b[0m✅\n",
+			"  · \x1b[38;5;155;m" + strings.Repeat("#", Width-8) + "...\x1b[0m\x1b[38;5;250;m\x1b[0m✅\n",
 		},
 		{
 			"Yo mama",
@@ -118,7 +118,7 @@ func TestOpen(t *testing.T) {
 			linter.Issues{
 				"fred": []linter.Issue{linter.NewError(linter.WarnLevel, "Yo Mama!")},
 			},
-			"\n\x1b[38;5;75;mblee\x1b[0m                                                       💥 0 😱 1 🔊 0 ✅ 0 \x1b[38;5;196;m0\x1b[0m٪\n\x1b[38;5;75;m┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅\x1b[0m\n",
+			"\n\x1b[38;5;75;mblee\x1b[0m" + strings.Repeat(" ", 75) + "💥 0 😱 1 🔊 0 ✅ 0 \x1b[38;5;196;m0\x1b[0m٪\n\x1b[38;5;75;m" + strings.Repeat("┅", Width) + "\x1b[0m\n",
 		},
 	}
 
@@ -136,7 +136,7 @@ func TestOpenClose(t *testing.T) {
 	Open(w, "fred", nil)
 	Close(w)
 
-	assert.Equal(t, "\n\x1b[38;5;75;mfred\x1b[0m\n\x1b[38;5;75;m┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅\x1b[0m\n\n", w.String())
+	assert.Equal(t, "\n\x1b[38;5;75;mfred\x1b[0m\n\x1b[38;5;75;m"+strings.Repeat("┅", Width)+"\x1b[0m\n\n", w.String())
 }
 
 func TestTruncate(t *testing.T) {
