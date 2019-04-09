@@ -44,7 +44,7 @@ Popeye is available on Linux, OSX and Windows platforms.
 
       ```text
       replace (
-        github.com/derailed/popeye => MY_K9S_CLONED_GIT_REPO
+        github.com/derailed/popeye => MY_POPEYE_CLONED_GIT_REPO
       )
       ```
 
