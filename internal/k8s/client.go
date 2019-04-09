@@ -3,8 +3,6 @@ package k8s
 //go:generate popeye gen
 
 import (
-	"fmt"
-
 	"github.com/derailed/popeye/pkg/config"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -156,7 +154,7 @@ func (c *Client) ListCRBs() (map[string]rbacv1.ClusterRoleBinding, error) {
 	return c.allCRBs, nil
 }
 
-// ListEndpoints returns a endpoint by name.
+// ListEndpoints returns a map of Endpoints by name.
 func (c *Client) ListEndpoints() (map[string]v1.Endpoints, error) {
 	if c.eps != nil {
 		return c.eps, nil
@@ -178,7 +176,7 @@ func (c *Client) ListEndpoints() (map[string]v1.Endpoints, error) {
 	return c.eps, nil
 }
 
-// GetEndpoints returns a endpoint by name.
+// GetEndpoints returns an Endpoints reference by name.
 func (c *Client) GetEndpoints(svcFQN string) (*v1.Endpoints, error) {
 	eps, err := c.ListEndpoints()
 	if err != nil {
@@ -188,8 +186,9 @@ func (c *Client) GetEndpoints(svcFQN string) (*v1.Endpoints, error) {
 	if ep, ok := eps[svcFQN]; ok {
 		return &ep, nil
 	}
-
-	return nil, fmt.Errorf("Unable to find ep for service %s", svcFQN)
+	// A service having no endpoints isn't an error in the client, but it *is* something we'll want to determine
+	// in the linter.
+	return nil, nil
 }
 
 // ListServices lists all available services in a given namespace.
@@ -244,8 +243,8 @@ func (c *Client) GetPod(sel map[string]string) (*v1.Pod, error) {
 			return &po, nil
 		}
 	}
-
-	return nil, fmt.Errorf("No pods match service selector")
+	// not getting a pod matching a selector is OK, the linter should determine whether it is an error.
+	return nil, nil
 }
 
 // ListPods list all available pods.
