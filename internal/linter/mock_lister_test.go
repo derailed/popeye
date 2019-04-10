@@ -8,8 +8,8 @@ import (
 	"time"
 
 	pegomock "github.com/petergtz/pegomock"
-	v10 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/rbac/v1"
+	v1 "k8s.io/api/core/v1"
+	v10 "k8s.io/api/rbac/v1"
 	v1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
@@ -21,169 +21,17 @@ func NewMockLister() *MockLister {
 	return &MockLister{fail: pegomock.GlobalFailHandler}
 }
 
-func (mock *MockLister) ClusterHasMetrics() (bool, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockLister().")
-	}
-	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ClusterHasMetrics", params, []reflect.Type{reflect.TypeOf((*bool)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 bool
-	var ret1 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(bool)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(error)
-		}
-	}
-	return ret0, ret1
-}
-
-func (mock *MockLister) FetchCMs() (*v10.ConfigMapList, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockLister().")
-	}
-	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchCMs", params, []reflect.Type{reflect.TypeOf((**v10.ConfigMapList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v10.ConfigMapList
-	var ret1 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(*v10.ConfigMapList)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(error)
-		}
-	}
-	return ret0, ret1
-}
-
-func (mock *MockLister) FetchCRBs() (*v1.ClusterRoleBindingList, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockLister().")
-	}
-	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchCRBs", params, []reflect.Type{reflect.TypeOf((**v1.ClusterRoleBindingList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v1.ClusterRoleBindingList
-	var ret1 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(*v1.ClusterRoleBindingList)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(error)
-		}
-	}
-	return ret0, ret1
-}
-
-func (mock *MockLister) FetchEPs() (*v10.EndpointsList, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockLister().")
-	}
-	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchEPs", params, []reflect.Type{reflect.TypeOf((**v10.EndpointsList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v10.EndpointsList
-	var ret1 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(*v10.EndpointsList)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(error)
-		}
-	}
-	return ret0, ret1
-}
-
-func (mock *MockLister) FetchNOs() (*v10.NodeList, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockLister().")
-	}
-	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchNOs", params, []reflect.Type{reflect.TypeOf((**v10.NodeList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v10.NodeList
-	var ret1 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(*v10.NodeList)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(error)
-		}
-	}
-	return ret0, ret1
-}
-
-func (mock *MockLister) FetchNSs() (*v10.NamespaceList, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockLister().")
-	}
-	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchNSs", params, []reflect.Type{reflect.TypeOf((**v10.NamespaceList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v10.NamespaceList
-	var ret1 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(*v10.NamespaceList)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(error)
-		}
-	}
-	return ret0, ret1
-}
-
-func (mock *MockLister) FetchNodesMetrics() ([]v1beta1.NodeMetrics, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockLister().")
-	}
-	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchNodesMetrics", params, []reflect.Type{reflect.TypeOf((*[]v1beta1.NodeMetrics)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 []v1beta1.NodeMetrics
-	var ret1 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].([]v1beta1.NodeMetrics)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(error)
-		}
-	}
-	return ret0, ret1
-}
-
-func (mock *MockLister) FetchPOs() (*v10.PodList, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockLister().")
-	}
-	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchPOs", params, []reflect.Type{reflect.TypeOf((**v10.PodList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v10.PodList
-	var ret1 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(*v10.PodList)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(error)
-		}
-	}
-	return ret0, ret1
-}
-
-func (mock *MockLister) FetchPodsMetrics(_param0 string) ([]v1beta1.PodMetrics, error) {
+func (mock *MockLister) GetEndpoints(_param0 string) (*v1.Endpoints, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLister().")
 	}
 	params := []pegomock.Param{_param0}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchPodsMetrics", params, []reflect.Type{reflect.TypeOf((*[]v1beta1.PodMetrics)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 []v1beta1.PodMetrics
+	result := pegomock.GetGenericMockFrom(mock).Invoke("GetEndpoints", params, []reflect.Type{reflect.TypeOf((**v1.Endpoints)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 *v1.Endpoints
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].([]v1beta1.PodMetrics)
+			ret0 = result[0].(*v1.Endpoints)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -192,93 +40,17 @@ func (mock *MockLister) FetchPodsMetrics(_param0 string) ([]v1beta1.PodMetrics, 
 	return ret0, ret1
 }
 
-func (mock *MockLister) FetchRBs() (*v1.RoleBindingList, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockLister().")
-	}
-	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchRBs", params, []reflect.Type{reflect.TypeOf((**v1.RoleBindingList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v1.RoleBindingList
-	var ret1 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(*v1.RoleBindingList)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(error)
-		}
-	}
-	return ret0, ret1
-}
-
-func (mock *MockLister) FetchSAs() (*v10.ServiceAccountList, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockLister().")
-	}
-	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchSAs", params, []reflect.Type{reflect.TypeOf((**v10.ServiceAccountList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v10.ServiceAccountList
-	var ret1 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(*v10.ServiceAccountList)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(error)
-		}
-	}
-	return ret0, ret1
-}
-
-func (mock *MockLister) FetchSECs() (*v10.SecretList, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockLister().")
-	}
-	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchSECs", params, []reflect.Type{reflect.TypeOf((**v10.SecretList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v10.SecretList
-	var ret1 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(*v10.SecretList)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(error)
-		}
-	}
-	return ret0, ret1
-}
-
-func (mock *MockLister) FetchSVCs() (*v10.ServiceList, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockLister().")
-	}
-	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchSVCs", params, []reflect.Type{reflect.TypeOf((**v10.ServiceList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v10.ServiceList
-	var ret1 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(*v10.ServiceList)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(error)
-		}
-	}
-	return ret0, ret1
-}
-
-func (mock *MockLister) GetEndpoints(_param0 string) (*v10.Endpoints, error) {
+func (mock *MockLister) GetPod(_param0 map[string]string) (*v1.Pod, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLister().")
 	}
 	params := []pegomock.Param{_param0}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("GetEndpoints", params, []reflect.Type{reflect.TypeOf((**v10.Endpoints)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v10.Endpoints
+	result := pegomock.GetGenericMockFrom(mock).Invoke("GetPod", params, []reflect.Type{reflect.TypeOf((**v1.Pod)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 *v1.Pod
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].(*v10.Endpoints)
+			ret0 = result[0].(*v1.Pod)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -287,36 +59,17 @@ func (mock *MockLister) GetEndpoints(_param0 string) (*v10.Endpoints, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLister) GetPod(_param0 map[string]string) (*v10.Pod, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockLister().")
-	}
-	params := []pegomock.Param{_param0}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("GetPod", params, []reflect.Type{reflect.TypeOf((**v10.Pod)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v10.Pod
-	var ret1 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(*v10.Pod)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(error)
-		}
-	}
-	return ret0, ret1
-}
-
-func (mock *MockLister) ListAllCRBs() (map[string]v1.ClusterRoleBinding, error) {
+func (mock *MockLister) ListAllCRBs() (map[string]v10.ClusterRoleBinding, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLister().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListAllCRBs", params, []reflect.Type{reflect.TypeOf((*map[string]v1.ClusterRoleBinding)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 map[string]v1.ClusterRoleBinding
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListAllCRBs", params, []reflect.Type{reflect.TypeOf((*map[string]v10.ClusterRoleBinding)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v10.ClusterRoleBinding
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].(map[string]v1.ClusterRoleBinding)
+			ret0 = result[0].(map[string]v10.ClusterRoleBinding)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -325,17 +78,17 @@ func (mock *MockLister) ListAllCRBs() (map[string]v1.ClusterRoleBinding, error) 
 	return ret0, ret1
 }
 
-func (mock *MockLister) ListAllPods() (map[string]v10.Pod, error) {
+func (mock *MockLister) ListAllPods() (map[string]v1.Pod, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLister().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListAllPods", params, []reflect.Type{reflect.TypeOf((*map[string]v10.Pod)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 map[string]v10.Pod
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListAllPods", params, []reflect.Type{reflect.TypeOf((*map[string]v1.Pod)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.Pod
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].(map[string]v10.Pod)
+			ret0 = result[0].(map[string]v1.Pod)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -344,17 +97,17 @@ func (mock *MockLister) ListAllPods() (map[string]v10.Pod, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLister) ListAllRBs() (map[string]v1.RoleBinding, error) {
+func (mock *MockLister) ListAllRBs() (map[string]v10.RoleBinding, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLister().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListAllRBs", params, []reflect.Type{reflect.TypeOf((*map[string]v1.RoleBinding)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 map[string]v1.RoleBinding
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListAllRBs", params, []reflect.Type{reflect.TypeOf((*map[string]v10.RoleBinding)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v10.RoleBinding
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].(map[string]v1.RoleBinding)
+			ret0 = result[0].(map[string]v10.RoleBinding)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -363,17 +116,17 @@ func (mock *MockLister) ListAllRBs() (map[string]v1.RoleBinding, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLister) ListCMs() (map[string]v10.ConfigMap, error) {
+func (mock *MockLister) ListCMs() (map[string]v1.ConfigMap, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLister().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListCMs", params, []reflect.Type{reflect.TypeOf((*map[string]v10.ConfigMap)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 map[string]v10.ConfigMap
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListCMs", params, []reflect.Type{reflect.TypeOf((*map[string]v1.ConfigMap)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.ConfigMap
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].(map[string]v10.ConfigMap)
+			ret0 = result[0].(map[string]v1.ConfigMap)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -382,17 +135,17 @@ func (mock *MockLister) ListCMs() (map[string]v10.ConfigMap, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLister) ListNS() (map[string]v10.Namespace, error) {
+func (mock *MockLister) ListNS() (map[string]v1.Namespace, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLister().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListNS", params, []reflect.Type{reflect.TypeOf((*map[string]v10.Namespace)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 map[string]v10.Namespace
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListNS", params, []reflect.Type{reflect.TypeOf((*map[string]v1.Namespace)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.Namespace
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].(map[string]v10.Namespace)
+			ret0 = result[0].(map[string]v1.Namespace)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -401,17 +154,17 @@ func (mock *MockLister) ListNS() (map[string]v10.Namespace, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLister) ListNodes() ([]v10.Node, error) {
+func (mock *MockLister) ListNodes() ([]v1.Node, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLister().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListNodes", params, []reflect.Type{reflect.TypeOf((*[]v10.Node)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 []v10.Node
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListNodes", params, []reflect.Type{reflect.TypeOf((*[]v1.Node)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 []v1.Node
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].([]v10.Node)
+			ret0 = result[0].([]v1.Node)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -420,7 +173,7 @@ func (mock *MockLister) ListNodes() ([]v10.Node, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLister) ListNodesMetrics(_param0 []v10.Node, _param1 []v1beta1.NodeMetrics, _param2 NodesMetrics) {
+func (mock *MockLister) ListNodesMetrics(_param0 []v1.Node, _param1 []v1beta1.NodeMetrics, _param2 NodesMetrics) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLister().")
 	}
@@ -428,17 +181,17 @@ func (mock *MockLister) ListNodesMetrics(_param0 []v10.Node, _param1 []v1beta1.N
 	pegomock.GetGenericMockFrom(mock).Invoke("ListNodesMetrics", params, []reflect.Type{})
 }
 
-func (mock *MockLister) ListPods() (map[string]v10.Pod, error) {
+func (mock *MockLister) ListPods() (map[string]v1.Pod, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLister().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListPods", params, []reflect.Type{reflect.TypeOf((*map[string]v10.Pod)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 map[string]v10.Pod
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListPods", params, []reflect.Type{reflect.TypeOf((*map[string]v1.Pod)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.Pod
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].(map[string]v10.Pod)
+			ret0 = result[0].(map[string]v1.Pod)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -455,17 +208,17 @@ func (mock *MockLister) ListPodsMetrics(_param0 []v1beta1.PodMetrics, _param1 Po
 	pegomock.GetGenericMockFrom(mock).Invoke("ListPodsMetrics", params, []reflect.Type{})
 }
 
-func (mock *MockLister) ListRBs() (map[string]v1.RoleBinding, error) {
+func (mock *MockLister) ListRBs() (map[string]v10.RoleBinding, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLister().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListRBs", params, []reflect.Type{reflect.TypeOf((*map[string]v1.RoleBinding)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 map[string]v1.RoleBinding
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListRBs", params, []reflect.Type{reflect.TypeOf((*map[string]v10.RoleBinding)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v10.RoleBinding
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].(map[string]v1.RoleBinding)
+			ret0 = result[0].(map[string]v10.RoleBinding)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -474,17 +227,17 @@ func (mock *MockLister) ListRBs() (map[string]v1.RoleBinding, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLister) ListSAs() (map[string]v10.ServiceAccount, error) {
+func (mock *MockLister) ListSAs() (map[string]v1.ServiceAccount, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLister().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListSAs", params, []reflect.Type{reflect.TypeOf((*map[string]v10.ServiceAccount)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 map[string]v10.ServiceAccount
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListSAs", params, []reflect.Type{reflect.TypeOf((*map[string]v1.ServiceAccount)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.ServiceAccount
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].(map[string]v10.ServiceAccount)
+			ret0 = result[0].(map[string]v1.ServiceAccount)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -493,17 +246,17 @@ func (mock *MockLister) ListSAs() (map[string]v10.ServiceAccount, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLister) ListSecs() (map[string]v10.Secret, error) {
+func (mock *MockLister) ListSecs() (map[string]v1.Secret, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLister().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListSecs", params, []reflect.Type{reflect.TypeOf((*map[string]v10.Secret)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 map[string]v10.Secret
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListSecs", params, []reflect.Type{reflect.TypeOf((*map[string]v1.Secret)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.Secret
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].(map[string]v10.Secret)
+			ret0 = result[0].(map[string]v1.Secret)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -512,17 +265,17 @@ func (mock *MockLister) ListSecs() (map[string]v10.Secret, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLister) ListServices() (map[string]v10.Service, error) {
+func (mock *MockLister) ListServices() (map[string]v1.Service, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLister().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListServices", params, []reflect.Type{reflect.TypeOf((*map[string]v10.Service)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 map[string]v10.Service
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListServices", params, []reflect.Type{reflect.TypeOf((*map[string]v1.Service)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.Service
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].(map[string]v10.Service)
+			ret0 = result[0].(map[string]v1.Service)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -574,237 +327,6 @@ type VerifierLister struct {
 	invocationCountMatcher pegomock.Matcher
 	inOrderContext         *pegomock.InOrderContext
 	timeout                time.Duration
-}
-
-func (verifier *VerifierLister) ClusterHasMetrics() *Lister_ClusterHasMetrics_OngoingVerification {
-	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ClusterHasMetrics", params, verifier.timeout)
-	return &Lister_ClusterHasMetrics_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
-}
-
-type Lister_ClusterHasMetrics_OngoingVerification struct {
-	mock              *MockLister
-	methodInvocations []pegomock.MethodInvocation
-}
-
-func (c *Lister_ClusterHasMetrics_OngoingVerification) GetCapturedArguments() {
-}
-
-func (c *Lister_ClusterHasMetrics_OngoingVerification) GetAllCapturedArguments() {
-}
-
-func (verifier *VerifierLister) FetchCMs() *Lister_FetchCMs_OngoingVerification {
-	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchCMs", params, verifier.timeout)
-	return &Lister_FetchCMs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
-}
-
-type Lister_FetchCMs_OngoingVerification struct {
-	mock              *MockLister
-	methodInvocations []pegomock.MethodInvocation
-}
-
-func (c *Lister_FetchCMs_OngoingVerification) GetCapturedArguments() {
-}
-
-func (c *Lister_FetchCMs_OngoingVerification) GetAllCapturedArguments() {
-}
-
-func (verifier *VerifierLister) FetchCRBs() *Lister_FetchCRBs_OngoingVerification {
-	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchCRBs", params, verifier.timeout)
-	return &Lister_FetchCRBs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
-}
-
-type Lister_FetchCRBs_OngoingVerification struct {
-	mock              *MockLister
-	methodInvocations []pegomock.MethodInvocation
-}
-
-func (c *Lister_FetchCRBs_OngoingVerification) GetCapturedArguments() {
-}
-
-func (c *Lister_FetchCRBs_OngoingVerification) GetAllCapturedArguments() {
-}
-
-func (verifier *VerifierLister) FetchEPs() *Lister_FetchEPs_OngoingVerification {
-	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchEPs", params, verifier.timeout)
-	return &Lister_FetchEPs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
-}
-
-type Lister_FetchEPs_OngoingVerification struct {
-	mock              *MockLister
-	methodInvocations []pegomock.MethodInvocation
-}
-
-func (c *Lister_FetchEPs_OngoingVerification) GetCapturedArguments() {
-}
-
-func (c *Lister_FetchEPs_OngoingVerification) GetAllCapturedArguments() {
-}
-
-func (verifier *VerifierLister) FetchNOs() *Lister_FetchNOs_OngoingVerification {
-	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchNOs", params, verifier.timeout)
-	return &Lister_FetchNOs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
-}
-
-type Lister_FetchNOs_OngoingVerification struct {
-	mock              *MockLister
-	methodInvocations []pegomock.MethodInvocation
-}
-
-func (c *Lister_FetchNOs_OngoingVerification) GetCapturedArguments() {
-}
-
-func (c *Lister_FetchNOs_OngoingVerification) GetAllCapturedArguments() {
-}
-
-func (verifier *VerifierLister) FetchNSs() *Lister_FetchNSs_OngoingVerification {
-	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchNSs", params, verifier.timeout)
-	return &Lister_FetchNSs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
-}
-
-type Lister_FetchNSs_OngoingVerification struct {
-	mock              *MockLister
-	methodInvocations []pegomock.MethodInvocation
-}
-
-func (c *Lister_FetchNSs_OngoingVerification) GetCapturedArguments() {
-}
-
-func (c *Lister_FetchNSs_OngoingVerification) GetAllCapturedArguments() {
-}
-
-func (verifier *VerifierLister) FetchNodesMetrics() *Lister_FetchNodesMetrics_OngoingVerification {
-	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchNodesMetrics", params, verifier.timeout)
-	return &Lister_FetchNodesMetrics_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
-}
-
-type Lister_FetchNodesMetrics_OngoingVerification struct {
-	mock              *MockLister
-	methodInvocations []pegomock.MethodInvocation
-}
-
-func (c *Lister_FetchNodesMetrics_OngoingVerification) GetCapturedArguments() {
-}
-
-func (c *Lister_FetchNodesMetrics_OngoingVerification) GetAllCapturedArguments() {
-}
-
-func (verifier *VerifierLister) FetchPOs() *Lister_FetchPOs_OngoingVerification {
-	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchPOs", params, verifier.timeout)
-	return &Lister_FetchPOs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
-}
-
-type Lister_FetchPOs_OngoingVerification struct {
-	mock              *MockLister
-	methodInvocations []pegomock.MethodInvocation
-}
-
-func (c *Lister_FetchPOs_OngoingVerification) GetCapturedArguments() {
-}
-
-func (c *Lister_FetchPOs_OngoingVerification) GetAllCapturedArguments() {
-}
-
-func (verifier *VerifierLister) FetchPodsMetrics(_param0 string) *Lister_FetchPodsMetrics_OngoingVerification {
-	params := []pegomock.Param{_param0}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchPodsMetrics", params, verifier.timeout)
-	return &Lister_FetchPodsMetrics_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
-}
-
-type Lister_FetchPodsMetrics_OngoingVerification struct {
-	mock              *MockLister
-	methodInvocations []pegomock.MethodInvocation
-}
-
-func (c *Lister_FetchPodsMetrics_OngoingVerification) GetCapturedArguments() string {
-	_param0 := c.GetAllCapturedArguments()
-	return _param0[len(_param0)-1]
-}
-
-func (c *Lister_FetchPodsMetrics_OngoingVerification) GetAllCapturedArguments() (_param0 []string) {
-	params := pegomock.GetGenericMockFrom(c.mock).GetInvocationParams(c.methodInvocations)
-	if len(params) > 0 {
-		_param0 = make([]string, len(params[0]))
-		for u, param := range params[0] {
-			_param0[u] = param.(string)
-		}
-	}
-	return
-}
-
-func (verifier *VerifierLister) FetchRBs() *Lister_FetchRBs_OngoingVerification {
-	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchRBs", params, verifier.timeout)
-	return &Lister_FetchRBs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
-}
-
-type Lister_FetchRBs_OngoingVerification struct {
-	mock              *MockLister
-	methodInvocations []pegomock.MethodInvocation
-}
-
-func (c *Lister_FetchRBs_OngoingVerification) GetCapturedArguments() {
-}
-
-func (c *Lister_FetchRBs_OngoingVerification) GetAllCapturedArguments() {
-}
-
-func (verifier *VerifierLister) FetchSAs() *Lister_FetchSAs_OngoingVerification {
-	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchSAs", params, verifier.timeout)
-	return &Lister_FetchSAs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
-}
-
-type Lister_FetchSAs_OngoingVerification struct {
-	mock              *MockLister
-	methodInvocations []pegomock.MethodInvocation
-}
-
-func (c *Lister_FetchSAs_OngoingVerification) GetCapturedArguments() {
-}
-
-func (c *Lister_FetchSAs_OngoingVerification) GetAllCapturedArguments() {
-}
-
-func (verifier *VerifierLister) FetchSECs() *Lister_FetchSECs_OngoingVerification {
-	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchSECs", params, verifier.timeout)
-	return &Lister_FetchSECs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
-}
-
-type Lister_FetchSECs_OngoingVerification struct {
-	mock              *MockLister
-	methodInvocations []pegomock.MethodInvocation
-}
-
-func (c *Lister_FetchSECs_OngoingVerification) GetCapturedArguments() {
-}
-
-func (c *Lister_FetchSECs_OngoingVerification) GetAllCapturedArguments() {
-}
-
-func (verifier *VerifierLister) FetchSVCs() *Lister_FetchSVCs_OngoingVerification {
-	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchSVCs", params, verifier.timeout)
-	return &Lister_FetchSVCs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
-}
-
-type Lister_FetchSVCs_OngoingVerification struct {
-	mock              *MockLister
-	methodInvocations []pegomock.MethodInvocation
-}
-
-func (c *Lister_FetchSVCs_OngoingVerification) GetCapturedArguments() {
-}
-
-func (c *Lister_FetchSVCs_OngoingVerification) GetAllCapturedArguments() {
 }
 
 func (verifier *VerifierLister) GetEndpoints(_param0 string) *Lister_GetEndpoints_OngoingVerification {
@@ -963,7 +485,7 @@ func (c *Lister_ListNodes_OngoingVerification) GetCapturedArguments() {
 func (c *Lister_ListNodes_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierLister) ListNodesMetrics(_param0 []v10.Node, _param1 []v1beta1.NodeMetrics, _param2 NodesMetrics) *Lister_ListNodesMetrics_OngoingVerification {
+func (verifier *VerifierLister) ListNodesMetrics(_param0 []v1.Node, _param1 []v1beta1.NodeMetrics, _param2 NodesMetrics) *Lister_ListNodesMetrics_OngoingVerification {
 	params := []pegomock.Param{_param0, _param1, _param2}
 	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListNodesMetrics", params, verifier.timeout)
 	return &Lister_ListNodesMetrics_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
@@ -974,17 +496,17 @@ type Lister_ListNodesMetrics_OngoingVerification struct {
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Lister_ListNodesMetrics_OngoingVerification) GetCapturedArguments() ([]v10.Node, []v1beta1.NodeMetrics, NodesMetrics) {
+func (c *Lister_ListNodesMetrics_OngoingVerification) GetCapturedArguments() ([]v1.Node, []v1beta1.NodeMetrics, NodesMetrics) {
 	_param0, _param1, _param2 := c.GetAllCapturedArguments()
 	return _param0[len(_param0)-1], _param1[len(_param1)-1], _param2[len(_param2)-1]
 }
 
-func (c *Lister_ListNodesMetrics_OngoingVerification) GetAllCapturedArguments() (_param0 [][]v10.Node, _param1 [][]v1beta1.NodeMetrics, _param2 []NodesMetrics) {
+func (c *Lister_ListNodesMetrics_OngoingVerification) GetAllCapturedArguments() (_param0 [][]v1.Node, _param1 [][]v1beta1.NodeMetrics, _param2 []NodesMetrics) {
 	params := pegomock.GetGenericMockFrom(c.mock).GetInvocationParams(c.methodInvocations)
 	if len(params) > 0 {
-		_param0 = make([][]v10.Node, len(params[0]))
+		_param0 = make([][]v1.Node, len(params[0]))
 		for u, param := range params[0] {
-			_param0[u] = param.([]v10.Node)
+			_param0[u] = param.([]v1.Node)
 		}
 		_param1 = make([][]v1beta1.NodeMetrics, len(params[1]))
 		for u, param := range params[1] {

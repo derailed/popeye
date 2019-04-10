@@ -20,6 +20,36 @@ func NewMockFetcher() *MockFetcher {
 	return &MockFetcher{fail: pegomock.GlobalFailHandler}
 }
 
+func (mock *MockFetcher) ActiveCluster() string {
+	if mock == nil {
+		panic("mock must not be nil. Use myMock := NewMockFetcher().")
+	}
+	params := []pegomock.Param{}
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ActiveCluster", params, []reflect.Type{reflect.TypeOf((*string)(nil)).Elem()})
+	var ret0 string
+	if len(result) != 0 {
+		if result[0] != nil {
+			ret0 = result[0].(string)
+		}
+	}
+	return ret0
+}
+
+func (mock *MockFetcher) ActiveNamespace() string {
+	if mock == nil {
+		panic("mock must not be nil. Use myMock := NewMockFetcher().")
+	}
+	params := []pegomock.Param{}
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ActiveNamespace", params, []reflect.Type{reflect.TypeOf((*string)(nil)).Elem()})
+	var ret0 string
+	if len(result) != 0 {
+		if result[0] != nil {
+			ret0 = result[0].(string)
+		}
+	}
+	return ret0
+}
+
 func (mock *MockFetcher) ClusterHasMetrics() (bool, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockFetcher().")
@@ -302,6 +332,40 @@ type VerifierFetcher struct {
 	invocationCountMatcher pegomock.Matcher
 	inOrderContext         *pegomock.InOrderContext
 	timeout                time.Duration
+}
+
+func (verifier *VerifierFetcher) ActiveCluster() *Fetcher_ActiveCluster_OngoingVerification {
+	params := []pegomock.Param{}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ActiveCluster", params, verifier.timeout)
+	return &Fetcher_ActiveCluster_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+}
+
+type Fetcher_ActiveCluster_OngoingVerification struct {
+	mock              *MockFetcher
+	methodInvocations []pegomock.MethodInvocation
+}
+
+func (c *Fetcher_ActiveCluster_OngoingVerification) GetCapturedArguments() {
+}
+
+func (c *Fetcher_ActiveCluster_OngoingVerification) GetAllCapturedArguments() {
+}
+
+func (verifier *VerifierFetcher) ActiveNamespace() *Fetcher_ActiveNamespace_OngoingVerification {
+	params := []pegomock.Param{}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ActiveNamespace", params, verifier.timeout)
+	return &Fetcher_ActiveNamespace_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+}
+
+type Fetcher_ActiveNamespace_OngoingVerification struct {
+	mock              *MockFetcher
+	methodInvocations []pegomock.MethodInvocation
+}
+
+func (c *Fetcher_ActiveNamespace_OngoingVerification) GetCapturedArguments() {
+}
+
+func (c *Fetcher_ActiveNamespace_OngoingVerification) GetAllCapturedArguments() {
 }
 
 func (verifier *VerifierFetcher) ClusterHasMetrics() *Fetcher_ClusterHasMetrics_OngoingVerification {

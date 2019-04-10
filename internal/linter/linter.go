@@ -27,14 +27,8 @@ type (
 		issues Issues
 	}
 
-	// Loader loads prefiltered Kubernetes resources.
-	Loader interface {
-		Konfig
-		Lister
-	}
-
-	// Konfig represents a configuration object.
-	Konfig interface {
+	// Spinach represents a Popeye configuration object.
+	Spinach interface {
 		PodCPULimit() float64
 		PodMEMLimit() float64
 		NodeCPULimit() float64
@@ -43,14 +37,15 @@ type (
 
 		Sections() []string
 		LinterLevel() int
-		ActiveCluster() string
-		ActiveNamespace() string
 		ExcludedNS(ns string) bool
 		ExcludedNode(n string) bool
 	}
 
 	// Fetcher fetches Kubernetes resources from the apiserver.
 	Fetcher interface {
+		ActiveCluster() string
+		ActiveNamespace() string
+
 		ClusterHasMetrics() (bool, error)
 		FetchNodesMetrics() ([]mv1beta1.NodeMetrics, error)
 		FetchPodsMetrics(ns string) ([]mv1beta1.PodMetrics, error)
@@ -69,8 +64,6 @@ type (
 
 	// Lister list Kubernetes resource based on configuration scopes.
 	Lister interface {
-		Fetcher
-
 		ListNodesMetrics([]v1.Node, []mv1beta1.NodeMetrics, NodesMetrics)
 		ListPodsMetrics([]mv1beta1.PodMetrics, PodsMetrics)
 
@@ -88,6 +81,13 @@ type (
 		ListCMs() (map[string]v1.ConfigMap, error)
 		ListSecs() (map[string]v1.Secret, error)
 		ListSAs() (map[string]v1.ServiceAccount, error)
+	}
+
+	// Loader loads prefiltered Kubernetes resources.
+	Loader interface {
+		Spinach
+		Fetcher
+		Lister
 	}
 )
 

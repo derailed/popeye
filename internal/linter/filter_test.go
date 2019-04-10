@@ -24,9 +24,9 @@ func TestListNS(t *testing.T) {
 			makeNS("n2", true),
 		},
 	}, nil)
+	m.When(mkf.ActiveNamespace()).ThenReturn("")
 
-	mkk := NewMockKonfig()
-	m.When(mkk.ActiveNamespace()).ThenReturn("")
+	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNS("n1")).ThenReturn(false)
 	m.When(mkk.ExcludedNS("n2")).ThenReturn(false)
 
@@ -35,7 +35,7 @@ func TestListNS(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
 	mkf.VerifyWasCalledOnce().FetchNSs()
-	mkk.VerifyWasCalled(pegomock.Times(2)).ActiveNamespace()
+	mkf.VerifyWasCalled(pegomock.Times(2)).ActiveNamespace()
 	mkk.VerifyWasCalled(pegomock.Times(1)).ExcludedNS("n1")
 	mkk.VerifyWasCalled(pegomock.Times(1)).ExcludedNS("n2")
 }
@@ -49,7 +49,7 @@ func TestListAllNS(t *testing.T) {
 		},
 	}, nil)
 
-	mkk := NewMockKonfig()
+	mkk := NewMockSpinach()
 	po, err := NewFilter(mkf, mkk).ListAllNS()
 
 	assert.Nil(t, err)
@@ -65,9 +65,9 @@ func TestListSAs(t *testing.T) {
 			makeSA("s2"),
 		},
 	}, nil)
+	m.When(mkf.ActiveNamespace()).ThenReturn("default")
 
-	mkk := NewMockKonfig()
-	m.When(mkk.ActiveNamespace()).ThenReturn("default")
+	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNS("s1")).ThenReturn(false)
 	m.When(mkk.ExcludedNS("s2")).ThenReturn(false)
 
@@ -76,7 +76,7 @@ func TestListSAs(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
 	mkf.VerifyWasCalledOnce().FetchSAs()
-	mkk.VerifyWasCalled(pegomock.Times(4)).ActiveNamespace()
+	mkf.VerifyWasCalled(pegomock.Times(4)).ActiveNamespace()
 	mkk.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("default")
 }
 
@@ -89,7 +89,7 @@ func TestListAllSAs(t *testing.T) {
 		},
 	}, nil)
 
-	mkk := NewMockKonfig()
+	mkk := NewMockSpinach()
 	po, err := NewFilter(mkf, mkk).ListAllSAs()
 
 	assert.Nil(t, err)
@@ -105,9 +105,9 @@ func TestListSecs(t *testing.T) {
 			makeSec("s2"),
 		},
 	}, nil)
+	m.When(mkf.ActiveNamespace()).ThenReturn("default")
 
-	mkk := NewMockKonfig()
-	m.When(mkk.ActiveNamespace()).ThenReturn("default")
+	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNS("s1")).ThenReturn(false)
 	m.When(mkk.ExcludedNS("s2")).ThenReturn(false)
 
@@ -116,7 +116,7 @@ func TestListSecs(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
 	mkf.VerifyWasCalledOnce().FetchSECs()
-	mkk.VerifyWasCalled(pegomock.Times(4)).ActiveNamespace()
+	mkf.VerifyWasCalled(pegomock.Times(4)).ActiveNamespace()
 	mkk.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("default")
 }
 
@@ -129,7 +129,7 @@ func TestListAllSecs(t *testing.T) {
 		},
 	}, nil)
 
-	mkk := NewMockKonfig()
+	mkk := NewMockSpinach()
 	po, err := NewFilter(mkf, mkk).ListAllSecs()
 
 	assert.Nil(t, err)
@@ -145,9 +145,9 @@ func TestListCMs(t *testing.T) {
 			makeCM("cm2"),
 		},
 	}, nil)
+	m.When(mkf.ActiveNamespace()).ThenReturn("default")
 
-	mkk := NewMockKonfig()
-	m.When(mkk.ActiveNamespace()).ThenReturn("default")
+	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNS("p1")).ThenReturn(false)
 	m.When(mkk.ExcludedNS("p2")).ThenReturn(false)
 
@@ -156,7 +156,7 @@ func TestListCMs(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
 	mkf.VerifyWasCalledOnce().FetchCMs()
-	mkk.VerifyWasCalled(pegomock.Times(4)).ActiveNamespace()
+	mkf.VerifyWasCalled(pegomock.Times(4)).ActiveNamespace()
 	mkk.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("default")
 }
 
@@ -169,7 +169,7 @@ func TestListAllCMs(t *testing.T) {
 		},
 	}, nil)
 
-	mkk := NewMockKonfig()
+	mkk := NewMockSpinach()
 	po, err := NewFilter(mkf, mkk).ListAllCMs()
 
 	assert.Nil(t, err)
@@ -185,9 +185,9 @@ func TestListPod(t *testing.T) {
 			makePodLabel("p2"),
 		},
 	}, nil)
+	m.When(mkf.ActiveNamespace()).ThenReturn("default")
 
-	mkk := NewMockKonfig()
-	m.When(mkk.ActiveNamespace()).ThenReturn("default")
+	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNS("p1")).ThenReturn(false)
 	m.When(mkk.ExcludedNS("p2")).ThenReturn(false)
 
@@ -196,7 +196,7 @@ func TestListPod(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
 	mkf.VerifyWasCalledOnce().FetchPOs()
-	mkk.VerifyWasCalled(pegomock.Times(4)).ActiveNamespace()
+	mkf.VerifyWasCalled(pegomock.Times(4)).ActiveNamespace()
 	mkk.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("default")
 }
 
@@ -209,7 +209,7 @@ func TestListAllPods(t *testing.T) {
 		},
 	}, nil)
 
-	mkk := NewMockKonfig()
+	mkk := NewMockSpinach()
 
 	po, err := NewFilter(mkf, mkk).ListAllPods()
 
@@ -226,9 +226,9 @@ func TestGetPod(t *testing.T) {
 			makePodLabel("p2"),
 		},
 	}, nil)
+	m.When(mkf.ActiveNamespace()).ThenReturn("default")
 
-	mkk := NewMockKonfig()
-	m.When(mkk.ActiveNamespace()).ThenReturn("default")
+	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNS("p1")).ThenReturn(false)
 	m.When(mkk.ExcludedNS("p2")).ThenReturn(false)
 
@@ -237,7 +237,7 @@ func TestGetPod(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
 	mkf.VerifyWasCalledOnce().FetchPOs()
-	mkk.VerifyWasCalled(pegomock.Times(4)).ActiveNamespace()
+	mkf.VerifyWasCalled(pegomock.Times(4)).ActiveNamespace()
 	mkk.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("default")
 }
 
@@ -250,7 +250,7 @@ func TestPodsNamespaces(t *testing.T) {
 		},
 	}, nil)
 
-	mkk := NewMockKonfig()
+	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNS("default")).ThenReturn(false)
 
 	nss := make([]string, 1)
@@ -270,7 +270,7 @@ func TestListNodes(t *testing.T) {
 		},
 	}, nil)
 
-	mkk := NewMockKonfig()
+	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNode("n1")).ThenReturn(false)
 	m.When(mkk.ExcludedNode("n2")).ThenReturn(false)
 
@@ -292,7 +292,7 @@ func TestListServices(t *testing.T) {
 		},
 	}, nil)
 
-	mkk := NewMockKonfig()
+	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNS("default")).ThenReturn(false)
 
 	rbs, err := NewFilter(mkf, mkk).ListServices()
@@ -311,7 +311,7 @@ func TestListAllServices(t *testing.T) {
 		},
 	}, nil)
 
-	mkk := NewMockKonfig()
+	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNS("default")).ThenReturn(false)
 
 	rbs, err := NewFilter(mkf, mkk).ListAllServices()
@@ -330,7 +330,7 @@ func TestListCRBs(t *testing.T) {
 		},
 	}, nil)
 
-	mkk := NewMockKonfig()
+	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNS("default")).ThenReturn(false)
 
 	rbs, err := NewFilter(mkf, mkk).ListAllCRBs()
@@ -349,7 +349,7 @@ func TestListRBs(t *testing.T) {
 		},
 	}, nil)
 
-	mkk := NewMockKonfig()
+	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNS("default")).ThenReturn(false)
 
 	rbs, err := NewFilter(mkf, mkk).ListRBs()
@@ -369,7 +369,7 @@ func TestListAllRBs(t *testing.T) {
 		},
 	}, nil)
 
-	mkk := NewMockKonfig()
+	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNS("default")).ThenReturn(false)
 
 	rbs, err := NewFilter(mkf, mkk).ListAllRBs()
@@ -414,10 +414,11 @@ func TestGetEndPoints(t *testing.T) {
 	}
 
 	for _, u := range uu {
-		mkl := NewMockLister()
+		mkl := NewMockFetcher()
 		m.When(mkl.FetchEPs()).ThenReturn(&v1.EndpointsList{Items: []v1.Endpoints{u.ep}}, nil)
 		m.When(mkl.FetchSVCs()).ThenReturn(&v1.ServiceList{Items: []v1.Service{u.svc}}, nil)
-		mkf := NewMockKonfig()
+
+		mkf := NewMockSpinach()
 
 		c := NewFilter(mkl, mkf)
 		ep, err := c.GetEndpoints("default/s1")

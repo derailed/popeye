@@ -12,8 +12,8 @@ var systemNS = []string{"kube-system", "kube-public"}
 
 // Filter represents a Kubernetes resources filter based on configuration.
 type Filter struct {
+	Spinach
 	Fetcher
-	Konfig
 
 	allPods map[string]v1.Pod
 	allNSs  map[string]v1.Namespace
@@ -27,8 +27,8 @@ type Filter struct {
 }
 
 // NewFilter returns a new Kubernetes resource filter.
-func NewFilter(f Fetcher, c Konfig) *Filter {
-	return &Filter{Fetcher: f, Konfig: c}
+func NewFilter(f Fetcher, s Spinach) *Filter {
+	return &Filter{Fetcher: f, Spinach: s}
 }
 
 // ListNodesMetrics retrieves metrics for a given set of nodes.
