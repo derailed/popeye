@@ -13,10 +13,10 @@ import (
 func TestSecLint(t *testing.T) {
 	mkl := NewMockLoader()
 	m.When(mkl.ActiveNamespace()).ThenReturn("default")
-	m.When(mkl.ListSecs()).ThenReturn(map[string]v1.Secret{
+	m.When(mkl.ListSecrets()).ThenReturn(map[string]v1.Secret{
 		"default/s1": makeSec("s1"),
 	}, nil)
-	m.When(mkl.ListSAs()).ThenReturn(map[string]v1.ServiceAccount{
+	m.When(mkl.ListServiceAccounts()).ThenReturn(map[string]v1.ServiceAccount{
 		"default/sa1": makeSA("sa1"),
 	}, nil)
 	m.When(mkl.ListPods()).ThenReturn(map[string]v1.Pod{
@@ -28,12 +28,12 @@ func TestSecLint(t *testing.T) {
 
 	assert.Equal(t, 0, len(s.Issues()["default/s1"]))
 
-	mkl.VerifyWasCalledOnce().ListSecs()
-	mkl.VerifyWasCalledOnce().ListSAs()
+	mkl.VerifyWasCalledOnce().ListSecrets()
+	mkl.VerifyWasCalledOnce().ListServiceAccounts()
 	mkl.VerifyWasCalledOnce().ListPods()
 }
 
-func TestSecLintSecs(t *testing.T) {
+func TestSecLintSecrets(t *testing.T) {
 	uu := []struct {
 		sec   v1.Secret
 		pod   v1.Pod

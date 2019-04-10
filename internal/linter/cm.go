@@ -19,7 +19,7 @@ func NewCM(l Loader, log *zerolog.Logger) *CM {
 
 // Lint a ConfigMap.
 func (c *CM) Lint(ctx context.Context) error {
-	cms, err := c.ListCMs()
+	cms, err := c.ListConfigMaps()
 	if err != nil {
 		return err
 	}

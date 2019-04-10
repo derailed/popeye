@@ -16,9 +16,9 @@ func TestIsSystemNS(t *testing.T) {
 	assert.False(t, isSystemNS("fred"))
 }
 
-func TestListNS(t *testing.T) {
+func TestListNamespaces(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchNSs()).ThenReturn(&v1.NamespaceList{
+	m.When(mkf.FetchNamespaces()).ThenReturn(&v1.NamespaceList{
 		Items: []v1.Namespace{
 			makeNS("n1", true),
 			makeNS("n2", true),
@@ -30,19 +30,19 @@ func TestListNS(t *testing.T) {
 	m.When(mkk.ExcludedNS("n1")).ThenReturn(false)
 	m.When(mkk.ExcludedNS("n2")).ThenReturn(false)
 
-	po, err := NewFilter(mkf, mkk).ListNS()
+	po, err := NewFilter(mkf, mkk).ListNamespaces()
 
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
-	mkf.VerifyWasCalledOnce().FetchNSs()
+	mkf.VerifyWasCalledOnce().FetchNamespaces()
 	mkf.VerifyWasCalled(pegomock.Times(2)).ActiveNamespace()
 	mkk.VerifyWasCalled(pegomock.Times(1)).ExcludedNS("n1")
 	mkk.VerifyWasCalled(pegomock.Times(1)).ExcludedNS("n2")
 }
 
-func TestListAllNS(t *testing.T) {
+func TestListAllNamespaces(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchNSs()).ThenReturn(&v1.NamespaceList{
+	m.When(mkf.FetchNamespaces()).ThenReturn(&v1.NamespaceList{
 		Items: []v1.Namespace{
 			makeNS("n1", true),
 			makeNS("n2", true),
@@ -50,16 +50,16 @@ func TestListAllNS(t *testing.T) {
 	}, nil)
 
 	mkk := NewMockSpinach()
-	po, err := NewFilter(mkf, mkk).ListAllNS()
+	po, err := NewFilter(mkf, mkk).ListAllNamespaces()
 
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
-	mkf.VerifyWasCalledOnce().FetchNSs()
+	mkf.VerifyWasCalledOnce().FetchNamespaces()
 }
 
-func TestListSAs(t *testing.T) {
+func TestListServiceAccounts(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchSAs()).ThenReturn(&v1.ServiceAccountList{
+	m.When(mkf.FetchServiceAccounts()).ThenReturn(&v1.ServiceAccountList{
 		Items: []v1.ServiceAccount{
 			makeSA("s1"),
 			makeSA("s2"),
@@ -71,18 +71,18 @@ func TestListSAs(t *testing.T) {
 	m.When(mkk.ExcludedNS("s1")).ThenReturn(false)
 	m.When(mkk.ExcludedNS("s2")).ThenReturn(false)
 
-	po, err := NewFilter(mkf, mkk).ListSAs()
+	po, err := NewFilter(mkf, mkk).ListServiceAccounts()
 
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
-	mkf.VerifyWasCalledOnce().FetchSAs()
+	mkf.VerifyWasCalledOnce().FetchServiceAccounts()
 	mkf.VerifyWasCalled(pegomock.Times(4)).ActiveNamespace()
 	mkk.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("default")
 }
 
-func TestListAllSAs(t *testing.T) {
+func TestListAllServiceAccounts(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchSAs()).ThenReturn(&v1.ServiceAccountList{
+	m.When(mkf.FetchServiceAccounts()).ThenReturn(&v1.ServiceAccountList{
 		Items: []v1.ServiceAccount{
 			makeSA("s1"),
 			makeSA("s2"),
@@ -90,16 +90,16 @@ func TestListAllSAs(t *testing.T) {
 	}, nil)
 
 	mkk := NewMockSpinach()
-	po, err := NewFilter(mkf, mkk).ListAllSAs()
+	po, err := NewFilter(mkf, mkk).ListAllServiceAccounts()
 
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
-	mkf.VerifyWasCalledOnce().FetchSAs()
+	mkf.VerifyWasCalledOnce().FetchServiceAccounts()
 }
 
-func TestListSecs(t *testing.T) {
+func TestListSecrets(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchSECs()).ThenReturn(&v1.SecretList{
+	m.When(mkf.FetchSecrets()).ThenReturn(&v1.SecretList{
 		Items: []v1.Secret{
 			makeSec("s1"),
 			makeSec("s2"),
@@ -111,18 +111,18 @@ func TestListSecs(t *testing.T) {
 	m.When(mkk.ExcludedNS("s1")).ThenReturn(false)
 	m.When(mkk.ExcludedNS("s2")).ThenReturn(false)
 
-	po, err := NewFilter(mkf, mkk).ListSecs()
+	po, err := NewFilter(mkf, mkk).ListSecrets()
 
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
-	mkf.VerifyWasCalledOnce().FetchSECs()
+	mkf.VerifyWasCalledOnce().FetchSecrets()
 	mkf.VerifyWasCalled(pegomock.Times(4)).ActiveNamespace()
 	mkk.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("default")
 }
 
-func TestListAllSecs(t *testing.T) {
+func TestListAllSecrets(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchSECs()).ThenReturn(&v1.SecretList{
+	m.When(mkf.FetchSecrets()).ThenReturn(&v1.SecretList{
 		Items: []v1.Secret{
 			makeSec("s1"),
 			makeSec("s2"),
@@ -130,16 +130,16 @@ func TestListAllSecs(t *testing.T) {
 	}, nil)
 
 	mkk := NewMockSpinach()
-	po, err := NewFilter(mkf, mkk).ListAllSecs()
+	po, err := NewFilter(mkf, mkk).ListAllSecrets()
 
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
-	mkf.VerifyWasCalledOnce().FetchSECs()
+	mkf.VerifyWasCalledOnce().FetchSecrets()
 }
 
-func TestListCMs(t *testing.T) {
+func TestListConfigMaps(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchCMs()).ThenReturn(&v1.ConfigMapList{
+	m.When(mkf.FetchConfigMaps()).ThenReturn(&v1.ConfigMapList{
 		Items: []v1.ConfigMap{
 			makeCM("cm1"),
 			makeCM("cm2"),
@@ -151,18 +151,18 @@ func TestListCMs(t *testing.T) {
 	m.When(mkk.ExcludedNS("p1")).ThenReturn(false)
 	m.When(mkk.ExcludedNS("p2")).ThenReturn(false)
 
-	po, err := NewFilter(mkf, mkk).ListCMs()
+	po, err := NewFilter(mkf, mkk).ListConfigMaps()
 
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
-	mkf.VerifyWasCalledOnce().FetchCMs()
+	mkf.VerifyWasCalledOnce().FetchConfigMaps()
 	mkf.VerifyWasCalled(pegomock.Times(4)).ActiveNamespace()
 	mkk.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("default")
 }
 
-func TestListAllCMs(t *testing.T) {
+func TestListAllConfigMaps(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchCMs()).ThenReturn(&v1.ConfigMapList{
+	m.When(mkf.FetchConfigMaps()).ThenReturn(&v1.ConfigMapList{
 		Items: []v1.ConfigMap{
 			makeCM("cm1"),
 			makeCM("cm2"),
@@ -170,16 +170,16 @@ func TestListAllCMs(t *testing.T) {
 	}, nil)
 
 	mkk := NewMockSpinach()
-	po, err := NewFilter(mkf, mkk).ListAllCMs()
+	po, err := NewFilter(mkf, mkk).ListAllConfigMaps()
 
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
-	mkf.VerifyWasCalledOnce().FetchCMs()
+	mkf.VerifyWasCalledOnce().FetchConfigMaps()
 }
 
 func TestListPod(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchPOs()).ThenReturn(&v1.PodList{
+	m.When(mkf.FetchPods()).ThenReturn(&v1.PodList{
 		Items: []v1.Pod{
 			makePodLabel("p1"),
 			makePodLabel("p2"),
@@ -195,14 +195,14 @@ func TestListPod(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
-	mkf.VerifyWasCalledOnce().FetchPOs()
+	mkf.VerifyWasCalledOnce().FetchPods()
 	mkf.VerifyWasCalled(pegomock.Times(4)).ActiveNamespace()
 	mkk.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("default")
 }
 
 func TestListAllPods(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchPOs()).ThenReturn(&v1.PodList{
+	m.When(mkf.FetchPods()).ThenReturn(&v1.PodList{
 		Items: []v1.Pod{
 			makePodLabel("p1"),
 			makePodLabel("p2"),
@@ -215,12 +215,12 @@ func TestListAllPods(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
-	mkf.VerifyWasCalledOnce().FetchPOs()
+	mkf.VerifyWasCalledOnce().FetchPods()
 }
 
 func TestGetPod(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchPOs()).ThenReturn(&v1.PodList{
+	m.When(mkf.FetchPods()).ThenReturn(&v1.PodList{
 		Items: []v1.Pod{
 			makePodLabel("p1"),
 			makePodLabel("p2"),
@@ -236,14 +236,14 @@ func TestGetPod(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.NotNil(t, po)
-	mkf.VerifyWasCalledOnce().FetchPOs()
+	mkf.VerifyWasCalledOnce().FetchPods()
 	mkf.VerifyWasCalled(pegomock.Times(4)).ActiveNamespace()
 	mkk.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("default")
 }
 
 func TestPodsNamespaces(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchPOs()).ThenReturn(&v1.PodList{
+	m.When(mkf.FetchPods()).ThenReturn(&v1.PodList{
 		Items: []v1.Pod{
 			makePod("p1"),
 			makePod("p2"),
@@ -257,13 +257,13 @@ func TestPodsNamespaces(t *testing.T) {
 	NewFilter(mkf, mkk).PodsNamespaces(nss)
 
 	assert.Equal(t, []string{"default"}, nss)
-	mkf.VerifyWasCalledOnce().FetchPOs()
+	mkf.VerifyWasCalledOnce().FetchPods()
 	mkk.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("default")
 }
 
 func TestListNodes(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchNOs()).ThenReturn(&v1.NodeList{
+	m.When(mkf.FetchNodes()).ThenReturn(&v1.NodeList{
 		Items: []v1.Node{
 			makeNode("n1"),
 			makeNode("n2"),
@@ -278,14 +278,14 @@ func TestListNodes(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(rbs))
-	mkf.VerifyWasCalledOnce().FetchNOs()
+	mkf.VerifyWasCalledOnce().FetchNodes()
 	mkk.VerifyWasCalledOnce().ExcludedNode("n1")
 	mkk.VerifyWasCalledOnce().ExcludedNode("n2")
 }
 
 func TestListServices(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchSVCs()).ThenReturn(&v1.ServiceList{
+	m.When(mkf.FetchServices()).ThenReturn(&v1.ServiceList{
 		Items: []v1.Service{
 			makeSvc("s1"),
 			makeSvc("s2"),
@@ -299,12 +299,12 @@ func TestListServices(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(rbs))
-	mkf.VerifyWasCalledOnce().FetchSVCs()
+	mkf.VerifyWasCalledOnce().FetchServices()
 }
 
 func TestListAllServices(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchSVCs()).ThenReturn(&v1.ServiceList{
+	m.When(mkf.FetchServices()).ThenReturn(&v1.ServiceList{
 		Items: []v1.Service{
 			makeSvc("s1"),
 			makeSvc("s2"),
@@ -318,12 +318,12 @@ func TestListAllServices(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(rbs))
-	mkf.VerifyWasCalledOnce().FetchSVCs()
+	mkf.VerifyWasCalledOnce().FetchServices()
 }
 
-func TestListCRBs(t *testing.T) {
+func TestListClusterRoleBindings(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchCRBs()).ThenReturn(&rbacv1.ClusterRoleBindingList{
+	m.When(mkf.FetchClusterRoleBindings()).ThenReturn(&rbacv1.ClusterRoleBindingList{
 		Items: []rbacv1.ClusterRoleBinding{
 			makeCRB("crb1", "sa1"),
 			makeCRB("crb2", "sa1"),
@@ -333,16 +333,16 @@ func TestListCRBs(t *testing.T) {
 	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNS("default")).ThenReturn(false)
 
-	rbs, err := NewFilter(mkf, mkk).ListAllCRBs()
+	rbs, err := NewFilter(mkf, mkk).ListAllClusterRoleBindings()
 
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(rbs))
-	mkf.VerifyWasCalledOnce().FetchCRBs()
+	mkf.VerifyWasCalledOnce().FetchClusterRoleBindings()
 }
 
-func TestListRBs(t *testing.T) {
+func TestListRoleBindings(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchRBs()).ThenReturn(&rbacv1.RoleBindingList{
+	m.When(mkf.FetchRoleBindings()).ThenReturn(&rbacv1.RoleBindingList{
 		Items: []rbacv1.RoleBinding{
 			makeRB("rb1", "sa1"),
 			makeRB("rb2", "sa1"),
@@ -352,17 +352,17 @@ func TestListRBs(t *testing.T) {
 	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNS("default")).ThenReturn(false)
 
-	rbs, err := NewFilter(mkf, mkk).ListRBs()
+	rbs, err := NewFilter(mkf, mkk).ListRoleBindings()
 
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(rbs))
-	mkf.VerifyWasCalledOnce().FetchRBs()
+	mkf.VerifyWasCalledOnce().FetchRoleBindings()
 	mkk.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("default")
 }
 
-func TestListAllRBs(t *testing.T) {
+func TestListAllRoleBindings(t *testing.T) {
 	mkf := NewMockFetcher()
-	m.When(mkf.FetchRBs()).ThenReturn(&rbacv1.RoleBindingList{
+	m.When(mkf.FetchRoleBindings()).ThenReturn(&rbacv1.RoleBindingList{
 		Items: []rbacv1.RoleBinding{
 			makeRB("rb1", "sa1"),
 			makeRB("rb2", "sa1"),
@@ -372,11 +372,11 @@ func TestListAllRBs(t *testing.T) {
 	mkk := NewMockSpinach()
 	m.When(mkk.ExcludedNS("default")).ThenReturn(false)
 
-	rbs, err := NewFilter(mkf, mkk).ListAllRBs()
+	rbs, err := NewFilter(mkf, mkk).ListAllRoleBindings()
 
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(rbs))
-	mkf.VerifyWasCalledOnce().FetchRBs()
+	mkf.VerifyWasCalledOnce().FetchRoleBindings()
 }
 
 func TestGetEndPoints(t *testing.T) {
@@ -415,8 +415,8 @@ func TestGetEndPoints(t *testing.T) {
 
 	for _, u := range uu {
 		mkl := NewMockFetcher()
-		m.When(mkl.FetchEPs()).ThenReturn(&v1.EndpointsList{Items: []v1.Endpoints{u.ep}}, nil)
-		m.When(mkl.FetchSVCs()).ThenReturn(&v1.ServiceList{Items: []v1.Service{u.svc}}, nil)
+		m.When(mkl.FetchEndpoints()).ThenReturn(&v1.EndpointsList{Items: []v1.Endpoints{u.ep}}, nil)
+		m.When(mkl.FetchServices()).ThenReturn(&v1.ServiceList{Items: []v1.Service{u.svc}}, nil)
 
 		mkf := NewMockSpinach()
 
@@ -429,8 +429,8 @@ func TestGetEndPoints(t *testing.T) {
 		} else {
 			assert.Nil(t, ep)
 		}
-		mkl.VerifyWasCalledOnce().FetchEPs()
-		mkl.VerifyWasCalled(pegomock.Times(u.count)).FetchSVCs()
+		mkl.VerifyWasCalledOnce().FetchEndpoints()
+		mkl.VerifyWasCalled(pegomock.Times(u.count)).FetchServices()
 	}
 }
 

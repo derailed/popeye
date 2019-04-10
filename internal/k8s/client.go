@@ -27,53 +27,53 @@ func NewClient(flags *Flags) *Client {
 	return &Client{Flags: flags}
 }
 
-// FetchNSs retrieves all namespaces on the cluster.
-func (c *Client) FetchNSs() (*v1.NamespaceList, error) {
+// FetchNamespaces retrieves all namespaces on the cluster.
+func (c *Client) FetchNamespaces() (*v1.NamespaceList, error) {
 	return c.DialOrDie().CoreV1().Namespaces().List(metav1.ListOptions{})
 }
 
-// FetchSAs retrieves all serviceaccounts on the cluster.
-func (c *Client) FetchSAs() (*v1.ServiceAccountList, error) {
+// FetchServiceAccounts retrieves all serviceaccounts on the cluster.
+func (c *Client) FetchServiceAccounts() (*v1.ServiceAccountList, error) {
 	return c.DialOrDie().CoreV1().ServiceAccounts("").List(metav1.ListOptions{})
 }
 
-// FetchCMs retrieves all configmaps on the cluster.
-func (c *Client) FetchCMs() (*v1.ConfigMapList, error) {
+// FetchConfigMaps retrieves all configmaps on the cluster.
+func (c *Client) FetchConfigMaps() (*v1.ConfigMapList, error) {
 	return c.DialOrDie().CoreV1().ConfigMaps("").List(metav1.ListOptions{})
 }
 
-// FetchSECs retrieves all secrets on the cluster.
-func (c *Client) FetchSECs() (*v1.SecretList, error) {
+// FetchSecrets retrieves all secrets on the cluster.
+func (c *Client) FetchSecrets() (*v1.SecretList, error) {
 	return c.DialOrDie().CoreV1().Secrets("").List(metav1.ListOptions{})
 }
 
-// FetchPOs retrieves all pods on the cluster.
-func (c *Client) FetchPOs() (*v1.PodList, error) {
+// FetchPods retrieves all pods on the cluster.
+func (c *Client) FetchPods() (*v1.PodList, error) {
 	return c.DialOrDie().CoreV1().Pods("").List(metav1.ListOptions{})
 }
 
-// FetchNOs retrieves all nodes on the cluster.
-func (c *Client) FetchNOs() (*v1.NodeList, error) {
+// FetchNodes retrieves all nodes on the cluster.
+func (c *Client) FetchNodes() (*v1.NodeList, error) {
 	return c.DialOrDie().CoreV1().Nodes().List(metav1.ListOptions{})
 }
 
-// FetchRBs retrieves all RBs on the cluster.
-func (c *Client) FetchRBs() (*rbacv1.RoleBindingList, error) {
+// FetchRoleBindings retrieves all RoleBindings on the cluster.
+func (c *Client) FetchRoleBindings() (*rbacv1.RoleBindingList, error) {
 	return c.DialOrDie().RbacV1().RoleBindings("").List(metav1.ListOptions{})
 }
 
-// FetchCRBs retrieves all CRBs on the cluster.
-func (c *Client) FetchCRBs() (*rbacv1.ClusterRoleBindingList, error) {
+// FetchClusterRoleBindings retrieves all CRoleBindings on the cluster.
+func (c *Client) FetchClusterRoleBindings() (*rbacv1.ClusterRoleBindingList, error) {
 	return c.DialOrDie().RbacV1().ClusterRoleBindings().List(metav1.ListOptions{})
 }
 
-// FetchSVCs retrieves all services on the cluster.
-func (c *Client) FetchSVCs() (*v1.ServiceList, error) {
+// FetchServices retrieves all services on the cluster.
+func (c *Client) FetchServices() (*v1.ServiceList, error) {
 	return c.DialOrDie().CoreV1().Services("").List(metav1.ListOptions{})
 }
 
-// FetchEPs retrieves all endpoints on the cluster.
-func (c *Client) FetchEPs() (*v1.EndpointsList, error) {
+// FetchEndpoints retrieves all endpoints on the cluster.
+func (c *Client) FetchEndpoints() (*v1.EndpointsList, error) {
 	return c.DialOrDie().CoreV1().Endpoints(c.ActiveNamespace()).List(metav1.ListOptions{})
 }
 

@@ -23,7 +23,7 @@ func NewNamespace(l Loader, log *zerolog.Logger) *Namespace {
 
 // Lint a namespace
 func (n *Namespace) Lint(ctx context.Context) error {
-	available, err := n.ListNS()
+	available, err := n.ListNamespaces()
 	if err != nil {
 		return err
 	}

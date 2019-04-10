@@ -13,7 +13,7 @@ import (
 func TestCMLint(t *testing.T) {
 	mkc := NewMockLoader()
 	m.When(mkc.ActiveNamespace()).ThenReturn("default")
-	m.When(mkc.ListCMs()).ThenReturn(map[string]v1.ConfigMap{
+	m.When(mkc.ListConfigMaps()).ThenReturn(map[string]v1.ConfigMap{
 		"default/cm1": makeCM("cm1"),
 	}, nil)
 	m.When(mkc.ListPods()).ThenReturn(map[string]v1.Pod{
@@ -24,7 +24,7 @@ func TestCMLint(t *testing.T) {
 	s.Lint(context.Background())
 
 	assert.Equal(t, 0, len(s.Issues()["default/cm1"]))
-	mkc.VerifyWasCalledOnce().ListCMs()
+	mkc.VerifyWasCalledOnce().ListConfigMaps()
 	mkc.VerifyWasCalledOnce().ListPods()
 }
 

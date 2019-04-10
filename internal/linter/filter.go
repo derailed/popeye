@@ -17,7 +17,7 @@ type Filter struct {
 
 	allPods map[string]v1.Pod
 	allNSs  map[string]v1.Namespace
-	eps     map[string]v1.Endpoints
+	allEPs  map[string]v1.Endpoints
 	allCRBs map[string]rbacv1.ClusterRoleBinding
 	allRBs  map[string]rbacv1.RoleBinding
 	allCMs  map[string]v1.ConfigMap
@@ -66,9 +66,9 @@ func (*Filter) ListPodsMetrics(pods []mv1beta1.PodMetrics, mmx PodsMetrics) {
 	}
 }
 
-// ListRBs lists all available RBs in a given namespace.
-func (f *Filter) ListRBs() (map[string]rbacv1.RoleBinding, error) {
-	rbs, err := f.ListAllRBs()
+// ListRoleBindings lists all available RBs in a given namespace.
+func (f *Filter) ListRoleBindings() (map[string]rbacv1.RoleBinding, error) {
+	rbs, err := f.ListAllRoleBindings()
 	if err != nil {
 		return nil, err
 	}
@@ -83,13 +83,13 @@ func (f *Filter) ListRBs() (map[string]rbacv1.RoleBinding, error) {
 	return res, nil
 }
 
-// ListAllRBs returns all RoleBindings.
-func (f *Filter) ListAllRBs() (map[string]rbacv1.RoleBinding, error) {
+// ListAllRoleBindings returns all RoleBindings.
+func (f *Filter) ListAllRoleBindings() (map[string]rbacv1.RoleBinding, error) {
 	if f.allRBs != nil {
 		return f.allRBs, nil
 	}
 
-	crbs, err := f.FetchRBs()
+	crbs, err := f.FetchRoleBindings()
 	if err != nil {
 		return nil, err
 	}
@@ -102,13 +102,13 @@ func (f *Filter) ListAllRBs() (map[string]rbacv1.RoleBinding, error) {
 	return f.allRBs, nil
 }
 
-// ListAllCRBs returns a ClusterRoleBindings.
-func (f *Filter) ListAllCRBs() (map[string]rbacv1.ClusterRoleBinding, error) {
+// ListAllClusterRoleBindings returns a ClusterRoleBindings.
+func (f *Filter) ListAllClusterRoleBindings() (map[string]rbacv1.ClusterRoleBinding, error) {
 	if f.allCRBs != nil {
 		return f.allCRBs, nil
 	}
 
-	ll, err := f.FetchCRBs()
+	ll, err := f.FetchClusterRoleBindings()
 	if err != nil {
 		return nil, err
 	}
@@ -123,33 +123,33 @@ func (f *Filter) ListAllCRBs() (map[string]rbacv1.ClusterRoleBinding, error) {
 
 // ListEndpoints returns a endpoint by name.
 func (f *Filter) ListEndpoints() (map[string]v1.Endpoints, error) {
-	if f.eps != nil {
-		return f.eps, nil
+	if f.allEPs != nil {
+		return f.allEPs, nil
 	}
 
-	ll, err := f.FetchEPs()
+	ll, err := f.FetchEndpoints()
 	if err != nil {
 		return nil, err
 	}
 
-	f.eps = make(map[string]v1.Endpoints, len(ll.Items))
+	f.allEPs = make(map[string]v1.Endpoints, len(ll.Items))
 	for _, ep := range ll.Items {
 		if !f.ExcludedNS(ep.Namespace) {
-			f.eps[fqn(ep.Namespace, ep.Name)] = ep
+			f.allEPs[fqn(ep.Namespace, ep.Name)] = ep
 		}
 	}
 
-	return f.eps, nil
+	return f.allEPs, nil
 }
 
 // GetEndpoints returns a endpoint by name.
 func (f *Filter) GetEndpoints(svcFQN string) (*v1.Endpoints, error) {
-	eps, err := f.ListEndpoints()
+	allEPs, err := f.ListEndpoints()
 	if err != nil {
 		return nil, err
 	}
 
-	if ep, ok := eps[svcFQN]; ok {
+	if ep, ok := allEPs[svcFQN]; ok {
 		return &ep, nil
 	}
 
@@ -162,6 +162,7 @@ func (f *Filter) GetEndpoints(svcFQN string) (*v1.Endpoints, error) {
 	if !ok {
 		return nil, fmt.Errorf("Unable to find service named `%s", svcFQN)
 	}
+
 	// No selector thus no eps...
 	if len(svc.Spec.Selector) == 0 {
 		return nil, nil
@@ -170,7 +171,7 @@ func (f *Filter) GetEndpoints(svcFQN string) (*v1.Endpoints, error) {
 	return nil, fmt.Errorf("Unable to find ep for service %s", svcFQN)
 }
 
-// ListServices lists services in a tolerated namespaces.
+// ListServices lists services in tolerated namespaces.
 func (f *Filter) ListServices() (map[string]v1.Service, error) {
 	svcs, err := f.ListAllServices()
 	if err != nil {
@@ -193,7 +194,7 @@ func (f *Filter) ListAllServices() (map[string]v1.Service, error) {
 		return f.allSVCs, nil
 	}
 
-	svcs, err := f.FetchSVCs()
+	svcs, err := f.FetchServices()
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +209,7 @@ func (f *Filter) ListAllServices() (map[string]v1.Service, error) {
 
 // ListNodes list all available nodes on the cluster.
 func (f *Filter) ListNodes() ([]v1.Node, error) {
-	ll, err := f.FetchNOs()
+	ll, err := f.FetchNodes()
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +288,7 @@ func (f *Filter) ListAllPods() (map[string]v1.Pod, error) {
 		return f.allPods, nil
 	}
 
-	ll, err := f.FetchPOs()
+	ll, err := f.FetchPods()
 	if err != nil {
 		return nil, err
 	}
@@ -300,9 +301,9 @@ func (f *Filter) ListAllPods() (map[string]v1.Pod, error) {
 	return f.allPods, nil
 }
 
-// ListCMs list all included ConfigMaps.
-func (f *Filter) ListCMs() (map[string]v1.ConfigMap, error) {
-	cms, err := f.ListAllCMs()
+// ListConfigMaps list all included ConfigMaps.
+func (f *Filter) ListConfigMaps() (map[string]v1.ConfigMap, error) {
+	cms, err := f.ListAllConfigMaps()
 	if err != nil {
 		return nil, err
 	}
@@ -317,13 +318,13 @@ func (f *Filter) ListCMs() (map[string]v1.ConfigMap, error) {
 	return res, nil
 }
 
-// ListAllCMs fetch all configmaps on the cluster.
-func (f *Filter) ListAllCMs() (map[string]v1.ConfigMap, error) {
+// ListAllConfigMaps fetch all configmaps on the cluster.
+func (f *Filter) ListAllConfigMaps() (map[string]v1.ConfigMap, error) {
 	if len(f.allCMs) != 0 {
 		return f.allCMs, nil
 	}
 
-	ll, err := f.FetchCMs()
+	ll, err := f.FetchConfigMaps()
 	if err != nil {
 		return nil, err
 	}
@@ -336,9 +337,9 @@ func (f *Filter) ListAllCMs() (map[string]v1.ConfigMap, error) {
 	return f.allCMs, nil
 }
 
-// ListSecs list all included Secrets.
-func (f *Filter) ListSecs() (map[string]v1.Secret, error) {
-	secs, err := f.ListAllSecs()
+// ListSecrets list included Secrets.
+func (f *Filter) ListSecrets() (map[string]v1.Secret, error) {
+	secs, err := f.ListAllSecrets()
 	if err != nil {
 		return nil, err
 	}
@@ -353,13 +354,13 @@ func (f *Filter) ListSecs() (map[string]v1.Secret, error) {
 	return res, nil
 }
 
-// ListAllSecs fetch all secrets on the cluster.
-func (f *Filter) ListAllSecs() (map[string]v1.Secret, error) {
+// ListAllSecrets fetch all secrets on the cluster.
+func (f *Filter) ListAllSecrets() (map[string]v1.Secret, error) {
 	if len(f.allSecs) != 0 {
 		return f.allSecs, nil
 	}
 
-	ll, err := f.FetchSECs()
+	ll, err := f.FetchSecrets()
 	if err != nil {
 		return nil, err
 	}
@@ -372,9 +373,9 @@ func (f *Filter) ListAllSecs() (map[string]v1.Secret, error) {
 	return f.allSecs, nil
 }
 
-// ListSAs list all included ConfigMaps.
-func (f *Filter) ListSAs() (map[string]v1.ServiceAccount, error) {
-	sas, err := f.ListAllSAs()
+// ListServiceAccounts list included ServiceAccounts.
+func (f *Filter) ListServiceAccounts() (map[string]v1.ServiceAccount, error) {
+	sas, err := f.ListAllServiceAccounts()
 	if err != nil {
 		return nil, err
 	}
@@ -389,13 +390,13 @@ func (f *Filter) ListSAs() (map[string]v1.ServiceAccount, error) {
 	return res, nil
 }
 
-// ListAllSAs fetch all ServiceAccount on the cluster.
-func (f *Filter) ListAllSAs() (map[string]v1.ServiceAccount, error) {
+// ListAllServiceAccounts fetch all ServiceAccount on the cluster.
+func (f *Filter) ListAllServiceAccounts() (map[string]v1.ServiceAccount, error) {
 	if len(f.allSAs) != 0 {
 		return f.allSAs, nil
 	}
 
-	ll, err := f.FetchSAs()
+	ll, err := f.FetchServiceAccounts()
 	if err != nil {
 		return nil, err
 	}
@@ -408,9 +409,9 @@ func (f *Filter) ListAllSAs() (map[string]v1.ServiceAccount, error) {
 	return f.allSAs, nil
 }
 
-// ListNS lists all available namespaces.
-func (f *Filter) ListNS() (map[string]v1.Namespace, error) {
-	nss, err := f.ListAllNS()
+// ListNamespaces lists all available namespaces.
+func (f *Filter) ListNamespaces() (map[string]v1.Namespace, error) {
+	nss, err := f.ListAllNamespaces()
 	if err != nil {
 		return nil, nil
 	}
@@ -425,13 +426,13 @@ func (f *Filter) ListNS() (map[string]v1.Namespace, error) {
 	return res, nil
 }
 
-// ListAllNS fetch all namespaces on this cluster.
-func (f *Filter) ListAllNS() (map[string]v1.Namespace, error) {
+// ListAllNamespaces fetch all namespaces on this cluster.
+func (f *Filter) ListAllNamespaces() (map[string]v1.Namespace, error) {
 	if len(f.allNSs) != 0 {
 		return f.allNSs, nil
 	}
 
-	nn, err := f.FetchNSs()
+	nn, err := f.FetchNamespaces()
 	if err != nil {
 		return nil, err
 	}

@@ -26,13 +26,13 @@ func (s *SA) Lint(ctx context.Context) error {
 	crbs := map[string]rbacv1.ClusterRoleBinding{}
 	if s.ActiveNamespace() == "" {
 		var err error
-		crbs, err = s.ListAllCRBs()
+		crbs, err = s.ListAllClusterRoleBindings()
 		if err != nil {
 			return err
 		}
 	}
 
-	rbs, err := s.ListRBs()
+	rbs, err := s.ListRoleBindings()
 	if err != nil {
 		return err
 	}

@@ -33,7 +33,7 @@ func NewSecret(l Loader, log *zerolog.Logger) *Secret {
 
 // Lint a Secret.
 func (s *Secret) Lint(ctx context.Context) error {
-	secs, err := s.ListSecs()
+	secs, err := s.ListSecrets()
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func (s *Secret) Lint(ctx context.Context) error {
 		return nil
 	}
 
-	sas, err := s.ListSAs()
+	sas, err := s.ListServiceAccounts()
 	if err != nil {
 		return nil
 	}

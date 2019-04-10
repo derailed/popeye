@@ -100,31 +100,12 @@ func (mock *MockLoader) ExcludedNode(_param0 string) bool {
 	return ret0
 }
 
-func (mock *MockLoader) FetchCMs() (*v1.ConfigMapList, error) {
+func (mock *MockLoader) FetchClusterRoleBindings() (*v10.ClusterRoleBindingList, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLoader().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchCMs", params, []reflect.Type{reflect.TypeOf((**v1.ConfigMapList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v1.ConfigMapList
-	var ret1 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(*v1.ConfigMapList)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(error)
-		}
-	}
-	return ret0, ret1
-}
-
-func (mock *MockLoader) FetchCRBs() (*v10.ClusterRoleBindingList, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockLoader().")
-	}
-	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchCRBs", params, []reflect.Type{reflect.TypeOf((**v10.ClusterRoleBindingList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchClusterRoleBindings", params, []reflect.Type{reflect.TypeOf((**v10.ClusterRoleBindingList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
 	var ret0 *v10.ClusterRoleBindingList
 	var ret1 error
 	if len(result) != 0 {
@@ -138,12 +119,31 @@ func (mock *MockLoader) FetchCRBs() (*v10.ClusterRoleBindingList, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLoader) FetchEPs() (*v1.EndpointsList, error) {
+func (mock *MockLoader) FetchConfigMaps() (*v1.ConfigMapList, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLoader().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchEPs", params, []reflect.Type{reflect.TypeOf((**v1.EndpointsList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchConfigMaps", params, []reflect.Type{reflect.TypeOf((**v1.ConfigMapList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 *v1.ConfigMapList
+	var ret1 error
+	if len(result) != 0 {
+		if result[0] != nil {
+			ret0 = result[0].(*v1.ConfigMapList)
+		}
+		if result[1] != nil {
+			ret1 = result[1].(error)
+		}
+	}
+	return ret0, ret1
+}
+
+func (mock *MockLoader) FetchEndpoints() (*v1.EndpointsList, error) {
+	if mock == nil {
+		panic("mock must not be nil. Use myMock := NewMockLoader().")
+	}
+	params := []pegomock.Param{}
+	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchEndpoints", params, []reflect.Type{reflect.TypeOf((**v1.EndpointsList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
 	var ret0 *v1.EndpointsList
 	var ret1 error
 	if len(result) != 0 {
@@ -157,17 +157,17 @@ func (mock *MockLoader) FetchEPs() (*v1.EndpointsList, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLoader) FetchNOs() (*v1.NodeList, error) {
+func (mock *MockLoader) FetchNamespaces() (*v1.NamespaceList, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLoader().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchNOs", params, []reflect.Type{reflect.TypeOf((**v1.NodeList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v1.NodeList
+	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchNamespaces", params, []reflect.Type{reflect.TypeOf((**v1.NamespaceList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 *v1.NamespaceList
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].(*v1.NodeList)
+			ret0 = result[0].(*v1.NamespaceList)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -176,17 +176,17 @@ func (mock *MockLoader) FetchNOs() (*v1.NodeList, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLoader) FetchNSs() (*v1.NamespaceList, error) {
+func (mock *MockLoader) FetchNodes() (*v1.NodeList, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLoader().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchNSs", params, []reflect.Type{reflect.TypeOf((**v1.NamespaceList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v1.NamespaceList
+	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchNodes", params, []reflect.Type{reflect.TypeOf((**v1.NodeList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 *v1.NodeList
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].(*v1.NamespaceList)
+			ret0 = result[0].(*v1.NodeList)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -214,12 +214,12 @@ func (mock *MockLoader) FetchNodesMetrics() ([]v1beta1.NodeMetrics, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLoader) FetchPOs() (*v1.PodList, error) {
+func (mock *MockLoader) FetchPods() (*v1.PodList, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLoader().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchPOs", params, []reflect.Type{reflect.TypeOf((**v1.PodList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchPods", params, []reflect.Type{reflect.TypeOf((**v1.PodList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
 	var ret0 *v1.PodList
 	var ret1 error
 	if len(result) != 0 {
@@ -252,12 +252,12 @@ func (mock *MockLoader) FetchPodsMetrics(_param0 string) ([]v1beta1.PodMetrics, 
 	return ret0, ret1
 }
 
-func (mock *MockLoader) FetchRBs() (*v10.RoleBindingList, error) {
+func (mock *MockLoader) FetchRoleBindings() (*v10.RoleBindingList, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLoader().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchRBs", params, []reflect.Type{reflect.TypeOf((**v10.RoleBindingList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchRoleBindings", params, []reflect.Type{reflect.TypeOf((**v10.RoleBindingList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
 	var ret0 *v10.RoleBindingList
 	var ret1 error
 	if len(result) != 0 {
@@ -271,31 +271,12 @@ func (mock *MockLoader) FetchRBs() (*v10.RoleBindingList, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLoader) FetchSAs() (*v1.ServiceAccountList, error) {
+func (mock *MockLoader) FetchSecrets() (*v1.SecretList, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLoader().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchSAs", params, []reflect.Type{reflect.TypeOf((**v1.ServiceAccountList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 *v1.ServiceAccountList
-	var ret1 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(*v1.ServiceAccountList)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(error)
-		}
-	}
-	return ret0, ret1
-}
-
-func (mock *MockLoader) FetchSECs() (*v1.SecretList, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockLoader().")
-	}
-	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchSECs", params, []reflect.Type{reflect.TypeOf((**v1.SecretList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchSecrets", params, []reflect.Type{reflect.TypeOf((**v1.SecretList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
 	var ret0 *v1.SecretList
 	var ret1 error
 	if len(result) != 0 {
@@ -309,12 +290,31 @@ func (mock *MockLoader) FetchSECs() (*v1.SecretList, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLoader) FetchSVCs() (*v1.ServiceList, error) {
+func (mock *MockLoader) FetchServiceAccounts() (*v1.ServiceAccountList, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLoader().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchSVCs", params, []reflect.Type{reflect.TypeOf((**v1.ServiceList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchServiceAccounts", params, []reflect.Type{reflect.TypeOf((**v1.ServiceAccountList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 *v1.ServiceAccountList
+	var ret1 error
+	if len(result) != 0 {
+		if result[0] != nil {
+			ret0 = result[0].(*v1.ServiceAccountList)
+		}
+		if result[1] != nil {
+			ret1 = result[1].(error)
+		}
+	}
+	return ret0, ret1
+}
+
+func (mock *MockLoader) FetchServices() (*v1.ServiceList, error) {
+	if mock == nil {
+		panic("mock must not be nil. Use myMock := NewMockLoader().")
+	}
+	params := []pegomock.Param{}
+	result := pegomock.GetGenericMockFrom(mock).Invoke("FetchServices", params, []reflect.Type{reflect.TypeOf((**v1.ServiceList)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
 	var ret0 *v1.ServiceList
 	var ret1 error
 	if len(result) != 0 {
@@ -381,12 +381,12 @@ func (mock *MockLoader) LinterLevel() int {
 	return ret0
 }
 
-func (mock *MockLoader) ListAllCRBs() (map[string]v10.ClusterRoleBinding, error) {
+func (mock *MockLoader) ListAllClusterRoleBindings() (map[string]v10.ClusterRoleBinding, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLoader().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListAllCRBs", params, []reflect.Type{reflect.TypeOf((*map[string]v10.ClusterRoleBinding)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListAllClusterRoleBindings", params, []reflect.Type{reflect.TypeOf((*map[string]v10.ClusterRoleBinding)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
 	var ret0 map[string]v10.ClusterRoleBinding
 	var ret1 error
 	if len(result) != 0 {
@@ -419,12 +419,12 @@ func (mock *MockLoader) ListAllPods() (map[string]v1.Pod, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLoader) ListAllRBs() (map[string]v10.RoleBinding, error) {
+func (mock *MockLoader) ListAllRoleBindings() (map[string]v10.RoleBinding, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLoader().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListAllRBs", params, []reflect.Type{reflect.TypeOf((*map[string]v10.RoleBinding)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListAllRoleBindings", params, []reflect.Type{reflect.TypeOf((*map[string]v10.RoleBinding)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
 	var ret0 map[string]v10.RoleBinding
 	var ret1 error
 	if len(result) != 0 {
@@ -438,12 +438,12 @@ func (mock *MockLoader) ListAllRBs() (map[string]v10.RoleBinding, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLoader) ListCMs() (map[string]v1.ConfigMap, error) {
+func (mock *MockLoader) ListConfigMaps() (map[string]v1.ConfigMap, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLoader().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListCMs", params, []reflect.Type{reflect.TypeOf((*map[string]v1.ConfigMap)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListConfigMaps", params, []reflect.Type{reflect.TypeOf((*map[string]v1.ConfigMap)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
 	var ret0 map[string]v1.ConfigMap
 	var ret1 error
 	if len(result) != 0 {
@@ -457,12 +457,12 @@ func (mock *MockLoader) ListCMs() (map[string]v1.ConfigMap, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLoader) ListNS() (map[string]v1.Namespace, error) {
+func (mock *MockLoader) ListNamespaces() (map[string]v1.Namespace, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLoader().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListNS", params, []reflect.Type{reflect.TypeOf((*map[string]v1.Namespace)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListNamespaces", params, []reflect.Type{reflect.TypeOf((*map[string]v1.Namespace)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
 	var ret0 map[string]v1.Namespace
 	var ret1 error
 	if len(result) != 0 {
@@ -530,12 +530,12 @@ func (mock *MockLoader) ListPodsMetrics(_param0 []v1beta1.PodMetrics, _param1 Po
 	pegomock.GetGenericMockFrom(mock).Invoke("ListPodsMetrics", params, []reflect.Type{})
 }
 
-func (mock *MockLoader) ListRBs() (map[string]v10.RoleBinding, error) {
+func (mock *MockLoader) ListRoleBindings() (map[string]v10.RoleBinding, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLoader().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListRBs", params, []reflect.Type{reflect.TypeOf((*map[string]v10.RoleBinding)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListRoleBindings", params, []reflect.Type{reflect.TypeOf((*map[string]v10.RoleBinding)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
 	var ret0 map[string]v10.RoleBinding
 	var ret1 error
 	if len(result) != 0 {
@@ -549,17 +549,17 @@ func (mock *MockLoader) ListRBs() (map[string]v10.RoleBinding, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLoader) ListSAs() (map[string]v1.ServiceAccount, error) {
+func (mock *MockLoader) ListSecrets() (map[string]v1.Secret, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLoader().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListSAs", params, []reflect.Type{reflect.TypeOf((*map[string]v1.ServiceAccount)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 map[string]v1.ServiceAccount
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListSecrets", params, []reflect.Type{reflect.TypeOf((*map[string]v1.Secret)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.Secret
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].(map[string]v1.ServiceAccount)
+			ret0 = result[0].(map[string]v1.Secret)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -568,17 +568,17 @@ func (mock *MockLoader) ListSAs() (map[string]v1.ServiceAccount, error) {
 	return ret0, ret1
 }
 
-func (mock *MockLoader) ListSecs() (map[string]v1.Secret, error) {
+func (mock *MockLoader) ListServiceAccounts() (map[string]v1.ServiceAccount, error) {
 	if mock == nil {
 		panic("mock must not be nil. Use myMock := NewMockLoader().")
 	}
 	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("ListSecs", params, []reflect.Type{reflect.TypeOf((*map[string]v1.Secret)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 map[string]v1.Secret
+	result := pegomock.GetGenericMockFrom(mock).Invoke("ListServiceAccounts", params, []reflect.Type{reflect.TypeOf((*map[string]v1.ServiceAccount)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
+	var ret0 map[string]v1.ServiceAccount
 	var ret1 error
 	if len(result) != 0 {
 		if result[0] != nil {
-			ret0 = result[0].(map[string]v1.Secret)
+			ret0 = result[0].(map[string]v1.ServiceAccount)
 		}
 		if result[1] != nil {
 			ret1 = result[1].(error)
@@ -846,89 +846,89 @@ func (c *Loader_ExcludedNode_OngoingVerification) GetAllCapturedArguments() (_pa
 	return
 }
 
-func (verifier *VerifierLoader) FetchCMs() *Loader_FetchCMs_OngoingVerification {
+func (verifier *VerifierLoader) FetchClusterRoleBindings() *Loader_FetchClusterRoleBindings_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchCMs", params, verifier.timeout)
-	return &Loader_FetchCMs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchClusterRoleBindings", params, verifier.timeout)
+	return &Loader_FetchClusterRoleBindings_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_FetchCMs_OngoingVerification struct {
+type Loader_FetchClusterRoleBindings_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_FetchCMs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_FetchClusterRoleBindings_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_FetchCMs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_FetchClusterRoleBindings_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierLoader) FetchCRBs() *Loader_FetchCRBs_OngoingVerification {
+func (verifier *VerifierLoader) FetchConfigMaps() *Loader_FetchConfigMaps_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchCRBs", params, verifier.timeout)
-	return &Loader_FetchCRBs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchConfigMaps", params, verifier.timeout)
+	return &Loader_FetchConfigMaps_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_FetchCRBs_OngoingVerification struct {
+type Loader_FetchConfigMaps_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_FetchCRBs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_FetchConfigMaps_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_FetchCRBs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_FetchConfigMaps_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierLoader) FetchEPs() *Loader_FetchEPs_OngoingVerification {
+func (verifier *VerifierLoader) FetchEndpoints() *Loader_FetchEndpoints_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchEPs", params, verifier.timeout)
-	return &Loader_FetchEPs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchEndpoints", params, verifier.timeout)
+	return &Loader_FetchEndpoints_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_FetchEPs_OngoingVerification struct {
+type Loader_FetchEndpoints_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_FetchEPs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_FetchEndpoints_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_FetchEPs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_FetchEndpoints_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierLoader) FetchNOs() *Loader_FetchNOs_OngoingVerification {
+func (verifier *VerifierLoader) FetchNamespaces() *Loader_FetchNamespaces_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchNOs", params, verifier.timeout)
-	return &Loader_FetchNOs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchNamespaces", params, verifier.timeout)
+	return &Loader_FetchNamespaces_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_FetchNOs_OngoingVerification struct {
+type Loader_FetchNamespaces_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_FetchNOs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_FetchNamespaces_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_FetchNOs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_FetchNamespaces_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierLoader) FetchNSs() *Loader_FetchNSs_OngoingVerification {
+func (verifier *VerifierLoader) FetchNodes() *Loader_FetchNodes_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchNSs", params, verifier.timeout)
-	return &Loader_FetchNSs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchNodes", params, verifier.timeout)
+	return &Loader_FetchNodes_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_FetchNSs_OngoingVerification struct {
+type Loader_FetchNodes_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_FetchNSs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_FetchNodes_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_FetchNSs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_FetchNodes_OngoingVerification) GetAllCapturedArguments() {
 }
 
 func (verifier *VerifierLoader) FetchNodesMetrics() *Loader_FetchNodesMetrics_OngoingVerification {
@@ -948,21 +948,21 @@ func (c *Loader_FetchNodesMetrics_OngoingVerification) GetCapturedArguments() {
 func (c *Loader_FetchNodesMetrics_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierLoader) FetchPOs() *Loader_FetchPOs_OngoingVerification {
+func (verifier *VerifierLoader) FetchPods() *Loader_FetchPods_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchPOs", params, verifier.timeout)
-	return &Loader_FetchPOs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchPods", params, verifier.timeout)
+	return &Loader_FetchPods_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_FetchPOs_OngoingVerification struct {
+type Loader_FetchPods_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_FetchPOs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_FetchPods_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_FetchPOs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_FetchPods_OngoingVerification) GetAllCapturedArguments() {
 }
 
 func (verifier *VerifierLoader) FetchPodsMetrics(_param0 string) *Loader_FetchPodsMetrics_OngoingVerification {
@@ -992,72 +992,72 @@ func (c *Loader_FetchPodsMetrics_OngoingVerification) GetAllCapturedArguments() 
 	return
 }
 
-func (verifier *VerifierLoader) FetchRBs() *Loader_FetchRBs_OngoingVerification {
+func (verifier *VerifierLoader) FetchRoleBindings() *Loader_FetchRoleBindings_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchRBs", params, verifier.timeout)
-	return &Loader_FetchRBs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchRoleBindings", params, verifier.timeout)
+	return &Loader_FetchRoleBindings_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_FetchRBs_OngoingVerification struct {
+type Loader_FetchRoleBindings_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_FetchRBs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_FetchRoleBindings_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_FetchRBs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_FetchRoleBindings_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierLoader) FetchSAs() *Loader_FetchSAs_OngoingVerification {
+func (verifier *VerifierLoader) FetchSecrets() *Loader_FetchSecrets_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchSAs", params, verifier.timeout)
-	return &Loader_FetchSAs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchSecrets", params, verifier.timeout)
+	return &Loader_FetchSecrets_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_FetchSAs_OngoingVerification struct {
+type Loader_FetchSecrets_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_FetchSAs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_FetchSecrets_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_FetchSAs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_FetchSecrets_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierLoader) FetchSECs() *Loader_FetchSECs_OngoingVerification {
+func (verifier *VerifierLoader) FetchServiceAccounts() *Loader_FetchServiceAccounts_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchSECs", params, verifier.timeout)
-	return &Loader_FetchSECs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchServiceAccounts", params, verifier.timeout)
+	return &Loader_FetchServiceAccounts_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_FetchSECs_OngoingVerification struct {
+type Loader_FetchServiceAccounts_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_FetchSECs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_FetchServiceAccounts_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_FetchSECs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_FetchServiceAccounts_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierLoader) FetchSVCs() *Loader_FetchSVCs_OngoingVerification {
+func (verifier *VerifierLoader) FetchServices() *Loader_FetchServices_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchSVCs", params, verifier.timeout)
-	return &Loader_FetchSVCs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "FetchServices", params, verifier.timeout)
+	return &Loader_FetchServices_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_FetchSVCs_OngoingVerification struct {
+type Loader_FetchServices_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_FetchSVCs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_FetchServices_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_FetchSVCs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_FetchServices_OngoingVerification) GetAllCapturedArguments() {
 }
 
 func (verifier *VerifierLoader) GetEndpoints(_param0 string) *Loader_GetEndpoints_OngoingVerification {
@@ -1131,21 +1131,21 @@ func (c *Loader_LinterLevel_OngoingVerification) GetCapturedArguments() {
 func (c *Loader_LinterLevel_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierLoader) ListAllCRBs() *Loader_ListAllCRBs_OngoingVerification {
+func (verifier *VerifierLoader) ListAllClusterRoleBindings() *Loader_ListAllClusterRoleBindings_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListAllCRBs", params, verifier.timeout)
-	return &Loader_ListAllCRBs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListAllClusterRoleBindings", params, verifier.timeout)
+	return &Loader_ListAllClusterRoleBindings_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_ListAllCRBs_OngoingVerification struct {
+type Loader_ListAllClusterRoleBindings_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_ListAllCRBs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_ListAllClusterRoleBindings_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_ListAllCRBs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_ListAllClusterRoleBindings_OngoingVerification) GetAllCapturedArguments() {
 }
 
 func (verifier *VerifierLoader) ListAllPods() *Loader_ListAllPods_OngoingVerification {
@@ -1165,55 +1165,55 @@ func (c *Loader_ListAllPods_OngoingVerification) GetCapturedArguments() {
 func (c *Loader_ListAllPods_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierLoader) ListAllRBs() *Loader_ListAllRBs_OngoingVerification {
+func (verifier *VerifierLoader) ListAllRoleBindings() *Loader_ListAllRoleBindings_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListAllRBs", params, verifier.timeout)
-	return &Loader_ListAllRBs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListAllRoleBindings", params, verifier.timeout)
+	return &Loader_ListAllRoleBindings_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_ListAllRBs_OngoingVerification struct {
+type Loader_ListAllRoleBindings_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_ListAllRBs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_ListAllRoleBindings_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_ListAllRBs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_ListAllRoleBindings_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierLoader) ListCMs() *Loader_ListCMs_OngoingVerification {
+func (verifier *VerifierLoader) ListConfigMaps() *Loader_ListConfigMaps_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListCMs", params, verifier.timeout)
-	return &Loader_ListCMs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListConfigMaps", params, verifier.timeout)
+	return &Loader_ListConfigMaps_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_ListCMs_OngoingVerification struct {
+type Loader_ListConfigMaps_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_ListCMs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_ListConfigMaps_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_ListCMs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_ListConfigMaps_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierLoader) ListNS() *Loader_ListNS_OngoingVerification {
+func (verifier *VerifierLoader) ListNamespaces() *Loader_ListNamespaces_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListNS", params, verifier.timeout)
-	return &Loader_ListNS_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListNamespaces", params, verifier.timeout)
+	return &Loader_ListNamespaces_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_ListNS_OngoingVerification struct {
+type Loader_ListNamespaces_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_ListNS_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_ListNamespaces_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_ListNS_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_ListNamespaces_OngoingVerification) GetAllCapturedArguments() {
 }
 
 func (verifier *VerifierLoader) ListNodes() *Loader_ListNodes_OngoingVerification {
@@ -1316,55 +1316,55 @@ func (c *Loader_ListPodsMetrics_OngoingVerification) GetAllCapturedArguments() (
 	return
 }
 
-func (verifier *VerifierLoader) ListRBs() *Loader_ListRBs_OngoingVerification {
+func (verifier *VerifierLoader) ListRoleBindings() *Loader_ListRoleBindings_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListRBs", params, verifier.timeout)
-	return &Loader_ListRBs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListRoleBindings", params, verifier.timeout)
+	return &Loader_ListRoleBindings_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_ListRBs_OngoingVerification struct {
+type Loader_ListRoleBindings_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_ListRBs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_ListRoleBindings_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_ListRBs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_ListRoleBindings_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierLoader) ListSAs() *Loader_ListSAs_OngoingVerification {
+func (verifier *VerifierLoader) ListSecrets() *Loader_ListSecrets_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListSAs", params, verifier.timeout)
-	return &Loader_ListSAs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListSecrets", params, verifier.timeout)
+	return &Loader_ListSecrets_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_ListSAs_OngoingVerification struct {
+type Loader_ListSecrets_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_ListSAs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_ListSecrets_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_ListSAs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_ListSecrets_OngoingVerification) GetAllCapturedArguments() {
 }
 
-func (verifier *VerifierLoader) ListSecs() *Loader_ListSecs_OngoingVerification {
+func (verifier *VerifierLoader) ListServiceAccounts() *Loader_ListServiceAccounts_OngoingVerification {
 	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListSecs", params, verifier.timeout)
-	return &Loader_ListSecs_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ListServiceAccounts", params, verifier.timeout)
+	return &Loader_ListServiceAccounts_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
 }
 
-type Loader_ListSecs_OngoingVerification struct {
+type Loader_ListServiceAccounts_OngoingVerification struct {
 	mock              *MockLoader
 	methodInvocations []pegomock.MethodInvocation
 }
 
-func (c *Loader_ListSecs_OngoingVerification) GetCapturedArguments() {
+func (c *Loader_ListServiceAccounts_OngoingVerification) GetCapturedArguments() {
 }
 
-func (c *Loader_ListSecs_OngoingVerification) GetAllCapturedArguments() {
+func (c *Loader_ListServiceAccounts_OngoingVerification) GetAllCapturedArguments() {
 }
 
 func (verifier *VerifierLoader) ListServices() *Loader_ListServices_OngoingVerification {

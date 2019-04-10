@@ -50,16 +50,16 @@ type (
 		FetchNodesMetrics() ([]mv1beta1.NodeMetrics, error)
 		FetchPodsMetrics(ns string) ([]mv1beta1.PodMetrics, error)
 
-		FetchNOs() (*v1.NodeList, error)
-		FetchNSs() (*v1.NamespaceList, error)
-		FetchPOs() (*v1.PodList, error)
-		FetchCMs() (*v1.ConfigMapList, error)
-		FetchSECs() (*v1.SecretList, error)
-		FetchSAs() (*v1.ServiceAccountList, error)
-		FetchEPs() (*v1.EndpointsList, error)
-		FetchSVCs() (*v1.ServiceList, error)
-		FetchCRBs() (*rbacv1.ClusterRoleBindingList, error)
-		FetchRBs() (*rbacv1.RoleBindingList, error)
+		FetchNodes() (*v1.NodeList, error)
+		FetchNamespaces() (*v1.NamespaceList, error)
+		FetchPods() (*v1.PodList, error)
+		FetchConfigMaps() (*v1.ConfigMapList, error)
+		FetchSecrets() (*v1.SecretList, error)
+		FetchServiceAccounts() (*v1.ServiceAccountList, error)
+		FetchEndpoints() (*v1.EndpointsList, error)
+		FetchServices() (*v1.ServiceList, error)
+		FetchClusterRoleBindings() (*rbacv1.ClusterRoleBindingList, error)
+		FetchRoleBindings() (*rbacv1.RoleBindingList, error)
 	}
 
 	// Lister list Kubernetes resource based on configuration scopes.
@@ -74,13 +74,13 @@ type (
 		GetPod(map[string]string) (*v1.Pod, error)
 		ListPods() (map[string]v1.Pod, error)
 		ListAllPods() (map[string]v1.Pod, error)
-		ListNS() (map[string]v1.Namespace, error)
-		ListRBs() (map[string]rbacv1.RoleBinding, error)
-		ListAllRBs() (map[string]rbacv1.RoleBinding, error)
-		ListAllCRBs() (map[string]rbacv1.ClusterRoleBinding, error)
-		ListCMs() (map[string]v1.ConfigMap, error)
-		ListSecs() (map[string]v1.Secret, error)
-		ListSAs() (map[string]v1.ServiceAccount, error)
+		ListNamespaces() (map[string]v1.Namespace, error)
+		ListRoleBindings() (map[string]rbacv1.RoleBinding, error)
+		ListAllRoleBindings() (map[string]rbacv1.RoleBinding, error)
+		ListAllClusterRoleBindings() (map[string]rbacv1.ClusterRoleBinding, error)
+		ListConfigMaps() (map[string]v1.ConfigMap, error)
+		ListSecrets() (map[string]v1.Secret, error)
+		ListServiceAccounts() (map[string]v1.ServiceAccount, error)
 	}
 
 	// Loader loads prefiltered Kubernetes resources.

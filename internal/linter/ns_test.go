@@ -13,7 +13,7 @@ import (
 
 func TestNsLinter(t *testing.T) {
 	mkl := NewMockLoader()
-	m.When(mkl.ListNS()).ThenReturn(map[string]v1.Namespace{
+	m.When(mkl.ListNamespaces()).ThenReturn(map[string]v1.Namespace{
 		"ns1": makeNS("ns1", true),
 		"ns2": makeNS("ns2", false),
 	}, nil)
@@ -28,7 +28,7 @@ func TestNsLinter(t *testing.T) {
 	assert.Equal(t, 2, len(l.Issues()))
 	assert.Equal(t, 1, len(l.Issues()["ns1"]))
 	assert.Equal(t, 1, len(l.Issues()["ns2"]))
-	mkl.VerifyWasCalledOnce().ListNS()
+	mkl.VerifyWasCalledOnce().ListNamespaces()
 	mkl.VerifyWasCalledOnce().ExcludedNS("ns1")
 	mkl.VerifyWasCalledOnce().ExcludedNS("ns2")
 }

@@ -15,10 +15,10 @@ import (
 func TestSALint(t *testing.T) {
 	mkl := NewMockLoader()
 	m.When(mkl.ActiveNamespace()).ThenReturn("")
-	m.When(mkl.ListAllCRBs()).ThenReturn(map[string]rbacv1.ClusterRoleBinding{
+	m.When(mkl.ListAllClusterRoleBindings()).ThenReturn(map[string]rbacv1.ClusterRoleBinding{
 		"crb1": makeCRB("crb1", "sa1"),
 	}, nil)
-	m.When(mkl.ListRBs()).ThenReturn(map[string]rbacv1.RoleBinding{
+	m.When(mkl.ListRoleBindings()).ThenReturn(map[string]rbacv1.RoleBinding{
 		"rb1": makeRB("rb1", "sa1"),
 	}, nil)
 
@@ -30,8 +30,8 @@ func TestSALint(t *testing.T) {
 	s.Lint(context.Background())
 
 	assert.Equal(t, 1, len(s.Issues()["default/sa1"]))
-	mkl.VerifyWasCalledOnce().ListAllCRBs()
-	mkl.VerifyWasCalledOnce().ListRBs()
+	mkl.VerifyWasCalledOnce().ListAllClusterRoleBindings()
+	mkl.VerifyWasCalledOnce().ListRoleBindings()
 	mkl.VerifyWasCalledOnce().ListAllPods()
 }
 
