@@ -13,6 +13,10 @@ func TestTallyRollup(t *testing.T) {
 		e      *Tally
 	}{
 		{
+			linter.Issues{},
+			&Tally{counts: []int{0, 0, 0, 0}, score: 0, valid: false},
+		},
+		{
 			linter.Issues{
 				"a": {
 					linter.NewError(linter.InfoLevel, ""),

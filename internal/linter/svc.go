@@ -8,6 +8,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+// SkipServices skips internal services for being included in scan.
+// BOZO!! spinachyaml default??
 var skipServices = []string{"default/kubernetes"}
 
 // Service represents a service linter.
@@ -16,31 +18,31 @@ type Service struct {
 }
 
 // NewService returns a new service linter.
-func NewService(c Client, l *zerolog.Logger) *Service {
-	return &Service{newLinter(c, l)}
+func NewService(l Loader, log *zerolog.Logger) *Service {
+	return &Service{NewLinter(l, log)}
 }
 
 // Lint a service.
 func (s *Service) Lint(ctx context.Context) error {
-	services, err := s.client.ListServices()
+	services, err := s.ListServices()
 	if err != nil {
 		return err
 	}
 
-	for _, svc := range services {
-		fqn := svcFQN(svc)
-
+	for fqn, svc := range services {
 		// Skip internal services...
 		if in(skipServices, svcFQN(svc)) {
 			continue
 		}
 
 		s.initIssues(fqn)
-		po, err := s.client.GetPod(svc.Spec.Selector)
+
+		po, err := s.GetPod(svc.Spec.Selector)
 		if err != nil {
 			s.addError(svcFQN(svc), err)
 		}
-		ep, err := s.client.GetEndpoints(fqn)
+
+		ep, err := s.GetEndpoints(fqn)
 		if err != nil {
 			s.addError(fqn, err)
 		}
@@ -79,7 +81,7 @@ func (s *Service) checkPorts(svc v1.Service, po *v1.Pod) {
 
 // CheckEndpoints runs a sanity check on all endpoints in a given namespace.
 func (s *Service) checkEndpoints(svc v1.Service, ep *v1.Endpoints) {
-	if svc.Spec.Type == v1.ClusterIPNone {
+	if len(svc.Spec.Selector) == 0 {
 		return
 	}
 
@@ -100,12 +102,13 @@ func checkServicePort(svc string, pod *v1.Pod, port v1.ServicePort) []error {
 	var errs []error
 	for _, c := range pod.Spec.Containers {
 		for _, p := range c.Ports {
-			if p.ContainerPort == sPort {
-				if p.Protocol != port.Protocol {
-					errs = append(errs, fmt.Errorf("Port `%d protocol mismatch %s vs %s", sPort, port.Protocol, p.Protocol))
-				}
-				return nil
+			if p.ContainerPort != sPort {
+				continue
 			}
+			if p.Protocol != port.Protocol {
+				errs = append(errs, fmt.Errorf("Port `%d protocol mismatch %s vs %s", sPort, port.Protocol, p.Protocol))
+			}
+			return nil
 		}
 	}
 
@@ -114,15 +117,4 @@ func checkServicePort(svc string, pod *v1.Pod, port v1.ServicePort) []error {
 
 func svcFQN(s v1.Service) string {
 	return s.Namespace + "/" + s.Name
-}
-
-// In checks if an item is in a list of items.
-func in(ll []string, s string) bool {
-	for _, l := range ll {
-		if l == s {
-			return true
-		}
-	}
-
-	return false
 }

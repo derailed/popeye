@@ -11,7 +11,7 @@ import (
 )
 
 func TestCMLint(t *testing.T) {
-	mkc := NewMockClient()
+	mkc := NewMockLoader()
 	m.When(mkc.ActiveNamespace()).ThenReturn("default")
 	m.When(mkc.ListCMs()).ThenReturn(map[string]v1.ConfigMap{
 		"default/cm1": makeCM("cm1"),
@@ -24,7 +24,6 @@ func TestCMLint(t *testing.T) {
 	s.Lint(context.Background())
 
 	assert.Equal(t, 0, len(s.Issues()["default/cm1"]))
-
 	mkc.VerifyWasCalledOnce().ListCMs()
 	mkc.VerifyWasCalledOnce().ListPods()
 }
@@ -48,18 +47,16 @@ func TestCMLintCMS(t *testing.T) {
 
 	for _, u := range uu {
 		c := NewCM(nil, nil)
-		c.lint(map[string]v1.Pod{
-			"default/p1": u.pod,
-		},
-			map[string]v1.ConfigMap{
-				"default/cm1": u.cm,
-			},
+		c.lint(
+			map[string]v1.ConfigMap{"default/cm1": u.cm},
+			map[string]v1.Pod{"default/p1": u.pod},
 		)
 
 		assert.Equal(t, 1, len(c.Issues()))
 		assert.Equal(t, u.issue, len(c.Issues()["default/cm1"]))
 	}
 }
+
 func TestCMCheckContainerRefs(t *testing.T) {
 	uu := []struct {
 		po      v1.Pod
@@ -68,20 +65,21 @@ func TestCMCheckContainerRefs(t *testing.T) {
 		e       *Reference
 	}{
 		{makePod("v1"), "envFrom", false, nil},
-		{makePodEnvFrom("p1", "cm1", true), "envFrom", true, &Reference{}},
-		{makePodEnvFrom("p1", "cm1", false), "envFrom", true, &Reference{}},
-		{makePodEnv("p1", "cm1", "fred", false), "keyRef", true, &Reference{
+		{makePodEnvFrom("p1", "cm1", true), "envFrom", true, &Reference{name: "default/p1:c1"}},
+		{makePodEnvFrom("p1", "cm1", false), "envFrom", true, &Reference{name: "default/p1:c1"}},
+		{makePodEnv("p1", "cm1", "fred", false), "env", true, &Reference{
 			name: "cm1",
 			keys: map[string]struct{}{
 				"fred": struct{}{},
 			},
 		}},
-		{makePodEnv("p1", "cm1", "fred", true), "keyRef", false, nil},
+		{makePodEnv("p1", "cm1", "fred", true), "env", false, nil},
 	}
 
 	for _, u := range uu {
 		refs := References{}
-		checkContainerRefs("default", u.po.Spec.Containers, refs)
+		var c *CM
+		c.checkContainerRefs("default/p1", u.po.Spec.Containers, refs)
 
 		v, ok := refs["default/cm1"][u.key]
 		if u.present {
@@ -94,34 +92,45 @@ func TestCMCheckContainerRefs(t *testing.T) {
 func TestCMCheckVolumes(t *testing.T) {
 	uu := []struct {
 		po      v1.Pod
-		key     string
 		present bool
 		e       *Reference
 	}{
+		// Pod with no volumes.
 		{
-			makePod("p1"), "volume", false, nil,
+			makePod("p1"), false, nil,
 		},
+		// Pod with a volume referencing a cm.
 		{
-			makePodVolume("p1", "cm1", "fred", false), "volume", true, &Reference{
-				name: "v1",
+			makePodVolume("p1", "cm1", "fred", false),
+			true,
+			&Reference{
+				name: "default/p1:v1",
 				keys: map[string]struct{}{"fred": struct{}{}},
 			},
 		},
+		// Pod with a volume referencing an optional cm.
 		{
-			makePodVolume("p1", "cm1", "fred", true), "volume", false, nil,
+			makePodVolume("p1", "cm1", "fred", true),
+			false,
+			nil,
 		},
 	}
 
 	for _, u := range uu {
 		refs := References{}
-		checkVolumes("default", u.po.Spec.Volumes, refs)
+		var c *CM
+		c.checkVolumes("default/p1", u.po.Spec.Volumes, refs)
 
-		v, ok := refs["default/cm1"][u.key]
+		v, ok := refs["default/cm1"]["volume"]
 		if u.present {
 			assert.True(t, ok)
 			assert.Equal(t, u.e, v)
 		}
 	}
+}
+
+func TestFQNCM(t *testing.T) {
+	assert.Equal(t, "default/cm1", fqnCM(makeCM("cm1")))
 }
 
 // ----------------------------------------------------------------------------

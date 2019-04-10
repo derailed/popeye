@@ -1,4 +1,4 @@
-package k8s
+package linter
 
 import (
 	"testing"
@@ -47,7 +47,8 @@ func TestPodsMetrics(t *testing.T) {
 	}
 
 	mmx := make(PodsMetrics)
-	GetPodsMetrics(metrics.Items, mmx)
+	var f *Filter
+	f.ListPodsMetrics(metrics.Items, mmx)
 	assert.Equal(t, 2, len(mmx))
 
 	mx, ok := mmx["default/p1"]
@@ -66,18 +67,20 @@ func BenchmarkPodsMetrics(b *testing.B) {
 	}
 	mmx := make(PodsMetrics, 3)
 
+	var f *Filter
+
 	b.ResetTimer()
 	b.ReportAllocs()
 	for n := 0; n < b.N; n++ {
-		GetPodsMetrics(metrics.Items, mmx)
+		f.ListPodsMetrics(metrics.Items, mmx)
 	}
 }
 
 func TestNodesMetrics(t *testing.T) {
 	nodes := v1.NodeList{
 		Items: []v1.Node{
-			makeNode("n1", "32", "128Gi", "50m", "2Mi"),
-			makeNode("n2", "8", "4Gi", "50m", "2Mi"),
+			makeNodeMX("n1", "32", "128Gi", "50m", "2Mi"),
+			makeNodeMX("n2", "8", "4Gi", "50m", "2Mi"),
 		},
 	}
 
@@ -89,7 +92,9 @@ func TestNodesMetrics(t *testing.T) {
 	}
 
 	mmx := make(NodesMetrics)
-	GetNodesMetrics(nodes.Items, metrics.Items, mmx)
+	var f *Filter
+	f.ListNodesMetrics(nodes.Items, metrics.Items, mmx)
+
 	assert.Equal(t, 2, len(mmx))
 	mx, ok := mmx["n1"]
 	assert.True(t, ok)
@@ -104,8 +109,8 @@ func TestNodesMetrics(t *testing.T) {
 func BenchmarkNodesMetrics(b *testing.B) {
 	nodes := v1.NodeList{
 		Items: []v1.Node{
-			makeNode("n1", "100m", "4Mi", "50m", "2Mi"),
-			makeNode("n2", "100m", "4Mi", "50m", "2Mi"),
+			makeNodeMX("n1", "100m", "4Mi", "50m", "2Mi"),
+			makeNodeMX("n2", "100m", "4Mi", "50m", "2Mi"),
 		},
 	}
 
@@ -117,11 +122,12 @@ func BenchmarkNodesMetrics(b *testing.B) {
 	}
 
 	mmx := make(NodesMetrics)
+	var f *Filter
 
 	b.ResetTimer()
 	b.ReportAllocs()
 	for n := 0; n < b.N; n++ {
-		GetNodesMetrics(nodes.Items, metrics.Items, mmx)
+		f.ListNodesMetrics(nodes.Items, metrics.Items, mmx)
 	}
 }
 
@@ -142,7 +148,7 @@ func makeMxPod(name, cpu, mem string) v1beta1.PodMetrics {
 	}
 }
 
-func makeNode(name, tcpu, tmem, acpu, amem string) v1.Node {
+func makeNodeMX(name, tcpu, tmem, acpu, amem string) v1.Node {
 	return v1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,

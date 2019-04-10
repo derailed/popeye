@@ -4,10 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/derailed/popeye/internal/k8s"
-	"github.com/derailed/popeye/pkg/config"
 	m "github.com/petergtz/pegomock"
-	pegomock "github.com/petergtz/pegomock"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -16,25 +13,27 @@ import (
 )
 
 func TestPoLinter(t *testing.T) {
-	mks := NewMockClient()
-	m.When(mks.ListPods()).ThenReturn(map[string]v1.Pod{
+	mkl := NewMockLoader()
+	m.When(mkl.ListPods()).ThenReturn(map[string]v1.Pod{
 		"default/p1": makePod("p1"),
 		"default/p2": makePod("p2"),
 	}, nil)
-	m.When(mks.ClusterHasMetrics()).ThenReturn(true)
-	m.When(mks.FetchPodsMetrics("default")).ThenReturn([]mv1beta1.PodMetrics{
+	m.When(mkl.ClusterHasMetrics()).ThenReturn(true, nil)
+	m.When(mkl.FetchPodsMetrics("")).ThenReturn([]mv1beta1.PodMetrics{
 		makeMxPod("p1", "50m", "1Mi"),
 		makeMxPod("p2", "50m", "1Mi"),
 	}, nil)
 
-	l := NewPod(mks, nil)
+	l := NewPod(mkl, nil)
 	l.Lint(context.Background())
 
 	assert.Equal(t, 2, len(l.Issues()))
 	assert.Equal(t, 0, len(l.Issues()["p1"]))
 	assert.Equal(t, 0, len(l.Issues()["p2"]))
 
-	mks.VerifyWasCalled(pegomock.Times(1)).ListPods()
+	mkl.VerifyWasCalledOnce().ListPods()
+	mkl.VerifyWasCalledOnce().ClusterHasMetrics()
+	mkl.VerifyWasCalledOnce().FetchPodsMetrics("")
 }
 
 func TestPoCheckStatus(t *testing.T) {
@@ -59,10 +58,10 @@ func TestPoCheckStatus(t *testing.T) {
 		l := NewPod(nil, nil)
 		l.checkStatus(po)
 
-		nsed := nsFQN(po)
-		assert.Equal(t, u.issues, len(l.Issues()[nsed]))
-		if len(l.Issues()[nsed]) != 0 {
-			assert.Equal(t, u.severity, l.MaxSeverity(nsed))
+		fqn := podFQN(po)
+		assert.Equal(t, u.issues, len(l.Issues()[fqn]))
+		if len(l.Issues()[fqn]) != 0 {
+			assert.Equal(t, u.severity, l.MaxSeverity(fqn))
 		}
 	}
 }
@@ -91,14 +90,18 @@ func TestPoCheckContainerStatus(t *testing.T) {
 			},
 		}
 
-		l := NewPod(k8s.NewClient(config.New()), nil)
+		mkl := NewMockLoader()
+		m.When(mkl.RestartsLimit()).ThenReturn(1)
+
+		l := NewPod(mkl, nil)
 		l.checkContainerStatus(po)
 
-		nsed := nsFQN(po)
-		assert.Equal(t, u.issues, len(l.Issues()[nsed]))
-		if len(l.Issues()[nsed]) != 0 {
-			assert.Equal(t, u.severity, l.Issues()[nsed][0].Severity())
+		fqn := podFQN(po)
+		assert.Equal(t, u.issues, len(l.Issues()[fqn]))
+		if len(l.Issues()[fqn]) != 0 {
+			assert.Equal(t, u.severity, l.Issues()[fqn][0].Severity())
 		}
+		mkl.VerifyWasCalledOnce().RestartsLimit()
 	}
 }
 
@@ -158,10 +161,10 @@ func TestPoCheckContainers(t *testing.T) {
 		l := NewPod(nil, nil)
 		l.checkContainers(po)
 
-		nsed := nsFQN(po)
-		assert.Equal(t, u.issues, len(l.Issues()[nsed]))
-		if len(l.Issues()[nsed]) != 0 {
-			assert.Equal(t, u.severity, l.MaxSeverity(nsed))
+		fqn := podFQN(po)
+		assert.Equal(t, u.issues, len(l.Issues()[fqn]))
+		if len(l.Issues()[fqn]) != 0 {
+			assert.Equal(t, u.severity, l.MaxSeverity(fqn))
 		}
 	}
 }
@@ -181,14 +184,14 @@ func TestPoCheckServiceAccount(t *testing.T) {
 		if u.sa != "" {
 			po.Spec.ServiceAccountName = u.sa
 		}
-		nsed := nsFQN(po)
+		fqn := podFQN(po)
 
 		l := NewPod(nil, nil)
 		l.checkServiceAccount(po)
 
-		assert.Equal(t, u.issues, len(l.Issues()[nsed]))
-		if len(l.Issues()[nsed]) != 0 {
-			assert.Equal(t, u.severity, l.MaxSeverity(nsed))
+		assert.Equal(t, u.issues, len(l.Issues()[fqn]))
+		if len(l.Issues()[fqn]) != 0 {
+			assert.Equal(t, u.severity, l.MaxSeverity(fqn))
 		}
 	}
 }
@@ -243,21 +246,23 @@ func TestPoLint(t *testing.T) {
 		},
 	}
 
-	l := NewPod(k8s.NewClient(config.New()), nil)
+	mkl := NewMockLoader()
+	l := NewPod(mkl, nil)
 	l.lint(po, nil)
+
 	assert.True(t, l.NoIssues("p1"))
 }
 
 func TestPoUtilization(t *testing.T) {
 	uu := []struct {
-		mx     k8s.Metrics
+		mx     Metrics
 		res    v1.ResourceRequirements
 		issues int
 		level  Level
 	}{
 		// Under the request (Burstable)
 		{
-			mx: k8s.Metrics{CurrentCPU: 50, CurrentMEM: 15e6},
+			mx: Metrics{CurrentCPU: 50, CurrentMEM: 15e6},
 			res: v1.ResourceRequirements{
 				Requests: makeRes("1", "10Mi"),
 				Limits:   makeRes("200m", "20Mi"),
@@ -266,7 +271,7 @@ func TestPoUtilization(t *testing.T) {
 		},
 		// Under the limit (Burstable)
 		{
-			mx: k8s.Metrics{CurrentCPU: 200, CurrentMEM: 5e6},
+			mx: Metrics{CurrentCPU: 200, CurrentMEM: 5e6},
 			res: v1.ResourceRequirements{
 				Requests: makeRes("100m", "10Mi"),
 				Limits:   makeRes("500m", "20Mi"),
@@ -275,7 +280,7 @@ func TestPoUtilization(t *testing.T) {
 		},
 		// Over the request CPU
 		{
-			mx: k8s.Metrics{CurrentCPU: 200, CurrentMEM: 5e6},
+			mx: Metrics{CurrentCPU: 200, CurrentMEM: 5e6},
 			res: v1.ResourceRequirements{
 				Requests: makeRes("100m", "10Mi"),
 			},
@@ -283,7 +288,7 @@ func TestPoUtilization(t *testing.T) {
 		},
 		// Over the request MEM
 		{
-			mx: k8s.Metrics{CurrentCPU: 50, CurrentMEM: 15e6},
+			mx: Metrics{CurrentCPU: 50, CurrentMEM: 15e6},
 			res: v1.ResourceRequirements{
 				Requests: makeRes("100m", "10Mi"),
 			},
@@ -291,7 +296,7 @@ func TestPoUtilization(t *testing.T) {
 		},
 		// Over the limit CPU (Guaranteed)
 		{
-			mx: k8s.Metrics{CurrentCPU: 200, CurrentMEM: 5e6},
+			mx: Metrics{CurrentCPU: 200, CurrentMEM: 5e6},
 			res: v1.ResourceRequirements{
 				Limits: makeRes("100m", "20Mi"),
 			},
@@ -299,7 +304,7 @@ func TestPoUtilization(t *testing.T) {
 		},
 		// Over the limit MEM (Guaranteed)
 		{
-			mx: k8s.Metrics{CurrentCPU: 50, CurrentMEM: 40e6},
+			mx: Metrics{CurrentCPU: 50, CurrentMEM: 40e6},
 			res: v1.ResourceRequirements{
 				Limits: makeRes("100m", "20Mi"),
 			},
@@ -327,9 +332,16 @@ func TestPoUtilization(t *testing.T) {
 		co.Resources = resReq
 		po.Spec = v1.PodSpec{Containers: []v1.Container{co}}
 
-		l := NewPod(k8s.NewClient(config.New()), nil)
-		l.checkUtilization(po, k8s.ContainerMetrics{"c1": u.mx})
+		mkl := NewMockLoader()
+		m.When(mkl.PodCPULimit()).ThenReturn(float64(80))
+		m.When(mkl.PodMEMLimit()).ThenReturn(float64(80))
+
+		l := NewPod(mkl, nil)
+		l.checkUtilization(po, ContainerMetrics{"c1": u.mx})
+
 		assert.Equal(t, u.issues, len(l.Issues()))
+		mkl.VerifyWasCalledOnce().PodCPULimit()
+		mkl.VerifyWasCalledOnce().PodMEMLimit()
 	}
 }
 
@@ -345,18 +357,4 @@ func makePod(n string) v1.Pod {
 	}
 
 	return po
-}
-
-func makeMxPod(name, cpu, mem string) mv1beta1.PodMetrics {
-	return mv1beta1.PodMetrics{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: "default",
-		},
-		Containers: []mv1beta1.ContainerMetrics{
-			{Usage: makeRes(cpu, mem)},
-			{Usage: makeRes(cpu, mem)},
-			{Usage: makeRes(cpu, mem)},
-		},
-	}
 }

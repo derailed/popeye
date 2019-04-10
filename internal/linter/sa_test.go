@@ -13,26 +13,26 @@ import (
 )
 
 func TestSALint(t *testing.T) {
-	mkc := NewMockClient()
-	m.When(mkc.ActiveNamespace()).ThenReturn("")
-	m.When(mkc.ListAllCRBs()).ThenReturn(map[string]rbacv1.ClusterRoleBinding{
-		"crb1": makeCrb("crb1", "sa1"),
+	mkl := NewMockLoader()
+	m.When(mkl.ActiveNamespace()).ThenReturn("")
+	m.When(mkl.ListAllCRBs()).ThenReturn(map[string]rbacv1.ClusterRoleBinding{
+		"crb1": makeCRB("crb1", "sa1"),
 	}, nil)
-	m.When(mkc.ListRBs()).ThenReturn(map[string]rbacv1.RoleBinding{
-		"rb1": makeRb("rb1", "sa1"),
+	m.When(mkl.ListRBs()).ThenReturn(map[string]rbacv1.RoleBinding{
+		"rb1": makeRB("rb1", "sa1"),
 	}, nil)
 
-	m.When(mkc.ListAllPods()).ThenReturn(map[string]v1.Pod{
+	m.When(mkl.ListAllPods()).ThenReturn(map[string]v1.Pod{
 		"p1": makePodSa("p1", "sa2"),
 	}, nil)
 
-	s := NewSA(mkc, nil)
+	s := NewSA(mkl, nil)
 	s.Lint(context.Background())
 
 	assert.Equal(t, 1, len(s.Issues()["default/sa1"]))
-	mkc.VerifyWasCalledOnce().ListAllCRBs()
-	mkc.VerifyWasCalledOnce().ListRBs()
-	mkc.VerifyWasCalledOnce().ListAllPods()
+	mkl.VerifyWasCalledOnce().ListAllCRBs()
+	mkl.VerifyWasCalledOnce().ListRBs()
+	mkl.VerifyWasCalledOnce().ListAllPods()
 }
 
 func TestSACheckDead(t *testing.T) {
@@ -43,14 +43,14 @@ func TestSACheckDead(t *testing.T) {
 		issue int
 	}{
 		{
-			crbs:  map[string]rbacv1.ClusterRoleBinding{"crb1": makeCrb("crb1", "sa1")},
-			rbs:   map[string]rbacv1.RoleBinding{"default/rb1": makeRb("rb1", "sa2")},
+			crbs:  map[string]rbacv1.ClusterRoleBinding{"crb1": makeCRB("crb1", "sa1")},
+			rbs:   map[string]rbacv1.RoleBinding{"default/rb1": makeRB("rb1", "sa2")},
 			pods:  map[string]v1.Pod{"p1": makePodSa("p1", "sa1")},
 			issue: 1,
 		},
 		{
-			crbs: map[string]rbacv1.ClusterRoleBinding{"crb1": makeCrb("crb1", "sa2")},
-			rbs:  map[string]rbacv1.RoleBinding{"default/rb1": makeRb("rb1", "sa2")},
+			crbs: map[string]rbacv1.ClusterRoleBinding{"crb1": makeCRB("crb1", "sa2")},
+			rbs:  map[string]rbacv1.RoleBinding{"default/rb1": makeRB("rb1", "sa2")},
 			pods: map[string]v1.Pod{
 				"p1": makePodSa("p1", "sa2"),
 			},
@@ -58,15 +58,15 @@ func TestSACheckDead(t *testing.T) {
 		},
 	}
 
-	mks := NewMockClient()
-	m.When(mks.ExcludedNS("default")).ThenReturn(false)
+	mkl := NewMockLoader()
+	m.When(mkl.ExcludedNS("default")).ThenReturn(false)
 	for _, u := range uu {
-		s := NewSA(mks, nil)
+		s := NewSA(mkl, nil)
 		s.checkDead(u.pods, u.crbs, u.rbs)
 
 		assert.Equal(t, u.issue, len(s.Issues()["default/sa2"]))
 	}
-	mks.VerifyWasCalled(pegomock.Times(6)).ExcludedNS("default")
+	mkl.VerifyWasCalled(pegomock.Times(6)).ExcludedNS("default")
 }
 
 // ----------------------------------------------------------------------------
@@ -79,7 +79,7 @@ func makePodSa(s, sa string) v1.Pod {
 	return po
 }
 
-func makeCrb(s, sa string) rbacv1.ClusterRoleBinding {
+func makeCRB(s, sa string) rbacv1.ClusterRoleBinding {
 	return rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: s,
@@ -93,7 +93,7 @@ func makeCrb(s, sa string) rbacv1.ClusterRoleBinding {
 	}
 }
 
-func makeRb(s, sa string) rbacv1.RoleBinding {
+func makeRB(s, sa string) rbacv1.RoleBinding {
 	return rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      s,

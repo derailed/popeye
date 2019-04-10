@@ -13,39 +13,38 @@ type CM struct {
 }
 
 // NewCM returns a new ConfigMap linter.
-func NewCM(c Client, l *zerolog.Logger) *CM {
-	return &CM{newLinter(c, l)}
+func NewCM(l Loader, log *zerolog.Logger) *CM {
+	return &CM{NewLinter(l, log)}
 }
 
 // Lint a ConfigMap.
 func (c *CM) Lint(ctx context.Context) error {
-	cms, err := c.client.ListCMs()
+	cms, err := c.ListCMs()
 	if err != nil {
 		return err
 	}
 
-	pods, err := c.client.ListPods()
+	pods, err := c.ListPods()
 	if err != nil {
 		return nil
 	}
 
-	c.lint(pods, cms)
+	c.lint(cms, pods)
 
 	return nil
 }
 
-func (c *CM) lint(pods map[string]v1.Pod, cms map[string]v1.ConfigMap) {
+func (c *CM) lint(cms map[string]v1.ConfigMap, pods map[string]v1.Pod) {
 	refs := make(References, len(cms))
-
-	for _, po := range pods {
-		checkVolumes(po.Namespace, po.Spec.Volumes, refs)
-		checkContainerRefs(po.Namespace, po.Spec.InitContainers, refs)
-		checkContainerRefs(po.Namespace, po.Spec.Containers, refs)
+	for fqn, po := range pods {
+		c.checkVolumes(fqn, po.Spec.Volumes, refs)
+		c.checkContainerRefs(fqn, po.Spec.InitContainers, refs)
+		c.checkContainerRefs(fqn, po.Spec.Containers, refs)
 	}
 
 	for fqn, cm := range cms {
 		c.initIssues(fqn)
-		ref, ok := refs[fqn]
+		cmRef, ok := refs[fqn]
 		if !ok {
 			c.addIssuef(fqn, InfoLevel, "Used?")
 			continue
@@ -54,7 +53,7 @@ func (c *CM) lint(pods map[string]v1.Pod, cms map[string]v1.ConfigMap) {
 		victims := map[string]bool{}
 		for key := range cm.Data {
 			victims[key] = false
-			if used, ok := ref["volume"]; ok {
+			if used, ok := cmRef["volume"]; ok {
 				if len(used.keys) != 0 {
 					for k := range used.keys {
 						victims[key] = k == key
@@ -64,11 +63,11 @@ func (c *CM) lint(pods map[string]v1.Pod, cms map[string]v1.ConfigMap) {
 				}
 			}
 
-			if _, ok := ref["envFrom"]; ok {
+			if _, ok := cmRef["envFrom"]; ok {
 				victims[key] = true
 			}
 
-			if used, ok := ref["keyRef"]; ok {
+			if used, ok := cmRef["env"]; ok {
 				for k := range used.keys {
 					victims[key] = k == key
 				}
@@ -83,78 +82,88 @@ func (c *CM) lint(pods map[string]v1.Pod, cms map[string]v1.ConfigMap) {
 	}
 }
 
-func checkVolumes(ns string, vols []v1.Volume, refs References) {
+func (*CM) checkVolumes(poFQN string, vols []v1.Volume, refs References) {
+	ns, _ := namespaced(poFQN)
 	for _, v := range vols {
 		cm := v.VolumeSource.ConfigMap
 		if cm == nil {
 			continue
 		}
 
-		fqn := fqn(ns, cm.Name)
-		u := Reference{name: v.Name, keys: map[string]struct{}{}}
-		if r, ok := refs[fqn]; ok {
+		key := fqn(ns, cm.Name)
+		u := Reference{name: ref(poFQN, v.Name), keys: map[string]struct{}{}}
+		if r, ok := refs[key]; ok {
 			r["volume"] = &u
 		} else {
-			refs[fqn] = TypedReferences{"volume": &u}
+			refs[key] = TypedReferences{"volume": &u}
 		}
 
 		for _, k := range cm.Items {
-			refs[fqn]["volume"].keys[k.Key] = struct{}{}
+			refs[key]["volume"].keys[k.Key] = struct{}{}
 		}
 	}
 }
 
-func checkContainerRefs(ns string, cos []v1.Container, refs References) {
+func (c *CM) checkContainerRefs(poFQN string, cos []v1.Container, refs References) {
 	for _, co := range cos {
-		for _, e := range co.EnvFrom {
-			ref := e.ConfigMapRef
-			if ref == nil {
-				continue
-			}
+		c.checkEnvFrom(poFQN, co, refs)
+		c.checkEnv(poFQN, co, refs)
+	}
+}
 
-			// Check EnvFrom refs...
-			fqn := fqn(ns, ref.Name)
-			used := Reference{}
-			if v, ok := refs[fqn]; ok {
-				v["envFrom"] = &used
-			} else {
-				refs[fqn] = TypedReferences{"envFrom": &used}
-			}
+// CheckEnvFrom check container envFrom for configMap references.
+func (*CM) checkEnvFrom(poFQN string, co v1.Container, refs References) {
+	ns, _ := namespaced(poFQN)
+	for _, e := range co.EnvFrom {
+		cmRef := e.ConfigMapRef
+		if cmRef == nil {
+			continue
 		}
 
-		// Check envs...
-		for _, e := range co.Env {
-			ref := e.ValueFrom
-			if ref == nil {
-				continue
-			}
+		key := fqn(ns, cmRef.Name)
+		used := Reference{name: ref(poFQN, co.Name)}
+		if v, ok := refs[key]; ok {
+			v["envFrom"] = &used
+			continue
+		}
+		refs[key] = TypedReferences{"envFrom": &used}
+	}
+}
 
-			kref := ref.ConfigMapKeyRef
-			if kref == nil {
-				continue
-			}
+// CheckEnv checks container Env section for configMap references.
+func (*CM) checkEnv(poFQN string, co v1.Container, refs References) {
+	ns, _ := namespaced(poFQN)
+	blank := struct{}{}
 
-			fqn := fqn(ns, kref.Name)
-			if v, ok := refs[fqn]; ok {
-				v["keyRef"].keys[kref.Name] = struct{}{}
-			} else {
-				refs[fqn] = map[string]*Reference{
-					"keyRef": &Reference{
-						name: kref.Name,
-						keys: map[string]struct{}{
-							kref.Key: struct{}{},
-						},
-					},
-				}
-			}
+	for _, e := range co.Env {
+		if e.ValueFrom == nil || e.ValueFrom.ConfigMapKeyRef == nil {
+			continue
+		}
+
+		kref := e.ValueFrom.ConfigMapKeyRef
+		key := fqn(ns, kref.Name)
+		if v, ok := refs[key]; ok {
+			v["env"].keys[kref.Name] = blank
+			continue
+		}
+		refs[key] = map[string]*Reference{
+			"env": &Reference{
+				name: kref.Name,
+				keys: map[string]struct{}{
+					kref.Key: blank,
+				},
+			},
 		}
 	}
+}
+
+// ----------------------------------------------------------------------------
+// Helpers...
+
+func ref(s, r string) string {
+	return s + ":" + r
 }
 
 func fqnCM(s v1.ConfigMap) string {
 	return s.Namespace + "/" + s.Name
-}
-
-func fqn(ns, n string) string {
-	return ns + "/" + n
 }

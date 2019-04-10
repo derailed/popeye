@@ -17,27 +17,27 @@ type SA struct {
 }
 
 // NewSA returns a new ServiceAccount linter.
-func NewSA(c Client, l *zerolog.Logger) *SA {
-	return &SA{newLinter(c, l)}
+func NewSA(l Loader, log *zerolog.Logger) *SA {
+	return &SA{NewLinter(l, log)}
 }
 
 // Lint a serviceaccount.
 func (s *SA) Lint(ctx context.Context) error {
 	crbs := map[string]rbacv1.ClusterRoleBinding{}
-	if s.client.ActiveNamespace() == "" {
+	if s.ActiveNamespace() == "" {
 		var err error
-		crbs, err = s.client.ListAllCRBs()
+		crbs, err = s.ListAllCRBs()
 		if err != nil {
 			return err
 		}
 	}
 
-	rbs, err := s.client.ListRBs()
+	rbs, err := s.ListRBs()
 	if err != nil {
 		return err
 	}
 
-	pods, err := s.client.ListAllPods()
+	pods, err := s.ListAllPods()
 	if err != nil {
 		return nil
 	}
@@ -54,7 +54,7 @@ func (s *SA) checkDead(pods map[string]v1.Pod, crbs map[string]rbacv1.ClusterRol
 		pullSas(crb.Name, crb.Subjects, refs)
 	}
 	for _, rb := range rbs {
-		if s.client.ExcludedNS(rb.Namespace) {
+		if s.ExcludedNS(rb.Namespace) {
 			continue
 		}
 		pullSas(rb.Namespace+"/"+rb.Name, rb.Subjects, refs)
@@ -62,7 +62,7 @@ func (s *SA) checkDead(pods map[string]v1.Pod, crbs map[string]rbacv1.ClusterRol
 
 	psas := make(map[string]struct{}, len(pods))
 	for _, p := range pods {
-		if s.client.ExcludedNS(p.Namespace) {
+		if s.ExcludedNS(p.Namespace) {
 			continue
 		}
 
@@ -74,7 +74,7 @@ func (s *SA) checkDead(pods map[string]v1.Pod, crbs map[string]rbacv1.ClusterRol
 	// Check for dead service account usage
 	for sa, b := range refs {
 		ns, _ := namespaced(sa)
-		if ns != "" && s.client.ExcludedNS(ns) {
+		if ns != "" && s.ExcludedNS(ns) {
 			continue
 		}
 		s.initIssues(sa)

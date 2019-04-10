@@ -8,8 +8,8 @@ import (
 )
 
 type (
-	// Sec represents a Secret linter.
-	Sec struct {
+	// Secret represents a Secret linter.
+	Secret struct {
 		*Linter
 	}
 
@@ -26,24 +26,24 @@ type (
 	References map[string]TypedReferences
 )
 
-// NewSec returns a new Secret linter.
-func NewSec(c Client, l *zerolog.Logger) *Sec {
-	return &Sec{newLinter(c, l)}
+// NewSecret returns a new Secret linter.
+func NewSecret(l Loader, log *zerolog.Logger) *Secret {
+	return &Secret{NewLinter(l, log)}
 }
 
 // Lint a Secret.
-func (s *Sec) Lint(ctx context.Context) error {
-	secs, err := s.client.ListSecs()
+func (s *Secret) Lint(ctx context.Context) error {
+	secs, err := s.ListSecs()
 	if err != nil {
 		return err
 	}
 
-	pods, err := s.client.ListPods()
+	pods, err := s.ListPods()
 	if err != nil {
 		return nil
 	}
 
-	sas, err := s.client.ListSAs()
+	sas, err := s.ListSAs()
 	if err != nil {
 		return nil
 	}
@@ -53,14 +53,14 @@ func (s *Sec) Lint(ctx context.Context) error {
 	return nil
 }
 
-func (s *Sec) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map[string]v1.ServiceAccount) {
+func (s *Secret) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map[string]v1.ServiceAccount) {
 	refs := make(References, len(pods)+len(sas))
 
-	for _, po := range pods {
-		checkSecVolumes(po.Namespace, po.Spec.Volumes, refs)
-		checkSecContainerRefs(po.Namespace, po.Spec.InitContainers, refs)
-		checkSecContainerRefs(po.Namespace, po.Spec.Containers, refs)
-		checkPullImageSecrets(po, refs)
+	for fqn, po := range pods {
+		s.checkVolumes(fqn, po.Spec.Volumes, refs)
+		s.checkContainerRefs(fqn, po.Spec.InitContainers, refs)
+		s.checkContainerRefs(fqn, po.Spec.Containers, refs)
+		s.checkPullImageSecrets(po, refs)
 	}
 
 	for _, sa := range sas {
@@ -109,7 +109,7 @@ func (s *Sec) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map[st
 				victims[key] = true
 			}
 
-			if Reference, ok := ref["keyRef"]; ok {
+			if Reference, ok := ref["env"]; ok {
 				for k := range Reference.keys {
 					victims[key] = k == key
 				}
@@ -124,31 +124,29 @@ func (s *Sec) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map[st
 	}
 }
 
-// ----------------------------------------------------------------------------
-// Helpers...
-
-func checkPullImageSecrets(po v1.Pod, refs map[string]TypedReferences) {
+func (*Secret) checkPullImageSecrets(po v1.Pod, refs map[string]TypedReferences) {
 	for _, s := range po.Spec.ImagePullSecrets {
 		fqn := fqn(po.Namespace, s.Name)
 
 		u := Reference{name: s.Name}
 		if r, ok := refs[fqn]; ok {
 			r["pull"] = &u
-		} else {
-			refs[fqn] = TypedReferences{"pull": &u}
+			continue
 		}
+		refs[fqn] = TypedReferences{"pull": &u}
 	}
 }
 
-func checkSecVolumes(ns string, vols []v1.Volume, refs map[string]TypedReferences) {
+func (*Secret) checkVolumes(poFQN string, vols []v1.Volume, refs map[string]TypedReferences) {
+	ns, _ := namespaced(poFQN)
 	for _, v := range vols {
-		sec := v.VolumeSource.Secret
-		if sec == nil {
+		if v.VolumeSource.Secret == nil {
 			continue
 		}
 
+		sec := v.VolumeSource.Secret
 		fqn := fqn(ns, sec.SecretName)
-		u := &Reference{name: v.Name, keys: map[string]struct{}{}}
+		u := &Reference{name: ref(poFQN, v.Name), keys: map[string]struct{}{}}
 		if r, ok := refs[fqn]; ok {
 			r["volume"] = u
 		} else {
@@ -161,32 +159,29 @@ func checkSecVolumes(ns string, vols []v1.Volume, refs map[string]TypedReference
 	}
 }
 
-func checkSecContainerRefs(ns string, cos []v1.Container, refs map[string]TypedReferences) {
+func (*Secret) checkContainerRefs(poFQN string, cos []v1.Container, refs map[string]TypedReferences) {
+	ns, _ := namespaced(poFQN)
 	for _, co := range cos {
 		// Check envs...
 		for _, e := range co.Env {
-			ref := e.ValueFrom
-			if ref == nil {
+			if e.ValueFrom == nil || e.ValueFrom.SecretKeyRef == nil {
 				continue
 			}
 
-			kref := ref.SecretKeyRef
-			if kref == nil {
-				continue
-			}
-
+			kref := e.ValueFrom.SecretKeyRef
 			fqn := fqn(ns, kref.Name)
 			if v, ok := refs[fqn]; ok {
-				v["keyRef"].keys[kref.Name] = struct{}{}
-			} else {
-				refs[fqn] = map[string]*Reference{
-					"keyRef": &Reference{
-						name: kref.Name,
-						keys: map[string]struct{}{
-							kref.Key: struct{}{},
-						},
+				v["env"].keys[kref.Name] = struct{}{}
+				continue
+			}
+
+			refs[fqn] = map[string]*Reference{
+				"env": &Reference{
+					name: kref.Name,
+					keys: map[string]struct{}{
+						kref.Key: struct{}{},
 					},
-				}
+				},
 			}
 		}
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"math"
 
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/rs/zerolog"
 	v1 "k8s.io/api/core/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
@@ -26,13 +25,13 @@ type (
 )
 
 // NewNode returns a new Node linter.
-func NewNode(c Client, l *zerolog.Logger) *Node {
-	return &Node{newLinter(c, l)}
+func NewNode(l Loader, log *zerolog.Logger) *Node {
+	return &Node{NewLinter(l, log)}
 }
 
 // Lint a Node.
 func (n *Node) Lint(ctx context.Context) error {
-	nodes, err := n.client.ListNodes()
+	nodes, err := n.ListNodes()
 	if err != nil {
 		return err
 	}
@@ -40,12 +39,12 @@ func (n *Node) Lint(ctx context.Context) error {
 	tt := n.fetchPodTolerations()
 
 	var mx []mv1beta1.NodeMetrics
-	nmx := make(k8s.NodesMetrics)
-	if n.client.ClusterHasMetrics() {
-		if mx, err = n.client.FetchNodesMetrics(); err != nil {
+	nmx := make(NodesMetrics)
+	if ok, _ := n.ClusterHasMetrics(); ok {
+		if mx, err = n.FetchNodesMetrics(); err != nil {
 			return err
 		}
-		k8s.GetNodesMetrics(nodes, mx, nmx)
+		n.ListNodesMetrics(nodes, mx, nmx)
 	}
 
 	for _, no := range nodes {
@@ -56,7 +55,7 @@ func (n *Node) Lint(ctx context.Context) error {
 	return nil
 }
 
-func (n *Node) lint(no v1.Node, mx k8s.NodeMetrics, t tolerations) {
+func (n *Node) lint(no v1.Node, mx NodeMetrics, t tolerations) {
 	ready := n.checkConditions(no)
 	if ready {
 		n.checkTaints(no, t)
@@ -74,7 +73,7 @@ func (n *Node) checkTaints(no v1.Node, t tolerations) {
 
 func (n *Node) fetchPodTolerations() tolerations {
 	tt := tolerations{}
-	pods, err := n.client.ListAllPods()
+	pods, err := n.ListAllPods()
 	if err != nil {
 		n.addIssuef("", ErrorLevel, "Unable to list all pods %s", err)
 	}
@@ -129,20 +128,20 @@ func (n *Node) checkConditions(no v1.Node) bool {
 	return ready
 }
 
-func (n *Node) checkUtilization(no string, mx k8s.NodeMetrics) {
+func (n *Node) checkUtilization(no string, mx NodeMetrics) {
 	if mx.Empty() {
 		n.addIssuef(no, WarnLevel, "No node metrics available")
 		return
 	}
 
 	percCPU := ToPerc(float64(mx.CurrentCPU), float64(mx.AvailCPU))
-	cpuLimit := n.client.NodeCPULimit()
+	cpuLimit := n.NodeCPULimit()
 	if math.Round(percCPU) > cpuLimit {
 		n.addIssuef(no, WarnLevel, "CPU threshold (%0.f%%) reached %0.f%%", cpuLimit, percCPU)
 	}
 
 	percMEM := ToPerc(float64(mx.CurrentMEM), float64(mx.AvailMEM))
-	memLimit := n.client.NodeMEMLimit()
+	memLimit := n.NodeMEMLimit()
 	if math.Round(percMEM) > memLimit {
 		n.addIssuef(no, WarnLevel, "Memory threshold (%0.f%%) reached %0.f%%", memLimit, percMEM)
 	}

@@ -1,22 +1,16 @@
-package config_test
+package config
 
 import (
 	"testing"
 
-	"github.com/rs/zerolog"
-
-	"github.com/derailed/popeye/internal/linter"
-	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/internal/k8s"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func TestInit(t *testing.T) {
-	cfg := config.New()
+func TestNewConfig(t *testing.T) {
+	cfg, err := NewConfig(k8s.NewFlags())
 
-	flags := genericclioptions.ConfigFlags{}
-
-	assert.Nil(t, cfg.Init(&flags))
+	assert.Nil(t, err)
 	assert.Equal(t, 80.0, cfg.NodeCPULimit())
 	assert.Equal(t, 80.0, cfg.NodeMEMLimit())
 	assert.Equal(t, 80.0, cfg.PodCPULimit())
@@ -25,35 +19,26 @@ func TestInit(t *testing.T) {
 	assert.False(t, cfg.ExcludedService("default/kubernetes"))
 	assert.False(t, cfg.ExcludedNS("kube-public"))
 	assert.Equal(t, 5, cfg.RestartsLimit())
-	assert.Equal(t, "", cfg.ActiveNamespace())
 }
 
-func TestLogLevel(t *testing.T) {
-	uu := map[string]zerolog.Level{
-		"debug": zerolog.DebugLevel,
-		"warn":  zerolog.WarnLevel,
-		"error": zerolog.ErrorLevel,
-		"fatal": zerolog.FatalLevel,
-		"blee":  zerolog.InfoLevel,
-		"":      zerolog.InfoLevel,
-	}
+func TestSpinach(t *testing.T) {
+	dir := "assets/sp1.yml"
 
-	for k, e := range uu {
-		assert.Equal(t, e, config.ToLogLevel(k))
-	}
-}
+	f := k8s.NewFlags()
+	f.Spinach = &dir
 
-func TestLintLevel(t *testing.T) {
-	uu := map[string]linter.Level{
-		"ok":    linter.OkLevel,
-		"info":  linter.InfoLevel,
-		"warn":  linter.WarnLevel,
-		"error": linter.ErrorLevel,
-		"blee":  linter.OkLevel,
-		"":      linter.OkLevel,
-	}
+	cfg, err := NewConfig(f)
 
-	for k, e := range uu {
-		assert.Equal(t, e, linter.Level(config.ToLintLevel(k)))
-	}
+	assert.Nil(t, err)
+	assert.Equal(t, 3, cfg.RestartsLimit())
+	assert.True(t, cfg.ExcludedNode("n1"))
+	assert.False(t, cfg.ExcludedService("default/fred"))
+	assert.True(t, cfg.ExcludedService("default/dictionary"))
+	assert.True(t, cfg.ExcludedNS("kube-public"))
+	assert.Equal(t, 90.0, cfg.NodeCPULimit())
+	assert.Equal(t, 80.0, cfg.NodeMEMLimit())
+	assert.Equal(t, 80.0, cfg.PodCPULimit())
+	assert.Equal(t, 75.0, cfg.PodMEMLimit())
+	assert.Equal(t, 0, cfg.LintLevel)
+	assert.Equal(t, []string{}, cfg.Sections())
 }

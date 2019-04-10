@@ -1,0 +1,40 @@
+# A Sample Popeye configuration.
+popeye:
+  # Node...
+  node:
+    # Check nodes resource utilization in percent against these thresholds.
+    limits:
+      cpu:    90
+      memory: 80
+    exclude:
+    - n1
+
+  # Namespace...
+  namespace:
+    # Excludes these namespaces from the scan.
+    exclude:
+      - kube-system
+      - kube-node-lease
+      - kube-public
+      - istio-system
+
+  # Pod...
+  pod:
+    # Check container resource utilization in percent.
+    # Issues a lint warning if about these threshold.
+    limits:
+      cpu:    80
+      memory: 75
+    # Warn if more than 3 restarts.
+    restarts:
+      3
+    # NYI!! Enforce this label presence on pods.
+    labels:
+    - app
+    - env
+
+  # Service ...
+  service:
+    # Excludes these services from the scan.
+    exclude:
+      - default/dictionary

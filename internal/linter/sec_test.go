@@ -11,26 +11,26 @@ import (
 )
 
 func TestSecLint(t *testing.T) {
-	mkc := NewMockClient()
-	m.When(mkc.ActiveNamespace()).ThenReturn("default")
-	m.When(mkc.ListSecs()).ThenReturn(map[string]v1.Secret{
+	mkl := NewMockLoader()
+	m.When(mkl.ActiveNamespace()).ThenReturn("default")
+	m.When(mkl.ListSecs()).ThenReturn(map[string]v1.Secret{
 		"default/s1": makeSec("s1"),
 	}, nil)
-	m.When(mkc.ListSAs()).ThenReturn(map[string]v1.ServiceAccount{
+	m.When(mkl.ListSAs()).ThenReturn(map[string]v1.ServiceAccount{
 		"default/sa1": makeSA("sa1"),
 	}, nil)
-	m.When(mkc.ListPods()).ThenReturn(map[string]v1.Pod{
+	m.When(mkl.ListPods()).ThenReturn(map[string]v1.Pod{
 		"default/p1": makePodSecEnv("p1", "s1", "fred", false),
 	}, nil)
 
-	s := NewSec(mkc, nil)
+	s := NewSecret(mkl, nil)
 	s.Lint(context.Background())
 
 	assert.Equal(t, 0, len(s.Issues()["default/s1"]))
 
-	mkc.VerifyWasCalledOnce().ListSecs()
-	mkc.VerifyWasCalledOnce().ListSAs()
-	mkc.VerifyWasCalledOnce().ListPods()
+	mkl.VerifyWasCalledOnce().ListSecs()
+	mkl.VerifyWasCalledOnce().ListSAs()
+	mkl.VerifyWasCalledOnce().ListPods()
 }
 
 func TestSecLintSecs(t *testing.T) {
@@ -52,7 +52,7 @@ func TestSecLintSecs(t *testing.T) {
 	}
 
 	for _, u := range uu {
-		s := NewSec(nil, nil)
+		s := NewSecret(nil, nil)
 		s.lint(
 			map[string]v1.Secret{"default/s1": u.sec},
 			map[string]v1.Pod{"default/p1": u.pod},
@@ -76,7 +76,8 @@ func TestPullImageSecrets(t *testing.T) {
 
 	for _, u := range uu {
 		refs := References{}
-		checkPullImageSecrets(u.po, refs)
+		var s *Secret
+		s.checkPullImageSecrets(u.po, refs)
 
 		v, ok := refs["default/s1"][u.key]
 		if u.present {
@@ -86,7 +87,7 @@ func TestPullImageSecrets(t *testing.T) {
 	}
 }
 
-func TestCheckSecContainerRefs(t *testing.T) {
+func TestSecCheckContainerRefs(t *testing.T) {
 	uu := []struct {
 		po      v1.Pod
 		key     string
@@ -94,18 +95,19 @@ func TestCheckSecContainerRefs(t *testing.T) {
 		e       *Reference
 	}{
 		{makePod("v1"), "envFrom", false, nil},
-		{makePodSecEnv("p1", "s1", "fred", false), "keyRef", true, &Reference{
+		{makePodSecEnv("p1", "s1", "fred", false), "env", true, &Reference{
 			name: "s1",
 			keys: map[string]struct{}{
 				"fred": struct{}{},
 			},
 		}},
-		{makePodEnv("p1", "s1", "fred", true), "keyRef", false, nil},
+		{makePodEnv("p1", "s1", "fred", true), "env", false, nil},
 	}
 
 	for _, u := range uu {
 		refs := References{}
-		checkSecContainerRefs("default", u.po.Spec.Containers, refs)
+		var s *Secret
+		s.checkContainerRefs(podFQN(u.po), u.po.Spec.Containers, refs)
 
 		v, ok := refs["default/s1"][u.key]
 		if u.present {
@@ -115,7 +117,7 @@ func TestCheckSecContainerRefs(t *testing.T) {
 	}
 }
 
-func TestCheckSecVolumes(t *testing.T) {
+func TestSecCheckVolumes(t *testing.T) {
 	uu := []struct {
 		po      v1.Pod
 		key     string
@@ -127,7 +129,7 @@ func TestCheckSecVolumes(t *testing.T) {
 		},
 		{
 			makePodSecVol("p1", "s1", "fred", false), "volume", true, &Reference{
-				name: "v1",
+				name: "default/p1:v1",
 				keys: map[string]struct{}{"fred": struct{}{}},
 			},
 		},
@@ -138,7 +140,8 @@ func TestCheckSecVolumes(t *testing.T) {
 
 	for _, u := range uu {
 		refs := References{}
-		checkSecVolumes("default", u.po.Spec.Volumes, refs)
+		var s *Secret
+		s.checkVolumes(podFQN(u.po), u.po.Spec.Volumes, refs)
 
 		v, ok := refs["default/s1"][u.key]
 		if u.present {

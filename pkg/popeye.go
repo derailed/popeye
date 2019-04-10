@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"sort"
 	"strings"
 
@@ -33,7 +34,7 @@ type (
 
 	// Popeye a kubernetes sanitizer.
 	Popeye struct {
-		config       *config.Config
+		loader       linter.Loader
 		totalScore   int
 		sectionCount int
 		out          io.Writer
@@ -42,28 +43,33 @@ type (
 )
 
 // NewPopeye returns a new sanitizer.
-func NewPopeye(c *config.Config, log *zerolog.Logger, out io.Writer) *Popeye {
-	return &Popeye{config: c, out: out, log: log}
+func NewPopeye(flags *k8s.Flags, log *zerolog.Logger, out io.Writer) (*Popeye, error) {
+	cfg, err := config.NewConfig(flags)
+	if err != nil {
+		return nil, err
+	}
+
+	f := linter.NewFilter(k8s.NewClient(flags), cfg)
+
+	return &Popeye{loader: f, out: out, log: log}, nil
 }
 
 // Sanitize scans a cluster for potential issues.
 func (p *Popeye) Sanitize(showHeader bool) {
-	c := k8s.NewClient(p.config)
-
 	if showHeader {
 		p.printHeader()
-		p.clusterInfo(c)
+		p.clusterInfo(p.loader)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	for k, l := range linters(c, p.log) {
-		if !in(p.config.Sections, k) {
+	for k, l := range linters(p.loader, p.log) {
+		if !in(p.loader.Sections(), k) {
 			continue
 		}
 
 		// Skip no check if active namespace is set.
-		if k == "no" && p.config.ActiveNamespace() != "" {
+		if k == "no" && p.loader.ActiveNamespace() != "" {
 			continue
 		}
 
@@ -82,15 +88,15 @@ func (p *Popeye) Sanitize(showHeader bool) {
 	p.printSummary()
 }
 
-func linters(c *k8s.Client, log *zerolog.Logger) Linters {
+func linters(l linter.Loader, log *zerolog.Logger) Linters {
 	return Linters{
-		"no":  linter.NewNode(c, log),
-		"ns":  linter.NewNamespace(c, log),
-		"po":  linter.NewPod(c, log),
-		"svc": linter.NewService(c, log),
-		"sa":  linter.NewSA(c, log),
-		"cm":  linter.NewCM(c, log),
-		"sec": linter.NewSec(c, log),
+		"no":  linter.NewNode(l, log),
+		"ns":  linter.NewNamespace(l, log),
+		"po":  linter.NewPod(l, log),
+		"svc": linter.NewService(l, log),
+		"sa":  linter.NewSA(l, log),
+		"cm":  linter.NewCM(l, log),
+		"sec": linter.NewService(l, log),
 	}
 }
 
@@ -98,7 +104,7 @@ func (p *Popeye) printReport(r Reporter, section string) {
 	w := bufio.NewWriter(p.out)
 	defer w.Flush()
 
-	level := linter.Level(p.config.Popeye.LintLevel)
+	level := linter.Level(p.loader.LinterLevel())
 	t, any := report.NewTally().Rollup(r.Issues()), false
 
 	report.Open(w, section, t)
@@ -138,6 +144,10 @@ func (p *Popeye) printReport(r Reporter, section string) {
 }
 
 func (p *Popeye) printSummary() {
+	if p.sectionCount == 0 {
+		return
+	}
+
 	w := bufio.NewWriter(p.out)
 	defer w.Flush()
 
@@ -160,13 +170,13 @@ func (p *Popeye) printHeader() {
 	for i, s := range report.Logo {
 		if i < len(report.Popeye) {
 			fmt.Fprintf(w, report.Colorize(report.Popeye[i], report.ColorAqua))
-			fmt.Fprintf(w, strings.Repeat(" ", 35))
+			fmt.Fprintf(w, strings.Repeat(" ", 55))
 		} else {
 			if i == 4 {
 				fmt.Fprintf(w, report.Colorize("  Biffs`em and Buffs`em!", report.ColorLighSlate))
-				fmt.Fprintf(w, strings.Repeat(" ", 38))
+				fmt.Fprintf(w, strings.Repeat(" ", 58))
 			} else {
-				fmt.Fprintf(w, strings.Repeat(" ", 62))
+				fmt.Fprintf(w, strings.Repeat(" ", 82))
 			}
 		}
 		fmt.Fprintln(w, report.Colorize(s, report.ColorLighSlate))
@@ -174,16 +184,22 @@ func (p *Popeye) printHeader() {
 	fmt.Fprintln(w, "")
 }
 
-func (p *Popeye) clusterInfo(c *k8s.Client) {
+func (p *Popeye) clusterInfo(l linter.Loader) {
 	w := bufio.NewWriter(p.out)
 	defer w.Flush()
 
-	t := fmt.Sprintf("CLUSTER [%s]", strings.ToUpper(c.Config.ActiveCluster()))
+	t := fmt.Sprintf("CLUSTER [%s]", strings.ToUpper(l.ActiveCluster()))
 	report.Open(w, t, nil)
 	{
 		report.Write(w, linter.OkLevel, 1, "Connectivity")
 
-		if !c.ClusterHasMetrics() {
+		ok, err := l.ClusterHasMetrics()
+		if err != nil {
+			fmt.Printf("💥 %s\n", report.Colorize(err.Error(), report.ColorRed))
+			os.Exit(1)
+		}
+
+		if ok {
 			report.Write(w, linter.OkLevel, 1, "Metrics")
 		} else {
 			report.Write(w, linter.OkLevel, 1, "Metrics")

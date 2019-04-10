@@ -12,25 +12,25 @@ import (
 )
 
 func TestNsLinter(t *testing.T) {
-	mks := NewMockClient()
-	m.When(mks.ListNS()).ThenReturn(map[string]v1.Namespace{
+	mkl := NewMockLoader()
+	m.When(mkl.ListNS()).ThenReturn(map[string]v1.Namespace{
 		"ns1": makeNS("ns1", true),
 		"ns2": makeNS("ns2", false),
 	}, nil)
-	m.When(mks.ExcludedNS("ns1")).ThenReturn(false)
-	m.When(mks.ExcludedNS("ns2")).ThenReturn(false)
+	m.When(mkl.ExcludedNS("ns1")).ThenReturn(false)
+	m.When(mkl.ExcludedNS("ns2")).ThenReturn(false)
 	used := make([]string, 2)
-	mks.InUseNamespaces(used)
+	mkl.PodsNamespaces(used)
 
-	l := NewNamespace(mks, nil)
+	l := NewNamespace(mkl, nil)
 	l.Lint(context.Background())
 
 	assert.Equal(t, 2, len(l.Issues()))
 	assert.Equal(t, 1, len(l.Issues()["ns1"]))
 	assert.Equal(t, 1, len(l.Issues()["ns2"]))
-	mks.VerifyWasCalledOnce().ListNS()
-	mks.VerifyWasCalledOnce().ExcludedNS("ns1")
-	mks.VerifyWasCalledOnce().ExcludedNS("ns2")
+	mkl.VerifyWasCalledOnce().ListNS()
+	mkl.VerifyWasCalledOnce().ExcludedNS("ns1")
+	mkl.VerifyWasCalledOnce().ExcludedNS("ns2")
 }
 
 func TestNsLint(t *testing.T) {
@@ -54,12 +54,12 @@ func TestNsLint(t *testing.T) {
 		},
 	}
 
-	mks := NewMockClient()
-	m.When(mks.ExcludedNS("ns1")).ThenReturn(false)
-	m.When(mks.ExcludedNS("ns2")).ThenReturn(false)
+	mkl := NewMockLoader()
+	m.When(mkl.ExcludedNS("ns1")).ThenReturn(false)
+	m.When(mkl.ExcludedNS("ns2")).ThenReturn(false)
 
 	for _, u := range uu {
-		l := NewNamespace(mks, nil)
+		l := NewNamespace(mkl, nil)
 		l.lint(u.nn, nil)
 		assert.Equal(t, len(u.nn), len(l.Issues()))
 		var tissue int
@@ -69,8 +69,8 @@ func TestNsLint(t *testing.T) {
 
 		assert.Equal(t, u.issues, tissue)
 	}
-	mks.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("ns1")
-	mks.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("ns2")
+	mkl.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("ns1")
+	mkl.VerifyWasCalled(pegomock.Times(2)).ExcludedNS("ns2")
 }
 
 func TestNsCheckActive(t *testing.T) {

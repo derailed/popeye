@@ -16,26 +16,26 @@ func TestSvcLinter(t *testing.T) {
 	var labels map[string]string
 
 	po, ep := makePod("p1"), makeEp("ep1")
-	mks := NewMockClient()
-	m.When(mks.ActiveNamespace()).ThenReturn("default")
-	m.When(mks.ListServices()).ThenReturn([]v1.Service{
-		makeSvc("s1"),
-		makeSvc("s2"),
+	mkl := NewMockLoader()
+	m.When(mkl.ActiveNamespace()).ThenReturn("default")
+	m.When(mkl.ListServices()).ThenReturn(map[string]v1.Service{
+		"default/s1": makeSvc("s1"),
+		"default/s2": makeSvc("s2"),
 	}, nil)
-	m.When(mks.GetPod(labels)).ThenReturn(&po, nil)
-	m.When(mks.GetEndpoints("default/s1")).ThenReturn(&ep, nil)
-	m.When(mks.GetEndpoints("default/s2")).ThenReturn(&ep, nil)
+	m.When(mkl.GetPod(labels)).ThenReturn(&po, nil)
+	m.When(mkl.GetEndpoints("default/s1")).ThenReturn(&ep, nil)
+	m.When(mkl.GetEndpoints("default/s2")).ThenReturn(&ep, nil)
 
-	l := NewService(mks, nil)
+	l := NewService(mkl, nil)
 	l.Lint(context.Background())
 
 	assert.Equal(t, 2, len(l.Issues()))
 	assert.Equal(t, 0, len(l.Issues()["n1"]))
 	assert.Equal(t, 0, len(l.Issues()["n2"]))
 
-	mks.VerifyWasCalledOnce().ListServices()
-	mks.VerifyWasCalledOnce().GetEndpoints("default/s1")
-	mks.VerifyWasCalledOnce().GetEndpoints("default/s2")
+	mkl.VerifyWasCalledOnce().ListServices()
+	mkl.VerifyWasCalledOnce().GetEndpoints("default/s1")
+	mkl.VerifyWasCalledOnce().GetEndpoints("default/s2")
 }
 
 func TestSvcLint(t *testing.T) {
@@ -184,6 +184,7 @@ func makeSvc(s string) v1.Service {
 		},
 	}
 }
+
 func makePorts(ports ...int) []v1.ContainerPort {
 	pp := []v1.ContainerPort{}
 	for _, p := range ports {
