@@ -2,6 +2,7 @@ package linter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -32,20 +33,19 @@ func (s *Service) Lint(ctx context.Context) error {
 		fqn := svcFQN(svc)
 
 		// Skip internal services...
-		if in(skipServices, svcFQN(svc)) {
+		if in(skipServices, fqn) {
 			continue
 		}
 
 		s.initIssues(fqn)
 		po, err := s.client.GetPod(svc.Spec.Selector)
 		if err != nil {
-			s.addError(svcFQN(svc), err)
+			s.addError(fqn, err)
 		}
 		ep, err := s.client.GetEndpoints(fqn)
 		if err != nil {
 			s.addError(fqn, err)
 		}
-
 		s.lint(svc, po, ep)
 	}
 
@@ -53,22 +53,23 @@ func (s *Service) Lint(ctx context.Context) error {
 }
 
 func (s *Service) lint(svc v1.Service, po *v1.Pod, ep *v1.Endpoints) {
-	if po != nil {
-		s.checkPorts(svc, po)
-	}
-	if ep != nil {
-		s.checkEndpoints(svc, ep)
-	}
+	// if we have a list of selector that didn't return pods, we need to raise this as an error.
+	s.checkPorts(svc, po)
+	s.checkEndpoints(svc, ep)
 	s.checkType(svc)
 }
 
 func (s *Service) checkType(svc v1.Service) {
 	if svc.Spec.Type == v1.ServiceTypeLoadBalancer {
-		s.addIssue(svcFQN(svc), InfoLevel, "Type Loadbalancer detected. Could be expensive!")
+		s.addIssue(svcFQN(svc), InfoLevel, "Type Loadbalancer detected. Could be expensive")
 	}
 }
 
 func (s *Service) checkPorts(svc v1.Service, po *v1.Pod) {
+	if po == nil && len(svc.Spec.Selector) > 0{
+		s.addError(svcFQN(svc), errors.New("No pod found for selector"))
+		return
+	}
 	for _, p := range svc.Spec.Ports {
 		errs := checkServicePort(svc.Name, po, p)
 		if errs != nil {
@@ -80,11 +81,16 @@ func (s *Service) checkPorts(svc v1.Service, po *v1.Pod) {
 
 // CheckEndpoints runs a sanity check on all endpoints in a given namespace.
 func (s *Service) checkEndpoints(svc v1.Service, ep *v1.Endpoints) {
-	if svc.Spec.Type == v1.ClusterIPNone {
+	// skip out on externalName services
+	if svc.Spec.Type == v1.ServiceTypeExternalName {
 		return
 	}
-
-	if len(ep.Subsets) == 0 {
+	// skip out on services that have no clusterIP
+	if svc.Spec.ClusterIP == v1.ClusterIPNone {
+		return
+	}
+	// At this point we have services with ClusterIPs, and therefore should have services with Endpoints.
+	if ep == nil || len(ep.Subsets) == 0 {
 		s.addError(svcFQN(svc), fmt.Errorf("No associated endpoints"))
 	}
 }
