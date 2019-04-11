@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/derailed/popeye/internal/report"
+	"github.com/derailed/popeye/pkg"
 	"github.com/spf13/cobra"
 )
 
@@ -26,6 +27,7 @@ func printVersion() {
 	printTuple(secFmt, "Version", version)
 	printTuple(secFmt, "Commit", commit)
 	printTuple(secFmt, "Date", date)
+	printTuple(secFmt, "Logs", pkg.PopeyeLog)
 }
 
 func printTuple(format, section, value string) {

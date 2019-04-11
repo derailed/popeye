@@ -70,7 +70,7 @@ func TestTallyScore(t *testing.T) {
 func TestTallyWidth(t *testing.T) {
 	uu := []struct {
 		issues linter.Issues
-		e      int
+		e      string
 	}{
 		{
 			linter.Issues{
@@ -83,14 +83,15 @@ func TestTallyWidth(t *testing.T) {
 				},
 				"c": {},
 			},
-			35,
+			"💥 1 😱 1 🔊 1 ✅ 1 \x1b[38;5;196;m50\x1b[0m٪",
 		},
 	}
 
+	s := new(Sanitizer)
 	for _, u := range uu {
 		ta := NewTally()
 		ta.Rollup(u.issues)
 
-		assert.Equal(t, u.e, ta.Width())
+		assert.Equal(t, u.e, ta.Dump(s))
 	}
 }

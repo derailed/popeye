@@ -11,6 +11,7 @@ type Flags struct {
 	*genericclioptions.ConfigFlags
 
 	LintLevel   *string
+	Jurassic    *bool
 	ClearScreen *bool
 	Spinach     *string
 	Sections    *[]string
@@ -18,11 +19,12 @@ type Flags struct {
 
 // NewFlags returns new configuration flags.
 func NewFlags() *Flags {
-	level, clear, blank := defaultLintLevel, false, ""
+	level, enable, blank := defaultLintLevel, false, ""
 
 	return &Flags{
 		LintLevel:   &level,
-		ClearScreen: &clear,
+		ClearScreen: &enable,
+		Jurassic:    &enable,
 		Spinach:     &blank,
 		Sections:    &[]string{},
 		ConfigFlags: genericclioptions.NewConfigFlags(false)}

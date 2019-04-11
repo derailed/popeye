@@ -12,18 +12,34 @@ var emojis = map[string]string{
 	"container":  "🐳",
 }
 
+var emojisUgry = map[string]string{
+	"peachy":     "OK",
+	"farfromfok": "E",
+	"warn":       "W",
+	"fyi":        "I",
+	"container":  "C",
+}
+
 // EmojiForLevel maps lint levels to emojis.
-func EmojiForLevel(l linter.Level) string {
+func (s *Sanitizer) EmojiForLevel(l linter.Level) string {
+	var key string
+
 	switch l {
 	case containerLevel:
-		return emojis["container"]
+		key = "container"
 	case linter.ErrorLevel:
-		return emojis["farfromfok"]
+		key = "farfromfok"
 	case linter.WarnLevel:
-		return emojis["warn"]
+		key = "warn"
 	case linter.InfoLevel:
-		return emojis["fyi"]
+		key = "fyi"
 	default:
-		return emojis["peachy"]
+		key = "peachy"
 	}
+
+	if s.jurassicMode {
+		return emojisUgry[key]
+	}
+
+	return emojis[key]
 }

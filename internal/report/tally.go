@@ -6,7 +6,6 @@ import (
 	"io"
 	"math"
 	"strconv"
-	"unicode/utf8"
 
 	"github.com/derailed/popeye/internal/linter"
 )
@@ -67,24 +66,28 @@ func (t *Tally) computeScore() int {
 	return t.score
 }
 
-// Dump prints out a tally.
-func (t *Tally) Dump(w io.Writer) {
+// Write out a tally.
+func (t *Tally) write(w io.Writer, s *Sanitizer) {
 	for i := len(t.counts) - 1; i >= 0; i-- {
-		emoji := EmojiForLevel(linter.Level(i))
-		fmt.Fprintf(w, "%s %d ", emoji, t.counts[i])
+		emoji := s.EmojiForLevel(linter.Level(i))
+		fmat := "%s %d "
+		if s.jurassicMode {
+			fmat = "%s:%d "
+		}
+		fmt.Fprintf(w, fmat, emoji, t.counts[i])
 	}
 
 	score, color := t.score, ColorAqua
 	if score < 80 {
 		color = ColorRed
 	}
-	fmt.Fprintf(w, "%s٪", Colorize(strconv.Itoa(score), color))
+	fmt.Fprintf(w, "%s٪", s.Color(strconv.Itoa(score), color))
 }
 
-// Width computes the tally width.
-func (t *Tally) Width() int {
+// Dump writes out tally and computes length
+func (t *Tally) Dump(s *Sanitizer) string {
 	w := bytes.NewBufferString("")
-	t.Dump(w)
+	t.write(w, s)
 
-	return utf8.RuneCountInString(w.String())
+	return w.String()
 }

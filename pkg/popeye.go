@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -15,6 +15,9 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/rs/zerolog"
 )
+
+// PopeyeLog file path to our logs.
+var PopeyeLog = filepath.Join(os.TempDir(), fmt.Sprintf("popeye.log"))
 
 type (
 	// Reporter obtains lint reports
@@ -37,13 +40,14 @@ type (
 		loader       linter.Loader
 		totalScore   int
 		sectionCount int
-		out          io.Writer
+		out          *os.File
 		log          *zerolog.Logger
+		flags        *k8s.Flags
 	}
 )
 
 // NewPopeye returns a new sanitizer.
-func NewPopeye(flags *k8s.Flags, log *zerolog.Logger, out io.Writer) (*Popeye, error) {
+func NewPopeye(flags *k8s.Flags, log *zerolog.Logger, out *os.File) (*Popeye, error) {
 	cfg, err := config.NewConfig(flags)
 	if err != nil {
 		return nil, err
@@ -51,14 +55,19 @@ func NewPopeye(flags *k8s.Flags, log *zerolog.Logger, out io.Writer) (*Popeye, e
 
 	f := linter.NewFilter(k8s.NewClient(flags), cfg)
 
-	return &Popeye{loader: f, out: out, log: log}, nil
+	return &Popeye{loader: f, log: log, out: out, flags: flags}, nil
 }
 
 // Sanitize scans a cluster for potential issues.
 func (p *Popeye) Sanitize(showHeader bool) {
+	w := bufio.NewWriter(p.out)
+	defer w.Flush()
+
+	s := report.NewSanitizer(w, p.out.Fd(), p.flags.Jurassic)
+
 	if showHeader {
-		p.printHeader()
-		p.clusterInfo(p.loader)
+		p.printHeader(s)
+		p.clusterInfo(s, p.loader)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -74,18 +83,16 @@ func (p *Popeye) Sanitize(showHeader bool) {
 		}
 
 		if err := l.Lint(ctx); err != nil {
-			w := bufio.NewWriter(p.out)
-			defer w.Flush()
-			report.Open(w, report.TitleForRes(k), nil)
+			s.Open(report.TitleForRes(k), nil)
 			{
-				report.Error(w, "Scan failed!", err)
+				s.Error("Scan failed!", err)
 			}
-			report.Close(w)
+			s.Close()
 			continue
 		}
-		p.printReport(l, report.TitleForRes(k))
+		p.printReport(s, l, report.TitleForRes(k))
 	}
-	p.printSummary()
+	p.printSummary(s)
 }
 
 func linters(l linter.Loader, log *zerolog.Logger) Linters {
@@ -100,16 +107,12 @@ func linters(l linter.Loader, log *zerolog.Logger) Linters {
 	}
 }
 
-func (p *Popeye) printReport(r Reporter, section string) {
-	w := bufio.NewWriter(p.out)
-	defer w.Flush()
-
+func (p *Popeye) printReport(s *report.Sanitizer, r Reporter, section string) {
 	level := linter.Level(p.loader.LinterLevel())
 	t, any := report.NewTally().Rollup(r.Issues()), false
 
-	report.Open(w, section, t)
+	s.Open(section, t)
 	{
-		w.Flush()
 		keys := make([]string, 0, len(r.Issues()))
 		for k := range r.Issues() {
 			keys = append(keys, k)
@@ -120,22 +123,22 @@ func (p *Popeye) printReport(r Reporter, section string) {
 			if len(issues) == 0 {
 				if level <= linter.OkLevel {
 					any = true
-					report.Write(w, linter.OkLevel, 1, res)
+					s.Print(linter.OkLevel, 1, res)
 				}
 				continue
 			}
 			max := r.MaxSeverity(res)
 			if level <= max {
 				any = true
-				report.Write(w, max, 1, res)
+				s.Print(max, 1, res)
 			}
-			report.Dump(w, level, issues...)
+			s.Dump(level, issues...)
 		}
 		if !any {
-			report.Comment(w, report.Colorize("Nothing to report.", report.ColorAqua))
+			s.Comment(s.Color("Nothing to report.", report.ColorAqua))
 		}
 	}
-	report.Close(w)
+	s.Close()
 
 	if t.IsValid() {
 		p.sectionCount++
@@ -143,69 +146,57 @@ func (p *Popeye) printReport(r Reporter, section string) {
 	}
 }
 
-func (p *Popeye) printSummary() {
+func (p *Popeye) printSummary(s *report.Sanitizer) {
 	if p.sectionCount == 0 {
 		return
 	}
 
-	w := bufio.NewWriter(p.out)
-	defer w.Flush()
-
-	report.Open(w, "SUMMARY", nil)
+	s.Open("SUMMARY", nil)
 	{
-		s := p.totalScore / p.sectionCount
-		fmt.Fprintf(w, "Your cluster score: %d -- %s\n", s, report.Grade(s))
-		for _, l := range report.Badge(s) {
-			fmt.Fprintf(w, "%s%s\n", strings.Repeat(" ", report.Width-20), l)
+		score := p.totalScore / p.sectionCount
+		fmt.Fprintf(s, "Your cluster score: %d -- %s\n", score, report.Grade(score))
+		for _, l := range s.Badge(score) {
+			fmt.Fprintf(s, "%s%s\n", strings.Repeat(" ", report.Width-20), l)
 		}
 	}
-	report.Close(w)
+	s.Close()
 }
 
-func (p *Popeye) printHeader() {
-	w := bufio.NewWriter(p.out)
-	defer w.Flush()
-
-	fmt.Fprintln(w)
-	for i, s := range report.Logo {
-		if i < len(report.Popeye) {
-			fmt.Fprintf(w, report.Colorize(report.Popeye[i], report.ColorAqua))
-			fmt.Fprintf(w, strings.Repeat(" ", 55))
-		} else {
-			if i == 4 {
-				fmt.Fprintf(w, report.Colorize("  Biffs`em and Buffs`em!", report.ColorLighSlate))
-				fmt.Fprintf(w, strings.Repeat(" ", 58))
-			} else {
-				fmt.Fprintf(w, strings.Repeat(" ", 82))
-			}
+func (p *Popeye) printHeader(s *report.Sanitizer) {
+	fmt.Fprintln(s)
+	for i, l := range report.Logo {
+		switch {
+		case i < len(report.Popeye):
+			fmt.Fprintf(s, s.Color(report.Popeye[i], report.ColorAqua))
+			fmt.Fprintf(s, strings.Repeat(" ", 53))
+		case i == 4:
+			fmt.Fprintf(s, s.Color("  Biffs`em and Buffs`em!", report.ColorLighSlate))
+			fmt.Fprintf(s, strings.Repeat(" ", 56))
+		default:
+			fmt.Fprintf(s, strings.Repeat(" ", 80))
 		}
-		fmt.Fprintln(w, report.Colorize(s, report.ColorLighSlate))
+		fmt.Fprintln(s, s.Color(l, report.ColorLighSlate))
 	}
-	fmt.Fprintln(w, "")
+	fmt.Fprintln(s, "")
 }
 
-func (p *Popeye) clusterInfo(l linter.Loader) {
-	w := bufio.NewWriter(p.out)
-	defer w.Flush()
-
+func (p *Popeye) clusterInfo(s *report.Sanitizer, l linter.Loader) {
 	t := fmt.Sprintf("CLUSTER [%s]", strings.ToUpper(l.ActiveCluster()))
-	report.Open(w, t, nil)
+	s.Open(t, nil)
 	{
-		report.Write(w, linter.OkLevel, 1, "Connectivity")
+		s.Print(linter.OkLevel, 1, "Connectivity")
 
 		ok, err := l.ClusterHasMetrics()
 		if err != nil {
-			fmt.Printf("💥 %s\n", report.Colorize(err.Error(), report.ColorRed))
+			fmt.Printf("💥 %s\n", s.Color(err.Error(), report.ColorRed))
 			os.Exit(1)
 		}
 
 		if ok {
-			report.Write(w, linter.OkLevel, 1, "Metrics")
-		} else {
-			report.Write(w, linter.OkLevel, 1, "Metrics")
+			s.Print(linter.OkLevel, 1, "Metrics")
 		}
 	}
-	report.Close(w)
+	s.Close()
 }
 
 // ----------------------------------------------------------------------------

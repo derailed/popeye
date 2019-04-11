@@ -73,6 +73,13 @@ func initFlags() {
 	)
 
 	rootCmd.Flags().BoolVarP(
+		flags.Jurassic,
+		"jurassic", "j",
+		false,
+		"Turn on Jurassic mode sanitizer report",
+	)
+
+	rootCmd.Flags().BoolVarP(
 		flags.ClearScreen,
 		"clear", "c",
 		false,
