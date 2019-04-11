@@ -38,7 +38,7 @@ func NewSanitizer(w io.Writer, fd uintptr, jurassic *bool) *Sanitizer {
 	if jurassic != nil {
 		s.jurassicMode = *jurassic
 	}
-	log.Debug().Msgf("Nehenderterm mode activated? %t", s.jurassicMode)
+	log.Debug().Msgf("NeanderTerm mode activated? %t", s.jurassicMode)
 
 	return &s
 }

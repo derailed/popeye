@@ -2,6 +2,7 @@ package linter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/rs/zerolog"
@@ -31,17 +32,15 @@ func (s *Service) Lint(ctx context.Context) error {
 
 	for fqn, svc := range services {
 		// Skip internal services...
-		if in(skipServices, svcFQN(svc)) {
+		if in(skipServices, fqn) {
 			continue
 		}
 
 		s.initIssues(fqn)
-
 		po, err := s.GetPod(svc.Spec.Selector)
 		if err != nil {
-			s.addError(svcFQN(svc), err)
+			s.addError(fqn, err)
 		}
-
 		ep, err := s.GetEndpoints(fqn)
 		if err != nil {
 			s.addError(fqn, err)
@@ -54,22 +53,24 @@ func (s *Service) Lint(ctx context.Context) error {
 }
 
 func (s *Service) lint(svc v1.Service, po *v1.Pod, ep *v1.Endpoints) {
-	if po != nil {
-		s.checkPorts(svc, po)
-	}
-	if ep != nil {
-		s.checkEndpoints(svc, ep)
-	}
+	s.checkPorts(svc, po)
+	s.checkEndpoints(svc, ep)
 	s.checkType(svc)
 }
 
 func (s *Service) checkType(svc v1.Service) {
 	if svc.Spec.Type == v1.ServiceTypeLoadBalancer {
-		s.addIssue(svcFQN(svc), InfoLevel, "Type Loadbalancer detected. Could be expensive!")
+		s.addIssue(svcFQN(svc), InfoLevel, "Type Loadbalancer detected. Could be expensive")
 	}
 }
 
 func (s *Service) checkPorts(svc v1.Service, po *v1.Pod) {
+	// No matching pod bail out!
+	if po == nil && len(svc.Spec.Selector) > 0 {
+		s.addError(svcFQN(svc), errors.New("No pods matched service selector"))
+		return
+	}
+
 	for _, p := range svc.Spec.Ports {
 		errs := checkServicePort(svc.Name, po, p)
 		if errs != nil {
@@ -79,13 +80,17 @@ func (s *Service) checkPorts(svc v1.Service, po *v1.Pod) {
 	}
 }
 
-// CheckEndpoints runs a sanity check on all endpoints in a given namespace.
+// CheckEndpoints runs a sanity check on this service endpoints.
 func (s *Service) checkEndpoints(svc v1.Service, ep *v1.Endpoints) {
 	if len(svc.Spec.Selector) == 0 {
 		return
 	}
 
-	if len(ep.Subsets) == 0 {
+	if svc.Spec.Type == v1.ServiceTypeExternalName {
+		return
+	}
+
+	if ep == nil || len(ep.Subsets) == 0 {
 		s.addError(svcFQN(svc), fmt.Errorf("No associated endpoints"))
 	}
 }

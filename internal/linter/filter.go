@@ -66,7 +66,7 @@ func (*Filter) ListPodsMetrics(pods []mv1beta1.PodMetrics, mmx PodsMetrics) {
 	}
 }
 
-// ListRoleBindings lists all available RBs in a given namespace.
+// ListRoleBindings lists all available RBs in the allowed namespaces.
 func (f *Filter) ListRoleBindings() (map[string]rbacv1.RoleBinding, error) {
 	rbs, err := f.ListAllRoleBindings()
 	if err != nil {
@@ -121,8 +121,8 @@ func (f *Filter) ListAllClusterRoleBindings() (map[string]rbacv1.ClusterRoleBind
 	return f.allCRBs, nil
 }
 
-// ListEndpoints returns a endpoint by name.
-func (f *Filter) ListEndpoints() (map[string]v1.Endpoints, error) {
+// ListAllEndpoints returns all the  endpoints on a cluster.
+func (f *Filter) ListAllEndpoints() (map[string]v1.Endpoints, error) {
 	if f.allEPs != nil {
 		return f.allEPs, nil
 	}
@@ -134,41 +134,41 @@ func (f *Filter) ListEndpoints() (map[string]v1.Endpoints, error) {
 
 	f.allEPs = make(map[string]v1.Endpoints, len(ll.Items))
 	for _, ep := range ll.Items {
-		if !f.ExcludedNS(ep.Namespace) {
-			f.allEPs[fqn(ep.Namespace, ep.Name)] = ep
-		}
+		f.allEPs[fqn(ep.Namespace, ep.Name)] = ep
 	}
 
 	return f.allEPs, nil
 }
 
-// GetEndpoints returns a endpoint by name.
-func (f *Filter) GetEndpoints(svcFQN string) (*v1.Endpoints, error) {
-	allEPs, err := f.ListEndpoints()
+// ListEndpoints returns a collection of endpoints in allowed namespaces.
+func (f *Filter) ListEndpoints() (map[string]v1.Endpoints, error) {
+	eps, err := f.ListAllEndpoints()
 	if err != nil {
 		return nil, err
 	}
 
-	if ep, ok := allEPs[svcFQN]; ok {
+	res := make(map[string]v1.Endpoints, len(eps))
+	for fqn, ep := range eps {
+		if !f.ExcludedNS(ep.Namespace) {
+			res[fqn] = ep
+		}
+	}
+
+	return res, nil
+}
+
+// GetEndpoints returns a endpoint instance if present or an error if not.
+func (f *Filter) GetEndpoints(svcFQN string) (*v1.Endpoints, error) {
+	eps, err := f.ListEndpoints()
+	if err != nil {
+		return nil, err
+	}
+
+	if ep, ok := eps[svcFQN]; ok {
 		return &ep, nil
 	}
 
-	svcs, err := f.ListAllServices()
-	if err != nil {
-		return nil, err
-	}
-
-	svc, ok := svcs[svcFQN]
-	if !ok {
-		return nil, fmt.Errorf("Unable to find service named `%s", svcFQN)
-	}
-
-	// No selector thus no eps...
-	if len(svc.Spec.Selector) == 0 {
-		return nil, nil
-	}
-
-	return nil, fmt.Errorf("Unable to find ep for service %s", svcFQN)
+	return nil, nil
 }
 
 // ListServices lists services in tolerated namespaces.

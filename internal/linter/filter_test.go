@@ -1,7 +1,6 @@
 package linter
 
 import (
-	"fmt"
 	"testing"
 
 	m "github.com/petergtz/pegomock"
@@ -399,9 +398,9 @@ func TestGetEndPoints(t *testing.T) {
 		{
 			makeEp("s2", "1.2.3.4"),
 			makeSvcType("s1", v1.ServiceTypeClusterIP, map[string]string{"app": "blee"}),
-			fmt.Errorf("Unable to find ep for service default/s1"),
-			1,
-			true,
+			nil,
+			0,
+			false,
 		},
 		// Missing EP but no selectors => no error
 		{
@@ -416,7 +415,6 @@ func TestGetEndPoints(t *testing.T) {
 	for _, u := range uu {
 		mkl := NewMockFetcher()
 		m.When(mkl.FetchEndpoints()).ThenReturn(&v1.EndpointsList{Items: []v1.Endpoints{u.ep}}, nil)
-		m.When(mkl.FetchServices()).ThenReturn(&v1.ServiceList{Items: []v1.Service{u.svc}}, nil)
 
 		mkf := NewMockSpinach()
 
@@ -430,7 +428,6 @@ func TestGetEndPoints(t *testing.T) {
 			assert.Nil(t, ep)
 		}
 		mkl.VerifyWasCalledOnce().FetchEndpoints()
-		mkl.VerifyWasCalled(pegomock.Times(u.count)).FetchServices()
 	}
 }
 
