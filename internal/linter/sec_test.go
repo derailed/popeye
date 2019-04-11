@@ -98,7 +98,7 @@ func TestSecCheckContainerRefs(t *testing.T) {
 		{makePodSecEnv("p1", "s1", "fred", false), "env", true, &Reference{
 			name: "s1",
 			keys: map[string]struct{}{
-				"fred": struct{}{},
+				"fred": {},
 			},
 		}},
 		{makePodEnv("p1", "s1", "fred", true), "env", false, nil},
@@ -130,7 +130,7 @@ func TestSecCheckVolumes(t *testing.T) {
 		{
 			makePodSecVol("p1", "s1", "fred", false), "volume", true, &Reference{
 				name: "default/p1:v1",
-				keys: map[string]struct{}{"fred": struct{}{}},
+				keys: map[string]struct{}{"fred": {}},
 			},
 		},
 		{

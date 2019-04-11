@@ -53,16 +53,7 @@ func (s *Secret) Lint(ctx context.Context) error {
 	return nil
 }
 
-func (s *Secret) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map[string]v1.ServiceAccount) {
-	refs := make(References, len(pods)+len(sas))
-
-	for fqn, po := range pods {
-		s.checkVolumes(fqn, po.Spec.Volumes, refs)
-		s.checkContainerRefs(fqn, po.Spec.InitContainers, refs)
-		s.checkContainerRefs(fqn, po.Spec.Containers, refs)
-		s.checkPullImageSecrets(po, refs)
-	}
-
+func checkServiceAccountRef(sas map[string]v1.ServiceAccount, refs References) {
 	for _, sa := range sas {
 		Reference := Reference{name: sa.Name}
 		for _, s := range sa.Secrets {
@@ -83,9 +74,22 @@ func (s *Secret) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map
 			}
 		}
 	}
+}
+
+func (s *Secret) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map[string]v1.ServiceAccount) {
+	refs := make(References, len(pods)+len(sas))
+
+	for fqn, po := range pods {
+		s.checkVolumes(fqn, po.Spec.Volumes, refs)
+		s.checkContainerRefs(fqn, po.Spec.InitContainers, refs)
+		s.checkContainerRefs(fqn, po.Spec.Containers, refs)
+		s.checkPullImageSecrets(po, refs)
+	}
+	checkServiceAccountRef(sas, refs)
 
 	for fqn, sec := range secs {
 		s.initIssues(fqn)
+
 		ref, ok := refs[fqn]
 		if !ok {
 			s.addIssuef(fqn, InfoLevel, "Reference?")
@@ -176,10 +180,10 @@ func (*Secret) checkContainerRefs(poFQN string, cos []v1.Container, refs map[str
 			}
 
 			refs[fqn] = map[string]*Reference{
-				"env": &Reference{
+				"env": {
 					name: kref.Name,
 					keys: map[string]struct{}{
-						kref.Key: struct{}{},
+						kref.Key: {},
 					},
 				},
 			}

@@ -147,7 +147,7 @@ func (*CM) checkEnv(poFQN string, co v1.Container, refs References) {
 			continue
 		}
 		refs[key] = map[string]*Reference{
-			"env": &Reference{
+			"env": {
 				name: kref.Name,
 				keys: map[string]struct{}{
 					kref.Key: blank,

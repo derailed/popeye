@@ -70,7 +70,7 @@ func TestCMCheckContainerRefs(t *testing.T) {
 		{makePodEnv("p1", "cm1", "fred", false), "env", true, &Reference{
 			name: "cm1",
 			keys: map[string]struct{}{
-				"fred": struct{}{},
+				"fred": {},
 			},
 		}},
 		{makePodEnv("p1", "cm1", "fred", true), "env", false, nil},
@@ -105,7 +105,7 @@ func TestCMCheckVolumes(t *testing.T) {
 			true,
 			&Reference{
 				name: "default/p1:v1",
-				keys: map[string]struct{}{"fred": struct{}{}},
+				keys: map[string]struct{}{"fred": {}},
 			},
 		},
 		// Pod with a volume referencing an optional cm.
