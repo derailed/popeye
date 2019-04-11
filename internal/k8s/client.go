@@ -1,38 +1,80 @@
 package k8s
 
-//go:generate popeye gen
-
 import (
-	"github.com/derailed/popeye/pkg/config"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	metricsapi "k8s.io/metrics/pkg/apis/metrics"
+	"k8s.io/client-go/rest"
+	clientcmd "k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
+	versioned "k8s.io/metrics/pkg/client/clientset/versioned"
 )
 
-var (
-	supportedMetricsAPIVersions = []string{"v1beta1"}
-	systemNS                    = []string{"kube-system", "kube-public"}
-)
-
-// Client represents a Kubernetes api server client.
+// Client represents an api server client.
 type Client struct {
-	*config.Config
+	Flags *Flags
 
-	api kubernetes.Interface
-
-	allPods       map[string]v1.Pod
-	allNamespaces map[string]v1.Namespace
-	eps           map[string]v1.Endpoints
-	allCRBs       map[string]rbacv1.ClusterRoleBinding
-	allRBs        map[string]rbacv1.RoleBinding
+	clientConfig clientcmd.ClientConfig
+	rawConfig    *clientcmdapi.Config
+	restConfig   *rest.Config
+	api          kubernetes.Interface
 }
 
-// NewClient returns a dialable api server configuration.
-func NewClient(config *config.Config) *Client {
-	return &Client{Config: config}
+// NewClient create Kubernetes apiservice client.
+func NewClient(flags *Flags) *Client {
+	return &Client{Flags: flags}
+}
+
+// FetchNamespaces retrieves all namespaces on the cluster.
+func (c *Client) FetchNamespaces() (*v1.NamespaceList, error) {
+	return c.DialOrDie().CoreV1().Namespaces().List(metav1.ListOptions{})
+}
+
+// FetchServiceAccounts retrieves all serviceaccounts on the cluster.
+func (c *Client) FetchServiceAccounts() (*v1.ServiceAccountList, error) {
+	return c.DialOrDie().CoreV1().ServiceAccounts("").List(metav1.ListOptions{})
+}
+
+// FetchConfigMaps retrieves all configmaps on the cluster.
+func (c *Client) FetchConfigMaps() (*v1.ConfigMapList, error) {
+	return c.DialOrDie().CoreV1().ConfigMaps("").List(metav1.ListOptions{})
+}
+
+// FetchSecrets retrieves all secrets on the cluster.
+func (c *Client) FetchSecrets() (*v1.SecretList, error) {
+	return c.DialOrDie().CoreV1().Secrets("").List(metav1.ListOptions{})
+}
+
+// FetchPods retrieves all pods on the cluster.
+func (c *Client) FetchPods() (*v1.PodList, error) {
+	return c.DialOrDie().CoreV1().Pods("").List(metav1.ListOptions{})
+}
+
+// FetchNodes retrieves all nodes on the cluster.
+func (c *Client) FetchNodes() (*v1.NodeList, error) {
+	return c.DialOrDie().CoreV1().Nodes().List(metav1.ListOptions{})
+}
+
+// FetchRoleBindings retrieves all RoleBindings on the cluster.
+func (c *Client) FetchRoleBindings() (*rbacv1.RoleBindingList, error) {
+	return c.DialOrDie().RbacV1().RoleBindings("").List(metav1.ListOptions{})
+}
+
+// FetchClusterRoleBindings retrieves all CRoleBindings on the cluster.
+func (c *Client) FetchClusterRoleBindings() (*rbacv1.ClusterRoleBindingList, error) {
+	return c.DialOrDie().RbacV1().ClusterRoleBindings().List(metav1.ListOptions{})
+}
+
+// FetchServices retrieves all services on the cluster.
+func (c *Client) FetchServices() (*v1.ServiceList, error) {
+	return c.DialOrDie().CoreV1().Services("").List(metav1.ListOptions{})
+}
+
+// FetchEndpoints retrieves all endpoints on the cluster.
+func (c *Client) FetchEndpoints() (*v1.EndpointsList, error) {
+	return c.DialOrDie().CoreV1().Endpoints(c.ActiveNamespace()).List(metav1.ListOptions{})
 }
 
 // DialOrDie returns an api server client connection or dies.
@@ -50,7 +92,7 @@ func (c *Client) Dial() (kubernetes.Interface, error) {
 		return c.api, nil
 	}
 
-	cfg, err := c.Config.RESTConfig()
+	cfg, err := c.RESTConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -61,274 +103,162 @@ func (c *Client) Dial() (kubernetes.Interface, error) {
 	return c.api, nil
 }
 
-// ClusterHasMetrics checks if metrics server is available on the cluster.
-func (c *Client) ClusterHasMetrics() bool {
-	srv, err := c.Dial()
-	if err != nil {
-		return false
+// ActiveNamespace returns the active namespace from the args or kubeconfig.
+// It returns all namespace is none is found.
+func (c *Client) ActiveNamespace() string {
+	if IsSet(c.Flags.Namespace) {
+		return *c.Flags.Namespace
 	}
-	apiGroups, err := srv.Discovery().ServerGroups()
+
+	cfg, err := c.RawConfig()
 	if err != nil {
-		return false
+		return "n/a"
+	}
+
+	ctx := cfg.CurrentContext
+	if IsSet(c.Flags.Context) {
+		ctx = *c.Flags.Context
+	}
+
+	if c, ok := cfg.Contexts[ctx]; ok {
+		return c.Namespace
+	}
+
+	return ""
+}
+
+// ActiveCluster get the current cluster name.
+func (c *Client) ActiveCluster() string {
+	if IsSet(c.Flags.ClusterName) {
+		return *c.Flags.ClusterName
+	}
+
+	cfg, err := c.RawConfig()
+	if err != nil {
+		return "n/a"
+	}
+
+	ctx := cfg.CurrentContext
+	if IsSet(c.Flags.Context) {
+		ctx = *c.Flags.Context
+	}
+
+	if ctx, ok := cfg.Contexts[ctx]; ok {
+		return ctx.Cluster
+	}
+
+	return "n/a"
+}
+
+// RawConfig fetch the current kubeconfig with no overrides.
+func (c *Client) RawConfig() (clientcmdapi.Config, error) {
+	if c.rawConfig != nil {
+		return *c.rawConfig, nil
+	}
+
+	err := c.ensureClientConfig()
+	if err != nil {
+		return clientcmdapi.Config{}, err
+	}
+
+	raw, err := c.clientConfig.RawConfig()
+	if err != nil {
+		return clientcmdapi.Config{}, err
+	}
+	c.rawConfig = &raw
+
+	return *c.rawConfig, nil
+}
+
+// RESTConfig fetch the current REST api-server connection.
+func (c *Client) RESTConfig() (*rest.Config, error) {
+	if c.restConfig != nil {
+		return c.restConfig, nil
+	}
+
+	err := c.ensureClientConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if c.restConfig, err = c.Flags.ToRESTConfig(); err != nil {
+		return nil, err
+	}
+
+	return c.restConfig, nil
+}
+
+func (c *Client) ensureClientConfig() error {
+	if c.clientConfig == nil {
+		c.clientConfig = c.Flags.ToRawKubeConfigLoader()
+	}
+	return nil
+}
+
+var supportedMetricsAPIVersions = []string{"v1beta1"}
+
+// ClusterHasMetrics checks if metrics server is available on the cluster.
+func (c *Client) ClusterHasMetrics() (bool, error) {
+	apiGroups, err := c.DialOrDie().Discovery().ServerGroups()
+	if err != nil {
+		return false, err
 	}
 
 	for _, discoveredAPIGroup := range apiGroups.Groups {
-		if discoveredAPIGroup.Name != metricsapi.GroupName {
+		if discoveredAPIGroup.Name != mv1beta1.GroupName {
 			continue
 		}
 		for _, version := range discoveredAPIGroup.Versions {
 			for _, supportedVersion := range supportedMetricsAPIVersions {
 				if version.Version == supportedVersion {
-					return true
+					return true, nil
 				}
 			}
 		}
 	}
-	return false
+
+	return false, nil
 }
 
-// FetchNodesMetrics fetch all node metrics.
+// FetchNodesMetrics retrieve metrics from metrics server.
 func (c *Client) FetchNodesMetrics() ([]mv1beta1.NodeMetrics, error) {
-	return FetchNodesMetrics(c)
+	vClient, err := c.vClient()
+	if err != nil {
+		return nil, err
+	}
+
+	list, err := vClient.Metrics().NodeMetricses().List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return list.Items, nil
 }
 
-// FetchPodsMetrics fetch all pods metrics in a given namespace.
+// FetchPodsMetrics return all metrics for pods in a given namespace.
 func (c *Client) FetchPodsMetrics(ns string) ([]mv1beta1.PodMetrics, error) {
-	return FetchPodsMetrics(c, ns)
-}
-
-// InUseNamespaces returns a list of namespaces referenced by pods.
-func (c *Client) InUseNamespaces(nss []string) {
-	pods, err := c.ListPods()
-	if err != nil {
-		return
-	}
-
-	ll := make(map[string]struct{})
-	for _, p := range pods {
-		ll[p.Namespace] = struct{}{}
-	}
-
-	var i int
-	for k := range ll {
-		nss[i] = k
-		i++
-	}
-}
-
-// ListRBs returns all RoleBindings.
-func (c *Client) ListRBs() (map[string]rbacv1.RoleBinding, error) {
-	if c.allRBs != nil {
-		return c.allRBs, nil
-	}
-
-	ll, err := c.DialOrDie().RbacV1().RoleBindings("").List(metav1.ListOptions{})
+	client, err := c.vClient()
 	if err != nil {
 		return nil, err
 	}
 
-	c.allRBs = make(map[string]rbacv1.RoleBinding, len(ll.Items))
-	for _, rb := range ll.Items {
-		c.allRBs[rb.Namespace+"/"+rb.Name] = rb
-	}
-
-	return c.allRBs, nil
-}
-
-// ListCRBs returns a ClusterRoleBindings.
-func (c *Client) ListCRBs() (map[string]rbacv1.ClusterRoleBinding, error) {
-	if c.allCRBs != nil {
-		return c.allCRBs, nil
-	}
-
-	ll, err := c.DialOrDie().RbacV1().ClusterRoleBindings().List(metav1.ListOptions{})
+	list, err := client.Metrics().PodMetricses(ns).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	c.allCRBs = make(map[string]rbacv1.ClusterRoleBinding, len(ll.Items))
-	for _, crb := range ll.Items {
-		c.allCRBs[crb.Name] = crb
-	}
-
-	return c.allCRBs, nil
+	return list.Items, nil
 }
 
-// ListEndpoints returns a map of Endpoints by name.
-func (c *Client) ListEndpoints() (map[string]v1.Endpoints, error) {
-	if c.eps != nil {
-		return c.eps, nil
-	}
-
-	ll, err := c.DialOrDie().CoreV1().Endpoints(c.Config.ActiveNamespace()).List(metav1.ListOptions{})
+func (c *Client) vClient() (*versioned.Clientset, error) {
+	restCfg, err := c.RESTConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	c.eps = make(map[string]v1.Endpoints, len(ll.Items))
-	for _, ep := range ll.Items {
-		if !c.Config.ExcludedNS(ep.Namespace) {
-			fqn := ep.Namespace + "/" + ep.Name
-			c.eps[fqn] = ep
-		}
-	}
-
-	return c.eps, nil
-}
-
-// GetEndpoints returns an Endpoints reference by name.
-func (c *Client) GetEndpoints(svcFQN string) (*v1.Endpoints, error) {
-	eps, err := c.ListEndpoints()
+	client, err := versioned.NewForConfig(restCfg)
 	if err != nil {
 		return nil, err
 	}
-
-	if ep, ok := eps[svcFQN]; ok {
-		return &ep, nil
-	}
-	// A service having no endpoints isn't an error in the client, but it *is* something we'll want to determine
-	// in the linter.
-	return nil, nil
-}
-
-// ListServices lists all available services in a given namespace.
-func (c *Client) ListServices() ([]v1.Service, error) {
-	ll, err := c.DialOrDie().CoreV1().Services(c.Config.ActiveNamespace()).List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	svcs := make([]v1.Service, 0, len(ll.Items))
-	for _, svc := range ll.Items {
-		if !c.Config.ExcludedNS(svc.Namespace) {
-			svcs = append(svcs, svc)
-		}
-	}
-
-	return svcs, nil
-}
-
-// ListNodes list all available nodes on the cluster.
-func (c *Client) ListNodes() ([]v1.Node, error) {
-	ll, err := c.DialOrDie().CoreV1().Nodes().List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	nodes := make([]v1.Node, 0, len(ll.Items))
-	for _, no := range ll.Items {
-		if !c.Config.ExcludedNode(no.Name) {
-			nodes = append(nodes, no)
-		}
-	}
-
-	return nodes, nil
-}
-
-// GetPod returns a pod via a label query.
-func (c *Client) GetPod(sel map[string]string) (*v1.Pod, error) {
-	pods, err := c.ListPods()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, po := range pods {
-		var found int
-		for k, v := range sel {
-			if pv, ok := po.Labels[k]; ok && pv == v {
-				found++
-			}
-		}
-		if found == len(sel) {
-			return &po, nil
-		}
-	}
-	// not getting a pod matching a selector is OK, the linter should determine whether it is an error.
-	return nil, nil
-}
-
-// ListPods list all available pods.
-func (c *Client) ListPods() (map[string]v1.Pod, error) {
-	pods, err := c.ListAllPods()
-	if err != nil {
-		return nil, err
-	}
-
-	res := make(map[string]v1.Pod, len(pods))
-	for fqn, po := range pods {
-		if !c.Config.ExcludedNS(po.Namespace) {
-			res[fqn] = po
-		}
-	}
-
-	return res, nil
-}
-
-// ListAllPods fetch all pods on the cluster.
-func (c *Client) ListAllPods() (map[string]v1.Pod, error) {
-	if len(c.allPods) != 0 {
-		return c.allPods, nil
-	}
-
-	ll, err := c.DialOrDie().CoreV1().Pods("").List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	c.allPods = make(map[string]v1.Pod, len(ll.Items))
-	for _, po := range ll.Items {
-		fqn := po.Namespace + "/" + po.Name
-		c.allPods[fqn] = po
-	}
-
-	return c.allPods, nil
-}
-
-// ListNS lists all available namespaces.
-func (c *Client) ListNS() ([]v1.Namespace, error) {
-	nss, err := c.ListAllNS()
-	if err != nil {
-		return nil, nil
-	}
-
-	if c.Config.ActiveNamespace() != "" {
-		return []v1.Namespace{nss[c.Config.ActiveNamespace()]}, nil
-	}
-
-	res := make([]v1.Namespace, 0, len(nss))
-	for n, ns := range nss {
-		if !c.Config.ExcludedNS(n) {
-			res = append(res, ns)
-		}
-	}
-
-	return res, nil
-}
-
-// ListAllNS fetch all namespaces on this cluster.
-func (c *Client) ListAllNS() (map[string]v1.Namespace, error) {
-	if len(c.allNamespaces) != 0 {
-		return c.allNamespaces, nil
-	}
-
-	nn, err := c.DialOrDie().CoreV1().Namespaces().List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	c.allNamespaces = make(map[string]v1.Namespace, len(nn.Items))
-	for _, ns := range nn.Items {
-		c.allNamespaces[ns.Name] = ns
-	}
-
-	return c.allNamespaces, nil
-}
-
-func isSystemNS(ns string) bool {
-	for _, n := range systemNS {
-		if n == ns {
-			return true
-		}
-	}
-	return false
+	return client, nil
 }

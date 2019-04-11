@@ -1,20 +1,26 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/derailed/popeye/cmd"
-	// "github.com/pkg/profile"
+	"github.com/derailed/popeye/pkg"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
 func init() {
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	mod := os.O_CREATE | os.O_APPEND | os.O_WRONLY
+	if file, err := os.OpenFile(pkg.PopeyeLog, mod, 0644); err == nil {
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: file})
+	} else {
+		fmt.Printf("Unable to create Popeye log file %v. Exiting...", err)
+		os.Exit(1)
+	}
 }
 
 func main() {
-	// defer profile.Start(profile.TraceProfile).Stop()
 	cmd.Execute()
 }

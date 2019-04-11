@@ -65,33 +65,45 @@ The aim of the sanitizers is to pick up on misconfigurations ie things
 like ports mismatch, dead or unused resources, metrics utilization,
 probes, container images, RBAC rules, naked resources, etc...
 
+Popeye is not another static analysis tool. It runs and inspect Kubernetes resources on
+live clusters and sanitize resources as they are in the wild!
+
 Here is a list of sanitizers in place for the current release.
 
-| Resource       | Sanitizers                                                              |
-|----------------|-------------------------------------------------------------------------|
-| Node           |                                                                         |
-|                | Conditions ie not ready, out of mem/disk, network, pids, etc            |
-|                | Pod tolerations referencing node taints                                 |
-|                | CPU/MEM utilization metrics, trips if over limits (default 80% CPU/MEM) |
-| Namespace      |                                                                         |
-|                | Inactive                                                                |
-|                | Dead namespaces                                                         |
-| Pod            |                                                                         |
-|                | Pod status                                                              |
-|                | Containers statuses                                                     |
-|                | ServiceAccount presence                                                 |
-|                | CPU/MEM on containers over a set CPU/MEM limit (default 80% CPU/MEM)    |
-|                | Container image with no tags                                            |
-|                | Container image using `latest` tag                                      |
-|                | Resources request/limits presence                                       |
-|                | Probes liveness/readiness presence                                      |
-|                | Named ports and their references                                        |
-| Service        |                                                                         |
-|                | Endpoints presence                                                      |
-|                | Matching pods labels                                                    |
-|                | Named ports and their references                                        |
-| ServiceAccount |                                                                         |
-|                | Dead SA ie used by CRB/RB but no matching pod ServiceAccount reference  |
+
+|    | Resource       | Sanitizers                                                              |
+|----|----------------|-------------------------------------------------------------------------|
+| 🛀 | Node           |                                                                         |
+|    |                | Conditions ie not ready, out of mem/disk, network, pids, etc            |
+|    |                | Pod tolerations referencing node taints                                 |
+|    |                | CPU/MEM utilization metrics, trips if over limits (default 80% CPU/MEM) |
+| 🛀 | Namespace      |                                                                         |
+|    |                | Inactive                                                                |
+|    |                | Dead namespaces                                                         |
+| 🛀 | Pod            |                                                                         |
+|    |                | Pod status                                                              |
+|    |                | Containers statuses                                                     |
+|    |                | ServiceAccount presence                                                 |
+|    |                | CPU/MEM on containers over a set CPU/MEM limit (default 80% CPU/MEM)    |
+|    |                | Container image with no tags                                            |
+|    |                | Container image using `latest` tag                                      |
+|    |                | Resources request/limits presence                                       |
+|    |                | Probes liveness/readiness presence                                      |
+|    |                | Named ports and their references                                        |
+| 🛀 | Service        |                                                                         |
+|    |                | Endpoints presence                                                      |
+|    |                | Matching pods labels                                                    |
+|    |                | Named ports and their references                                        |
+| 🛀 | ServiceAccount |                                                                         |
+|    |                | Dead ServiceAccounts. Detects potentially unused SAs                    |
+| 🎉 | Secrets        |                                                                         |
+|    |                | Dead Secrets. Detects potentially unused secrets or associated keys     |
+| 🎉 | ConfigMap      |                                                                         |
+|    |                | Dead ConfigMap. Detects potentially unused cm or associated keys        |
+
+
+- 🛀 Existing Sanitizers
+- 🎉 New Sanitizers
 
 ## The Command Line
 
@@ -165,6 +177,23 @@ popeye:
       - default/kubernetes
       - blee-ns/fred
 ```
+
+## Report Morphology
+
+The sanitizer report outputs each resource group scanned and their potential issues.
+The report is color/emoji coded in term of Sanitizer severity levels:
+
+| Level | Icon | Color     | Description     |
+|-------|------|-----------|-----------------|
+| Ok    | ✅    | Green     | Happy!          |
+| Info  | 🔊   | BlueGreen | FYI             |
+| Warn  | 😱   | Yellow    | Potential Issue |
+| Error | 💥   | Red       | Action required |
+
+The heading section for each Kubenertes resource scanned,  provides an issue rollup summary count
+for each of the categories above.
+
+The Summary section provides a **Popeye Score** based on the sanitization pass on the given cluster.
 
 ## Supported Resources
 

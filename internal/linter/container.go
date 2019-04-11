@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/rs/zerolog"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -19,8 +18,8 @@ type Container struct {
 }
 
 // NewContainer returns a new container linter.
-func NewContainer(c Client, l *zerolog.Logger) *Container {
-	return &Container{newLinter(c, l)}
+func NewContainer(l Loader, log *zerolog.Logger) *Container {
+	return &Container{NewLinter(l, log)}
 }
 
 // Lint a Container.
@@ -96,26 +95,26 @@ func (c *Container) checkNamedPorts(co v1.Container) {
 	}
 }
 
-func (c *Container) checkUtilization(co v1.Container, cmx k8s.Metrics) {
-	cpu, mem, limited := c.getLimits(co)
-	c.checkMetrics(co.Name, cpu, cmx.CurrentCPU, mem, int64(cmx.CurrentMEM), limited)
+func (c *Container) checkUtilization(co v1.Container, cmx Metrics) {
+	cpu, mem, burstable := c.getLimits(co)
+	c.checkMetrics(co.Name, cpu, cmx.CurrentCPU, mem, int64(cmx.CurrentMEM), burstable)
 }
 
 func (c *Container) checkMetrics(co string, cpu, ccpu, mem, cmem int64, hard bool) {
 	percCPU := ToPerc(float64(ccpu), float64(cpu))
-	cpuLimit := c.client.PodCPULimit()
+	cpuLimit := c.PodCPULimit()
 	if percCPU >= cpuLimit {
 		c.addIssuef(co, ErrorLevel, "CPU threshold (%0.f%%) reached `%0.f%%", cpuLimit, percCPU)
 	}
 
 	percMEM := ToPerc(float64(cmem), float64(mem))
-	memLimit := c.client.PodMEMLimit()
+	memLimit := c.PodMEMLimit()
 	if percMEM >= memLimit {
 		c.addIssuef(co, ErrorLevel, "Memory threshold (%0.f%%) reached `%0.f%%", memLimit, percMEM)
 	}
 }
 
-func (c *Container) getLimits(co v1.Container) (cpu, mem int64, limited bool) {
+func (c *Container) getLimits(co v1.Container) (cpu, mem int64, burstable bool) {
 	req, limit := co.Resources.Requests, co.Resources.Limits
 
 	switch {
@@ -134,7 +133,7 @@ func (c *Container) getLimits(co v1.Container) (cpu, mem int64, limited bool) {
 		if m, ok := lmem.AsInt64(); ok {
 			mem = m
 		}
-		limited = true
+		burstable = true
 	}
 	return
 }

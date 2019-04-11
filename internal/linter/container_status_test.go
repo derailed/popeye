@@ -44,18 +44,21 @@ func TestContainerStatusDiagnose(t *testing.T) {
 	uu := []struct {
 		counts containerStatusCount
 		total  int
+		init   bool
 		issue  Issue
 	}{
-		{containerStatusCount{0, 0, 0, 0, ""}, 1, NewError(ErrorLevel, "Pod is not ready [0/1]")},
-		{containerStatusCount{1, 0, 0, 0, ""}, 1, nil},
-		{containerStatusCount{0, 1, 0, 0, ""}, 1, NewError(ErrorLevel, "Pod is waiting [0/1]")},
-		{containerStatusCount{1, 0, 1, 0, ""}, 1, NewError(WarnLevel, "Pod is terminating [1/1]")},
-		{containerStatusCount{1, 0, 0, 1, ""}, 1, NewError(WarnLevel, "Pod was restarted (1) time")},
-		{containerStatusCount{1, 0, 0, 10, ""}, 1, NewError(WarnLevel, "Pod was restarted (10) times")},
-		{containerStatusCount{1, 0, 0, 0, ""}, 0, nil},
+		{containerStatusCount{0, 0, 0, 0, ""}, 1, false, NewError(ErrorLevel, "Pod is not ready [0/1]")},
+		{containerStatusCount{1, 0, 0, 0, ""}, 1, false, nil},
+		{containerStatusCount{0, 1, 0, 0, ""}, 1, false, NewError(ErrorLevel, "Pod is waiting [0/1]")},
+		{containerStatusCount{0, 1, 0, 0, "blah"}, 1, false, NewError(ErrorLevel, "Pod is waiting [0/1] blah")},
+		{containerStatusCount{1, 0, 1, 0, ""}, 1, false, NewError(WarnLevel, "Pod is terminating [1/1]")},
+		{containerStatusCount{1, 0, 1, 0, "blah"}, 1, false, NewError(WarnLevel, "Pod is terminating [1/1] blah")},
+		{containerStatusCount{1, 0, 0, 1, ""}, 1, false, NewError(WarnLevel, "Pod was restarted (1) time")},
+		{containerStatusCount{1, 0, 0, 10, ""}, 1, false, NewError(WarnLevel, "Pod was restarted (10) times")},
+		{containerStatusCount{1, 0, 0, 0, ""}, 0, false, nil},
 	}
 
 	for _, u := range uu {
-		assert.Equal(t, u.issue, u.counts.diagnose(u.total, 0, false))
+		assert.Equal(t, u.issue, u.counts.diagnose(u.total, 0, u.init))
 	}
 }

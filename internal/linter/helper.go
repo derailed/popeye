@@ -7,3 +7,14 @@ func ToPerc(v1, v2 float64) float64 {
 	}
 	return (v1 / v2) * 100
 }
+
+// In checks if a string is in a list of strings.
+func in(ll []string, s string) bool {
+	for _, l := range ll {
+		if l == s {
+			return true
+		}
+	}
+
+	return false
+}

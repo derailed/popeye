@@ -37,14 +37,14 @@ func TestLinterMaxSeverity(t *testing.T) {
 	}
 
 	for _, u := range uu {
-		l := newLinter(nil, nil)
+		l := NewLinter(nil, nil)
 		l.addIssues("blee", u.issues...)
 		assert.Equal(t, u.severity, l.MaxSeverity("blee"))
 	}
 }
 
 func TestLinterAddIssue(t *testing.T) {
-	l := newLinter(nil, nil)
+	l := NewLinter(nil, nil)
 
 	l.initIssues("fred")
 	assert.True(t, l.NoIssues("fred"))
@@ -55,7 +55,7 @@ func TestLinterAddIssue(t *testing.T) {
 }
 
 func TestLinterAddIssuesMap(t *testing.T) {
-	l := newLinter(nil, nil)
+	l := NewLinter(nil, nil)
 
 	l.initIssues("fred")
 	assert.True(t, l.NoIssues("fred"))
@@ -66,7 +66,7 @@ func TestLinterAddIssuesMap(t *testing.T) {
 }
 
 func TestLinterAddErrors(t *testing.T) {
-	l := newLinter(nil, nil)
+	l := NewLinter(nil, nil)
 
 	l.initIssues("fred")
 	assert.True(t, l.NoIssues("fred"))
@@ -78,7 +78,7 @@ func TestLinterAddErrors(t *testing.T) {
 }
 
 func TestLinterAddError(t *testing.T) {
-	l := newLinter(nil, nil)
+	l := NewLinter(nil, nil)
 
 	l.initIssues("fred")
 	assert.True(t, l.NoIssues("fred"))

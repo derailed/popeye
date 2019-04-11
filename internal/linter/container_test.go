@@ -3,36 +3,41 @@ package linter
 import (
 	"testing"
 
-	"github.com/derailed/popeye/internal/k8s"
-	"github.com/derailed/popeye/pkg/config"
+	m "github.com/petergtz/pegomock"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func TestContainerCheckUtilization(t *testing.T) {
 	uu := []struct {
 		co       v1.Container
-		mx       k8s.Metrics
+		mx       Metrics
 		issues   int
 		severity Level
 	}{
-		{makeContainer("c1", true, true), k8s.Metrics{100, 4096}, 0, WarnLevel},
-		{makeContainer("c1", true, true), k8s.Metrics{5000, 10000}, 1, ErrorLevel},
-		{makeContainer("c1", true, true), k8s.Metrics{5000, 4000000}, 2, ErrorLevel},
-		{makeContainer("c1", false, false), k8s.Metrics{5000, 4000000}, 0, ErrorLevel},
-		{makeContainer("c1", true, false), k8s.Metrics{5000, 4000000}, 2, ErrorLevel},
-		{makeContainer("c1", false, true), k8s.Metrics{5000, 4000000}, 2, ErrorLevel},
+		{makeContainer("c1", true, true), Metrics{100, 4096}, 0, WarnLevel},
+		{makeContainer("c1", true, true), Metrics{5000, 10000}, 1, ErrorLevel},
+		{makeContainer("c1", true, true), Metrics{5000, 4000000}, 2, ErrorLevel},
+		{makeContainer("c1", false, false), Metrics{5000, 4000000}, 0, ErrorLevel},
+		{makeContainer("c1", true, false), Metrics{5000, 4000000}, 2, ErrorLevel},
+		{makeContainer("c1", false, true), Metrics{5000, 4000000}, 2, ErrorLevel},
 	}
 
 	for _, u := range uu {
-		l := NewContainer(k8s.NewClient(config.New()), nil)
+		mkl := NewMockLoader()
+		m.When(mkl.PodCPULimit()).ThenReturn(float64(80))
+		m.When(mkl.PodMEMLimit()).ThenReturn(float64(80))
+
+		l := NewContainer(mkl, nil)
 		l.checkUtilization(u.co, u.mx)
+
 		assert.Equal(t, u.issues, len(l.Issues()["c1"]))
 		if len(l.Issues()["c1"]) != 0 {
 			assert.Equal(t, u.severity, l.Issues()["c1"][0].Severity())
 		}
+		mkl.VerifyWasCalledOnce().PodCPULimit()
+		mkl.VerifyWasCalledOnce().PodMEMLimit()
 	}
 }
 
@@ -116,6 +121,7 @@ func TestContainerCheckImageTags(t *testing.T) {
 
 		l := NewContainer(nil, nil)
 		l.checkImageTags(co)
+
 		assert.Equal(t, u.issues, len(l.Issues()["c1"]))
 		if len(l.Issues()["c1"]) != 0 {
 			assert.Equal(t, u.severity, l.Issues()["c1"][0].Severity())
@@ -139,6 +145,7 @@ func TestContainerCheckNamedPorts(t *testing.T) {
 
 		l := NewContainer(nil, nil)
 		l.checkNamedPorts(co)
+
 		assert.Equal(t, u.issues, len(l.Issues()["c1"]))
 		if len(l.Issues()["c1"]) != 0 {
 			assert.Equal(t, u.severity, l.Issues()["c1"][0].Severity())
@@ -157,6 +164,7 @@ func TestContainerLint(t *testing.T) {
 	for _, u := range uu {
 		l := NewContainer(nil, nil)
 		l.lint(u.co, false)
+
 		assert.Equal(t, u.issues, len(l.Issues()["c1"]))
 	}
 }
@@ -175,14 +183,4 @@ func makeContainer(n string, reqs, limits bool) v1.Container {
 	}
 
 	return co
-}
-
-func makeRes(c, m string) v1.ResourceList {
-	cpu, _ := resource.ParseQuantity(c)
-	mem, _ := resource.ParseQuantity(m)
-
-	return v1.ResourceList{
-		v1.ResourceCPU:    cpu,
-		v1.ResourceMemory: mem,
-	}
 }

@@ -3,7 +3,6 @@ package linter
 import (
 	"context"
 
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/rs/zerolog"
 	v1 "k8s.io/api/core/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
@@ -40,35 +39,35 @@ type (
 )
 
 // NewPod returns a new pod linter.
-func NewPod(c Client, l *zerolog.Logger) *Pod {
-	return &Pod{newLinter(c, l)}
+func NewPod(l Loader, log *zerolog.Logger) *Pod {
+	return &Pod{NewLinter(l, log)}
 }
 
 // Lint a Pod.
 func (p *Pod) Lint(ctx context.Context) error {
-	ll, err := p.client.ListPods()
+	pods, err := p.ListPods()
 	if err != nil {
 		return err
 	}
 
 	var mx []mv1beta1.PodMetrics
-	pmx := make(k8s.PodsMetrics)
-	if p.client.ClusterHasMetrics() {
-		if mx, err = p.client.FetchPodsMetrics(""); err != nil {
+	pmx := make(PodsMetrics)
+	if ok, _ := p.ClusterHasMetrics(); ok {
+		if mx, err = p.FetchPodsMetrics(""); err != nil {
 			return err
 		}
-		k8s.GetPodsMetrics(mx, pmx)
+		p.ListPodsMetrics(mx, pmx)
 	}
 
-	for nsed, po := range ll {
-		p.initIssues(nsed)
-		p.lint(po, pmx[nsed])
+	for fqn, po := range pods {
+		p.initIssues(fqn)
+		p.lint(po, pmx[fqn])
 	}
 
 	return nil
 }
 
-func (p *Pod) lint(po v1.Pod, mx k8s.ContainerMetrics) {
+func (p *Pod) lint(po v1.Pod, mx ContainerMetrics) {
 	p.checkStatus(po)
 	p.checkContainerStatus(po)
 	p.checkContainers(po)
@@ -76,7 +75,7 @@ func (p *Pod) lint(po v1.Pod, mx k8s.ContainerMetrics) {
 	p.checkUtilization(po, mx)
 }
 
-func (p *Pod) checkUtilization(po v1.Pod, mx k8s.ContainerMetrics) {
+func (p *Pod) checkUtilization(po v1.Pod, mx ContainerMetrics) {
 	if len(mx) == 0 {
 		return
 	}
@@ -86,28 +85,30 @@ func (p *Pod) checkUtilization(po v1.Pod, mx k8s.ContainerMetrics) {
 		if !ok {
 			continue
 		}
-		c := NewContainer(p.client, p.log)
+		c := NewContainer(p.Loader, p.log)
 		c.checkUtilization(co, cmx)
-		p.addIssuesMap(nsFQN(po), c.Issues())
+
+		p.addIssuesMap(podFQN(po), c.Issues())
 	}
 }
 
 func (p *Pod) checkServiceAccount(po v1.Pod) {
 	if len(po.Spec.ServiceAccountName) == 0 {
-		p.addIssuef(nsFQN(po), InfoLevel, "No service account specified")
+		p.addIssuef(podFQN(po), InfoLevel, "No service account specified")
 	}
 }
 
 func (p *Pod) checkContainers(po v1.Pod) {
 	for _, c := range po.Spec.Containers {
-		l := NewContainer(p.client, p.log)
+		l := NewContainer(p.Loader, p.log)
 		l.lint(c, isPartOfJob(po))
-		p.addIssuesMap(nsFQN(po), l.Issues())
+
+		p.addIssuesMap(podFQN(po), l.Issues())
 	}
 }
 
 func (p *Pod) checkContainerStatus(po v1.Pod) {
-	limit := p.client.RestartsLimit()
+	limit := p.RestartsLimit()
 
 	if len(po.Status.InitContainerStatuses) != 0 {
 
@@ -115,7 +116,7 @@ func (p *Pod) checkContainerStatus(po v1.Pod) {
 			counts := new(containerStatusCount)
 			counts.rollup(s)
 			if issue := counts.diagnose(len(po.Status.InitContainerStatuses), limit, true); issue != nil {
-				p.addIssues(nsFQN(po), issue)
+				p.addIssues(podFQN(po), issue)
 				return
 			}
 		}
@@ -125,7 +126,7 @@ func (p *Pod) checkContainerStatus(po v1.Pod) {
 		counts := new(containerStatusCount)
 		counts.rollup(s)
 		if issue := counts.diagnose(len(po.Status.ContainerStatuses), limit, false); issue != nil {
-			p.addIssues(nsFQN(po), issue)
+			p.addIssues(podFQN(po), issue)
 		}
 	}
 }
@@ -135,14 +136,14 @@ func (p *Pod) checkStatus(po v1.Pod) {
 	case v1.PodRunning:
 	case v1.PodSucceeded:
 	default:
-		p.addIssuef(nsFQN(po), ErrorLevel, "Pod is in an unhappy phase (%s)", po.Status.Phase)
+		p.addIssuef(podFQN(po), ErrorLevel, "Pod is in an unhappy phase (%s)", po.Status.Phase)
 	}
 }
 
 // ----------------------------------------------------------------------------
 // Helpers...
 
-func nsFQN(po v1.Pod) string {
+func podFQN(po v1.Pod) string {
 	return po.Namespace + "/" + po.Name
 }
 
@@ -152,5 +153,6 @@ func isPartOfJob(po v1.Pod) bool {
 			return true
 		}
 	}
+
 	return false
 }

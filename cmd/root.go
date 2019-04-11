@@ -3,23 +3,22 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"runtime/debug"
 
+	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/report"
 	"github.com/derailed/popeye/pkg"
-	"github.com/derailed/popeye/pkg/config"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 var (
-	version   = "dev"
-	commit    = "dev"
-	date      = "n/a"
-	popConfig = config.New()
-	k8sFlags  *genericclioptions.ConfigFlags
-	rootCmd   = &cobra.Command{
+	version = "dev"
+	commit  = "dev"
+	date    = "n/a"
+	flags   = k8s.NewFlags()
+	rootCmd = &cobra.Command{
 		Use:   "popeye",
 		Short: "A Kubernetes Cluster sanitizer and linter",
 		Long:  `Popeye scans your Kubernetes clusters and reports potential resource issues.`,
@@ -30,13 +29,7 @@ var (
 func init() {
 	rootCmd.AddCommand(versionCmd())
 
-	initK8sFlags()
-	initPopeyeFlags()
-}
-
-func bomb(msg string) {
-	fmt.Printf("💥 %s\n", report.Colorize(msg, report.ColorRed))
-	os.Exit(1)
+	initFlags()
 }
 
 // Execute root command
@@ -48,134 +41,151 @@ func Execute() {
 
 // Doit runs the scans and lints pass over the specified cluster.
 func doIt(cmd *cobra.Command, args []string) {
-	if err := popConfig.Init(k8sFlags); err != nil {
-		bomb(fmt.Sprintf("Spinach load failed %s", popConfig.Spinach))
-	}
+	defer func() {
+		if err := recover(); err != nil {
+			bomb(fmt.Sprintf("%v", err))
+			log.Error().Msgf("%v", err)
+			log.Error().Msg(string(debug.Stack()))
+		}
+	}()
 
-	zerolog.SetGlobalLevel(popConfig.Popeye.LogLevel)
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+
 	clearScreen()
-	pkg.NewPopeye(popConfig, &log.Logger, os.Stdout).Sanitize(true)
+	popeye, err := pkg.NewPopeye(flags, &log.Logger, os.Stdout)
+	if err != nil {
+		bomb(fmt.Sprintf("Popeye configuration load failed %v", err))
+	}
+	popeye.Sanitize(true)
 }
 
-func initPopeyeFlags() {
+func bomb(msg string) {
+	fmt.Printf("💥 %s\n", report.Colorize(msg, report.ColorRed))
+	os.Exit(1)
+}
+
+func initFlags() {
 	rootCmd.Flags().StringVarP(
-		&popConfig.LintLevel,
-		"lintLevel", "l",
-		popConfig.LintLevel,
+		flags.LintLevel,
+		"lint", "l",
+		"ok",
 		"Specify a lint level (ok, info, warn, error)",
 	)
 
 	rootCmd.Flags().BoolVarP(
-		&popConfig.ClearScreen,
+		flags.Jurassic,
+		"jurassic", "j",
+		false,
+		"Turn on Jurassic mode sanitizer report",
+	)
+
+	rootCmd.Flags().BoolVarP(
+		flags.ClearScreen,
 		"clear", "c",
-		popConfig.ClearScreen,
+		false,
 		"Clears the screen before a run",
 	)
 
 	rootCmd.Flags().StringVarP(
-		&popConfig.Spinach,
+		flags.Spinach,
 		"file", "f",
 		"",
 		"Use a spinach YAML configuration file",
 	)
 
 	rootCmd.Flags().StringSliceVarP(
-		&popConfig.Sections,
+		flags.Sections,
 		"sections", "s",
-		popConfig.Sections,
+		[]string{},
 		"Specifies which resources to include in the scan ie -s po,svc",
 	)
-}
-
-func initK8sFlags() {
-	k8sFlags = genericclioptions.NewConfigFlags(false)
 
 	rootCmd.Flags().StringVar(
-		k8sFlags.KubeConfig,
+		flags.KubeConfig,
 		"kubeconfig",
 		"",
 		"Path to the kubeconfig file to use for CLI requests",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sFlags.Timeout,
+		flags.Timeout,
 		"request-timeout",
 		"",
 		"The length of time to wait before giving up on a single server request",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sFlags.Context,
+		flags.Context,
 		"context",
 		"",
 		"The name of the kubeconfig context to use",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sFlags.ClusterName,
+		flags.ClusterName,
 		"cluster",
 		"",
 		"The name of the kubeconfig cluster to use",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sFlags.AuthInfoName,
+		flags.AuthInfoName,
 		"user",
 		"",
 		"The name of the kubeconfig user to use",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sFlags.Impersonate,
+		flags.Impersonate,
 		"as",
 		"",
 		"Username to impersonate for the operation",
 	)
 
 	rootCmd.Flags().StringArrayVar(
-		k8sFlags.ImpersonateGroup,
+		flags.ImpersonateGroup,
 		"as-group",
 		[]string{},
 		"Group to impersonate for the operation",
 	)
 
 	rootCmd.Flags().BoolVar(
-		k8sFlags.Insecure,
+		flags.Insecure,
 		"insecure-skip-tls-verify",
 		false,
 		"If true, the server's caCertFile will not be checked for validity",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sFlags.CAFile,
+		flags.CAFile,
 		"certificate-authority",
 		"",
 		"Path to a cert file for the certificate authority",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sFlags.KeyFile,
+		flags.KeyFile,
 		"client-key",
 		"",
 		"Path to a client key file for TLS",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sFlags.CertFile,
+		flags.CertFile,
 		"client-certificate",
 		"",
 		"Path to a client certificate file for TLS",
 	)
 
 	rootCmd.Flags().StringVar(
-		k8sFlags.BearerToken,
+		flags.BearerToken,
 		"token",
 		"",
 		"Bearer token for authentication to the API server",
 	)
 
 	rootCmd.Flags().StringVarP(
-		k8sFlags.Namespace,
+		flags.Namespace,
 		"namespace",
 		"n",
 		"",
@@ -186,7 +196,8 @@ func initK8sFlags() {
 // Helpers...
 
 func clearScreen() {
-	if popConfig.ClearScreen {
-		fmt.Print("\033[H\033[2J")
+	if flags.ClearScreen == nil || !*flags.ClearScreen {
+		return
 	}
+	fmt.Print("\033[H\033[2J")
 }

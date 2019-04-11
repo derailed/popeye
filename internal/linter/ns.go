@@ -7,7 +7,9 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-var excludedSystemNS = []string{"kube-public"}
+// SkipNamespaces excludes system namespaces with no pods from being included in scan.
+// BOZO!! spinachyaml default??
+var skipNamespaces = []string{"default", "kube-public", "kube-node-lease"}
 
 // Namespace represents a Namespace linter.
 type Namespace struct {
@@ -15,19 +17,19 @@ type Namespace struct {
 }
 
 // NewNamespace returns a new namespace linter.
-func NewNamespace(c Client, l *zerolog.Logger) *Namespace {
-	return &Namespace{newLinter(c, l)}
+func NewNamespace(l Loader, log *zerolog.Logger) *Namespace {
+	return &Namespace{NewLinter(l, log)}
 }
 
 // Lint a namespace
 func (n *Namespace) Lint(ctx context.Context) error {
-	available, err := n.client.ListAllNS()
+	available, err := n.ListNamespaces()
 	if err != nil {
 		return err
 	}
 
 	used := make([]string, len(available))
-	n.client.InUseNamespaces(used)
+	n.PodsNamespaces(used)
 	n.lint(available, used)
 
 	return nil
@@ -35,8 +37,11 @@ func (n *Namespace) Lint(ctx context.Context) error {
 
 func (n *Namespace) lint(nn map[string]v1.Namespace, used []string) {
 	for _, ns := range nn {
+		if n.ExcludedNS(ns.Name) {
+			continue
+		}
 		n.initIssues(ns.Name)
-		if n.checkActive(ns) && !in(excludedSystemNS, ns.Name) {
+		if n.checkActive(ns) {
 			n.checkInUse(ns.Name, used)
 		}
 	}
@@ -61,5 +66,7 @@ func (n *Namespace) checkInUse(name string, used []string) {
 		}
 	}
 
-	n.addIssuef(name, InfoLevel, "Used?")
+	if !in(skipNamespaces, name) {
+		n.addIssuef(name, InfoLevel, "Used?")
+	}
 }

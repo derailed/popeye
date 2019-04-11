@@ -21,7 +21,7 @@ func Grade(score int) string {
 }
 
 // Badge returns a popeye grade.
-func Badge(score int) []string {
+func (s *Sanitizer) Badge(score int) []string {
 	ic := make([]string, len(grader))
 	for i, l := range grader {
 		switch i {
@@ -36,7 +36,7 @@ func Badge(score int) []string {
 				l = strings.Replace(l, "a", "O", 1)
 			}
 		}
-		ic[i] = Colorize(l, colorForScore(score))
+		ic[i] = s.Color(l, colorForScore(score))
 	}
 
 	return ic

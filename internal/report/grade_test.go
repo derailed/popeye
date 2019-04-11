@@ -38,7 +38,8 @@ func TestBadge(t *testing.T) {
 		},
 	}
 
+	s := new(Sanitizer)
 	for _, u := range uu {
-		assert.Equal(t, u.e, strings.Join(Badge(u.score), "\n"))
+		assert.Equal(t, u.e, strings.Join(s.Badge(u.score), "\n"))
 	}
 }

@@ -3,67 +3,57 @@ package config
 import (
 	"io/ioutil"
 
-	"github.com/rs/zerolog"
+	"github.com/derailed/popeye/internal/k8s"
 	"gopkg.in/yaml.v2"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
-	restclient "k8s.io/client-go/rest"
-	clientcmd "k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 const (
 	defaultWidth     = 80
-	defaultLogLevel  = "debug"
 	defaultLintLevel = "ok"
 )
 
 // Config tracks Popeye configuration options.
 type Config struct {
-	Popeye      Popeye `yaml:"popeye"`
-	Spinach     string
-	ClearScreen bool
-	LogLevel    string
-	LintLevel   string
-	Sections    []string
+	*k8s.Client
 
-	flags        *genericclioptions.ConfigFlags
-	clientConfig clientcmd.ClientConfig
-	rawConfig    *clientcmdapi.Config
-	restConfig   *restclient.Config
+	Popeye    Popeye `yaml:"popeye"`
+	Flags     *k8s.Flags
+	LintLevel int
 }
 
-// New create a new Popeye configuration.
-func New() *Config {
-	return &Config{
-		Popeye:    NewPopeye(),
-		LogLevel:  defaultLogLevel,
-		LintLevel: defaultLintLevel,
-	}
-}
-
-// Init a popeye configuration from file or default if no file given.
-func (c *Config) Init(f *genericclioptions.ConfigFlags) error {
-	c.flags = f
-
+// NewConfig create a new Popeye configuration.
+func NewConfig(flags *k8s.Flags) (*Config, error) {
 	var cfg Config
-	if len(c.Spinach) != 0 {
-		f, err := ioutil.ReadFile(c.Spinach)
+
+	if isSet(flags.Spinach) {
+		f, err := ioutil.ReadFile(*flags.Spinach)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if err := yaml.Unmarshal(f, &cfg); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	cfg.Popeye.LogLevel = ToLogLevel(c.LogLevel)
-	cfg.Popeye.LintLevel = ToLintLevel(c.LintLevel)
-	cfg.Sections = c.Sections
-	cfg.ClearScreen = c.ClearScreen
-	cfg.flags = f
-	*c = cfg
+	cfg.Flags = flags
+	cfg.LintLevel = int(ToLintLevel(flags.LintLevel))
+	cfg.Client = k8s.NewClient(flags)
 
-	return nil
+	return &cfg, nil
+}
+
+// LinterLevel returns the current lint level.
+func (c *Config) LinterLevel() int {
+	return c.LintLevel
+}
+
+// Sections returns a collection of sanitizers categories.
+func (c *Config) Sections() []string {
+	if c.Flags.Sections != nil {
+		return *c.Flags.Sections
+	}
+
+	return []string{}
 }
 
 // NodeCPULimit returns the node cpu threshold if set otherwise the default.
@@ -126,142 +116,10 @@ func (c *Config) NodeMEMLimit() float64 {
 	return l
 }
 
-// ActiveNamespace returns the desired namespace if set or all if not.
-func (c *Config) ActiveNamespace() string {
-	cfg, err := c.RawConfig()
-	if err != nil {
-		return "n/a"
-	}
+// ----------------------------------------------------------------------------
+// Helpers...
 
-	if isSet(c.flags.Namespace) {
-		return *c.flags.Namespace
-	}
-
-	ctx := cfg.CurrentContext
-	if isSet(c.flags.Context) {
-		ctx = *c.flags.Context
-	}
-
-	if c, ok := cfg.Contexts[ctx]; ok {
-		return c.Namespace
-	}
-
-	return ""
-}
-
-// ActiveCluster get the current cluster name.
-func (c *Config) ActiveCluster() string {
-	cfg, err := c.RawConfig()
-	if err != nil {
-		return "n/a"
-	}
-
-	if isSet(c.flags.ClusterName) {
-		return *c.flags.ClusterName
-	}
-
-	ctx := cfg.CurrentContext
-	if isSet(c.flags.Context) {
-		ctx = *c.flags.Context
-	}
-
-	if ctx, ok := cfg.Contexts[ctx]; ok {
-		return ctx.Cluster
-	}
-
-	return "n/a"
-}
-
-// RawConfig fetch the current kubeconfig with no overrides.
-func (c *Config) RawConfig() (clientcmdapi.Config, error) {
-	if c.rawConfig != nil {
-		return *c.rawConfig, nil
-	}
-
-	err := c.ensureClientConfig()
-	if err != nil {
-		return clientcmdapi.Config{}, err
-	}
-
-	raw, err := c.clientConfig.RawConfig()
-	if err != nil {
-		return clientcmdapi.Config{}, err
-	}
-	c.rawConfig = &raw
-
-	return *c.rawConfig, nil
-}
-
-// RESTConfig fetch the current REST api-server connection.
-func (c *Config) RESTConfig() (*restclient.Config, error) {
-	if c.restConfig != nil {
-		return c.restConfig, nil
-	}
-
-	err := c.ensureClientConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	if c.restConfig, err = c.flags.ToRESTConfig(); err != nil {
-		return nil, err
-	}
-	return c.restConfig, nil
-}
-
-func (c *Config) ensureClientConfig() error {
-	if c.clientConfig == nil {
-		c.clientConfig = c.flags.ToRawKubeConfigLoader()
-	}
-	return nil
-}
-
-// ToLogLevel convert a string to a level.
-func ToLogLevel(level string) zerolog.Level {
-	switch level {
-	case "debug":
-		return zerolog.DebugLevel
-	case "warn":
-		return zerolog.WarnLevel
-	case "error":
-		return zerolog.ErrorLevel
-	case "fatal":
-		return zerolog.FatalLevel
-	default:
-		return zerolog.InfoLevel
-	}
-}
-
-// Level tracks lint check level.
-type Level int
-
-const (
-	// OkLevel denotes no linting issues.
-	OkLevel Level = iota
-	// InfoLevel denotes FIY linting issues.
-	InfoLevel
-	// WarnLevel denotes a warning issue.
-	WarnLevel
-	// ErrorLevel denotes a serious issue.
-	ErrorLevel
-)
-
-// ToLintLevel convert a string to a level.
-func ToLintLevel(level string) Level {
-	switch level {
-	case "ok":
-		return OkLevel
-	case "info":
-		return InfoLevel
-	case "warn":
-		return WarnLevel
-	case "error":
-		return ErrorLevel
-	default:
-		return OkLevel
-	}
-}
-
+// IsSet checks if a string flag is set.
 func isSet(s *string) bool {
 	return s != nil && *s != ""
 }
