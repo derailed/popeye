@@ -39,13 +39,13 @@ func printLogo() {
 	for i, s := range report.Logo {
 		if i < len(report.Popeye) {
 			fmt.Printf(report.Colorize(report.Popeye[i], report.ColorAqua))
-			fmt.Printf(strings.Repeat(" ", 2))
+			fmt.Printf(strings.Repeat(" ", 22))
 		} else {
 			if i == 4 {
 				fmt.Printf(report.Colorize("  Biffs`em and Buffs`em!", report.ColorLighSlate))
-				fmt.Printf(strings.Repeat(" ", 6))
+				fmt.Printf(strings.Repeat(" ", 26))
 			} else {
-				fmt.Printf(strings.Repeat(" ", 30))
+				fmt.Printf(strings.Repeat(" ", 50))
 			}
 		}
 		fmt.Println(report.Colorize(s, report.ColorLighSlate))
