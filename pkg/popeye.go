@@ -103,7 +103,7 @@ func linters(l linter.Loader, log *zerolog.Logger) Linters {
 		"svc": linter.NewService(l, log),
 		"sa":  linter.NewSA(l, log),
 		"cm":  linter.NewCM(l, log),
-		"sec": linter.NewService(l, log),
+		"sec": linter.NewSecret(l, log),
 	}
 }
 
