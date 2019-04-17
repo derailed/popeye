@@ -13,7 +13,7 @@ type (
 		*Linter
 	}
 
-	// Reference tracks a config reference.
+	// Reference tracks a configuration reference.
 	Reference struct {
 		name string
 		keys map[string]struct{}
@@ -92,7 +92,7 @@ func (s *Secret) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map
 
 		ref, ok := refs[fqn]
 		if !ok {
-			s.addIssuef(fqn, InfoLevel, "Reference?")
+			s.addIssuef(fqn, InfoLevel, "Used?")
 			continue
 		}
 

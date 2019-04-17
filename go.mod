@@ -43,6 +43,7 @@ require (
 	k8s.io/cli-runtime v0.0.0-20190207094101-a32b78e5dd0a
 	k8s.io/client-go v10.0.0+incompatible
 	k8s.io/klog v0.1.0 // indirect
+	k8s.io/kubernetes v1.14.1
 	k8s.io/metrics v0.0.0-20181121073115-d8618695b08f
 	sigs.k8s.io/structured-merge-diff v0.0.0-20190130003954-e5e029740eb8 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect

@@ -2,8 +2,8 @@ package report
 
 import "strings"
 
-// TitleForRes returns a human readable resource name.
-func TitleForRes(r string) string {
+// Titleize returns a human readable resource name.
+func Titleize(r string) string {
 	var t string
 	switch r {
 	case "po":
@@ -20,6 +20,17 @@ func TitleForRes(r string) string {
 		t = "configmap"
 	case "sec":
 		t = "Secret"
+	case "pv":
+		t = "persistentvolume"
+	case "pvc":
+		t = "persistentvolumeclaim"
+	case "hpa":
+		t = "horizontalpodautoscaler"
+	case "dp":
+		t = "deployment"
+	case "sts":
+		t = "statefulset"
+
 	default:
 		t = r
 	}

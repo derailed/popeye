@@ -1,5 +1,13 @@
 # A Sample Popeye configuration.
 popeye:
+  allocations:
+    cpu:
+      over: 100
+      under: 50
+    memory:
+      over: 100
+      under: 50
+
   # Node...
   node:
     # Check nodes resource utilization in percent against these thresholds.

@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/derailed/popeye/internal/k8s"
 	"github.com/rs/zerolog"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -23,11 +25,10 @@ func NewContainer(l Loader, log *zerolog.Logger) *Container {
 }
 
 // Lint a Container.
-func (c *Container) lint(co v1.Container, isJob bool) {
+func (c *Container) lint(co v1.Container, checkProbes bool) {
 	c.checkImageTags(co)
 	c.checkResources(co)
-	// If this is a container job, lax on the probes
-	if !isJob {
+	if checkProbes {
 		c.checkProbes(co)
 	}
 	c.checkNamedPorts(co)
@@ -95,45 +96,37 @@ func (c *Container) checkNamedPorts(co v1.Container) {
 	}
 }
 
-func (c *Container) checkUtilization(co v1.Container, cmx Metrics) {
-	cpu, mem, burstable := c.getLimits(co)
-	c.checkMetrics(co.Name, cpu, cmx.CurrentCPU, mem, int64(cmx.CurrentMEM), burstable)
+func (c *Container) checkUtilization(co v1.Container, cmx k8s.Metrics) {
+	cpu, mem, _ := containerResources(co)
+	c.checkMetrics(co.Name, cpu, mem, cmx.CurrentCPU, cmx.CurrentMEM)
 }
 
-func (c *Container) checkMetrics(co string, cpu, ccpu, mem, cmem int64, hard bool) {
-	percCPU := ToPerc(float64(ccpu), float64(cpu))
-	cpuLimit := c.PodCPULimit()
+func (c *Container) checkMetrics(co string, cpu, mem, ccpu, cmem resource.Quantity) {
+	percCPU := ToPerc(toMC(ccpu), toMC(cpu))
+	cpuLimit := int64(c.PodCPULimit())
 	if percCPU >= cpuLimit {
-		c.addIssuef(co, ErrorLevel, "CPU threshold (%0.f%%) reached `%0.f%%", cpuLimit, percCPU)
+		c.addIssuef(co, ErrorLevel, "CPU C:%s|R:%s reached user %d%% threshold (%d%%)", asMC(ccpu), asMC(cpu), cpuLimit, percCPU)
 	}
 
-	percMEM := ToPerc(float64(cmem), float64(mem))
-	memLimit := c.PodMEMLimit()
+	percMEM := ToPerc(toMB(cmem), toMB(mem))
+	memLimit := int64(c.PodMEMLimit())
 	if percMEM >= memLimit {
-		c.addIssuef(co, ErrorLevel, "Memory threshold (%0.f%%) reached `%0.f%%", memLimit, percMEM)
+		c.addIssuef(co, ErrorLevel, "Memory C:%s|R:%s reached user %d%% threshold (%d%%)", asMB(cmem), asMB(mem), memLimit, percMEM)
 	}
 }
 
-func (c *Container) getLimits(co v1.Container) (cpu, mem int64, burstable bool) {
+func containerResources(co v1.Container) (cpu, mem resource.Quantity, burstable bool) {
 	req, limit := co.Resources.Requests, co.Resources.Limits
 
 	switch {
-	case len(req) == 0 && len(limit) == 0:
-	case len(req) != 0 && len(limit) == 0:
-		lcpu := req[v1.ResourceCPU]
-		cpu = lcpu.MilliValue()
-		lmem := req[v1.ResourceMemory]
-		if m, ok := lmem.AsInt64(); ok {
-			mem = m
-		}
-	case len(limit) != 0:
-		lcpu := limit[v1.ResourceCPU]
-		cpu = lcpu.MilliValue()
-		lmem := limit[v1.ResourceMemory]
-		if m, ok := lmem.AsInt64(); ok {
-			mem = m
-		}
+	case len(req) != 0 && len(limit) != 0:
+		cpu, mem = limit[v1.ResourceCPU], limit[v1.ResourceMemory]
 		burstable = true
+	case len(req) != 0:
+		cpu, mem = req[v1.ResourceCPU], req[v1.ResourceMemory]
+	case len(limit) != 0:
+		cpu, mem = limit[v1.ResourceCPU], limit[v1.ResourceMemory]
 	}
+
 	return
 }

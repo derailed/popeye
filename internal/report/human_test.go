@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTitleForRes(t *testing.T) {
+func TestTitleize(t *testing.T) {
 	uu := map[string]string{
 		"po":   "PODS",
 		"no":   "NODES",
@@ -19,6 +19,6 @@ func TestTitleForRes(t *testing.T) {
 	}
 
 	for k, e := range uu {
-		assert.Equal(t, e, TitleForRes(k))
+		assert.Equal(t, e, Titleize(k))
 	}
 }

@@ -1,6 +1,9 @@
 package linter
 
 import (
+	"github.com/derailed/popeye/internal/k8s"
+	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
@@ -22,6 +25,11 @@ type Filter struct {
 	allSecs map[string]v1.Secret
 	allSAs  map[string]v1.ServiceAccount
 	allSVCs map[string]v1.Service
+	allPVs  map[string]v1.PersistentVolume
+	allPVCs map[string]v1.PersistentVolumeClaim
+	allHPAs map[string]autoscalingv1.HorizontalPodAutoscaler
+	allDPs  map[string]appsv1.Deployment
+	allSTs  map[string]appsv1.StatefulSet
 }
 
 // NewFilter returns a new Kubernetes resource filter.
@@ -29,38 +37,201 @@ func NewFilter(f Fetcher, s Spinach) *Filter {
 	return &Filter{Fetcher: f, Spinach: s}
 }
 
+// ListStatefulSets lists all available StatefulSets in allowed namespace.
+func (f *Filter) ListStatefulSets() (map[string]appsv1.StatefulSet, error) {
+	sts, err := f.ListAllStatefulSets()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[string]appsv1.StatefulSet, len(sts))
+	for fqn, st := range sts {
+		if f.matchActiveNS(st.Namespace) && !f.ExcludedNS(st.Namespace) {
+			res[fqn] = st
+		}
+	}
+
+	return res, nil
+}
+
+// ListAllStatefulSets returns all StatefulSets on cluster.
+func (f *Filter) ListAllStatefulSets() (map[string]appsv1.StatefulSet, error) {
+	if f.allSTs != nil {
+		return f.allSTs, nil
+	}
+
+	sts, err := f.FetchStatefulSets()
+	if err != nil {
+		return nil, err
+	}
+
+	f.allSTs = make(map[string]appsv1.StatefulSet, len(sts.Items))
+	for _, st := range sts.Items {
+		f.allSTs[metaFQN(st.ObjectMeta)] = st
+	}
+
+	return f.allSTs, nil
+}
+
+// ListDeployments lists all available Deployments in allowed namespace.
+func (f *Filter) ListDeployments() (map[string]appsv1.Deployment, error) {
+	dps, err := f.ListAllDeployments()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[string]appsv1.Deployment, len(dps))
+	for fqn, dp := range dps {
+		if f.matchActiveNS(dp.Namespace) && !f.ExcludedNS(dp.Namespace) {
+			res[fqn] = dp
+		}
+	}
+
+	return res, nil
+}
+
+// ListAllDeployments returns all Deployments on cluster.
+func (f *Filter) ListAllDeployments() (map[string]appsv1.Deployment, error) {
+	if f.allDPs != nil {
+		return f.allDPs, nil
+	}
+
+	dps, err := f.FetchDeployments()
+	if err != nil {
+		return nil, err
+	}
+
+	f.allDPs = make(map[string]appsv1.Deployment, len(dps.Items))
+	for _, dp := range dps.Items {
+		f.allDPs[metaFQN(dp.ObjectMeta)] = dp
+	}
+
+	return f.allDPs, nil
+}
+
+// ListHorizontalPodAutoscalers lists all available PVCs on the cluster.
+func (f *Filter) ListHorizontalPodAutoscalers() (map[string]autoscalingv1.HorizontalPodAutoscaler, error) {
+	hpas, err := f.ListAllHorizontalPodAutoscalers()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[string]autoscalingv1.HorizontalPodAutoscaler, len(hpas))
+	for fqn, hpa := range hpas {
+		if f.matchActiveNS(hpa.Namespace) && !f.ExcludedNS(hpa.Namespace) {
+			res[fqn] = hpa
+		}
+	}
+
+	return res, nil
+}
+
+// ListAllHorizontalPodAutoscalers returns all HorizontalPodAutoscaler.
+func (f *Filter) ListAllHorizontalPodAutoscalers() (map[string]autoscalingv1.HorizontalPodAutoscaler, error) {
+	if f.allHPAs != nil {
+		return f.allHPAs, nil
+	}
+
+	hpas, err := f.FetchHorizontalPodAutoscalers()
+	if err != nil {
+		return nil, err
+	}
+
+	f.allHPAs = make(map[string]autoscalingv1.HorizontalPodAutoscaler, len(hpas.Items))
+	for _, hpa := range hpas.Items {
+		f.allHPAs[metaFQN(hpa.ObjectMeta)] = hpa
+	}
+
+	return f.allHPAs, nil
+}
+
+// ListPersistentVolumeClaims lists all available PVCs on the cluster.
+func (f *Filter) ListPersistentVolumeClaims() (map[string]v1.PersistentVolumeClaim, error) {
+	pvcs, err := f.ListAllPersistentVolumeClaims()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[string]v1.PersistentVolumeClaim, len(pvcs))
+	for fqn, pvc := range pvcs {
+		if f.matchActiveNS(pvc.Namespace) && !f.ExcludedNS(pvc.Namespace) {
+			res[fqn] = pvc
+		}
+	}
+
+	return res, nil
+}
+
+// ListAllPersistentVolumeClaims returns all PersistentVolumeClaims.
+func (f *Filter) ListAllPersistentVolumeClaims() (map[string]v1.PersistentVolumeClaim, error) {
+	if f.allPVCs != nil {
+		return f.allPVCs, nil
+	}
+
+	pvcs, err := f.FetchPersistentVolumeClaims()
+	if err != nil {
+		return nil, err
+	}
+
+	f.allPVCs = make(map[string]v1.PersistentVolumeClaim, len(pvcs.Items))
+	for _, pv := range pvcs.Items {
+		f.allPVCs[metaFQN(pv.ObjectMeta)] = pv
+	}
+
+	return f.allPVCs, nil
+}
+
+// ListPersistentVolumes returns all PersistentVolumes.
+func (f *Filter) ListPersistentVolumes() (map[string]v1.PersistentVolume, error) {
+	if f.allPVs != nil {
+		return f.allPVs, nil
+	}
+
+	pvs, err := f.FetchPersistentVolumes()
+	if err != nil {
+		return nil, err
+	}
+
+	f.allPVs = make(map[string]v1.PersistentVolume, len(pvs.Items))
+	for _, pv := range pvs.Items {
+		f.allPVs[metaFQN(pv.ObjectMeta)] = pv
+	}
+
+	return f.allPVs, nil
+}
+
 // ListNodesMetrics retrieves metrics for a given set of nodes.
-func (*Filter) ListNodesMetrics(nodes []v1.Node, metrics []mv1beta1.NodeMetrics, mmx NodesMetrics) {
+func (*Filter) ListNodesMetrics(nodes []v1.Node, metrics []mv1beta1.NodeMetrics, nmx k8s.NodesMetrics) {
 	for _, n := range nodes {
-		mmx[n.Name] = NodeMetrics{
-			AvailCPU: n.Status.Allocatable.Cpu().MilliValue(),
-			AvailMEM: asMi(n.Status.Allocatable.Memory().Value()),
-			TotalCPU: n.Status.Capacity.Cpu().MilliValue(),
-			TotalMEM: asMi(n.Status.Capacity.Memory().Value()),
+		nmx[n.Name] = k8s.NodeMetrics{
+			AvailableCPU: *n.Status.Allocatable.Cpu(),
+			AvailableMEM: *n.Status.Allocatable.Memory(),
+			TotalCPU:     *n.Status.Capacity.Cpu(),
+			TotalMEM:     *n.Status.Capacity.Memory(),
 		}
 	}
 
 	for _, c := range metrics {
-		if mx, ok := mmx[c.Name]; ok {
-			mx.CurrentCPU = c.Usage.Cpu().MilliValue()
-			mx.CurrentMEM = asMi(c.Usage.Memory().Value())
-			mmx[c.Name] = mx
+		if mx, ok := nmx[c.Name]; ok {
+			mx.CurrentCPU = *c.Usage.Cpu()
+			mx.CurrentMEM = *c.Usage.Memory()
+			nmx[c.Name] = mx
 		}
 	}
 }
 
 // ListPodsMetrics retrieves metrics for all pods in a given namespace.
-func (*Filter) ListPodsMetrics(pods []mv1beta1.PodMetrics, mmx PodsMetrics) {
+func (*Filter) ListPodsMetrics(pods []mv1beta1.PodMetrics, nmx k8s.PodsMetrics) {
 	// Compute all pod's containers metrics.
 	for _, p := range pods {
-		mx := make(ContainerMetrics, len(p.Containers))
+		mx := make(k8s.ContainerMetrics, len(p.Containers))
 		for _, c := range p.Containers {
-			mx[c.Name] = Metrics{
-				CurrentCPU: c.Usage.Cpu().MilliValue(),
-				CurrentMEM: asMi(c.Usage.Memory().Value()),
+			mx[c.Name] = k8s.Metrics{
+				CurrentCPU: *c.Usage.Cpu(),
+				CurrentMEM: *c.Usage.Memory(),
 			}
 		}
-		mmx[mxFQN(p)] = mx
+		nmx[mxFQN(p)] = mx
 	}
 }
 
@@ -94,7 +265,7 @@ func (f *Filter) ListAllRoleBindings() (map[string]rbacv1.RoleBinding, error) {
 
 	f.allRBs = make(map[string]rbacv1.RoleBinding, len(crbs.Items))
 	for _, rb := range crbs.Items {
-		f.allRBs[fqn(rb.Namespace, rb.Name)] = rb
+		f.allRBs[metaFQN(rb.ObjectMeta)] = rb
 	}
 
 	return f.allRBs, nil
@@ -132,7 +303,7 @@ func (f *Filter) ListAllEndpoints() (map[string]v1.Endpoints, error) {
 
 	f.allEPs = make(map[string]v1.Endpoints, len(ll.Items))
 	for _, ep := range ll.Items {
-		f.allEPs[fqn(ep.Namespace, ep.Name)] = ep
+		f.allEPs[metaFQN(ep.ObjectMeta)] = ep
 	}
 
 	return f.allEPs, nil
@@ -199,7 +370,7 @@ func (f *Filter) ListAllServices() (map[string]v1.Service, error) {
 
 	f.allSVCs = make(map[string]v1.Service, len(svcs.Items))
 	for _, svc := range svcs.Items {
-		f.allSVCs[fqn(svc.Namespace, svc.Name)] = svc
+		f.allSVCs[metaFQN(svc.ObjectMeta)] = svc
 	}
 
 	return f.allSVCs, nil
@@ -263,6 +434,24 @@ func (f *Filter) PodsNamespaces(nss []string) {
 	}
 }
 
+// ListPodsByLabels retrieves all pods matching a label selector in the allowed namespaces.
+func (f *Filter) ListPodsByLabels(sel string) (map[string]v1.Pod, error) {
+	pods, err := f.FetchPodsByLabels(sel)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[string]v1.Pod, len(pods.Items))
+	for _, po := range pods.Items {
+		if f.matchActiveNS(po.Namespace) && !f.ExcludedNS(po.Namespace) {
+			res[metaFQN(po.ObjectMeta)] = po
+		}
+	}
+
+	return res, nil
+
+}
+
 // ListPods list all available pods.
 func (f *Filter) ListPods() (map[string]v1.Pod, error) {
 	pods, err := f.ListAllPods()
@@ -293,7 +482,7 @@ func (f *Filter) ListAllPods() (map[string]v1.Pod, error) {
 
 	f.allPods = make(map[string]v1.Pod, len(ll.Items))
 	for _, po := range ll.Items {
-		f.allPods[podFQN(po)] = po
+		f.allPods[metaFQN(po.ObjectMeta)] = po
 	}
 
 	return f.allPods, nil
@@ -329,7 +518,7 @@ func (f *Filter) ListAllConfigMaps() (map[string]v1.ConfigMap, error) {
 
 	f.allCMs = make(map[string]v1.ConfigMap, len(ll.Items))
 	for _, cm := range ll.Items {
-		f.allCMs[fqn(cm.Namespace, cm.Name)] = cm
+		f.allCMs[metaFQN(cm.ObjectMeta)] = cm
 	}
 
 	return f.allCMs, nil
@@ -365,7 +554,7 @@ func (f *Filter) ListAllSecrets() (map[string]v1.Secret, error) {
 
 	f.allSecs = make(map[string]v1.Secret, len(ll.Items))
 	for _, sec := range ll.Items {
-		f.allSecs[fqn(sec.Namespace, sec.Name)] = sec
+		f.allSecs[metaFQN(sec.ObjectMeta)] = sec
 	}
 
 	return f.allSecs, nil
@@ -401,7 +590,7 @@ func (f *Filter) ListAllServiceAccounts() (map[string]v1.ServiceAccount, error) 
 
 	f.allSAs = make(map[string]v1.ServiceAccount, len(ll.Items))
 	for _, sa := range ll.Items {
-		f.allSAs[fqn(sa.Namespace, sa.Name)] = sa
+		f.allSAs[metaFQN(sa.ObjectMeta)] = sa
 	}
 
 	return f.allSAs, nil
@@ -456,10 +645,6 @@ func (f *Filter) matchActiveNS(ns string) bool {
 
 func mxFQN(mx mv1beta1.PodMetrics) string {
 	return mx.Namespace + "/" + mx.Name
-}
-
-func fqn(ns, n string) string {
-	return ns + "/" + n
 }
 
 func isSystemNS(ns string) bool {

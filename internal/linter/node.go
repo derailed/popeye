@@ -2,10 +2,11 @@ package linter
 
 import (
 	"context"
-	"math"
 
+	"github.com/derailed/popeye/internal/k8s"
 	"github.com/rs/zerolog"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
@@ -38,13 +39,9 @@ func (n *Node) Lint(ctx context.Context) error {
 
 	tt := n.fetchPodTolerations()
 
-	var mx []mv1beta1.NodeMetrics
-	nmx := make(NodesMetrics)
-	if ok, _ := n.ClusterHasMetrics(); ok {
-		if mx, err = n.FetchNodesMetrics(); err != nil {
-			return err
-		}
-		n.ListNodesMetrics(nodes, mx, nmx)
+	nmx := make(k8s.NodesMetrics)
+	if err := nodeMetrics(n, nmx); err != nil {
+		return err
 	}
 
 	for _, no := range nodes {
@@ -55,7 +52,7 @@ func (n *Node) Lint(ctx context.Context) error {
 	return nil
 }
 
-func (n *Node) lint(no v1.Node, mx NodeMetrics, t tolerations) {
+func (n *Node) lint(no v1.Node, mx k8s.NodeMetrics, t tolerations) {
 	ready := n.checkConditions(no)
 	if ready {
 		n.checkTaints(no, t)
@@ -128,21 +125,50 @@ func (n *Node) checkConditions(no v1.Node) bool {
 	return ready
 }
 
-func (n *Node) checkUtilization(no string, mx NodeMetrics) {
+func (n *Node) checkUtilization(no string, mx k8s.NodeMetrics) {
 	if mx.Empty() {
 		n.addIssuef(no, WarnLevel, "No node metrics available")
 		return
 	}
 
-	percCPU := ToPerc(float64(mx.CurrentCPU), float64(mx.AvailCPU))
-	cpuLimit := n.NodeCPULimit()
-	if math.Round(percCPU) > cpuLimit {
-		n.addIssuef(no, WarnLevel, "CPU threshold (%0.f%%) reached %0.f%%", cpuLimit, percCPU)
+	percCPU := ToPerc(toMC(mx.CurrentCPU), toMC(mx.AvailableCPU))
+	cpuLimit := int64(n.NodeCPULimit())
+	if percCPU > cpuLimit {
+		n.addIssuef(no, WarnLevel, "CPU threshold (%d%%) reached %d%%", cpuLimit, percCPU)
 	}
 
-	percMEM := ToPerc(float64(mx.CurrentMEM), float64(mx.AvailMEM))
-	memLimit := n.NodeMEMLimit()
-	if math.Round(percMEM) > memLimit {
-		n.addIssuef(no, WarnLevel, "Memory threshold (%0.f%%) reached %0.f%%", memLimit, percMEM)
+	percMEM := ToPerc(toMB(mx.CurrentMEM), toMB(mx.AvailableMEM))
+	memLimit := int64(n.NodeMEMLimit())
+	if percMEM > memLimit {
+		n.addIssuef(no, WarnLevel, "Memory threshold (%d%%) reached %d%%", memLimit, percMEM)
 	}
+}
+
+// ----------------------------------------------------------------------------
+// Helpers...
+
+func clusterCapacity(mx k8s.NodesMetrics) (cpu, mem resource.Quantity) {
+	for _, m := range mx {
+		cpu.Add(m.AvailableCPU)
+		mem.Add(m.AvailableMEM)
+	}
+
+	return
+}
+
+func nodeMetrics(l Loader, nmx k8s.NodesMetrics) error {
+	nodes, err := l.ListNodes()
+	if err != nil {
+		return err
+	}
+
+	var mx []mv1beta1.NodeMetrics
+	if ok, _ := l.ClusterHasMetrics(); ok {
+		if mx, err = l.FetchNodesMetrics(); err != nil {
+			return err
+		}
+		l.ListNodesMetrics(nodes, mx, nmx)
+	}
+
+	return nil
 }

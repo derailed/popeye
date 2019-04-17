@@ -4,7 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/derailed/popeye/internal/k8s"
 	m "github.com/petergtz/pegomock"
+	pegomock "github.com/petergtz/pegomock"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,7 +35,7 @@ func TestNoLinter(t *testing.T) {
 	assert.Equal(t, 2, len(l.Issues()))
 	assert.Equal(t, 1, len(l.Issues()["n1"]))
 	assert.Equal(t, 0, len(l.Issues()["n2"]))
-	mkl.VerifyWasCalledOnce().ListNodes()
+	mkl.VerifyWasCalled(pegomock.Times(2)).ListNodes()
 	mkl.VerifyWasCalledOnce().ListAllPods()
 }
 
@@ -54,7 +56,7 @@ func TestNodeLint(t *testing.T) {
 
 	for _, u := range uu {
 		l := NewNode(nil, nil)
-		l.lint(u.no, NodeMetrics{}, tolerations{})
+		l.lint(u.no, k8s.NodeMetrics{}, tolerations{})
 
 		assert.Equal(t, u.issues, len(l.Issues()[u.no.Name]))
 	}
@@ -62,31 +64,48 @@ func TestNodeLint(t *testing.T) {
 
 func TestNodeUtilization(t *testing.T) {
 	uu := []struct {
-		mx     NodeMetrics
+		mx     k8s.NodeMetrics
 		issues int
 		level  Level
 	}{
 		{
-			mx:     NodeMetrics{CurrentCPU: 500, AvailCPU: 1000, CurrentMEM: 1000, AvailMEM: 2000},
+			mx: k8s.NodeMetrics{
+				CurrentCPU:   toQty("500m"),
+				AvailableCPU: toQty("1000m"),
+				CurrentMEM:   toQty("100Mi"),
+				AvailableMEM: toQty("200Mi")},
 			issues: 0,
 		},
 		{
-			mx:     NodeMetrics{CurrentCPU: 900, AvailCPU: 1000, CurrentMEM: 1000, AvailMEM: 2000},
+			mx: k8s.NodeMetrics{
+				CurrentCPU:   toQty("900m"),
+				AvailableCPU: toQty("1"),
+				CurrentMEM:   toQty("1Mi"),
+				AvailableMEM: toQty("2Mi")},
 			issues: 1,
 			level:  WarnLevel,
 		},
 		{
-			mx:     NodeMetrics{CurrentCPU: 500, AvailCPU: 1000, CurrentMEM: 9000, AvailMEM: 10000},
+			mx: k8s.NodeMetrics{
+				CurrentCPU:   toQty("500m"),
+				AvailableCPU: toQty("1"),
+				CurrentMEM:   toQty("900Mi"),
+				AvailableMEM: toQty("1Mi"),
+			},
 			issues: 1,
 			level:  WarnLevel,
 		},
 		{
-			mx:     NodeMetrics{CurrentCPU: 900, AvailCPU: 1000, CurrentMEM: 9000, AvailMEM: 10000},
+			mx: k8s.NodeMetrics{
+				CurrentCPU:   toQty("900m"),
+				AvailableCPU: toQty("1"),
+				CurrentMEM:   toQty("900Mi"),
+				AvailableMEM: toQty("1Mi")},
 			issues: 2,
 			level:  WarnLevel,
 		},
 		{
-			mx:     NodeMetrics{},
+			mx:     k8s.NodeMetrics{},
 			issues: 1,
 			level:  WarnLevel,
 		},

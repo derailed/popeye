@@ -7,18 +7,18 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-// CM represents a ConfigMap linter.
-type CM struct {
+// ConfigMap represents a ConfigMap linter.
+type ConfigMap struct {
 	*Linter
 }
 
-// NewCM returns a new ConfigMap linter.
-func NewCM(l Loader, log *zerolog.Logger) *CM {
-	return &CM{NewLinter(l, log)}
+// NewConfigMap returns a new ConfigMap linter.
+func NewConfigMap(l Loader, log *zerolog.Logger) *ConfigMap {
+	return &ConfigMap{NewLinter(l, log)}
 }
 
 // Lint a ConfigMap.
-func (c *CM) Lint(ctx context.Context) error {
+func (c *ConfigMap) Lint(ctx context.Context) error {
 	cms, err := c.ListConfigMaps()
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ func (c *CM) Lint(ctx context.Context) error {
 	return nil
 }
 
-func (c *CM) lint(cms map[string]v1.ConfigMap, pods map[string]v1.Pod) {
+func (c *ConfigMap) lint(cms map[string]v1.ConfigMap, pods map[string]v1.Pod) {
 	refs := make(References, len(cms))
 	for fqn, po := range pods {
 		c.checkVolumes(fqn, po.Spec.Volumes, refs)
@@ -82,7 +82,7 @@ func (c *CM) lint(cms map[string]v1.ConfigMap, pods map[string]v1.Pod) {
 	}
 }
 
-func (*CM) checkVolumes(poFQN string, vols []v1.Volume, refs References) {
+func (*ConfigMap) checkVolumes(poFQN string, vols []v1.Volume, refs References) {
 	ns, _ := namespaced(poFQN)
 	for _, v := range vols {
 		cm := v.VolumeSource.ConfigMap
@@ -104,7 +104,7 @@ func (*CM) checkVolumes(poFQN string, vols []v1.Volume, refs References) {
 	}
 }
 
-func (c *CM) checkContainerRefs(poFQN string, cos []v1.Container, refs References) {
+func (c *ConfigMap) checkContainerRefs(poFQN string, cos []v1.Container, refs References) {
 	for _, co := range cos {
 		c.checkEnvFrom(poFQN, co, refs)
 		c.checkEnv(poFQN, co, refs)
@@ -112,7 +112,7 @@ func (c *CM) checkContainerRefs(poFQN string, cos []v1.Container, refs Reference
 }
 
 // CheckEnvFrom check container envFrom for configMap references.
-func (*CM) checkEnvFrom(poFQN string, co v1.Container, refs References) {
+func (*ConfigMap) checkEnvFrom(poFQN string, co v1.Container, refs References) {
 	ns, _ := namespaced(poFQN)
 	for _, e := range co.EnvFrom {
 		cmRef := e.ConfigMapRef
@@ -131,7 +131,7 @@ func (*CM) checkEnvFrom(poFQN string, co v1.Container, refs References) {
 }
 
 // CheckEnv checks container Env section for configMap references.
-func (*CM) checkEnv(poFQN string, co v1.Container, refs References) {
+func (*ConfigMap) checkEnv(poFQN string, co v1.Container, refs References) {
 	ns, _ := namespaced(poFQN)
 	blank := struct{}{}
 
@@ -164,6 +164,6 @@ func ref(s, r string) string {
 	return s + ":" + r
 }
 
-func fqnCM(s v1.ConfigMap) string {
+func fqnConfigMap(s v1.ConfigMap) string {
 	return s.Namespace + "/" + s.Name
 }

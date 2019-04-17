@@ -4,12 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/derailed/popeye/internal/k8s"
 	m "github.com/petergtz/pegomock"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
+	v1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
 func TestPoLinter(t *testing.T) {
@@ -58,7 +60,7 @@ func TestPoCheckStatus(t *testing.T) {
 		l := NewPod(nil, nil)
 		l.checkStatus(po)
 
-		fqn := podFQN(po)
+		fqn := metaFQN(po.ObjectMeta)
 		assert.Equal(t, u.issues, len(l.Issues()[fqn]))
 		if len(l.Issues()[fqn]) != 0 {
 			assert.Equal(t, u.severity, l.MaxSeverity(fqn))
@@ -96,7 +98,7 @@ func TestPoCheckContainerStatus(t *testing.T) {
 		l := NewPod(mkl, nil)
 		l.checkContainerStatus(po)
 
-		fqn := podFQN(po)
+		fqn := metaFQN(po.ObjectMeta)
 		assert.Equal(t, u.issues, len(l.Issues()[fqn]))
 		if len(l.Issues()[fqn]) != 0 {
 			assert.Equal(t, u.severity, l.Issues()[fqn][0].Severity())
@@ -112,21 +114,37 @@ func TestPoCheckContainers(t *testing.T) {
 		issues              int
 		severity            Level
 	}{
+		// No probes, no resources.
 		{issues: 2, severity: WarnLevel},
+		// No resources, no liveness.
 		{issues: 2, readiness: true, severity: WarnLevel},
+		// No resources.
 		{issues: 2, liveness: true, severity: WarnLevel},
+		// Probes but no resources.
 		{issues: 1, liveness: true, readiness: true, severity: WarnLevel},
+		// No probes.
 		{issues: 1, limit: true, severity: WarnLevel},
+		// One probe, one resource.
 		{issues: 1, limit: true, readiness: true, severity: WarnLevel},
+		// One probe, one resource (Guaranteed).
 		{issues: 1, limit: true, liveness: true, severity: WarnLevel},
+		// Two probes, guaranteed.
 		{issues: 0, limit: true, liveness: true, readiness: true},
+		// No probes, one resource.
 		{issues: 2, request: true, severity: WarnLevel},
+		// No limit, One probe.
 		{issues: 2, request: true, readiness: true, severity: WarnLevel},
+		// No limit, One probe.
 		{issues: 2, request: true, liveness: true, severity: WarnLevel},
+		// No limit, 2 probes.
 		{issues: 1, request: true, liveness: true, readiness: true, severity: WarnLevel},
+		// Burstable, no probes.
 		{issues: 1, request: true, limit: true, severity: WarnLevel},
+		// Burstable, one probe.
 		{issues: 1, request: true, limit: true, readiness: true, severity: WarnLevel},
+		// Burstable, one probe.
 		{issues: 1, request: true, limit: true, liveness: true, severity: WarnLevel},
+		// Burstable, 2 probes.
 		{issues: 0, request: true, limit: true, liveness: true, readiness: true},
 	}
 
@@ -140,14 +158,14 @@ func TestPoCheckContainers(t *testing.T) {
 		if u.request {
 			po.Spec.Containers[0].Resources = v1.ResourceRequirements{
 				Requests: v1.ResourceList{
-					v1.ResourceCPU: resource.Quantity{},
+					v1.ResourceCPU: toQty("100m"),
 				},
 			}
 		}
 		if u.limit {
 			po.Spec.Containers[0].Resources = v1.ResourceRequirements{
 				Limits: v1.ResourceList{
-					v1.ResourceCPU: resource.Quantity{},
+					v1.ResourceCPU: toQty("100m"),
 				},
 			}
 		}
@@ -158,11 +176,11 @@ func TestPoCheckContainers(t *testing.T) {
 			po.Spec.Containers[0].ReadinessProbe = &v1.Probe{}
 		}
 
+		fqn := metaFQN(po.ObjectMeta)
 		l := NewPod(nil, nil)
 		l.checkContainers(po)
 
-		fqn := podFQN(po)
-		assert.Equal(t, u.issues, len(l.Issues()[fqn]))
+		assert.Equal(t, u.issues, len(l.Issues()[fqn][0].SubIssues()["c1"]))
 		if len(l.Issues()[fqn]) != 0 {
 			assert.Equal(t, u.severity, l.MaxSeverity(fqn))
 		}
@@ -184,7 +202,7 @@ func TestPoCheckServiceAccount(t *testing.T) {
 		if u.sa != "" {
 			po.Spec.ServiceAccountName = u.sa
 		}
-		fqn := podFQN(po)
+		fqn := metaFQN(po.ObjectMeta)
 
 		l := NewPod(nil, nil)
 		l.checkServiceAccount(po)
@@ -255,14 +273,14 @@ func TestPoLint(t *testing.T) {
 
 func TestPoUtilization(t *testing.T) {
 	uu := []struct {
-		mx     Metrics
+		mx     k8s.Metrics
 		res    v1.ResourceRequirements
 		issues int
 		level  Level
 	}{
 		// Under the request (Burstable)
 		{
-			mx: Metrics{CurrentCPU: 50, CurrentMEM: 15e6},
+			mx: k8s.Metrics{CurrentCPU: toQty("50m"), CurrentMEM: toQty("15Mi")},
 			res: v1.ResourceRequirements{
 				Requests: makeRes("1", "10Mi"),
 				Limits:   makeRes("200m", "20Mi"),
@@ -271,7 +289,7 @@ func TestPoUtilization(t *testing.T) {
 		},
 		// Under the limit (Burstable)
 		{
-			mx: Metrics{CurrentCPU: 200, CurrentMEM: 5e6},
+			mx: k8s.Metrics{CurrentCPU: toQty("200m"), CurrentMEM: toQty("5Mi")},
 			res: v1.ResourceRequirements{
 				Requests: makeRes("100m", "10Mi"),
 				Limits:   makeRes("500m", "20Mi"),
@@ -280,7 +298,7 @@ func TestPoUtilization(t *testing.T) {
 		},
 		// Over the request CPU
 		{
-			mx: Metrics{CurrentCPU: 200, CurrentMEM: 5e6},
+			mx: k8s.Metrics{CurrentCPU: toQty("200m"), CurrentMEM: toQty("5Mi")},
 			res: v1.ResourceRequirements{
 				Requests: makeRes("100m", "10Mi"),
 			},
@@ -288,7 +306,7 @@ func TestPoUtilization(t *testing.T) {
 		},
 		// Over the request MEM
 		{
-			mx: Metrics{CurrentCPU: 50, CurrentMEM: 15e6},
+			mx: k8s.Metrics{CurrentCPU: toQty("50m"), CurrentMEM: toQty("15Mi")},
 			res: v1.ResourceRequirements{
 				Requests: makeRes("100m", "10Mi"),
 			},
@@ -296,7 +314,7 @@ func TestPoUtilization(t *testing.T) {
 		},
 		// Over the limit CPU (Guaranteed)
 		{
-			mx: Metrics{CurrentCPU: 200, CurrentMEM: 5e6},
+			mx: k8s.Metrics{CurrentCPU: toQty("200m"), CurrentMEM: toQty("5Mi")},
 			res: v1.ResourceRequirements{
 				Limits: makeRes("100m", "20Mi"),
 			},
@@ -304,7 +322,7 @@ func TestPoUtilization(t *testing.T) {
 		},
 		// Over the limit MEM (Guaranteed)
 		{
-			mx: Metrics{CurrentCPU: 50, CurrentMEM: 40e6},
+			mx: k8s.Metrics{CurrentCPU: toQty("50m"), CurrentMEM: toQty("40Mi")},
 			res: v1.ResourceRequirements{
 				Limits: makeRes("100m", "20Mi"),
 			},
@@ -313,9 +331,7 @@ func TestPoUtilization(t *testing.T) {
 	}
 
 	for _, u := range uu {
-		po := v1.Pod{
-			ObjectMeta: metav1.ObjectMeta{Name: "fred"},
-		}
+		po := makePod("p1")
 
 		co := v1.Container{
 			Name:  "c1",
@@ -337,9 +353,9 @@ func TestPoUtilization(t *testing.T) {
 		m.When(mkl.PodMEMLimit()).ThenReturn(float64(80))
 
 		l := NewPod(mkl, nil)
-		l.checkUtilization(po, ContainerMetrics{"c1": u.mx})
+		l.checkUtilization(po, k8s.ContainerMetrics{"c1": u.mx})
 
-		assert.Equal(t, u.issues, len(l.Issues()))
+		assert.Equal(t, u.issues, len(l.Issues()["default/p1"][0].SubIssues()))
 		mkl.VerifyWasCalledOnce().PodCPULimit()
 		mkl.VerifyWasCalledOnce().PodMEMLimit()
 	}
@@ -357,4 +373,18 @@ func makePod(n string) v1.Pod {
 	}
 
 	return po
+}
+
+func makeMxPod(name, cpu, mem string) v1beta1.PodMetrics {
+	return v1beta1.PodMetrics{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: "default",
+		},
+		Containers: []v1beta1.ContainerMetrics{
+			{Name: "c1", Usage: makeRes(cpu, mem)},
+			{Name: "c2", Usage: makeRes(cpu, mem)},
+			{Name: "c3", Usage: makeRes(cpu, mem)},
+		},
+	}
 }

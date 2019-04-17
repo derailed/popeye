@@ -60,9 +60,10 @@ func TestLinterAddIssuesMap(t *testing.T) {
 	l.initIssues("fred")
 	assert.True(t, l.NoIssues("fred"))
 
-	l.addIssuesMap("fred", Issues{"blee": []Issue{NewError(WarnLevel, "this is hosed")}})
+	l.addContainerIssues("fred", Issues{"blee": []Issue{NewError(WarnLevel, "this is hosed")}})
 	assert.False(t, l.NoIssues("fred"))
-	assert.Equal(t, "blee||this is hosed", l.Issues()["fred"][0].Description())
+	assert.Equal(t, 1, len(l.Issues()["fred"]))
+	assert.Equal(t, 1, len(l.Issues()["fred"][0].SubIssues()))
 }
 
 func TestLinterAddErrors(t *testing.T) {

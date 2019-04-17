@@ -4,6 +4,7 @@
 package linter
 
 import (
+	config "github.com/derailed/popeye/pkg/config"
 	pegomock "github.com/petergtz/pegomock"
 	"reflect"
 	"time"
@@ -15,6 +16,21 @@ type MockSpinach struct {
 
 func NewMockSpinach() *MockSpinach {
 	return &MockSpinach{fail: pegomock.GlobalFailHandler}
+}
+
+func (mock *MockSpinach) CPUResourceLimits() config.Allocations {
+	if mock == nil {
+		panic("mock must not be nil. Use myMock := NewMockSpinach().")
+	}
+	params := []pegomock.Param{}
+	result := pegomock.GetGenericMockFrom(mock).Invoke("CPUResourceLimits", params, []reflect.Type{reflect.TypeOf((*config.Allocations)(nil)).Elem()})
+	var ret0 config.Allocations
+	if len(result) != 0 {
+		if result[0] != nil {
+			ret0 = result[0].(config.Allocations)
+		}
+	}
+	return ret0
 }
 
 func (mock *MockSpinach) ExcludedNS(_param0 string) bool {
@@ -57,6 +73,21 @@ func (mock *MockSpinach) LinterLevel() int {
 	if len(result) != 0 {
 		if result[0] != nil {
 			ret0 = result[0].(int)
+		}
+	}
+	return ret0
+}
+
+func (mock *MockSpinach) MEMResourceLimits() config.Allocations {
+	if mock == nil {
+		panic("mock must not be nil. Use myMock := NewMockSpinach().")
+	}
+	params := []pegomock.Param{}
+	result := pegomock.GetGenericMockFrom(mock).Invoke("MEMResourceLimits", params, []reflect.Type{reflect.TypeOf((*config.Allocations)(nil)).Elem()})
+	var ret0 config.Allocations
+	if len(result) != 0 {
+		if result[0] != nil {
+			ret0 = result[0].(config.Allocations)
 		}
 	}
 	return ret0
@@ -189,6 +220,23 @@ type VerifierSpinach struct {
 	timeout                time.Duration
 }
 
+func (verifier *VerifierSpinach) CPUResourceLimits() *Spinach_CPUResourceLimits_OngoingVerification {
+	params := []pegomock.Param{}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "CPUResourceLimits", params, verifier.timeout)
+	return &Spinach_CPUResourceLimits_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+}
+
+type Spinach_CPUResourceLimits_OngoingVerification struct {
+	mock              *MockSpinach
+	methodInvocations []pegomock.MethodInvocation
+}
+
+func (c *Spinach_CPUResourceLimits_OngoingVerification) GetCapturedArguments() {
+}
+
+func (c *Spinach_CPUResourceLimits_OngoingVerification) GetAllCapturedArguments() {
+}
+
 func (verifier *VerifierSpinach) ExcludedNS(_param0 string) *Spinach_ExcludedNS_OngoingVerification {
 	params := []pegomock.Param{_param0}
 	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "ExcludedNS", params, verifier.timeout)
@@ -258,6 +306,23 @@ func (c *Spinach_LinterLevel_OngoingVerification) GetCapturedArguments() {
 }
 
 func (c *Spinach_LinterLevel_OngoingVerification) GetAllCapturedArguments() {
+}
+
+func (verifier *VerifierSpinach) MEMResourceLimits() *Spinach_MEMResourceLimits_OngoingVerification {
+	params := []pegomock.Param{}
+	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "MEMResourceLimits", params, verifier.timeout)
+	return &Spinach_MEMResourceLimits_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
+}
+
+type Spinach_MEMResourceLimits_OngoingVerification struct {
+	mock              *MockSpinach
+	methodInvocations []pegomock.MethodInvocation
+}
+
+func (c *Spinach_MEMResourceLimits_OngoingVerification) GetCapturedArguments() {
+}
+
+func (c *Spinach_MEMResourceLimits_OngoingVerification) GetAllCapturedArguments() {
 }
 
 func (verifier *VerifierSpinach) NodeCPULimit() *Spinach_NodeCPULimit_OngoingVerification {

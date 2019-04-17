@@ -56,7 +56,7 @@ func doIt(cmd *cobra.Command, args []string) {
 	if err != nil {
 		bomb(fmt.Sprintf("Popeye configuration load failed %v", err))
 	}
-	popeye.Sanitize(true)
+	popeye.Sanitize()
 }
 
 func bomb(msg string) {
@@ -66,17 +66,17 @@ func bomb(msg string) {
 
 func initFlags() {
 	rootCmd.Flags().StringVarP(
+		flags.Output,
+		"out", "o",
+		"pimpy",
+		"Specify the output type pimpy, jurassic, yaml",
+	)
+
+	rootCmd.Flags().StringVarP(
 		flags.LintLevel,
 		"lint", "l",
 		"ok",
 		"Specify a lint level (ok, info, warn, error)",
-	)
-
-	rootCmd.Flags().BoolVarP(
-		flags.Jurassic,
-		"jurassic", "j",
-		false,
-		"Turn on Jurassic mode sanitizer report",
 	)
 
 	rootCmd.Flags().BoolVarP(

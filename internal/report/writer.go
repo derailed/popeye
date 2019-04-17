@@ -32,12 +32,10 @@ type Sanitizer struct {
 //
 
 // NewSanitizer returns a new sanitizer report writer.
-func NewSanitizer(w io.Writer, fd uintptr, jurassic *bool) *Sanitizer {
+func NewSanitizer(w io.Writer, fd uintptr, jurassic bool) *Sanitizer {
 	s := Sanitizer{Writer: w, jurassicMode: jurassicTerm(fd)}
+	s.jurassicMode = jurassic
 
-	if jurassic != nil {
-		s.jurassicMode = *jurassic
-	}
 	log.Debug().Msgf("NeanderTerm mode activated? %t", s.jurassicMode)
 
 	return &s
@@ -50,7 +48,7 @@ func (s *Sanitizer) Open(msg string, t *Tally) {
 		out := t.Dump(s)
 		spacer := 13
 		if s.jurassicMode {
-			spacer = 1
+			spacer = 2
 		}
 		indent := Width - len(msg) - utf8.RuneCountInString(out) + spacer
 		fmt.Fprintf(s, "%s", strings.Repeat(" ", indent))
@@ -92,20 +90,23 @@ func (s *Sanitizer) Comment(msg string) {
 
 // Dump all errors to output.
 func (s *Sanitizer) Dump(l linter.Level, issues ...linter.Issue) {
-	var current string
 	for _, i := range issues {
-		if i.Severity() >= l {
-			tokens := strings.Split(i.Description(), linter.Delimiter)
-			if len(tokens) == 1 {
-				s.write(i.Severity(), 2, i.Description()+".")
-			} else {
-				if current != tokens[0] {
-					s.write(containerLevel, 2, tokens[0])
-					current = tokens[0]
-				}
-				s.write(i.Severity(), 3, tokens[1]+".")
-			}
+		if i.Severity() < l {
+			continue
 		}
+
+		if i.HasSubIssues() {
+			s.write(i.Severity(), 2, i.Description()+".")
+
+			for k, ii := range i.SubIssues() {
+				s.write(containerLevel, 2, k)
+				for _, is := range ii {
+					s.write(is.Severity(), 3, is.Description()+".")
+				}
+			}
+			continue
+		}
+		s.write(i.Severity(), 2, i.Description()+".")
 	}
 }
 
@@ -116,6 +117,10 @@ func (s *Sanitizer) Print(l linter.Level, indent int, msg string) {
 
 // Write a colorized message to stdout.
 func (s *Sanitizer) write(l linter.Level, indent int, msg string) {
+	if msg == "" || msg == "." {
+		return
+	}
+
 	spacer, emoji := strings.Repeat(" ", tabSize*indent), s.EmojiForLevel(l)
 
 	extra := 1
@@ -135,7 +140,11 @@ func (s *Sanitizer) write(l linter.Level, indent int, msg string) {
 	}
 
 	msg = s.Color(msg, colorForLevel(l))
-	fmt.Fprintf(s, "%s%s %s\n", spacer, emoji, msg)
+	if emoji == "" {
+		fmt.Fprintf(s, "%s%s\n", spacer, msg)
+	} else {
+		fmt.Fprintf(s, "%s%s %s\n", spacer, emoji, msg)
+	}
 }
 
 // Color or not this message by inject ansi colors.

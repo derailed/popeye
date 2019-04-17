@@ -11,7 +11,7 @@ type Flags struct {
 	*genericclioptions.ConfigFlags
 
 	LintLevel   *string
-	Jurassic    *bool
+	Output      *string
 	ClearScreen *bool
 	Spinach     *string
 	Sections    *[]string
@@ -19,15 +19,24 @@ type Flags struct {
 
 // NewFlags returns new configuration flags.
 func NewFlags() *Flags {
-	level, enable, blank := defaultLintLevel, false, ""
+	level, clear, format, blank := defaultLintLevel, false, "standard", ""
 
 	return &Flags{
 		LintLevel:   &level,
-		ClearScreen: &enable,
-		Jurassic:    &enable,
+		Output:      &format,
+		ClearScreen: &clear,
 		Spinach:     &blank,
 		Sections:    &[]string{},
 		ConfigFlags: genericclioptions.NewConfigFlags(false)}
+}
+
+// OutputFormat returns the report output format.
+func (f *Flags) OutputFormat() string {
+	if f.Output != nil {
+		return *f.Output
+	}
+
+	return "cool"
 }
 
 // ----------------------------------------------------------------------------

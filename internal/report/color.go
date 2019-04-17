@@ -40,8 +40,10 @@ func colorForLevel(l linter.Level) Color {
 		return ColorOrangish
 	case linter.InfoLevel:
 		return ColorAqua
-	default:
+	case linter.OkLevel:
 		return ColorDarkOlive
+	default:
+		return ColorLighSlate
 	}
 }
 

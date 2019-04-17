@@ -20,7 +20,7 @@ func TestCMLint(t *testing.T) {
 		"default/p1": makePodEnv("p1", "cm1", "fred", false),
 	}, nil)
 
-	s := NewCM(mkc, nil)
+	s := NewConfigMap(mkc, nil)
 	s.Lint(context.Background())
 
 	assert.Equal(t, 0, len(s.Issues()["default/cm1"]))
@@ -46,7 +46,7 @@ func TestCMLintCMS(t *testing.T) {
 	}
 
 	for _, u := range uu {
-		c := NewCM(nil, nil)
+		c := NewConfigMap(nil, nil)
 		c.lint(
 			map[string]v1.ConfigMap{"default/cm1": u.cm},
 			map[string]v1.Pod{"default/p1": u.pod},
@@ -78,7 +78,7 @@ func TestCMCheckContainerRefs(t *testing.T) {
 
 	for _, u := range uu {
 		refs := References{}
-		var c *CM
+		var c *ConfigMap
 		c.checkContainerRefs("default/p1", u.po.Spec.Containers, refs)
 
 		v, ok := refs["default/cm1"][u.key]
@@ -118,7 +118,7 @@ func TestCMCheckVolumes(t *testing.T) {
 
 	for _, u := range uu {
 		refs := References{}
-		var c *CM
+		var c *ConfigMap
 		c.checkVolumes("default/p1", u.po.Spec.Volumes, refs)
 
 		v, ok := refs["default/cm1"]["volume"]
@@ -130,7 +130,7 @@ func TestCMCheckVolumes(t *testing.T) {
 }
 
 func TestFQNCM(t *testing.T) {
-	assert.Equal(t, "default/cm1", fqnCM(makeCM("cm1")))
+	assert.Equal(t, "default/cm1", fqnConfigMap(makeCM("cm1")))
 }
 
 // ----------------------------------------------------------------------------

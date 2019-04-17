@@ -11,18 +11,18 @@ import (
 
 // BOZO!! Check policy for potential dups or override privs
 
-// SA represents a ServiceAccount linter.
-type SA struct {
+// ServiceAccount represents a ServiceAccount linter.
+type ServiceAccount struct {
 	*Linter
 }
 
-// NewSA returns a new ServiceAccount linter.
-func NewSA(l Loader, log *zerolog.Logger) *SA {
-	return &SA{NewLinter(l, log)}
+// NewServiceAccount returns a new ServiceAccount linter.
+func NewServiceAccount(l Loader, log *zerolog.Logger) *ServiceAccount {
+	return &ServiceAccount{NewLinter(l, log)}
 }
 
 // Lint a serviceaccount.
-func (s *SA) Lint(ctx context.Context) error {
+func (s *ServiceAccount) Lint(ctx context.Context) error {
 	crbs := map[string]rbacv1.ClusterRoleBinding{}
 	if s.ActiveNamespace() == "" {
 		var err error
@@ -47,7 +47,7 @@ func (s *SA) Lint(ctx context.Context) error {
 	return nil
 }
 
-func (s *SA) checkDead(pods map[string]v1.Pod, crbs map[string]rbacv1.ClusterRoleBinding, rbs map[string]rbacv1.RoleBinding) {
+func (s *ServiceAccount) checkDead(pods map[string]v1.Pod, crbs map[string]rbacv1.ClusterRoleBinding, rbs map[string]rbacv1.RoleBinding) {
 	refs := make(map[string]string, len(crbs)+len(rbs))
 
 	for _, crb := range crbs {
@@ -90,7 +90,7 @@ func (s *SA) checkDead(pods map[string]v1.Pod, crbs map[string]rbacv1.ClusterRol
 }
 
 // ----------------------------------------------------------------------------
-// Refs...
+// Helpers...
 
 func namespaced(s string) (string, string) {
 	tokens := strings.Split(s, "/")

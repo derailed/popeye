@@ -7,10 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const (
-	defaultWidth     = 80
-	defaultLintLevel = "ok"
-)
+const defaultLintLevel = "ok"
 
 // Config tracks Popeye configuration options.
 type Config struct {
@@ -54,6 +51,16 @@ func (c *Config) Sections() []string {
 	}
 
 	return []string{}
+}
+
+// CPUResourceLimits returns memory over/under allocation thresholds.
+func (c *Config) CPUResourceLimits() Allocations {
+	return c.Popeye.Allocations.CPU
+}
+
+// MEMResourceLimits returns memory over/under allocation thresholds.
+func (c *Config) MEMResourceLimits() Allocations {
+	return c.Popeye.Allocations.MEM
 }
 
 // NodeCPULimit returns the node cpu threshold if set otherwise the default.

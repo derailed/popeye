@@ -26,7 +26,7 @@ func TestSALint(t *testing.T) {
 		"p1": makePodSa("p1", "sa2"),
 	}, nil)
 
-	s := NewSA(mkl, nil)
+	s := NewServiceAccount(mkl, nil)
 	s.Lint(context.Background())
 
 	assert.Equal(t, 1, len(s.Issues()["default/sa1"]))
@@ -61,7 +61,7 @@ func TestSACheckDead(t *testing.T) {
 	mkl := NewMockLoader()
 	m.When(mkl.ExcludedNS("default")).ThenReturn(false)
 	for _, u := range uu {
-		s := NewSA(mkl, nil)
+		s := NewServiceAccount(mkl, nil)
 		s.checkDead(u.pods, u.crbs, u.rbs)
 
 		assert.Equal(t, u.issue, len(s.Issues()["default/sa2"]))

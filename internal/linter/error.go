@@ -11,9 +11,6 @@ const (
 	WarnLevel
 	// ErrorLevel denotes a serious issue.
 	ErrorLevel
-
-	// Delimiter indicates a sub section.
-	Delimiter = "||"
 )
 
 type (
@@ -22,27 +19,43 @@ type (
 
 	// Error tracks a linter issue.
 	Error struct {
-		severity    Level
-		description string
+		Level   Level  `yaml:"level"`
+		Message string `yaml:"message"`
+		Subs    Issues `yaml:"containers,omitempty"`
 	}
 )
 
-// NewErrorf returns a new lint issue using a formatter.
-func NewErrorf(level Level, format string, args ...interface{}) Error {
-	return Error{severity: level, description: fmt.Sprintf(format, args...)}
-}
-
 // NewError returns a new lint issue.
-func NewError(level Level, description string) Error {
-	return Error{severity: level, description: description}
+func NewError(level Level, description string) *Error {
+	return &Error{Level: level, Message: description, Subs: Issues{}}
 }
 
-// Severity returns the severity of the message.
-func (e Error) Severity() Level {
-	return e.severity
+// NewErrorf returns a new lint issue using a formatter.
+func NewErrorf(level Level, format string, args ...interface{}) *Error {
+	return NewError(level, fmt.Sprintf(format, args...))
 }
 
-// Description returns the lint description.
-func (e Error) Description() string {
-	return e.description
+// Severity returns the Level of the message.
+func (e *Error) Severity() Level {
+	return e.Level
+}
+
+// SetSeverity sets the severity level.
+func (e *Error) SetSeverity(l Level) {
+	e.Level = l
+}
+
+// Description returns the lint Message.
+func (e *Error) Description() string {
+	return e.Message
+}
+
+// HasSubIssues checks if error contains sub issues.
+func (e *Error) HasSubIssues() bool {
+	return len(e.Subs) > 0
+}
+
+// SubIssues returns the lint Message.
+func (e *Error) SubIssues() Issues {
+	return e.Subs
 }

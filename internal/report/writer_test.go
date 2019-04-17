@@ -11,11 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var jurassic = false
-
 func TestComment(t *testing.T) {
 	w := bytes.NewBufferString("")
-	s := NewSanitizer(w, 0, &jurassic)
+	s := NewSanitizer(w, 0, false)
 
 	s.Comment("blee")
 
@@ -39,7 +37,7 @@ func TestError(t *testing.T) {
 
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
-		s := NewSanitizer(w, 0, &jurassic)
+		s := NewSanitizer(w, 0, false)
 		s.Error("blee", u.err)
 
 		assert.Equal(t, u.e, w.String())
@@ -71,7 +69,7 @@ func TestPrint(t *testing.T) {
 
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
-		s := NewSanitizer(w, 0, &jurassic)
+		s := NewSanitizer(w, 0, false)
 		s.Print(linter.OkLevel, u.indent, u.m)
 
 		assert.Equal(t, u.e, w.String())
@@ -96,13 +94,13 @@ func TestDump(t *testing.T) {
 					linter.NewError(linter.WarnLevel, "c1||Yo!"),
 				},
 			},
-			"    🐳 \x1b[38;5;155;mc1\x1b[0m\n      😱 \x1b[38;5;220;mYo Mama!.\x1b[0m\n      😱 \x1b[38;5;220;mYo!.\x1b[0m\n",
+			"    😱 \x1b[38;5;220;mc1||Yo Mama!.\x1b[0m\n    😱 \x1b[38;5;220;mc1||Yo!.\x1b[0m\n",
 		},
 	}
 
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
-		s := NewSanitizer(w, 0, &jurassic)
+		s := NewSanitizer(w, 0, false)
 		s.Dump(linter.OkLevel, u.issues["fred"]...)
 
 		assert.Equal(t, u.e, w.String())
@@ -110,7 +108,7 @@ func TestDump(t *testing.T) {
 }
 
 func BenchmarkPrint(b *testing.B) {
-	s := NewSanitizer(ioutil.Discard, 0, &jurassic)
+	s := NewSanitizer(ioutil.Discard, 0, false)
 
 	b.ResetTimer()
 	b.ReportAllocs()
@@ -134,7 +132,7 @@ func TestOpen(t *testing.T) {
 
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
-		s := NewSanitizer(w, 0, &jurassic)
+		s := NewSanitizer(w, 0, false)
 
 		ta := NewTally().Rollup(u.issues)
 		s.Open("blee", ta)
@@ -145,7 +143,7 @@ func TestOpen(t *testing.T) {
 
 func TestOpenClose(t *testing.T) {
 	w := bytes.NewBufferString("")
-	s := NewSanitizer(w, 0, &jurassic)
+	s := NewSanitizer(w, 0, false)
 
 	s.Open("fred", nil)
 	s.Close()

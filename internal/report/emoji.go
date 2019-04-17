@@ -2,7 +2,10 @@ package report
 
 import "github.com/derailed/popeye/internal/linter"
 
-const containerLevel linter.Level = 100
+const (
+	containerLevel linter.Level = 100
+	noLevel        linter.Level = 101
+)
 
 var emojis = map[string]string{
 	"peachy":     "✅",
@@ -25,6 +28,8 @@ func (s *Sanitizer) EmojiForLevel(l linter.Level) string {
 	var key string
 
 	switch l {
+	case noLevel:
+		return ""
 	case containerLevel:
 		key = "container"
 	case linter.ErrorLevel:

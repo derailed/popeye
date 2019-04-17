@@ -1,6 +1,8 @@
 package k8s
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,6 +29,31 @@ func NewClient(flags *Flags) *Client {
 	return &Client{Flags: flags}
 }
 
+// FetchStatefulSets retrieves all StatefulSets on the cluster.
+func (c *Client) FetchStatefulSets() (*appsv1.StatefulSetList, error) {
+	return c.DialOrDie().Apps().StatefulSets("").List(metav1.ListOptions{})
+}
+
+// FetchDeployments retrieves all Deployments on the cluster.
+func (c *Client) FetchDeployments() (*appsv1.DeploymentList, error) {
+	return c.DialOrDie().Apps().Deployments("").List(metav1.ListOptions{})
+}
+
+// FetchHorizontalPodAutoscalers retrieves all HorizontalPodAutoscalers on the cluster.
+func (c *Client) FetchHorizontalPodAutoscalers() (*autoscalingv1.HorizontalPodAutoscalerList, error) {
+	return c.DialOrDie().AutoscalingV1().HorizontalPodAutoscalers("").List(metav1.ListOptions{})
+}
+
+// FetchPersistentVolumes retrieves all persistentvolumes on the cluster.
+func (c *Client) FetchPersistentVolumes() (*v1.PersistentVolumeList, error) {
+	return c.DialOrDie().CoreV1().PersistentVolumes().List(metav1.ListOptions{})
+}
+
+// FetchPersistentVolumeClaims retrieves all persistentvolumes on the cluster.
+func (c *Client) FetchPersistentVolumeClaims() (*v1.PersistentVolumeClaimList, error) {
+	return c.DialOrDie().CoreV1().PersistentVolumeClaims("").List(metav1.ListOptions{})
+}
+
 // FetchNamespaces retrieves all namespaces on the cluster.
 func (c *Client) FetchNamespaces() (*v1.NamespaceList, error) {
 	return c.DialOrDie().CoreV1().Namespaces().List(metav1.ListOptions{})
@@ -45,6 +72,13 @@ func (c *Client) FetchConfigMaps() (*v1.ConfigMapList, error) {
 // FetchSecrets retrieves all secrets on the cluster.
 func (c *Client) FetchSecrets() (*v1.SecretList, error) {
 	return c.DialOrDie().CoreV1().Secrets("").List(metav1.ListOptions{})
+}
+
+// FetchPodsByLabels retrieves all pods matching a label selector.
+func (c *Client) FetchPodsByLabels(sel string) (*v1.PodList, error) {
+	return c.DialOrDie().CoreV1().Pods("").List(metav1.ListOptions{
+		LabelSelector: sel,
+	})
 }
 
 // FetchPods retrieves all pods on the cluster.

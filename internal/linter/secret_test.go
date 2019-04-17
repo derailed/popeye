@@ -107,7 +107,7 @@ func TestSecCheckContainerRefs(t *testing.T) {
 	for _, u := range uu {
 		refs := References{}
 		var s *Secret
-		s.checkContainerRefs(podFQN(u.po), u.po.Spec.Containers, refs)
+		s.checkContainerRefs(metaFQN(u.po.ObjectMeta), u.po.Spec.Containers, refs)
 
 		v, ok := refs["default/s1"][u.key]
 		if u.present {
@@ -141,7 +141,7 @@ func TestSecCheckVolumes(t *testing.T) {
 	for _, u := range uu {
 		refs := References{}
 		var s *Secret
-		s.checkVolumes(podFQN(u.po), u.po.Spec.Volumes, refs)
+		s.checkVolumes(metaFQN(u.po.ObjectMeta), u.po.Spec.Volumes, refs)
 
 		v, ok := refs["default/s1"][u.key]
 		if u.present {

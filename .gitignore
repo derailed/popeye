@@ -7,3 +7,5 @@ eugen1
 *.txt
 /dist
 .envrc
+gen.sh
+capacitor.go

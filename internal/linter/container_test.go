@@ -3,6 +3,7 @@ package linter
 import (
 	"testing"
 
+	"github.com/derailed/popeye/internal/k8s"
 	m "github.com/petergtz/pegomock"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -12,16 +13,16 @@ import (
 func TestContainerCheckUtilization(t *testing.T) {
 	uu := []struct {
 		co       v1.Container
-		mx       Metrics
+		mx       k8s.Metrics
 		issues   int
 		severity Level
 	}{
-		{makeContainer("c1", true, true), Metrics{100, 4096}, 0, WarnLevel},
-		{makeContainer("c1", true, true), Metrics{5000, 10000}, 1, ErrorLevel},
-		{makeContainer("c1", true, true), Metrics{5000, 4000000}, 2, ErrorLevel},
-		{makeContainer("c1", false, false), Metrics{5000, 4000000}, 0, ErrorLevel},
-		{makeContainer("c1", true, false), Metrics{5000, 4000000}, 2, ErrorLevel},
-		{makeContainer("c1", false, true), Metrics{5000, 4000000}, 2, ErrorLevel},
+		{makeContainer("c1", true, true), k8s.Metrics{toQty("100m"), toQty("1Mi")}, 0, WarnLevel},
+		{makeContainer("c1", true, true), k8s.Metrics{toQty("100m"), toQty("2Mi")}, 1, ErrorLevel},
+		{makeContainer("c1", true, true), k8s.Metrics{toQty("5"), toQty("4Mi")}, 2, ErrorLevel},
+		{makeContainer("c1", false, false), k8s.Metrics{toQty("5"), toQty("4Mi")}, 0, ErrorLevel},
+		{makeContainer("c1", true, false), k8s.Metrics{toQty("5"), toQty("4Mi")}, 2, ErrorLevel},
+		{makeContainer("c1", false, true), k8s.Metrics{toQty("5"), toQty("4Mi")}, 2, ErrorLevel},
 	}
 
 	for _, u := range uu {
@@ -163,7 +164,7 @@ func TestContainerLint(t *testing.T) {
 
 	for _, u := range uu {
 		l := NewContainer(nil, nil)
-		l.lint(u.co, false)
+		l.lint(u.co, true)
 
 		assert.Equal(t, u.issues, len(l.Issues()["c1"]))
 	}

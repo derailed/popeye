@@ -3,6 +3,7 @@ package linter
 import (
 	"testing"
 
+	"github.com/derailed/popeye/internal/k8s"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -32,6 +33,6 @@ func BenchmarkNodeLint(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 	for n := 0; n < b.N; n++ {
-		l.lint(no, NodeMetrics{}, tt)
+		l.lint(no, k8s.NodeMetrics{}, tt)
 	}
 }
