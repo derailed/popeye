@@ -29,7 +29,7 @@ type (
 		Loader
 
 		log    *zerolog.Logger
-		issues Issues `json:"issues,omitempty" yaml:"issues,omitempty"`
+		issues Issues
 	}
 
 	// Spinach represents a Popeye configuration object.

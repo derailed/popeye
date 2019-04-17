@@ -14,8 +14,8 @@ const targetScore = 80
 
 // Tally tracks lint section scores.
 type Tally struct {
-	counts []int `json:"counts" yaml:"counts"`
-	score  int   `json:"score" yaml:"score"`
+	counts []int
+	score  int
 	valid  bool
 }
 
