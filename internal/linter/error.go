@@ -19,9 +19,9 @@ type (
 
 	// Error tracks a linter issue.
 	Error struct {
-		Level   Level  `yaml:"level"`
-		Message string `yaml:"message"`
-		Subs    Issues `yaml:"containers,omitempty"`
+		Level   Level  `json:"level" yaml:"level"`
+		Message string `json:"message" yaml:"message"`
+		Subs    Issues `json:"containers,omitempty" yaml:"containers,omitempty"`
 	}
 )
 

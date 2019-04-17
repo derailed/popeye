@@ -8,7 +8,15 @@ import (
 )
 
 func TestColorForLevel(t *testing.T) {
-	for k, v := range map[int]Color{0: ColorDarkOlive, 1: ColorAqua, 2: ColorOrangish, 3: ColorRed} {
+	colors := map[int]Color{
+		0: ColorDarkOlive,
+		1: ColorAqua,
+		2: ColorOrangish,
+		3: ColorRed,
+		4: ColorLighSlate,
+	}
+
+	for k, v := range colors {
 		assert.Equal(t, v, colorForLevel(linter.Level(k)))
 	}
 }

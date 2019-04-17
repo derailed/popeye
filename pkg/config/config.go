@@ -20,7 +20,7 @@ type Config struct {
 
 // NewConfig create a new Popeye configuration.
 func NewConfig(flags *k8s.Flags) (*Config, error) {
-	var cfg Config
+	cfg := Config{Popeye: NewPopeye()}
 
 	if isSet(flags.Spinach) {
 		f, err := ioutil.ReadFile(*flags.Spinach)

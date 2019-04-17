@@ -69,7 +69,7 @@ func initFlags() {
 		flags.Output,
 		"out", "o",
 		"pimpy",
-		"Specify the output type pimpy, jurassic, yaml",
+		"Specify the output type (standard, jurassic, yaml, json)",
 	)
 
 	rootCmd.Flags().StringVarP(

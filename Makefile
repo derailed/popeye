@@ -1,6 +1,6 @@
 NAME     := popeye
 PACKAGE  := github.com/derailed/$(NAME)
-VERSION  := 0.3.0
+VERSION  := v0.3.0
 GIT      := $(shell git rev-parse --short HEAD)
 DATE     := $(shell date +%FT%T%Z)
 IMG_NAME := derailed/popeye
@@ -22,6 +22,9 @@ build:     ## Builds the CLI
 
 img:  ## Build Docker Image
 	@docker build --rm -t ${IMAGE} .
+
+push: img ## Push Docker Image
+	@docker push ${IMAGE}
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[38;5;69m%-30s\033[38;5;38m %s\033[0m\n", $$1, $$2}'

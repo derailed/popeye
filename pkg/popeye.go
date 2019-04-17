@@ -42,7 +42,7 @@ type (
 		outputTarget *os.File
 		log          *zerolog.Logger
 		flags        *k8s.Flags
-		builder      *ReportBuilder
+		builder      *report.Builder
 	}
 )
 
@@ -60,7 +60,7 @@ func NewPopeye(flags *k8s.Flags, log *zerolog.Logger, out *os.File) (*Popeye, er
 		log:          log,
 		outputTarget: out,
 		flags:        flags,
-		builder:      NewReportBuilder(),
+		builder:      report.NewBuilder(),
 	}
 
 	return &p, nil
@@ -71,19 +71,21 @@ func (p *Popeye) dump(printHeader bool) {
 	var jurassicMode bool
 
 	switch p.flags.OutputFormat() {
-	case YAMLFormat:
+	case report.YAMLFormat:
 		res, err := p.builder.ToYAML()
 		if err != nil {
+			fmt.Printf("Boom! %v\n", err)
 			log.Fatal().Err(err).Msg("Unable to dump YAML report")
 		}
 		fmt.Printf("%v\n", res)
-	case JSONFormat:
+	case report.JSONFormat:
 		res, err := p.builder.ToJSON()
 		if err != nil {
+			fmt.Printf("Boom! %v\n", err)
 			log.Fatal().Err(err).Msg("Unable to dump JSON report")
 		}
 		fmt.Printf("%v\n", res)
-	case JurassicFormat:
+	case report.JurassicFormat:
 		jurassicMode = true
 		fallthrough
 	default:

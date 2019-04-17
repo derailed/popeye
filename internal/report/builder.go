@@ -1,14 +1,14 @@
-package pkg
+package report
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
 	"strings"
 
 	"github.com/derailed/popeye/internal/linter"
-	"github.com/derailed/popeye/internal/report"
 	"gopkg.in/yaml.v2"
 )
 
@@ -27,41 +27,41 @@ const (
 )
 
 type (
-	// ReportBuilder represents sanitizer report.
-	ReportBuilder struct {
-		Report Report `yaml:"popeye"`
+	// Builder represents sanitizer
+	Builder struct {
+		Report Report `json:"popeye" yaml:"popeye"`
 	}
 
 	// Report represents the output of a sanitization pass.
 	Report struct {
-		Score         int       `yaml:"score"`
-		Grade         string    `yaml:"grade"`
-		Sections      []Section `yaml:"sanitizers"`
+		Score         int       `json:"score" yaml:"score"`
+		Grade         string    `json:"grade" yaml:"grade"`
+		Sections      []Section `json:"sanitizers,omitempty" yaml:"sanitizers,omitempty"`
+		Errors        []error   `json:"errors,omitempty" yaml:"errors,omitempty"`
 		sectionsCount int
 		totalScore    int
-		Errors        []error `yaml:"errors,omitempty"`
 	}
 
 	// Section represents a sanitizer pass
 	Section struct {
-		Title  string        `yaml:"sanitizer"`
-		Tally  *report.Tally `yaml:"tally"`
-		Issues linter.Issues `yaml:"issues,omitempty"`
+		Title  string        `json:"sanitizer" yaml:"sanitizer"`
+		Tally  *Tally        `json:"tally" yaml:"tally"`
+		Issues linter.Issues `json:"issues,omitempty" yaml:"issues,omitempty"`
 	}
 )
 
-// NewReportBuilder returns a new sanitizer report.
-func NewReportBuilder() *ReportBuilder {
-	return &ReportBuilder{}
+// NewBuilder returns a new sanitizer report.
+func NewBuilder() *Builder {
+	return &Builder{}
 }
 
 // AddError record an error associted with the report.
-func (r *ReportBuilder) AddError(err error) {
-	r.Report.Errors = append(r.Report.Errors, err)
+func (b *Builder) AddError(err error) {
+	b.Report.Errors = append(b.Report.Errors, err)
 }
 
-// AddSection adds a sanitizer section to the report
-func (r *ReportBuilder) AddSection(name string, issues linter.Issues, t *report.Tally) {
+// AddSection adds a sanitizer section to the report.
+func (b *Builder) AddSection(name string, issues linter.Issues, t *Tally) {
 	n := strings.ToLower(name)
 	section := Section{
 		Title:  n,
@@ -73,21 +73,25 @@ func (r *ReportBuilder) AddSection(name string, issues linter.Issues, t *report.
 		section.Issues[k] = v
 	}
 
-	r.Report.Sections = append(r.Report.Sections, section)
+	b.Report.Sections = append(b.Report.Sections, section)
 
 	if t.IsValid() {
-		r.Report.sectionsCount++
-		r.Report.totalScore += t.Score()
+		b.Report.sectionsCount++
+		b.Report.totalScore += t.Score()
 	}
 }
 
 // ToYAML dumps sanitizer to YAML.
-func (r *ReportBuilder) ToYAML() (string, error) {
-	score := r.Report.totalScore / r.Report.sectionsCount
-	r.Report.Score = score
-	r.Report.Grade = report.Grade(score)
+func (b *Builder) ToYAML() (string, error) {
+	if b.Report.sectionsCount == 0 {
+		return "", errors.New("Nothing to report, check permissions")
+	}
 
-	raw, err := yaml.Marshal(r)
+	score := b.Report.totalScore / b.Report.sectionsCount
+	b.Report.Score = score
+	b.Report.Grade = Grade(score)
+
+	raw, err := yaml.Marshal(b)
 	if err != nil {
 		return "", err
 	}
@@ -96,12 +100,15 @@ func (r *ReportBuilder) ToYAML() (string, error) {
 }
 
 // ToJSON dumps sanitizer to JSON.
-func (r *ReportBuilder) ToJSON() (string, error) {
-	score := r.Report.totalScore / r.Report.sectionsCount
-	r.Report.Score = score
-	r.Report.Grade = report.Grade(score)
+func (b *Builder) ToJSON() (string, error) {
+	if b.Report.sectionsCount == 0 {
+		return "", errors.New("Nothing to report, check permissions")
+	}
+	score := b.Report.totalScore / b.Report.sectionsCount
+	b.Report.Score = score
+	b.Report.Grade = Grade(score)
 
-	raw, err := json.Marshal(r)
+	raw, err := json.Marshal(b)
 	if err != nil {
 		return "", err
 	}
@@ -110,24 +117,24 @@ func (r *ReportBuilder) ToJSON() (string, error) {
 }
 
 // PrintSummary print outs summary report to screen.
-func (r *ReportBuilder) PrintSummary(s *report.Sanitizer) {
-	if r.Report.sectionsCount == 0 {
+func (b *Builder) PrintSummary(s *Sanitizer) {
+	if b.Report.sectionsCount == 0 {
 		return
 	}
 
 	s.Open("SUMMARY", nil)
 	{
-		score := r.Report.totalScore / r.Report.sectionsCount
-		fmt.Fprintf(s, "Your cluster score: %d -- %s\n", score, report.Grade(score))
+		score := b.Report.totalScore / b.Report.sectionsCount
+		fmt.Fprintf(s, "Your cluster score: %d -- %s\n", score, Grade(score))
 		for _, l := range s.Badge(score) {
-			fmt.Fprintf(s, "%s%s\n", strings.Repeat(" ", report.Width-20), l)
+			fmt.Fprintf(s, "%s%s\n", strings.Repeat(" ", Width-20), l)
 		}
 	}
 	s.Close()
 }
 
 // ClusterInfo dumps cluster information to screen.
-func (r *ReportBuilder) ClusterInfo(s *report.Sanitizer, l linter.Loader) {
+func (b *Builder) ClusterInfo(s *Sanitizer, l linter.Loader) {
 	t := fmt.Sprintf("CLUSTER [%s]", strings.ToUpper(l.ActiveCluster()))
 	s.Open(t, nil)
 	{
@@ -135,7 +142,7 @@ func (r *ReportBuilder) ClusterInfo(s *report.Sanitizer, l linter.Loader) {
 
 		ok, err := l.ClusterHasMetrics()
 		if err != nil {
-			fmt.Printf("💥 %s\n", s.Color(err.Error(), report.ColorRed))
+			fmt.Printf("💥 %s\n", s.Color(err.Error(), ColorRed))
 			os.Exit(1)
 		}
 
@@ -147,29 +154,29 @@ func (r *ReportBuilder) ClusterInfo(s *report.Sanitizer, l linter.Loader) {
 }
 
 // PrintHeader prints report header to screen.
-func (r *ReportBuilder) PrintHeader(s *report.Sanitizer) {
+func (b *Builder) PrintHeader(s *Sanitizer) {
 	fmt.Fprintln(s)
-	for i, l := range report.Logo {
+	for i, l := range Logo {
 		switch {
-		case i < len(report.Popeye):
-			fmt.Fprintf(s, s.Color(report.Popeye[i], report.ColorAqua))
+		case i < len(Popeye):
+			fmt.Fprintf(s, s.Color(Popeye[i], ColorAqua))
 			fmt.Fprintf(s, strings.Repeat(" ", 53))
 		case i == 4:
-			fmt.Fprintf(s, s.Color("  Biffs`em and Buffs`em!", report.ColorLighSlate))
+			fmt.Fprintf(s, s.Color("  Biffs`em and Buffs`em!", ColorLighSlate))
 			fmt.Fprintf(s, strings.Repeat(" ", 56))
 		default:
 			fmt.Fprintf(s, strings.Repeat(" ", 80))
 		}
-		fmt.Fprintln(s, s.Color(l, report.ColorLighSlate))
+		fmt.Fprintln(s, s.Color(l, ColorLighSlate))
 	}
 	fmt.Fprintln(s, "")
 }
 
 // PrintReport prints out sanitizer report to screen
-func (r *ReportBuilder) PrintReport(level linter.Level, s *report.Sanitizer) {
-	for _, section := range r.Report.Sections {
+func (b *Builder) PrintReport(level linter.Level, s *Sanitizer) {
+	for _, section := range b.Report.Sections {
 		var any bool
-		s.Open(report.Titleize(section.Title), section.Tally)
+		s.Open(Titleize(section.Title), section.Tally)
 		{
 			keys := make([]string, 0, len(section.Issues))
 			for k := range section.Issues {
@@ -194,7 +201,7 @@ func (r *ReportBuilder) PrintReport(level linter.Level, s *report.Sanitizer) {
 				s.Dump(level, issues...)
 			}
 			if !any {
-				s.Comment(s.Color("Nothing to report.", report.ColorAqua))
+				s.Comment(s.Color("Nothing to ", ColorAqua))
 			}
 		}
 		s.Close()

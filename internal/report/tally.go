@@ -2,6 +2,7 @@ package report
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
@@ -13,40 +14,14 @@ const targetScore = 80
 
 // Tally tracks lint section scores.
 type Tally struct {
-	counts []int `yaml:"counts"`
-	score  int   `yaml:"score"`
+	counts []int `json:"counts" yaml:"counts"`
+	score  int   `json:"score" yaml:"score"`
 	valid  bool
 }
 
 // NewTally returns a new tally.
 func NewTally() *Tally {
 	return &Tally{counts: make([]int, 4)}
-}
-
-func (t *Tally) MarshalYAML() (interface{}, error) {
-	type m struct {
-		OK    int `yaml:"ok"`
-		Info  int `yaml:"info"`
-		Warn  int `yaml:"warning"`
-		Error int `yaml:"error"`
-		Score int `yaml:"score"`
-	}
-	y := m{Score: t.score}
-
-	for i, v := range t.counts {
-		switch i {
-		case 0:
-			y.OK = v
-		case 1:
-			y.Info = v
-		case 2:
-			y.Warn = v
-		case 3:
-			y.Error = v
-		}
-	}
-
-	return y, nil
 }
 
 // Score returns the tally computed score.
@@ -124,6 +99,63 @@ func (t *Tally) Dump(s *Sanitizer) string {
 	return w.String()
 }
 
+// MarshalYAML renders a tally to YAML.
+func (t *Tally) MarshalYAML() (interface{}, error) {
+	y := struct {
+		OK    int `yaml:"ok"`
+		Info  int `yaml:"info"`
+		Warn  int `yaml:"warning"`
+		Error int `yaml:"error"`
+		Score int `yaml:"score"`
+	}{
+		Score: t.score,
+	}
+
+	for i, v := range t.counts {
+		switch i {
+		case 0:
+			y.OK = v
+		case 1:
+			y.Info = v
+		case 2:
+			y.Warn = v
+		case 3:
+			y.Error = v
+		}
+	}
+
+	return y, nil
+}
+
+// MarshalJSON renders a tally to JSON.
+func (t *Tally) MarshalJSON() ([]byte, error) {
+	y := struct {
+		OK    int `json:"ok"`
+		Info  int `json:"info"`
+		Warn  int `json:"warning"`
+		Error int `json:"error"`
+		Score int `json:"score"`
+	}{
+		Score: t.score,
+	}
+
+	for i, v := range t.counts {
+		switch i {
+		case 0:
+			y.OK = v
+		case 1:
+			y.Info = v
+		case 2:
+			y.Warn = v
+		case 3:
+			y.Error = v
+		}
+	}
+
+	return json.Marshal(y)
+}
+
+// ----------------------------------------------------------------------------
 // Helpers...
 
 func toPerc(v1, v2 float64) float64 {

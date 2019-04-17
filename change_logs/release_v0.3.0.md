@@ -14,25 +14,27 @@ Also if you dig this tool, please make some noise on social! [@kitesurfer](https
 
 ### New Sanitizers
 
-Added Sanitize reports for the following resources:
+Added Sanitizer reports for the following resources:
 
++ Deployment
++ StatefulSet
 + HorizontalPodAutoscaler
 + PersistentVolume
 + PersistentVolumeClaim
-+ StatefulSet
-+ Deployment
 
 Popeye will now scan for configuration and usage issues that may arise from these resources.
-In addition, Popeye now includes resource utilization tracker codename: `Capacitor` to track over/under resource allocations for cpu and memory. Furthermore the **Capacitor** warns you
-when you've maxed out your cluster capacity should say HPA's start firing. This assumes your
-pods declarations include resource requests/limits.
+
+### WARNING! Capacitors are Charged Up!
+
+Ever wondered how much cluster capacity you actually need? Or which resource scaling may cause your cluster to surpass it's capacity? Fear not my friends! In this release, we introduce `Capactor`. We've added metrics monitoring to the sanitizer reports. The `Capacitor` checks your resources (provided they are set!) for potential over/under allocation based on reported metrics. Additionally, the `Capacitor` checks your HorizontalPodAutoscalers and pre-computes resource allocations based on max replicas. Thus you can be warned when there is a potential for your clusters to either reach or surpass their capacity.
+
+Mind you, this is very much still experimental, so procceed with caution!
 
 ### Report Formats
 
 Added support for YAML and JSON output via `-o` CLI parameter.
 
-NOTE: The jurassic mode tho still available has been moved to `-o jurassic`
-
+> NOTE! Jurassic mode, though still in full effect, has been moved to `-o jurassic`
 
 ---
 

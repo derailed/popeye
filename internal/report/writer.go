@@ -10,7 +10,6 @@ import (
 	"github.com/derailed/popeye/internal/linter"
 	runewidth "github.com/mattn/go-runewidth"
 	"github.com/onsi/ginkgo/reporters/stenographer/support/go-isatty"
-	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -35,8 +34,6 @@ type Sanitizer struct {
 func NewSanitizer(w io.Writer, fd uintptr, jurassic bool) *Sanitizer {
 	s := Sanitizer{Writer: w, jurassicMode: jurassicTerm(fd)}
 	s.jurassicMode = jurassic
-
-	log.Debug().Msgf("NeanderTerm mode activated? %t", s.jurassicMode)
 
 	return &s
 }

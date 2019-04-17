@@ -16,6 +16,11 @@ func TestTitleize(t *testing.T) {
 		"ns":   "NAMESPACES",
 		"cm":   "CONFIGMAPS",
 		"sec":  "SECRETS",
+		"pv":   "PERSISTENTVOLUMES",
+		"pvc":  "PERSISTENTVOLUMECLAIMS",
+		"hpa":  "HORIZONTALPODAUTOSCALERS",
+		"dp":   "DEPLOYMENTS",
+		"sts":  "STATEFULSETS",
 	}
 
 	for k, e := range uu {

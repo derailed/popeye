@@ -16,12 +16,15 @@ func TestNewConfig(t *testing.T) {
 	assert.Equal(t, 80.0, cfg.PodCPULimit())
 	assert.Equal(t, 80.0, cfg.PodMEMLimit())
 	assert.False(t, cfg.ExcludedNode("n1"))
-	assert.False(t, cfg.ExcludedService("default/kubernetes"))
-	assert.False(t, cfg.ExcludedNS("kube-public"))
+	assert.True(t, cfg.ExcludedNS("kube-public"))
+	assert.True(t, cfg.ExcludedService("default/kubernetes"))
 	assert.Equal(t, 5, cfg.RestartsLimit())
+	assert.Equal(t, Allocations{Over: 100, Under: 50}, cfg.CPUResourceLimits())
+	assert.Equal(t, Allocations{Over: 100, Under: 50}, cfg.MEMResourceLimits())
+	assert.Equal(t, 0, cfg.LinterLevel())
 }
 
-func TestSpinach(t *testing.T) {
+func TestNewConfigWithFile(t *testing.T) {
 	dir := "assets/sp1.yml"
 
 	f := k8s.NewFlags()
@@ -41,4 +44,14 @@ func TestSpinach(t *testing.T) {
 	assert.Equal(t, 75.0, cfg.PodMEMLimit())
 	assert.Equal(t, 0, cfg.LintLevel)
 	assert.Equal(t, []string{}, cfg.Sections())
+}
+
+func TestNewConfigWithFileToast(t *testing.T) {
+	dir := "assets/spinach.yml"
+
+	f := k8s.NewFlags()
+	f.Spinach = &dir
+
+	_, err := NewConfig(f)
+	assert.NotNil(t, err)
 }

@@ -1,0 +1,6 @@
+.git
+README.md
+/execs
+*_test.go
+k8s
+*.yml

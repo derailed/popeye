@@ -90,11 +90,25 @@ func TestDump(t *testing.T) {
 		{
 			linter.Issues{
 				"fred": []linter.Issue{
-					linter.NewError(linter.WarnLevel, "c1||Yo Mama!"),
-					linter.NewError(linter.WarnLevel, "c1||Yo!"),
+					&linter.Error{
+						Level: linter.WarnLevel,
+						Subs: linter.Issues{
+							"c1": []linter.Issue{
+								linter.NewError(linter.ErrorLevel, "Yo Mama!"),
+							},
+						},
+					},
+					&linter.Error{
+						Level: linter.WarnLevel,
+						Subs: linter.Issues{
+							"c1": []linter.Issue{
+								linter.NewError(linter.ErrorLevel, "Yo!"),
+							},
+						},
+					},
 				},
 			},
-			"    😱 \x1b[38;5;220;mc1||Yo Mama!.\x1b[0m\n    😱 \x1b[38;5;220;mc1||Yo!.\x1b[0m\n",
+			"    🐳 \x1b[38;5;75;mc1\x1b[0m\n      💥 \x1b[38;5;196;mYo Mama!.\x1b[0m\n    🐳 \x1b[38;5;75;mc1\x1b[0m\n      💥 \x1b[38;5;196;mYo!.\x1b[0m\n",
 		},
 	}
 
