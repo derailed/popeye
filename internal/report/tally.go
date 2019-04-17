@@ -83,12 +83,11 @@ func (t *Tally) write(w io.Writer, s *Sanitizer) {
 	if score < targetScore {
 		color = ColorRed
 	}
-
-	perc := "٪"
+	percentageSign := "٪"
 	if s.jurassicMode {
-		perc = "%%"
+		percentageSign = "%%"
 	}
-	fmt.Fprintf(w, "%s%s", s.Color(strconv.Itoa(score), color), perc)
+	fmt.Fprintf(w, "%s%s", s.Color(strconv.Itoa(score), color), percentageSign)
 }
 
 // Dump writes out tally and computes length
