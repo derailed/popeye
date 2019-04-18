@@ -75,7 +75,7 @@ snapcraft:
     bitv6: Arm6
     bitv7: Arm7
   grade: stable
-  confinement: classic
+  confinement: strict
   apps:
     popeye:
       plugs: ["home", "network", "personal-files"]
