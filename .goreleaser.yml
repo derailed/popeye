@@ -74,8 +74,8 @@ snapcraft:
     bit: Arm
     bitv6: Arm6
     bitv7: Arm7
-  grade: edge
-  confinement: devmode
+  grade: stable
+  confinement: strict
   apps:
     popeye:
       plugs: ["home", "network", "personal-files"]
