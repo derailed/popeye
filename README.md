@@ -159,7 +159,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: popeye
-              image: derailed/popeye:v0.3.1
+              image: derailed/popeye:v0.3.3
               imagePullPolicy: IfNotPresent
               args:
                 - -o
