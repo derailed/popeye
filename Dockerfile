@@ -2,7 +2,7 @@
 # Build...
 FROM golang:1.12.3-alpine AS build
 
-ENV VERSION=0.3.0 GO111MODULE=on PACKAGE=github.com/derailed/popeye
+ENV VERSION=v0.3.0 GO111MODULE=on PACKAGE=github.com/derailed/popeye
 
 WORKDIR /go/src/$PACKAGE
 
@@ -18,6 +18,6 @@ RUN apk --no-cache add git ;\
 
 # -----------------------------------------------------------------------------
 # Image...
-FROM alpine:3.8
+FROM alpine:3.9.3
 COPY --from=build /go/bin/popeye /bin/popeye
-ENTRYPOINT ["/bin/popeye"]
+ENTRYPOINT [ "/bin/popeye" ]

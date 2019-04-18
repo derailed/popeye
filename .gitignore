@@ -1,6 +1,8 @@
-/k8s
+/k8s/*
+!/k8s/popeye/
+/manifests
 *.out
-popeye
+/execs
 *.test
 notes
 eugen1

@@ -130,6 +130,113 @@ popeye --context olive
 popeye help
 ```
 
+## Popeye In Cluster...
+
+Alternatively, Popeye can be run directly on your Kubernetes clusters as a single shot or cronjob.
+
+Here is a sample setup, please modify per your needs/wants. The manifests for this are in the k8s
+directory in this repo.
+
+```shell
+kubectl apply -f k8s/popeye/ns.yml && kubectl apply -f k8s/popeye
+```
+
+```yaml
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name:      popeye
+  namespace: popeye
+spec:
+  schedule: "* */1 * * *" # Fireoff Popeye once an hour
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: popeye
+          restartPolicy: Never
+          containers:
+            - name: popeye
+              image: derailed/popeye:v0.3.0
+              imagePullPolicy: IfNotPresent
+              args:
+                - -o
+                - yaml
+              resources:
+                limits:
+                  cpu:    500m
+                  memory: 100Mi
+```
+
+## Popeye got your RBAC!
+
+In order for Popeye to do his work, the signed in user must have enough RBAC oomph to
+get/list the resources mentioned above as well as metrics-server get/list access.
+
+Sample Popeye RBAC Rules (Subject to change!!)
+
+```yaml
+---
+# Popeye ServiceAccount.
+apiVersion: v1
+kind:       ServiceAccount
+metadata:
+  name:      popeye
+  namespace: popeye
+
+# Popeye needs get/list access on the following Kubernetes resources.
+apiVersion: rbac.authorization.k8s.io/v1
+kind:       ClusterRole
+metadata:
+  name: popeye
+rules:
+- apiGroups: [""]
+  resources:
+   - configmaps
+   - deployments
+   - endpoints
+   - horizontalpodautoscalers
+   - namespaces
+   - nodes
+   - persistentvolumes
+   - persistentvolumeclaims
+   - pods
+   - secrets
+   - serviceaccounts
+   - services
+   - statefulsets
+  verbs:     ["get", "list"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources:
+  - clusterroles
+  - clusterrolebindings
+  - roles
+  - rolebindings
+  verbs:     ["get", "list"]
+- apiGroups: ["metrics.k8s.io"]
+  resources:
+  - pods
+  - nodes
+  verbs:     ["get", "list"]
+
+---
+# Binds Popeye to this ClusterRole.
+apiVersion: rbac.authorization.k8s.io/v1
+kind:       ClusterRoleBinding
+metadata:
+  name: popeye
+subjects:
+- kind:     ServiceAccount
+  name:     popeye
+  namespace: popeye
+roleRef:
+  kind:     ClusterRole
+  name:     popeye
+  apiGroup: rbac.authorization.k8s.io
+```
+
 ## Screenshots
 
 ### Cluster D Score
@@ -211,27 +318,13 @@ for each of the categories above.
 
 The Summary section provides a **Popeye Score** based on the sanitization pass on the given cluster.
 
-## Supported Resources
-
-This initial drop only supports a handful of resources. More will be added soon...
-
-* Node
-* Namespace
-* Pod
-* Service
-
 ## Known Issues
 
 This initial drop is brittle. Popeye will most likely blow up...
 
 * You're running older versions of Kubernetes. Popeye works best Kubernetes 1.13+.
-* You don't have enough RBAC fu to manage your cluster (see RBAC section below)
+* You don't have enough RBAC fu to manage your cluster (see RBAC section)
 * Your cluster does not run a metric server.
-
-## RBAC POW!
-
-In order for Popeye to do his work, the signed in user must have enough oomph to
-get/list the resources mentioned above as well as metrics-server get/list access.
 
 ## Disclaimer
 
@@ -252,5 +345,5 @@ to make this project a reality!
 
 ---
 
-<img src="assets/imhotep_logo.png" width="32" height="auto"/> © 2019 Imhotep Software LLC.
+<img src="assets/imhotep_logo.png" width="32" height="auto"/>  &nbsp;© 2019 Imhotep Software LLC.
 All materials licensed under [Apache v2.0](http://www.apache.org/licenses/LICENSE-2.0)

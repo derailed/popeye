@@ -1,0 +1,27 @@
+---
+# Load Popeye spinach.yml as configmap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: popeye
+  namespace: popeye
+data:
+  spinach: |-
+    popeye:
+      allocations:
+        cpu:
+          over: 100
+          under: 50
+        memory:
+          over: 100
+          under: 50
+      node:
+        limits:
+          cpu:    90
+          memory: 80
+      pod:
+        limits:
+          cpu:    80
+          memory: 75
+        restarts:
+          5

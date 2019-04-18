@@ -1,0 +1,40 @@
+# Sample Popeye CronJob. Runs Popeye as a cron every hours
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: popeye
+  namespace: popeye
+spec:
+  schedule: "* */1 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: popeye
+          restartPolicy: OnFailure
+          containers:
+            - name: popeye
+              image: derailed/popeye:v0.3.0
+              imagePullPolicy: IfNotPresent
+              command: ["/bin/popeye"]
+              args:
+              - -f
+              - /etc/config/popeye/spinach.yml
+              - -o
+              - yaml
+              resources:
+                limits:
+                  cpu:    500m
+                  memory: 100Mi
+              volumeMounts:
+                - name: spinach
+                  mountPath: /etc/config/popeye
+          volumes:
+          - name: spinach
+            configMap:
+              name: popeye
+              items:
+              - key: spinach
+                path: spinach.yml
