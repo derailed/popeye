@@ -41,15 +41,16 @@ func Execute() {
 
 // Doit runs the scans and lints pass over the specified cluster.
 func doIt(cmd *cobra.Command, args []string) {
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+
 	defer func() {
 		if err := recover(); err != nil {
-			bomb(fmt.Sprintf("%v", err))
+			bomb(fmt.Sprintf("Boom! %v", err))
 			log.Error().Msgf("%v", err)
 			log.Error().Msg(string(debug.Stack()))
+			os.Exit(1)
 		}
 	}()
-
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
 	clearScreen()
 	popeye, err := pkg.NewPopeye(flags, &log.Logger, os.Stdout)
@@ -61,7 +62,6 @@ func doIt(cmd *cobra.Command, args []string) {
 
 func bomb(msg string) {
 	fmt.Printf("💥 %s\n", report.Colorize(msg, report.ColorRed))
-	os.Exit(1)
 }
 
 func initFlags() {
