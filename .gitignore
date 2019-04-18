@@ -1,6 +1,6 @@
 /k8s/*
 !/k8s/popeye/
-/manifests
+/k8s1
 *.out
 /execs
 *.test

@@ -87,20 +87,20 @@ func (d *Deployment) checkUtilization(fqn string, dp appsv1.Deployment, pmx k8s.
 
 	cpuPerc := mx.ReqCPURatio()
 	if cpuPerc > int64(d.CPUResourceLimits().Over) {
-		d.addIssuef(fqn, WarnLevel, "CPU over allocated. Current:%s - Requested:%s (%s)", asMC(mx.RequestedCPU), asMC(mx.CurrentCPU), asPerc(cpuPerc))
+		d.addIssuef(fqn, WarnLevel, "CPU over allocated. Requested:%s - Current:%s (%s)", asMC(mx.RequestedCPU), asMC(mx.CurrentCPU), asPerc(cpuPerc))
 	}
 
-	if cpuPerc < int64(d.CPUResourceLimits().Under) {
-		d.addIssuef(fqn, WarnLevel, "CPU under allocated. Current:%s - Requested:%s (%s)", asMC(mx.RequestedCPU), asMC(mx.CurrentCPU), asPerc(cpuPerc))
+	if cpuPerc > 0 && cpuPerc < int64(d.CPUResourceLimits().Under) {
+		d.addIssuef(fqn, WarnLevel, "CPU under allocated. Requested:%s - Current:%s (%s)", asMC(mx.RequestedCPU), asMC(mx.CurrentCPU), asPerc(cpuPerc))
 	}
 
 	memPerc := mx.ReqMEMRatio()
 	if memPerc > int64(d.MEMResourceLimits().Over) {
-		d.addIssuef(fqn, WarnLevel, "Memory over allocated. Current:%s - Requested:%s (%s)", asMB(mx.RequestedMEM), asMB(mx.CurrentMEM), asPerc(memPerc))
+		d.addIssuef(fqn, WarnLevel, "Memory over allocated. Requested:%s - Current:%s (%s)", asMB(mx.RequestedMEM), asMB(mx.CurrentMEM), asPerc(memPerc))
 	}
 
-	if memPerc < int64(d.MEMResourceLimits().Under) {
-		d.addIssuef(fqn, WarnLevel, "Memory under allocated. Current:%s - Requested:%s (%s)", asMB(mx.RequestedMEM), asMB(mx.CurrentMEM), asPerc(memPerc))
+	if memPerc > 0 && memPerc < int64(d.MEMResourceLimits().Under) {
+		d.addIssuef(fqn, WarnLevel, "Memory under allocated. Requested:%s - Current:%s (%s)", asMB(mx.RequestedMEM), asMB(mx.CurrentMEM), asPerc(memPerc))
 	}
 
 	return nil
