@@ -40,11 +40,13 @@ func TestSecLintSecrets(t *testing.T) {
 		sa    v1.ServiceAccount
 		issue int
 	}{
+		{makeSec("s1"), makePodPullSec("p1", "s1"), v1.ServiceAccount{}, 0},
+		{makeSec("s1"), makePodPullSec("p1", "s2"), v1.ServiceAccount{}, 1},
 		{makeSec("s1"), makePod("p1"), makeSA("sa1"), 1},
 		{makeSec("s1"), makePod("p1"), makeSASec("sa1", "s1"), 0},
 		{makeSec("s1"), makePodPullSec("p1", "s1"), makeSASec("sa1", "s1"), 0},
 		{makeSec("s1"), makePodPullSec("p1", "s2"), makeSASec("sa1", "s2"), 1},
-		{makeSec("s1"), makePodPullSec("p1", "s1"), makeSASec("sa1", "s3"), 1},
+		{makeSec("s1"), makePodPullSec("p1", "s1"), makeSASec("sa1", "s3"), 0},
 		{makeSec("s1"), makePodPullSec("p1", "s3"), makeSASec("sa1", "s1"), 0},
 		{makeSec("s1"), makePodSecVol("p1", "s1", "blee", true), makeSASec("sa1", "s2"), 1},
 		{makeSec("s1"), makePodSecVol("p1", "s1", "blee", true), makeSASec("sa1", "s1"), 0},

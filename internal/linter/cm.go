@@ -54,30 +54,34 @@ func (c *ConfigMap) lint(cms map[string]v1.ConfigMap, pods map[string]v1.Pod) {
 		for key := range cm.Data {
 			victims[key] = false
 			if used, ok := cmRef["volume"]; ok {
-				if len(used.keys) != 0 {
-					for k := range used.keys {
-						victims[key] = k == key
-					}
-				} else {
+				// If volumes does not specify items, then all cm keys used!
+				if len(used.keys) == 0 {
 					victims[key] = true
+					continue
+				}
+				if _, ok := used.keys[key]; ok {
+					victims[key] = true
+					continue
 				}
 			}
 
 			if _, ok := cmRef["envFrom"]; ok {
 				victims[key] = true
+				continue
 			}
 
 			if used, ok := cmRef["env"]; ok {
-				for k := range used.keys {
-					victims[key] = k == key
+				if _, ok := used.keys[key]; ok {
+					victims[key] = true
 				}
 			}
+		}
 
-			for k, v := range victims {
-				if !v {
-					c.addIssuef(fqn, InfoLevel, "Used key `%s?", k)
-				}
+		for k, v := range victims {
+			if v {
+				continue
 			}
+			c.addIssuef(fqn, InfoLevel, "Unused key `%s?", k)
 		}
 	}
 }
@@ -143,10 +147,19 @@ func (*ConfigMap) checkEnv(poFQN string, co v1.Container, refs References) {
 		kref := e.ValueFrom.ConfigMapKeyRef
 		key := fqn(ns, kref.Name)
 		if v, ok := refs[key]; ok {
-			v["env"].keys[kref.Name] = blank
+			if kv, ok := v["env"]; ok {
+				kv.keys[kref.Name] = blank
+			} else {
+				v["env"] = &Reference{
+					name: kref.Name,
+					keys: map[string]struct{}{
+						kref.Key: blank,
+					},
+				}
+			}
 			continue
 		}
-		refs[key] = map[string]*Reference{
+		refs[key] = TypedReferences{
 			"env": {
 				name: kref.Name,
 				keys: map[string]struct{}{

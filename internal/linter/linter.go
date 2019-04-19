@@ -177,7 +177,7 @@ func (l *Linter) addContainerIssues(res string, issues Issues) {
 
 	if newErr {
 		err.SetSeverity(maxLevel)
-		l.issues[res] = []Issue{err}
+		l.issues[res] = append(l.issues[res], err)
 	}
 }
 

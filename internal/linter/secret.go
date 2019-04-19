@@ -53,29 +53,6 @@ func (s *Secret) Lint(ctx context.Context) error {
 	return nil
 }
 
-func checkServiceAccountRef(sas map[string]v1.ServiceAccount, refs References) {
-	for _, sa := range sas {
-		Reference := Reference{name: sa.Name}
-		for _, s := range sa.Secrets {
-			fqn := fqn(sa.Namespace, s.Name)
-			if v, ok := refs[fqn]; ok {
-				v["sasec"] = &Reference
-			} else {
-				refs[fqn] = TypedReferences{"sasec": &Reference}
-			}
-		}
-
-		for _, s := range sa.ImagePullSecrets {
-			fqn := fqn(sa.Namespace, s.Name)
-			if v, ok := refs[fqn]; ok {
-				v["sapullsec"] = &Reference
-			} else {
-				refs[fqn] = TypedReferences{"sapullsec": &Reference}
-			}
-		}
-	}
-}
-
 func (s *Secret) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map[string]v1.ServiceAccount) {
 	refs := make(References, len(pods)+len(sas))
 
@@ -99,36 +76,51 @@ func (s *Secret) lint(secs map[string]v1.Secret, pods map[string]v1.Pod, sas map
 		victims := map[string]bool{}
 		for key := range sec.Data {
 			victims[key] = false
-			if Reference, ok := ref["volume"]; ok {
-				for k := range Reference.keys {
-					victims[key] = k == key
+			if used, ok := ref["volume"]; ok {
+				// No specific key usage all keys are used!
+				if len(used.keys) == 0 {
+					victims[key] = true
+					continue
 				}
+				if _, ok := used.keys[key]; ok {
+					victims[key] = true
+					continue
+				}
+			}
+
+			if _, ok := ref["pull"]; ok {
+				victims[key] = true
+				continue
 			}
 
 			if _, ok := ref["sasec"]; ok {
 				victims[key] = true
+				continue
 			}
 
 			if _, ok := ref["sapullsec"]; ok {
 				victims[key] = true
+				continue
 			}
 
-			if Reference, ok := ref["env"]; ok {
-				for k := range Reference.keys {
-					victims[key] = k == key
+			if used, ok := ref["env"]; ok {
+				if _, ok := used.keys[key]; ok {
+					victims[key] = true
+					continue
 				}
 			}
+		}
 
-			for k, v := range victims {
-				if !v {
-					s.addIssuef(fqn, InfoLevel, "Reference `%s?", k)
-				}
+		for k, v := range victims {
+			if v {
+				continue
 			}
+			s.addIssuef(fqn, InfoLevel, "Unused key `%s?", k)
 		}
 	}
 }
 
-func (*Secret) checkPullImageSecrets(po v1.Pod, refs map[string]TypedReferences) {
+func (*Secret) checkPullImageSecrets(po v1.Pod, refs References) {
 	for _, s := range po.Spec.ImagePullSecrets {
 		fqn := fqn(po.Namespace, s.Name)
 
@@ -141,7 +133,7 @@ func (*Secret) checkPullImageSecrets(po v1.Pod, refs map[string]TypedReferences)
 	}
 }
 
-func (*Secret) checkVolumes(poFQN string, vols []v1.Volume, refs map[string]TypedReferences) {
+func (*Secret) checkVolumes(poFQN string, vols []v1.Volume, refs References) {
 	ns, _ := namespaced(poFQN)
 	for _, v := range vols {
 		if v.VolumeSource.Secret == nil {
@@ -150,11 +142,11 @@ func (*Secret) checkVolumes(poFQN string, vols []v1.Volume, refs map[string]Type
 
 		sec := v.VolumeSource.Secret
 		fqn := fqn(ns, sec.SecretName)
-		u := &Reference{name: ref(poFQN, v.Name), keys: map[string]struct{}{}}
+		ref := Reference{name: ref(poFQN, v.Name), keys: map[string]struct{}{}}
 		if r, ok := refs[fqn]; ok {
-			r["volume"] = u
+			r["volume"] = &ref
 		} else {
-			refs[fqn] = TypedReferences{"volume": u}
+			refs[fqn] = TypedReferences{"volume": &ref}
 		}
 
 		for _, k := range sec.Items {
@@ -163,29 +155,69 @@ func (*Secret) checkVolumes(poFQN string, vols []v1.Volume, refs map[string]Type
 	}
 }
 
-func (*Secret) checkContainerRefs(poFQN string, cos []v1.Container, refs map[string]TypedReferences) {
-	ns, _ := namespaced(poFQN)
+func (s *Secret) checkContainerRefs(poFQN string, cos []v1.Container, refs References) {
 	for _, co := range cos {
-		// Check envs...
-		for _, e := range co.Env {
-			if e.ValueFrom == nil || e.ValueFrom.SecretKeyRef == nil {
-				continue
-			}
+		s.checkEnv(poFQN, co, refs)
+	}
+}
 
-			kref := e.ValueFrom.SecretKeyRef
-			fqn := fqn(ns, kref.Name)
-			if v, ok := refs[fqn]; ok {
-				v["env"].keys[kref.Name] = struct{}{}
-				continue
-			}
+func (*Secret) checkEnv(poFQN string, co v1.Container, refs References) {
+	ns, _ := namespaced(poFQN)
+	blank := struct{}{}
 
-			refs[fqn] = map[string]*Reference{
-				"env": {
+	for _, e := range co.Env {
+		if e.ValueFrom == nil || e.ValueFrom.SecretKeyRef == nil {
+			continue
+		}
+
+		kref := e.ValueFrom.SecretKeyRef
+		fqn := fqn(ns, kref.Name)
+		if v, ok := refs[fqn]; ok {
+			if kv, ok := v["env"]; ok {
+				kv.keys[kref.Name] = blank
+			} else {
+				v["env"] = &Reference{
 					name: kref.Name,
 					keys: map[string]struct{}{
-						kref.Key: {},
+						kref.Key: blank,
 					},
+				}
+			}
+			continue
+		}
+
+		refs[fqn] = TypedReferences{
+			"env": {
+				name: kref.Name,
+				keys: map[string]struct{}{
+					kref.Key: {},
 				},
+			},
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------
+// Helpers...
+
+func checkServiceAccountRef(sas map[string]v1.ServiceAccount, refs References) {
+	for _, sa := range sas {
+		Reference := Reference{name: sa.Name}
+		for _, s := range sa.Secrets {
+			fqn := fqn(sa.Namespace, s.Name)
+			if v, ok := refs[fqn]; ok {
+				v["sasec"] = &Reference
+			} else {
+				refs[fqn] = TypedReferences{"sasec": &Reference}
+			}
+		}
+
+		for _, s := range sa.ImagePullSecrets {
+			fqn := fqn(sa.Namespace, s.Name)
+			if v, ok := refs[fqn]; ok {
+				v["sapullsec"] = &Reference
+			} else {
+				refs[fqn] = TypedReferences{"sapullsec": &Reference}
 			}
 		}
 	}
