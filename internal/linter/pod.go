@@ -130,48 +130,13 @@ func (p *Pod) checkVolumeReferences(pfqn string, v v1.Volume, cms map[string]v1.
 
 func (p *Pod) checkContainerReferences(pfqn string, co v1.Container, cms map[string]v1.ConfigMap, secs map[string]v1.Secret) {
 	ns, _ := namespaced(pfqn)
+
 	for _, e := range co.Env {
 		if e.ValueFrom == nil {
 			continue
 		}
-
-		if e.ValueFrom.SecretKeyRef != nil {
-			ref := e.ValueFrom.SecretKeyRef
-			sfqn := fqn(ns, ref.Name)
-			if sec, ok := secs[sfqn]; !ok {
-				p.addIssuef(pfqn, ErrorLevel, "References a secret env `%s which does not exists", sfqn)
-			} else {
-				var found bool
-				for key := range sec.Data {
-					if key == ref.Key {
-						found = true
-					}
-				}
-				if !found && (ref.Optional != nil && !*ref.Optional) {
-					p.addIssuef(pfqn, ErrorLevel, "References secret `%s key `%s which does not exists", sfqn, ref.Key)
-				}
-			}
-		}
-
-		if e.ValueFrom.ConfigMapKeyRef == nil {
-			continue
-		}
-
-		ref := e.ValueFrom.ConfigMapKeyRef
-		cfqn := fqn(ns, ref.Name)
-		if cm, ok := cms[cfqn]; !ok {
-			p.addIssuef(pfqn, ErrorLevel, "References a configmap env `%s which does not exists", cfqn)
-		} else {
-			var found bool
-			for key := range cm.Data {
-				if key == ref.Key {
-					found = true
-				}
-			}
-			if !found && (ref.Optional != nil && !*ref.Optional) {
-				p.addIssuef(pfqn, ErrorLevel, "References configmap `%s key `%s which does not exists", cfqn, ref.Key)
-			}
-		}
+		p.checkSecretRefs(ns, pfqn, e.ValueFrom.SecretKeyRef, secs)
+		p.checkConfigMapRefs(ns, pfqn, e.ValueFrom.ConfigMapKeyRef, cms)
 	}
 
 	for _, e := range co.EnvFrom {
@@ -182,6 +147,48 @@ func (p *Pod) checkContainerReferences(pfqn string, co v1.Container, cms map[str
 		cfqn := fqn(ns, cmRef.Name)
 		if _, ok := cms[cfqn]; !ok {
 			p.addIssuef(pfqn, ErrorLevel, "References a configmap envFrom `%s which does not exists", cfqn)
+		}
+	}
+}
+
+func (p *Pod) checkSecretRefs(ns, pfqn string, ref *v1.SecretKeySelector, secs map[string]v1.Secret) {
+	if ref == nil {
+		return
+	}
+
+	sfqn := fqn(ns, ref.Name)
+	if sec, ok := secs[sfqn]; !ok {
+		p.addIssuef(pfqn, ErrorLevel, "References a secret env `%s which does not exists", sfqn)
+	} else {
+		var found bool
+		for key := range sec.Data {
+			if key == ref.Key {
+				found = true
+			}
+		}
+		if !found && (ref.Optional != nil && !*ref.Optional) {
+			p.addIssuef(pfqn, ErrorLevel, "References secret `%s key `%s which does not exists", sfqn, ref.Key)
+		}
+	}
+}
+
+func (p *Pod) checkConfigMapRefs(ns, pfqn string, ref *v1.ConfigMapKeySelector, cms map[string]v1.ConfigMap) {
+	if ref == nil {
+		return
+	}
+
+	cfqn := fqn(ns, ref.Name)
+	if cm, ok := cms[cfqn]; !ok {
+		p.addIssuef(pfqn, ErrorLevel, "References a configmap env `%s which does not exists", cfqn)
+	} else {
+		var found bool
+		for key := range cm.Data {
+			if key == ref.Key {
+				found = true
+			}
+		}
+		if !found && (ref.Optional != nil && !*ref.Optional) {
+			p.addIssuef(pfqn, ErrorLevel, "References configmap `%s key `%s which does not exists", cfqn, ref.Key)
 		}
 	}
 }
