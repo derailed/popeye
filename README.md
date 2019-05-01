@@ -173,7 +173,7 @@ spec:
 ## Popeye got your RBAC!
 
 In order for Popeye to do his work, the signed in user must have enough RBAC oomph to
-get/list the resources mentioned above as well as metrics-server get/list access.
+get/list the resources mentioned above.
 
 Sample Popeye RBAC Rules (Subject to change!!)
 
@@ -324,7 +324,6 @@ This initial drop is brittle. Popeye will most likely blow up...
 
 * You're running older versions of Kubernetes. Popeye works best Kubernetes 1.13+.
 * You don't have enough RBAC fu to manage your cluster (see RBAC section)
-* Your cluster does not run a metric server.
 
 ## Disclaimer
 
