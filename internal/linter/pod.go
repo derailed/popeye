@@ -97,7 +97,7 @@ func (p *Pod) checkReferences(po v1.Pod) error {
 	for _, s := range po.Spec.ImagePullSecrets {
 		sfqn := fqn(po.Namespace, s.Name)
 		if _, ok := secs[sfqn]; !ok {
-			p.addIssuef(pfqn, ErrorLevel, "References a pull secret `%s which does not exists", pfqn)
+			p.addIssuef(pfqn, ErrorLevel, "References a pull secret `%s which does not exists", sfqn)
 		}
 	}
 
