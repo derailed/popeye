@@ -1,9 +1,11 @@
 package report
 
-import "github.com/derailed/popeye/internal/linter"
+import (
+	"github.com/derailed/popeye/internal/issues"
+)
 
 const (
-	containerLevel linter.Level = 100
+	containerLevel issues.Level = 100
 )
 
 var emojis = map[string]string{
@@ -23,17 +25,17 @@ var emojisUgry = map[string]string{
 }
 
 // EmojiForLevel maps lint levels to emojis.
-func (s *Sanitizer) EmojiForLevel(l linter.Level) string {
+func (s *Sanitizer) EmojiForLevel(l issues.Level) string {
 	var key string
 
 	switch l {
 	case containerLevel:
 		key = "container"
-	case linter.ErrorLevel:
+	case issues.ErrorLevel:
 		key = "farfromfok"
-	case linter.WarnLevel:
+	case issues.WarnLevel:
 		key = "warn"
-	case linter.InfoLevel:
+	case issues.InfoLevel:
 		key = "fyi"
 	default:
 		key = "peachy"

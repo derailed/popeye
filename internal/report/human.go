@@ -1,9 +1,12 @@
 package report
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // Titleize returns a human readable resource name.
-func Titleize(r string) string {
+func Titleize(r string, count int) string {
 	var t string
 	switch r {
 	case "po":
@@ -30,9 +33,9 @@ func Titleize(r string) string {
 		t = "deployment"
 	case "sts":
 		t = "statefulset"
-
 	default:
 		t = r
 	}
-	return strings.ToUpper(t + "s")
+
+	return strings.ToUpper(fmt.Sprintf("%s (%d scanned)", t+"s", count))
 }

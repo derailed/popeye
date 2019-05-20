@@ -3,7 +3,6 @@ package config
 import (
 	"io/ioutil"
 
-	"github.com/derailed/popeye/internal/k8s"
 	"gopkg.in/yaml.v2"
 )
 
@@ -11,15 +10,13 @@ const defaultLintLevel = "ok"
 
 // Config tracks Popeye configuration options.
 type Config struct {
-	*k8s.Client
-
 	Popeye    Popeye `yaml:"popeye"`
-	Flags     *k8s.Flags
+	Flags     *Flags
 	LintLevel int
 }
 
 // NewConfig create a new Popeye configuration.
-func NewConfig(flags *k8s.Flags) (*Config, error) {
+func NewConfig(flags *Flags) (*Config, error) {
 	cfg := Config{Popeye: NewPopeye()}
 
 	if isSet(flags.Spinach) {
@@ -33,8 +30,12 @@ func NewConfig(flags *k8s.Flags) (*Config, error) {
 	}
 
 	cfg.Flags = flags
-	cfg.LintLevel = int(ToLintLevel(flags.LintLevel))
-	cfg.Client = k8s.NewClient(flags)
+
+	if flags.AllNamespaces != nil && *flags.AllNamespaces {
+		var allNS string
+		flags.Namespace = &allNS
+	}
+	cfg.LintLevel = int(ToIssueLevel(flags.LintLevel))
 
 	return &cfg, nil
 }

@@ -3,12 +3,11 @@ package config
 import (
 	"testing"
 
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewConfig(t *testing.T) {
-	cfg, err := NewConfig(k8s.NewFlags())
+	cfg, err := NewConfig(NewFlags())
 
 	assert.Nil(t, err)
 	assert.Equal(t, 80.0, cfg.NodeCPULimit())
@@ -27,7 +26,7 @@ func TestNewConfig(t *testing.T) {
 func TestNewConfigWithFile(t *testing.T) {
 	dir := "assets/sp1.yml"
 
-	f := k8s.NewFlags()
+	f := NewFlags()
 	f.Spinach = &dir
 
 	cfg, err := NewConfig(f)
@@ -49,7 +48,7 @@ func TestNewConfigWithFile(t *testing.T) {
 func TestNewConfigWithFileToast(t *testing.T) {
 	dir := "assets/spinach.yml"
 
-	f := k8s.NewFlags()
+	f := NewFlags()
 	f.Spinach = &dir
 
 	_, err := NewConfig(f)

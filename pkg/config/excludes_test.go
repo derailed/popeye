@@ -7,16 +7,18 @@ import (
 )
 
 func TestExcludes(t *testing.T) {
-	uu := []struct {
+	uu := map[string]struct {
 		n string
 		e bool
 	}{
-		{"a", true},
-		{"d", false},
+		"excluded": {"a", true},
+		"included": {"d", false},
 	}
 
-	for _, u := range uu {
+	for k, u := range uu {
 		ex := Excludes{"a", "b", "c"}
-		assert.Equal(t, u.e, ex.excluded(u.n))
+		t.Run(k, func(t *testing.T) {
+			assert.Equal(t, u.e, ex.excluded(u.n))
+		})
 	}
 }

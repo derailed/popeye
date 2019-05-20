@@ -1,6 +1,8 @@
 package k8s
 
-import "k8s.io/apimachinery/pkg/api/resource"
+import (
+	"k8s.io/apimachinery/pkg/api/resource"
+)
 
 type (
 	// Metrics represent an aggregation of all pod containers metrics.

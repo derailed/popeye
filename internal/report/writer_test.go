@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/derailed/popeye/internal/linter"
+	"github.com/derailed/popeye/internal/issues"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -70,7 +70,7 @@ func TestPrint(t *testing.T) {
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
 		s := NewSanitizer(w, 0, false)
-		s.Print(linter.OkLevel, u.indent, u.m)
+		s.Print(issues.OkLevel, u.indent, u.m)
 
 		assert.Equal(t, u.e, w.String())
 	}
@@ -78,34 +78,20 @@ func TestPrint(t *testing.T) {
 
 func TestDump(t *testing.T) {
 	uu := []struct {
-		issues linter.Issues
-		e      string
+		o issues.Outcome
+		e string
 	}{
 		{
-			linter.Issues{
-				"fred": []linter.Issue{linter.NewError(linter.WarnLevel, "Yo Mama!")},
+			issues.Outcome{
+				"fred": issues.Issues{issues.New(issues.Root, issues.WarnLevel, "Yo Mama!")},
 			},
 			"    😱 \x1b[38;5;220;mYo Mama!.\x1b[0m\n",
 		},
 		{
-			linter.Issues{
-				"fred": []linter.Issue{
-					&linter.Error{
-						Level: linter.WarnLevel,
-						Subs: linter.Issues{
-							"c1": []linter.Issue{
-								linter.NewError(linter.ErrorLevel, "Yo Mama!"),
-							},
-						},
-					},
-					&linter.Error{
-						Level: linter.WarnLevel,
-						Subs: linter.Issues{
-							"c1": []linter.Issue{
-								linter.NewError(linter.ErrorLevel, "Yo!"),
-							},
-						},
-					},
+			issues.Outcome{
+				"fred": issues.Issues{
+					issues.New("c1", issues.ErrorLevel, "Yo Mama!"),
+					issues.New("c1", issues.ErrorLevel, "Yo!"),
 				},
 			},
 			"    🐳 \x1b[38;5;75;mc1\x1b[0m\n      💥 \x1b[38;5;196;mYo Mama!.\x1b[0m\n    🐳 \x1b[38;5;75;mc1\x1b[0m\n      💥 \x1b[38;5;196;mYo!.\x1b[0m\n",
@@ -115,7 +101,7 @@ func TestDump(t *testing.T) {
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
 		s := NewSanitizer(w, 0, false)
-		s.Dump(linter.OkLevel, u.issues["fred"]...)
+		s.Dump(issues.OkLevel, u.o["fred"])
 
 		assert.Equal(t, u.e, w.String())
 	}
@@ -133,12 +119,12 @@ func BenchmarkPrint(b *testing.B) {
 
 func TestOpen(t *testing.T) {
 	uu := []struct {
-		issues linter.Issues
-		e      string
+		o issues.Outcome
+		e string
 	}{
 		{
-			linter.Issues{
-				"fred": []linter.Issue{linter.NewError(linter.WarnLevel, "Yo Mama!")},
+			issues.Outcome{
+				"fred": issues.Issues{issues.New(issues.Root, issues.WarnLevel, "Yo Mama!")},
 			},
 			"\n\x1b[38;5;75;mblee\x1b[0m" + strings.Repeat(" ", 75) + "💥 0 😱 1 🔊 0 ✅ 0 \x1b[38;5;196;m0\x1b[0m٪\n\x1b[38;5;75;m" + strings.Repeat("┅", Width) + "\x1b[0m\n",
 		},
@@ -148,7 +134,7 @@ func TestOpen(t *testing.T) {
 		w := bytes.NewBufferString("")
 		s := NewSanitizer(w, 0, false)
 
-		ta := NewTally().Rollup(u.issues)
+		ta := NewTally().Rollup(u.o)
 		s.Open("blee", ta)
 
 		assert.Equal(t, u.e, w.String())

@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 
-	"github.com/derailed/popeye/internal/linter"
+	"github.com/derailed/popeye/internal/issues"
 	"gopkg.in/yaml.v2"
 )
 
@@ -44,9 +43,9 @@ type (
 
 	// Section represents a sanitizer pass
 	Section struct {
-		Title  string        `json:"sanitizer" yaml:"sanitizer"`
-		Tally  *Tally        `json:"tally" yaml:"tally"`
-		Issues linter.Issues `json:"issues,omitempty" yaml:"issues,omitempty"`
+		Title   string         `json:"sanitizer" yaml:"sanitizer"`
+		Tally   *Tally         `json:"tally" yaml:"tally"`
+		Outcome issues.Outcome `json:"issues,omitempty" yaml:"issues,omitempty"`
 	}
 )
 
@@ -61,20 +60,13 @@ func (b *Builder) AddError(err error) {
 }
 
 // AddSection adds a sanitizer section to the report.
-func (b *Builder) AddSection(name string, issues linter.Issues, t *Tally) {
-	n := strings.ToLower(name)
+func (b *Builder) AddSection(name string, o issues.Outcome, t *Tally) {
 	section := Section{
-		Title:  n,
-		Tally:  t,
-		Issues: make(linter.Issues, len(issues)),
+		Title:   strings.ToLower(name),
+		Tally:   t,
+		Outcome: o,
 	}
-
-	for k, v := range issues {
-		section.Issues[k] = v
-	}
-
 	b.Report.Sections = append(b.Report.Sections, section)
-
 	if t.IsValid() {
 		b.Report.sectionsCount++
 		b.Report.totalScore += t.Score()
@@ -133,26 +125,6 @@ func (b *Builder) PrintSummary(s *Sanitizer) {
 	s.Close()
 }
 
-// ClusterInfo dumps cluster information to screen.
-func (b *Builder) ClusterInfo(s *Sanitizer, l linter.Loader) {
-	t := fmt.Sprintf("CLUSTER [%s]", strings.ToUpper(l.ActiveCluster()))
-	s.Open(t, nil)
-	{
-		s.Print(linter.OkLevel, 1, "Connectivity")
-
-		ok, err := l.ClusterHasMetrics()
-		if err != nil {
-			fmt.Printf("💥 %s\n", s.Color(err.Error(), ColorRed))
-			os.Exit(1)
-		}
-
-		if ok {
-			s.Print(linter.OkLevel, 1, "Metrics")
-		}
-	}
-	s.Close()
-}
-
 // PrintHeader prints report header to screen.
 func (b *Builder) PrintHeader(s *Sanitizer) {
 	fmt.Fprintln(s)
@@ -173,35 +145,35 @@ func (b *Builder) PrintHeader(s *Sanitizer) {
 }
 
 // PrintReport prints out sanitizer report to screen
-func (b *Builder) PrintReport(level linter.Level, s *Sanitizer) {
+func (b *Builder) PrintReport(level issues.Level, s *Sanitizer) {
 	for _, section := range b.Report.Sections {
 		var any bool
-		s.Open(Titleize(section.Title), section.Tally)
+		s.Open(Titleize(section.Title, len(section.Outcome)), section.Tally)
 		{
-			keys := make([]string, 0, len(section.Issues))
-			for k := range section.Issues {
+			keys := make([]string, 0, len(section.Outcome))
+			for k := range section.Outcome {
 				keys = append(keys, k)
 			}
 			sort.Strings(keys)
 
 			for _, res := range keys {
-				issues := section.Issues[res]
-				if len(issues) == 0 {
-					if level <= linter.OkLevel {
+				ii := section.Outcome[res]
+				if len(ii) == 0 {
+					if level <= issues.OkLevel {
 						any = true
-						s.Print(linter.OkLevel, 1, res)
+						s.Print(issues.OkLevel, 1, res)
 					}
 					continue
 				}
-				max := section.Issues.MaxSeverity(res)
+				max := section.Outcome.MaxSeverity(res)
 				if level <= max {
 					any = true
 					s.Print(max, 1, res)
 				}
-				s.Dump(level, issues...)
+				s.Dump(level, ii)
 			}
 			if !any {
-				s.Comment(s.Color("Nothing to ", ColorAqua))
+				s.Comment(s.Color("Nothing to report.", ColorAqua))
 			}
 		}
 		s.Close()

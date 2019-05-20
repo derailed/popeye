@@ -3,7 +3,7 @@ package report
 import (
 	"strconv"
 
-	"github.com/derailed/popeye/internal/linter"
+	"github.com/derailed/popeye/internal/issues"
 )
 
 // Color ANSI palette (256!)
@@ -32,15 +32,15 @@ func Colorize(s string, c Color) string {
 	return "\033[38;5;" + strconv.Itoa(int(c)) + ";m" + s + "\033[0m"
 }
 
-func colorForLevel(l linter.Level) Color {
+func colorForLevel(l issues.Level) Color {
 	switch l {
-	case linter.ErrorLevel:
+	case issues.ErrorLevel:
 		return ColorRed
-	case linter.WarnLevel:
+	case issues.WarnLevel:
 		return ColorOrangish
-	case linter.InfoLevel:
+	case issues.InfoLevel:
 		return ColorAqua
-	case linter.OkLevel:
+	case issues.OkLevel:
 		return ColorDarkOlive
 	default:
 		return ColorLighSlate

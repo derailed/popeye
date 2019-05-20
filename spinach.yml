@@ -2,10 +2,10 @@
 popeye:
   allocations:
     cpu:
-      over: 100
+      over: 200
       under: 50
     memory:
-      over: 100
+      over: 200
       under: 50
 
   # Node...

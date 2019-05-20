@@ -14,8 +14,8 @@ const (
 	ErrorLevel
 )
 
-// ToLintLevel convert a string to a level.
-func ToLintLevel(level *string) Level {
+// ToIssueLevel convert a string to a issue level.
+func ToIssueLevel(level *string) Level {
 	if !isSet(level) {
 		return OkLevel
 	}

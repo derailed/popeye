@@ -7,10 +7,19 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/derailed/popeye/internal/linter"
+	"github.com/derailed/popeye/internal/issues"
 	runewidth "github.com/mattn/go-runewidth"
 	"github.com/onsi/ginkgo/reporters/stenographer/support/go-isatty"
 )
+
+// Issue represents a sanitizer issues.
+type Issue interface {
+	MaxSeverity(string) issues.Level
+	Severity() issues.Level
+	Description() string
+	HasSubIssues() bool
+	SubIssues() map[string][]Issue
+}
 
 const (
 	// FontBold style
@@ -86,34 +95,28 @@ func (s *Sanitizer) Comment(msg string) {
 }
 
 // Dump all errors to output.
-func (s *Sanitizer) Dump(l linter.Level, issues ...linter.Issue) {
-	for _, i := range issues {
-		if i.Severity() < l {
+func (s *Sanitizer) Dump(l issues.Level, ii issues.Issues) {
+	for _, i := range ii {
+		if i.Level < l {
 			continue
 		}
-
-		if i.HasSubIssues() {
-			s.write(i.Severity(), 2, i.Description()+".")
-
-			for k, ii := range i.SubIssues() {
-				s.write(containerLevel, 2, k)
-				for _, is := range ii {
-					s.write(is.Severity(), 3, is.Description()+".")
-				}
-			}
+		if i.Group == issues.Root {
+			s.write(i.Level, 2, i.Message+".")
 			continue
 		}
-		s.write(i.Severity(), 2, i.Description()+".")
+		// s.write(i.Level, 2, i.Group+".")
+		s.write(containerLevel, 2, i.Group)
+		s.write(i.Level, 3, i.Message+".")
 	}
 }
 
 // Print a colorized message.
-func (s *Sanitizer) Print(l linter.Level, indent int, msg string) {
+func (s *Sanitizer) Print(l issues.Level, indent int, msg string) {
 	s.write(l, indent, msg)
 }
 
 // Write a colorized message to stdout.
-func (s *Sanitizer) write(l linter.Level, indent int, msg string) {
+func (s *Sanitizer) write(l issues.Level, indent int, msg string) {
 	if msg == "" || msg == "." {
 		return
 	}

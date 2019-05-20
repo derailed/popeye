@@ -7,9 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/k8s"
-	"github.com/derailed/popeye/internal/linter"
 	"github.com/derailed/popeye/internal/report"
+	"github.com/derailed/popeye/internal/scrub"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -19,44 +20,29 @@ import (
 var PopeyeLog = filepath.Join(os.TempDir(), fmt.Sprintf("popeye.log"))
 
 type (
-	// Reporter obtains lint reports
-	Reporter interface {
-		MaxSeverity(res string) linter.Level
-		Issues() linter.Issues
-	}
-
-	// Linter represents a resource linter.
-	Linter interface {
-		Reporter
-		Lint(context.Context) error
-	}
-
-	// Linters a collection of linters.
-	Linters map[string]Linter
-
 	// Popeye a kubernetes sanitizer.
 	Popeye struct {
-		loader       linter.Loader
+		client       *k8s.Client
+		config       *config.Config
 		totalScore   int
 		sectionCount int
 		outputTarget *os.File
 		log          *zerolog.Logger
-		flags        *k8s.Flags
+		flags        *config.Flags
 		builder      *report.Builder
 	}
 )
 
 // NewPopeye returns a new sanitizer.
-func NewPopeye(flags *k8s.Flags, log *zerolog.Logger, out *os.File) (*Popeye, error) {
+func NewPopeye(flags *config.Flags, log *zerolog.Logger, out *os.File) (*Popeye, error) {
 	cfg, err := config.NewConfig(flags)
 	if err != nil {
 		return nil, err
 	}
 
-	f := linter.NewFilter(k8s.NewClient(flags), cfg)
-
 	p := Popeye{
-		loader:       f,
+		client:       k8s.NewClient(flags),
+		config:       cfg,
 		log:          log,
 		outputTarget: out,
 		flags:        flags,
@@ -94,9 +80,8 @@ func (p *Popeye) dump(printHeader bool) {
 		s := report.NewSanitizer(w, p.outputTarget.Fd(), jurassicMode)
 		if printHeader {
 			p.builder.PrintHeader(s)
-			p.builder.ClusterInfo(s, p.loader)
 		}
-		p.builder.PrintReport(linter.Level(p.loader.LinterLevel()), s)
+		p.builder.PrintReport(issues.Level(p.config.LinterLevel()), s)
 		p.builder.PrintSummary(s)
 	}
 }
@@ -107,44 +92,47 @@ func (p *Popeye) Sanitize() {
 	p.dump(true)
 }
 
-func linters(l linter.Loader, log *zerolog.Logger) Linters {
-	return Linters{
-		"cm":  linter.NewConfigMap(l, log),
-		"dp":  linter.NewDeployment(l, log),
-		"hpa": linter.NewHorizontalPodAutoscaler(l, log),
-		"ns":  linter.NewNamespace(l, log),
-		"no":  linter.NewNode(l, log),
-		"pv":  linter.NewPersistentVolume(l, log),
-		"pvc": linter.NewPersistentVolumeClaim(l, log),
-		"po":  linter.NewPod(l, log),
-		"sec": linter.NewSecret(l, log),
-		"svc": linter.NewService(l, log),
-		"sa":  linter.NewServiceAccount(l, log),
-		"sts": linter.NewStatefulSet(l, log),
+type scrubFn func(c *k8s.Client, cfg *config.Config) scrub.Sanitizer
+
+func (p *Popeye) sanitizers() map[string]scrubFn {
+	return map[string]scrubFn{
+		"cm":  scrub.NewConfigMap,
+		"sec": scrub.NewSecret,
+		"dp":  scrub.NewDeployment,
+		"hpa": scrub.NewHorizontalPodAutoscaler,
+		"ns":  scrub.NewNamespace,
+		"no":  scrub.NewNode,
+		"pv":  scrub.NewPersistentVolume,
+		"pvc": scrub.NewPersistentVolumeClaim,
+		"po":  scrub.NewPod,
+		"svc": scrub.NewService,
+		"sa":  scrub.NewServiceAccount,
+		"sts": scrub.NewStatefulSet,
 	}
 }
 
 func (p *Popeye) sanitize() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	for k, l := range linters(p.loader, p.log) {
-		if !in(p.loader.Sections(), k) {
+	for k, f := range p.sanitizers() {
+		if !in(p.config.Sections(), k) {
 			continue
 		}
 
 		// Skip node checks if active namespace is set.
-		if k == "no" && p.loader.ActiveNamespace() != "" {
+		if k == "no" && p.client.ActiveNamespace() != "" {
 			continue
 		}
 
-		if err := l.Lint(ctx); err != nil {
+		s := f(p.client, p.config)
+		if err := s.Sanitize(ctx); err != nil {
 			p.builder.AddError(err)
 			continue
 		}
 
 		tally := report.NewTally()
-		tally.Rollup(l.Issues())
-		p.builder.AddSection(k, l.Issues(), tally)
+		tally.Rollup(s.Outcome())
+		p.builder.AddSection(k, s.Outcome(), tally)
 	}
 }
 

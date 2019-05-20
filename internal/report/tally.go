@@ -7,7 +7,8 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/derailed/popeye/internal/linter"
+	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/internal/sanitize"
 )
 
 const targetScore = 80
@@ -35,19 +36,14 @@ func (t *Tally) IsValid() bool {
 }
 
 // Rollup tallies up the report scores.
-func (t *Tally) Rollup(run linter.Issues) *Tally {
-	if run == nil || len(run) == 0 {
+func (t *Tally) Rollup(o issues.Outcome) *Tally {
+	if o == nil || len(o) == 0 {
 		return t
 	}
 
 	t.valid = true
-	for _, issues := range run {
-		if len(issues) == 0 {
-			t.counts[linter.OkLevel]++
-		}
-		for _, issue := range issues {
-			t.counts[issue.Severity()]++
-		}
+	for k := range o {
+		t.counts[o.MaxSeverity(k)]++
 	}
 	t.computeScore()
 
@@ -63,7 +59,7 @@ func (t *Tally) computeScore() int {
 		}
 		total += v
 	}
-	t.score = int(linter.ToPerc(int64(ok), int64(total)))
+	t.score = int(sanitize.ToPerc(int64(ok), int64(total)))
 
 	return t.score
 }
@@ -71,7 +67,7 @@ func (t *Tally) computeScore() int {
 // Write out a tally.
 func (t *Tally) write(w io.Writer, s *Sanitizer) {
 	for i := len(t.counts) - 1; i >= 0; i-- {
-		emoji := s.EmojiForLevel(linter.Level(i))
+		emoji := s.EmojiForLevel(issues.Level(i))
 		fmat := "%s %d "
 		if s.jurassicMode {
 			fmat = "%s:%d "

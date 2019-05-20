@@ -19,6 +19,6 @@ func TestIsSet(t *testing.T) {
 	}
 
 	for _, u := range uu {
-		assert.Equal(t, u.e, IsSet(u.s))
+		assert.Equal(t, u.e, isSet(u.s))
 	}
 }

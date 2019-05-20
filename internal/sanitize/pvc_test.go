@@ -1,0 +1,88 @@
+package sanitize
+
+import (
+	"context"
+	"testing"
+
+	"github.com/derailed/popeye/internal/issues"
+	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+func TestPVCSanitize(t *testing.T) {
+	uu := map[string]struct {
+		lister PersistentVolumeClaimLister
+		issues int
+	}{
+		"bound":   {makePVCLister("pvc1", pvcOpts{used: "pvc1", phase: v1.ClaimBound}), 0},
+		"lost":    {makePVCLister("pvc1", pvcOpts{used: "pvc1", phase: v1.ClaimLost}), 1},
+		"pending": {makePVCLister("pvc1", pvcOpts{used: "pvc1", phase: v1.ClaimPending}), 1},
+		"used":    {makePVCLister("pvc1", pvcOpts{used: "pvc2", phase: v1.ClaimBound}), 1},
+	}
+
+	for k, u := range uu {
+		t.Run(k, func(t *testing.T) {
+			p := NewPersistentVolumeClaim(issues.NewCollector(), u.lister)
+			p.Sanitize(context.Background())
+
+			assert.Equal(t, u.issues, len(p.Outcome()["default/pvc1"]))
+		})
+	}
+}
+
+// ----------------------------------------------------------------------------
+// Helpers...
+
+type pvcOpts struct {
+	phase v1.PersistentVolumeClaimPhase
+	used  string
+}
+
+type pvc struct {
+	name string
+	opts pvcOpts
+}
+
+func makePVCLister(n string, opts pvcOpts) pvc {
+	return pvc{name: n, opts: opts}
+}
+
+func (p pvc) ListPersistentVolumeClaims() map[string]*v1.PersistentVolumeClaim {
+	return map[string]*v1.PersistentVolumeClaim{
+		"default/pvc1": makePVC(p.opts.used, p.opts.phase),
+	}
+}
+
+func (p pvc) ListPods() map[string]*v1.Pod {
+	return map[string]*v1.Pod{
+		"default/p1": makePodPVC("p1", p.opts.used),
+	}
+}
+
+func makePVC(n string, p v1.PersistentVolumeClaimPhase) *v1.PersistentVolumeClaim {
+	return &v1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      n,
+			Namespace: "default",
+		},
+		Status: v1.PersistentVolumeClaimStatus{
+			Phase: p,
+		},
+	}
+}
+
+func makePodPVC(n, pvc string) *v1.Pod {
+	po := makePod(n)
+	po.Spec.Volumes = []v1.Volume{
+		{
+			VolumeSource: v1.VolumeSource{
+				PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
+					ClaimName: pvc,
+				},
+			},
+		},
+	}
+
+	return po
+}

@@ -5,9 +5,9 @@ import (
 	"os"
 	"runtime/debug"
 
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/report"
 	"github.com/derailed/popeye/pkg"
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -17,7 +17,7 @@ var (
 	version = "dev"
 	commit  = "dev"
 	date    = "n/a"
-	flags   = k8s.NewFlags()
+	flags   = config.NewFlags()
 	rootCmd = &cobra.Command{
 		Use:   "popeye",
 		Short: "A Kubernetes Cluster sanitizer and linter",
@@ -67,28 +67,40 @@ func bomb(msg string) {
 func initFlags() {
 	rootCmd.Flags().StringVarP(
 		flags.Output,
-		"out", "o",
+		"out",
+		"o",
 		"pimpy",
 		"Specify the output type (standard, jurassic, yaml, json)",
 	)
 
 	rootCmd.Flags().StringVarP(
 		flags.LintLevel,
-		"lint", "l",
+		"lint",
+		"l",
 		"ok",
 		"Specify a lint level (ok, info, warn, error)",
 	)
 
 	rootCmd.Flags().BoolVarP(
 		flags.ClearScreen,
-		"clear", "c",
+		"clear",
+		"c",
 		false,
 		"Clears the screen before a run",
 	)
 
+	rootCmd.Flags().BoolVarP(
+		flags.AllNamespaces,
+		"all-namespaces",
+		"",
+		false,
+		"Sanitize all namespaces",
+	)
+
 	rootCmd.Flags().StringVarP(
 		flags.Spinach,
-		"file", "f",
+		"file",
+		"f",
 		"",
 		"Use a spinach YAML configuration file",
 	)

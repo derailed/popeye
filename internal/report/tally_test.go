@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/derailed/popeye/internal/linter"
+	"github.com/derailed/popeye/internal/issues"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,31 +29,31 @@ func TestTallyWrite(t *testing.T) {
 
 func TestTallyRollup(t *testing.T) {
 	uu := []struct {
-		issues linter.Issues
-		e      *Tally
+		o issues.Outcome
+		e *Tally
 	}{
 		{
-			linter.Issues{},
+			issues.Outcome{},
 			&Tally{counts: []int{0, 0, 0, 0}, score: 0, valid: false},
 		},
 		{
-			linter.Issues{
+			issues.Outcome{
 				"a": {
-					linter.NewError(linter.InfoLevel, ""),
-					linter.NewError(linter.WarnLevel, ""),
+					issues.New(issues.Root, issues.InfoLevel, ""),
+					issues.New(issues.Root, issues.WarnLevel, ""),
 				},
 				"b": {
-					linter.NewError(linter.ErrorLevel, ""),
+					issues.New(issues.Root, issues.ErrorLevel, ""),
 				},
 				"c": {},
 			},
-			&Tally{counts: []int{1, 1, 1, 1}, score: 50, valid: true},
+			&Tally{counts: []int{1, 0, 1, 1}, score: 33, valid: true},
 		},
 	}
 
 	for _, u := range uu {
 		ta := NewTally()
-		ta.Rollup(u.issues)
+		ta.Rollup(u.o)
 
 		assert.Equal(t, u.e, ta)
 	}
@@ -61,27 +61,27 @@ func TestTallyRollup(t *testing.T) {
 
 func TestTallyScore(t *testing.T) {
 	uu := []struct {
-		issues linter.Issues
-		e      int
+		o issues.Outcome
+		e int
 	}{
 		{
-			linter.Issues{
+			issues.Outcome{
 				"a": {
-					linter.NewError(linter.InfoLevel, ""),
-					linter.NewError(linter.WarnLevel, ""),
+					issues.New(issues.Root, issues.InfoLevel, ""),
+					issues.New(issues.Root, issues.WarnLevel, ""),
 				},
 				"b": {
-					linter.NewError(linter.ErrorLevel, ""),
+					issues.New(issues.Root, issues.ErrorLevel, ""),
 				},
 				"c": {},
 			},
-			50,
+			33,
 		},
 	}
 
 	for _, u := range uu {
 		ta := NewTally()
-		ta.Rollup(u.issues)
+		ta.Rollup(u.o)
 
 		assert.Equal(t, u.e, ta.Score())
 	}
@@ -89,28 +89,28 @@ func TestTallyScore(t *testing.T) {
 
 func TestTallyWidth(t *testing.T) {
 	uu := []struct {
-		issues linter.Issues
-		e      string
+		o issues.Outcome
+		e string
 	}{
 		{
-			linter.Issues{
+			issues.Outcome{
 				"a": {
-					linter.NewError(linter.InfoLevel, ""),
-					linter.NewError(linter.WarnLevel, ""),
+					issues.New(issues.Root, issues.InfoLevel, ""),
+					issues.New(issues.Root, issues.WarnLevel, ""),
 				},
 				"b": {
-					linter.NewError(linter.ErrorLevel, ""),
+					issues.New(issues.Root, issues.ErrorLevel, ""),
 				},
 				"c": {},
 			},
-			"💥 1 😱 1 🔊 1 ✅ 1 \x1b[38;5;196;m50\x1b[0m٪",
+			"💥 1 😱 1 🔊 0 ✅ 1 \x1b[38;5;196;m33\x1b[0m٪",
 		},
 	}
 
 	s := new(Sanitizer)
 	for _, u := range uu {
 		ta := NewTally()
-		ta.Rollup(u.issues)
+		ta.Rollup(u.o)
 
 		assert.Equal(t, u.e, ta.Dump(s))
 	}
