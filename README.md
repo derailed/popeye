@@ -2,13 +2,16 @@
 
 # Popeye - A Kubernetes Cluster Sanitizer
 
-Popeye is a utility that cruises Kubernetes cluster resources and reports potential
-issues with your deployment manifests and configurations. By scanning your
-clusters, it detects misconfigurations and ensure best practices are in place thus
-preventing potential future headaches. It aims at reducing the cognitive *over*load
-one faces when managing and operating a Kubernetes cluster in the wild. Popeye
-is a readonly tool, it does not change or update any of your Kubernetes resources or
-configurations in any way!
+Popeye is a utility that scans live Kubernetes cluster and reports potential
+issues with your deployed resources or configurations. It is NOT a static
+YAML manifests scanner, it sanitizes your clusters based on what's deployed and not
+what's sitting on disk. By scanning your deployed resources, it detects misconfigurations
+and ensure best practices are in place thus preventing potential future headaches.
+It aims at reducing the cognitive *over*load one faces when managing and operating a
+Kubernetes cluster in the wild. Furthermore, if your cluster employs a metric-server,
+Popeye will report of potential resources over/under allocations and we attempt to warn
+the operator if your cluster runs out of capacity. Popeye is a readonly tool, it does not
+change or alter any of your Kubernetes resources or configurations in any way!
 
 <br/>
 <br/>
