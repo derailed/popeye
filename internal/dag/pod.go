@@ -11,11 +11,11 @@ import (
 func ListPods(c *k8s.Client, cfg *config.Config) (map[string]*v1.Pod, error) {
 	pods, err := listAllPods(c)
 	if err != nil {
-		return nil, err
+		return map[string]*v1.Pod{}, err
 	}
 	res := make(map[string]*v1.Pod, len(pods))
 	for fqn, po := range pods {
-		if c.IsActiveNamespace(po.Namespace) && !cfg.ExcludedNS(po.Namespace) {
+		if includeNS(c, cfg, po.Namespace) && !cfg.ExcludedPod(po.Name) {
 			res[fqn] = po
 		}
 	}

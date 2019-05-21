@@ -11,12 +11,12 @@ import (
 func ListServiceAccounts(c *k8s.Client, cfg *config.Config) (map[string]*v1.ServiceAccount, error) {
 	sas, err := listAllServiceAccounts(c)
 	if err != nil {
-		return nil, err
+		return map[string]*v1.ServiceAccount{}, err
 	}
 
 	res := make(map[string]*v1.ServiceAccount, len(sas))
 	for fqn, sa := range sas {
-		if c.IsActiveNamespace(sa.Namespace) && !cfg.ExcludedNS(sa.Namespace) {
+		if includeNS(c, cfg, sa.Namespace) {
 			res[fqn] = sa
 		}
 	}

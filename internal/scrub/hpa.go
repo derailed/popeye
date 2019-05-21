@@ -49,7 +49,7 @@ func NewHorizontalPodAutoscaler(c *Cache) Sanitizer {
 
 	nmx, err := c.nodesMx()
 	if err != nil {
-		h.AddErr("nodemetrics", err)
+		h.AddInfof("nodemetrics", "No metric-server detected %v", err)
 	}
 	h.NodesMetrics = nmx
 
@@ -61,7 +61,7 @@ func NewHorizontalPodAutoscaler(c *Cache) Sanitizer {
 
 	pmx, err := c.podsMx()
 	if err != nil {
-		h.AddErr("podmetrics", err)
+		h.AddInfof("podmetrics", "No metric-server detected %v", err)
 	}
 	h.PodsMetrics = pmx
 

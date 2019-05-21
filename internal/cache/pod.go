@@ -26,7 +26,6 @@ func (p *Pod) ListPodsBySelector(sel *metav1.LabelSelector) map[string]*v1.Pod {
 	if sel == nil {
 		return res
 	}
-
 	for fqn, po := range p.pods {
 		if matchLabels(po.ObjectMeta.Labels, sel.MatchLabels) {
 			res[fqn] = po
@@ -38,10 +37,6 @@ func (p *Pod) ListPodsBySelector(sel *metav1.LabelSelector) map[string]*v1.Pod {
 
 // GetPod returns a pod via a label query.
 func (p *Pod) GetPod(sel map[string]string) *v1.Pod {
-	// if len(sel) == 0 {
-	// 	return nil
-	// }
-
 	res := p.ListPodsBySelector(&metav1.LabelSelector{MatchLabels: sel})
 	for _, v := range res {
 		return v

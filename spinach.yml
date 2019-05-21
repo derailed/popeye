@@ -1,5 +1,9 @@
 # A Sample Popeye configuration.
 popeye:
+  # ---------------------------------------------------------------------------
+  # Allocations tracks deployments and statefulset resources as percentages.
+  # Popeye capacitor will trip if associated objects are either above or under
+  # these thresholds by x%.
   allocations:
     cpu:
       over: 200
@@ -8,41 +12,42 @@ popeye:
       over: 200
       under: 50
 
+  # ---------------------------------------------------------------------------
   # Node...
+  # o Check nodes resource utilization in percent against these thresholds.
+  # o Excludes these nodes from the scan.
   node:
-    # Check nodes resource utilization in percent against these thresholds.
     limits:
       cpu:    90
       memory: 80
     exclude:
     - n1
 
+  # ---------------------------------------------------------------------------
   # Namespace...
+  # Excludes these namespaces from the scan.
   namespace:
-    # Excludes these namespaces from the scan.
     exclude:
-      - kube-system
-      - kube-node-lease
-      - kube-public
-      - istio-system
+      - istio*
 
+  # ---------------------------------------------------------------------------
   # Pod...
+  # o Check containers resource utilization in percent.
+  # o Warns if more than 3 restarts.
+  # o Excludes these pods from the scan.
   pod:
-    # Check container resource utilization in percent.
-    # Issues a lint warning if above these thresholds.
     limits:
       cpu:    80
       memory: 75
-    # Warn if more than 3 restarts.
     restarts:
       3
-    # NYI!! Enforce this label presence on pods.
-    labels:
-    - app
-    - env
-
-  # Service ...
-  service:
-    # Excludes these services from the scan.
     exclude:
-      - default/dictionary
+      - \Acore
+      - storage*
+
+  # ---------------------------------------------------------------------------
+  # Service ...
+  # o Excludes these services from the scan.
+  service:
+    exclude:
+      - dictionary*

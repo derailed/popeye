@@ -16,7 +16,7 @@ func ListEndpoints(c *k8s.Client, cfg *config.Config) (map[string]*v1.Endpoints,
 
 	res := make(map[string]*v1.Endpoints, len(eps))
 	for fqn, ep := range eps {
-		if c.IsActiveNamespace(ep.Namespace) && !cfg.ExcludedNS(ep.Namespace) {
+		if includeNS(c, cfg, ep.Namespace) {
 			res[fqn] = ep
 		}
 	}

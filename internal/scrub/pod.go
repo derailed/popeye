@@ -32,7 +32,7 @@ func NewPod(c *Cache) Sanitizer {
 
 	pmx, err := c.podsMx()
 	if err != nil {
-		p.AddErr("podmetrics", err)
+		p.AddInfof("podmetrics", "No metric-server detected %v", err)
 	}
 	p.PodsMetrics = pmx
 

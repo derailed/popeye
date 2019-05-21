@@ -16,7 +16,7 @@ func ListSecrets(c *k8s.Client, cfg *config.Config) (map[string]*v1.Secret, erro
 
 	res := make(map[string]*v1.Secret, len(secs))
 	for fqn, sec := range secs {
-		if c.IsActiveNamespace(sec.Namespace) && !cfg.ExcludedNS(sec.Namespace) {
+		if includeNS(c, cfg, sec.Namespace) {
 			res[fqn] = sec
 		}
 	}

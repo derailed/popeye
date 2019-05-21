@@ -39,7 +39,7 @@ func NewStatefulSet(c *Cache) Sanitizer {
 
 	pmx, err := c.podsMx()
 	if err != nil {
-		s.AddErr("podmetrics", err)
+		s.AddInfof("podmetrics", "No metric-server detected %v", err)
 	}
 	s.PodsMetrics = pmx
 

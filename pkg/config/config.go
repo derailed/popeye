@@ -92,6 +92,11 @@ func (c *Config) ExcludedService(s string) bool {
 	return c.Popeye.Service.excluded(s)
 }
 
+// ExcludedPod checks if a pod should be excluded from the scan.
+func (c *Config) ExcludedPod(n string) bool {
+	return c.Popeye.Pod.excluded(n)
+}
+
 // ExcludedNS checks if a namespace should be excluded from the scan.
 func (c *Config) ExcludedNS(n string) bool {
 	return c.Popeye.Namespace.excluded(n)

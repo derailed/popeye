@@ -11,12 +11,12 @@ import (
 func ListDeployments(c *k8s.Client, cfg *config.Config) (map[string]*appsv1.Deployment, error) {
 	dps, err := listAllDeployments(c)
 	if err != nil {
-		return nil, err
+		return map[string]*appsv1.Deployment{}, err
 	}
 
 	res := make(map[string]*appsv1.Deployment, len(dps))
 	for fqn, dp := range dps {
-		if c.IsActiveNamespace(dp.Namespace) && !cfg.ExcludedNS(dp.Namespace) {
+		if includeNS(c, cfg, dp.Namespace) {
 			res[fqn] = dp
 		}
 	}

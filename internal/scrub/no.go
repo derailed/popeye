@@ -40,7 +40,7 @@ func NewNode(c *Cache) Sanitizer {
 
 	nmx, err := c.nodesMx()
 	if err != nil {
-		n.AddErr("nodemetrics", err)
+		n.AddInfof("nodemetrics", "No metric-server detected %v", err)
 	}
 	n.NodesMetrics = nmx
 

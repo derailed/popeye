@@ -11,12 +11,12 @@ import (
 func ListStatefulSets(c *k8s.Client, cfg *config.Config) (map[string]*appsv1.StatefulSet, error) {
 	sts, err := listAllStatefulSets(c)
 	if err != nil {
-		return nil, err
+		return map[string]*appsv1.StatefulSet{}, err
 	}
 
 	res := make(map[string]*appsv1.StatefulSet, len(sts))
 	for fqn, st := range sts {
-		if c.IsActiveNamespace(st.Namespace) && !cfg.ExcludedNS(st.Namespace) {
+		if includeNS(c, cfg, st.Namespace) {
 			res[fqn] = st
 		}
 	}

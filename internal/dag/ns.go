@@ -16,7 +16,7 @@ func ListNamespaces(c *k8s.Client, cfg *config.Config) (map[string]*v1.Namespace
 
 	res := make(map[string]*v1.Namespace, len(nss))
 	for fqn, ns := range nss {
-		if c.IsActiveNamespace(ns.Name) && !cfg.ExcludedNS(ns.Name) {
+		if includeNS(c, cfg, ns.Name) {
 			res[fqn] = ns
 		}
 	}
