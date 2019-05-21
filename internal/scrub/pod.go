@@ -4,9 +4,7 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal/cache"
-	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/sanitize"
 	"github.com/derailed/popeye/pkg/config"
 )
@@ -20,18 +18,23 @@ type Pod struct {
 }
 
 // NewPod return a new Pod sanitizer.
-func NewPod(c *k8s.Client, cfg *config.Config) Sanitizer {
-	p := Pod{Collector: issues.NewCollector(), Config: cfg}
+func NewPod(c *Cache) Sanitizer {
+	p := Pod{
+		Collector: issues.NewCollector(),
+		Config:    c.config,
+	}
 
-	pods, err := dag.ListPods(c, cfg)
+	pod, err := c.pods()
 	if err != nil {
 		p.AddErr("pods", err)
 	}
-	pmx, err := dag.ListPodsMetrics(c)
+	p.Pod = pod
+
+	pmx, err := c.podsMx()
 	if err != nil {
-		p.AddInfof("podmetrics", "No metric-server detected %v", err)
+		p.AddErr("podmetrics", err)
 	}
-	p.Pod, p.PodsMetrics = cache.NewPod(pods), cache.NewPodsMetrics(pmx)
+	p.PodsMetrics = pmx
 
 	return &p
 }

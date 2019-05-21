@@ -6,9 +6,7 @@ import (
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/sanitize"
-	"github.com/derailed/popeye/pkg/config"
 )
 
 // PersistentVolumeClaim represents a PersistentVolumeClaim sanitizer.
@@ -19,20 +17,22 @@ type PersistentVolumeClaim struct {
 }
 
 // NewPersistentVolumeClaim return a new PersistentVolumeClaim sanitizer.
-func NewPersistentVolumeClaim(c *k8s.Client, cfg *config.Config) Sanitizer {
-	p := PersistentVolumeClaim{Collector: issues.NewCollector()}
+func NewPersistentVolumeClaim(c *Cache) Sanitizer {
+	p := PersistentVolumeClaim{
+		Collector: issues.NewCollector(),
+	}
 
-	ss, err := dag.ListPersistentVolumeClaims(c, cfg)
+	ss, err := dag.ListPersistentVolumeClaims(c.client, c.config)
 	if err != nil {
 		p.AddErr("services", err)
 	}
 	p.PersistentVolumeClaim = cache.NewPersistentVolumeClaim(ss)
 
-	pp, err := dag.ListPods(c, cfg)
+	pod, err := c.pods()
 	if err != nil {
-		p.AddErr("pod", err)
+		p.AddErr("pods", err)
 	}
-	p.Pod = cache.NewPod(pp)
+	p.Pod = pod
 
 	return &p
 }

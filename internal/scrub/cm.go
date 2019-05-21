@@ -6,9 +6,7 @@ import (
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/sanitize"
-	"github.com/derailed/popeye/pkg/config"
 )
 
 // ConfigMap represents a configMap sanitizer.
@@ -31,18 +29,20 @@ type Collector interface {
 }
 
 // NewConfigMap return a new ConfigMap sanitizer.
-func NewConfigMap(c *k8s.Client, cfg *config.Config) Sanitizer {
+func NewConfigMap(c *Cache) Sanitizer {
 	s := ConfigMap{Collector: issues.NewCollector()}
 
-	cms, err := dag.ListConfigMaps(c, cfg)
+	cms, err := dag.ListConfigMaps(c.client, c.config)
 	if err != nil {
 		s.AddErr("configmaps", err)
 	}
-	pods, err := dag.ListPods(c, cfg)
+	s.ConfigMap = cache.NewConfigMap(cms)
+
+	pod, err := c.pods()
 	if err != nil {
 		s.AddErr("pods", err)
 	}
-	s.ConfigMap, s.Pod = cache.NewConfigMap(cms), cache.NewPod(pods)
+	s.Pod = pod
 
 	return &s
 }

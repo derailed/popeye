@@ -6,6 +6,8 @@ import (
 
 	"github.com/derailed/popeye/cmd"
 	"github.com/derailed/popeye/pkg"
+
+	// "github.com/pkg/profile"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -22,5 +24,7 @@ func init() {
 }
 
 func main() {
+	// defer profile.Start(profile.MemProfile).Stop()
+
 	cmd.Execute()
 }

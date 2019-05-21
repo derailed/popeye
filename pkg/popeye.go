@@ -20,6 +20,8 @@ import (
 var PopeyeLog = filepath.Join(os.TempDir(), fmt.Sprintf("popeye.log"))
 
 type (
+	scrubFn func(*scrub.Cache) scrub.Sanitizer
+
 	// Popeye a kubernetes sanitizer.
 	Popeye struct {
 		client       *k8s.Client
@@ -92,8 +94,6 @@ func (p *Popeye) Sanitize() {
 	p.dump(true)
 }
 
-type scrubFn func(c *k8s.Client, cfg *config.Config) scrub.Sanitizer
-
 func (p *Popeye) sanitizers() map[string]scrubFn {
 	return map[string]scrubFn{
 		"cm":  scrub.NewConfigMap,
@@ -114,6 +114,8 @@ func (p *Popeye) sanitizers() map[string]scrubFn {
 func (p *Popeye) sanitize() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	cache := scrub.NewCache(p.client, p.config)
 	for k, f := range p.sanitizers() {
 		if !in(p.config.Sections(), k) {
 			continue
@@ -124,7 +126,7 @@ func (p *Popeye) sanitize() {
 			continue
 		}
 
-		s := f(p.client, p.config)
+		s := f(cache)
 		if err := s.Sanitize(ctx); err != nil {
 			p.builder.AddError(err)
 			continue

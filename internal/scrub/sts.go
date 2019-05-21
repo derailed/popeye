@@ -4,9 +4,7 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal/cache"
-	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/sanitize"
 	"github.com/derailed/popeye/pkg/config"
 )
@@ -21,26 +19,29 @@ type StatefulSet struct {
 }
 
 // NewStatefulSet return a new StatefulSet sanitizer.
-func NewStatefulSet(c *k8s.Client, cfg *config.Config) Sanitizer {
-	s := StatefulSet{Collector: issues.NewCollector(), Config: cfg}
-
-	sts, err := dag.ListStatefulSets(c, cfg)
-	if err != nil {
-		s.AddErr("configmaps", err)
+func NewStatefulSet(c *Cache) Sanitizer {
+	s := StatefulSet{
+		Collector: issues.NewCollector(),
+		Config:    c.config,
 	}
-	s.StatefulSet = cache.NewStatefulSet(sts)
 
-	pods, err := dag.ListPods(c, cfg)
+	sts, err := c.statefulsets()
+	if err != nil {
+		s.AddErr("statefulsets", err)
+	}
+	s.StatefulSet = sts
+
+	pod, err := c.pods()
 	if err != nil {
 		s.AddErr("pods", err)
 	}
-	s.Pod = cache.NewPod(pods)
+	s.Pod = pod
 
-	pmx, err := dag.ListPodsMetrics(c)
+	pmx, err := c.podsMx()
 	if err != nil {
-		s.AddInfof("podmetrics", "No metric-server detected %v", err)
+		s.AddErr("podmetrics", err)
 	}
-	s.PodsMetrics = cache.NewPodsMetrics(pmx)
+	s.PodsMetrics = pmx
 
 	return &s
 }

@@ -6,9 +6,7 @@ import (
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/sanitize"
-	"github.com/derailed/popeye/pkg/config"
 )
 
 // PersistentVolume represents a PersistentVolume sanitizer.
@@ -19,20 +17,20 @@ type PersistentVolume struct {
 }
 
 // NewPersistentVolume return a new PersistentVolume sanitizer.
-func NewPersistentVolume(c *k8s.Client, cfg *config.Config) Sanitizer {
+func NewPersistentVolume(c *Cache) Sanitizer {
 	p := PersistentVolume{Collector: issues.NewCollector()}
 
-	ss, err := dag.ListPersistentVolumes(c, cfg)
+	ss, err := dag.ListPersistentVolumes(c.client, c.config)
 	if err != nil {
 		p.AddErr("services", err)
 	}
 	p.PersistentVolume = cache.NewPersistentVolume(ss)
 
-	pp, err := dag.ListPods(c, cfg)
+	pod, err := c.pods()
 	if err != nil {
-		p.AddErr("pod", err)
+		p.AddErr("pods", err)
 	}
-	p.Pod = cache.NewPod(pp)
+	p.Pod = pod
 
 	return &p
 }

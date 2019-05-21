@@ -6,7 +6,6 @@ import (
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/sanitize"
 	"github.com/derailed/popeye/pkg/config"
 )
@@ -21,26 +20,29 @@ type Node struct {
 }
 
 // NewNode return a new Node sanitizer.
-func NewNode(c *k8s.Client, cfg *config.Config) Sanitizer {
-	n := Node{Collector: issues.NewCollector(), Config: cfg}
+func NewNode(c *Cache) Sanitizer {
+	n := Node{
+		Collector: issues.NewCollector(),
+		Config:    c.config,
+	}
 
-	nn, err := dag.ListNodes(c, cfg)
+	nn, err := dag.ListNodes(c.client, c.config)
 	if err != nil {
 		n.AddErr("nodes", err)
 	}
 	n.Node = cache.NewNode(nn)
 
-	pp, err := dag.ListPods(c, cfg)
+	pod, err := c.pods()
 	if err != nil {
-		n.AddErr("pod", err)
+		n.AddErr("pods", err)
 	}
-	n.Pod = cache.NewPod(pp)
+	n.Pod = pod
 
-	nmx, err := dag.ListNodesMetrics(c)
+	nmx, err := c.nodesMx()
 	if err != nil {
-		n.AddInfof("nodemetrics", "No metric-server detected %v", err)
+		n.AddErr("nodemetrics", err)
 	}
-	n.NodesMetrics = cache.NewNodesMetrics(nmx)
+	n.NodesMetrics = nmx
 
 	return &n
 }

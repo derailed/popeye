@@ -6,7 +6,6 @@ import (
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/sanitize"
 	"github.com/derailed/popeye/pkg/config"
 )
@@ -24,44 +23,47 @@ type HorizontalPodAutoscaler struct {
 }
 
 // NewHorizontalPodAutoscaler return a new HorizontalPodAutoscaler sanitizer.
-func NewHorizontalPodAutoscaler(c *k8s.Client, cfg *config.Config) Sanitizer {
-	h := HorizontalPodAutoscaler{Collector: issues.NewCollector(), Config: cfg}
+func NewHorizontalPodAutoscaler(c *Cache) Sanitizer {
+	h := HorizontalPodAutoscaler{
+		Collector: issues.NewCollector(),
+		Config:    c.config,
+	}
 
-	ss, err := dag.ListHorizontalPodAutoscalers(c, cfg)
+	ss, err := dag.ListHorizontalPodAutoscalers(c.client, c.config)
 	if err != nil {
 		h.AddErr("services", err)
 	}
 	h.HorizontalPodAutoscaler = cache.NewHorizontalPodAutoscaler(ss)
 
-	dps, err := dag.ListDeployments(c, cfg)
+	dps, err := c.deployments()
 	if err != nil {
 		h.AddErr("deployments", err)
 	}
-	h.Deployment = cache.NewDeployment(dps)
+	h.Deployment = dps
 
-	sts, err := dag.ListStatefulSets(c, cfg)
+	sts, err := c.statefulsets()
 	if err != nil {
 		h.AddErr("statefulsets", err)
 	}
-	h.StatefulSet = cache.NewStatefulSet(sts)
+	h.StatefulSet = sts
 
-	nmx, err := dag.ListNodesMetrics(c)
+	nmx, err := c.nodesMx()
 	if err != nil {
-		h.AddInfof("nodemetrics", "No metric-server detected %v", err)
+		h.AddErr("nodemetrics", err)
 	}
-	h.NodesMetrics = cache.NewNodesMetrics(nmx)
+	h.NodesMetrics = nmx
 
-	pods, err := dag.ListPods(c, cfg)
+	pod, err := c.pods()
 	if err != nil {
 		h.AddErr("pods", err)
 	}
-	h.Pod = cache.NewPod(pods)
+	h.Pod = pod
 
-	pmx, err := dag.ListPodsMetrics(c)
+	pmx, err := c.podsMx()
 	if err != nil {
-		h.AddInfof("podmetrics", "No metric-server detected %v", err)
+		h.AddErr("podmetrics", err)
 	}
-	h.PodsMetrics = cache.NewPodsMetrics(pmx)
+	h.PodsMetrics = pmx
 
 	return &h
 }

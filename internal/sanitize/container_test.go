@@ -33,7 +33,7 @@ func TestContainerCheckUtilization(t *testing.T) {
 				lcpu: "100m",
 				lmem: "10Mi",
 			}),
-			mx:     k8s.Metrics{toQty("100m"), toQty("2Mi")},
+			mx:     k8s.Metrics{toQty("200m"), toQty("2Mi")},
 			issues: 1,
 		},
 		"memOver": {
@@ -63,7 +63,7 @@ func TestContainerCheckUtilization(t *testing.T) {
 				lcpu: "100m",
 				lmem: "10Mi",
 			}),
-			mx:     k8s.Metrics{toQty("5"), toQty("10Mi")},
+			mx:     k8s.Metrics{toQty("5"), toQty("20Mi")},
 			issues: 2,
 		},
 	}

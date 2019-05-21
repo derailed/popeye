@@ -6,9 +6,7 @@ import (
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/sanitize"
-	"github.com/derailed/popeye/pkg/config"
 )
 
 // Service represents a Service sanitizer.
@@ -20,28 +18,28 @@ type Service struct {
 }
 
 // NewService return a new Service sanitizer.
-func NewService(c *k8s.Client, cfg *config.Config) Sanitizer {
-	p := Service{Collector: issues.NewCollector()}
+func NewService(c *Cache) Sanitizer {
+	s := Service{Collector: issues.NewCollector()}
 
-	ss, err := dag.ListServices(c, cfg)
+	ss, err := dag.ListServices(c.client, c.config)
 	if err != nil {
-		p.AddErr("services", err)
+		s.AddErr("services", err)
 	}
-	p.Service = cache.NewService(ss)
+	s.Service = cache.NewService(ss)
 
-	pp, err := dag.ListPods(c, cfg)
+	pod, err := c.pods()
 	if err != nil {
-		p.AddErr("pod", err)
+		s.AddErr("pods", err)
 	}
-	p.Pod = cache.NewPod(pp)
+	s.Pod = pod
 
-	ee, err := dag.ListEndpoints(c, cfg)
+	ee, err := dag.ListEndpoints(c.client, c.config)
 	if err != nil {
-		p.AddErr("endpoints", err)
+		s.AddErr("endpoints", err)
 	}
-	p.Endpoints = cache.NewEndpoints(ee)
+	s.Endpoints = cache.NewEndpoints(ee)
 
-	return &p
+	return &s
 }
 
 // Sanitize all available Services.

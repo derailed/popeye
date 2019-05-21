@@ -37,22 +37,3 @@ func listAllPods(c *k8s.Client) (map[string]*v1.Pod, error) {
 
 	return pods, nil
 }
-
-// ListPodsByLabels retrieves all Pods matching a label selector in the allowed namespaces.
-func ListPodsByLabels(c k8s.Client, cfg *config.Config, sel string) (map[string]*v1.Pod, error) {
-	pods, err := c.DialOrDie().CoreV1().Pods("").List(metav1.ListOptions{
-		LabelSelector: sel,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	res := make(map[string]*v1.Pod, len(pods.Items))
-	for _, po := range pods.Items {
-		if c.IsActiveNamespace(po.Namespace) && !cfg.ExcludedNS(po.Namespace) {
-			res[metaFQN(po.ObjectMeta)] = &po
-		}
-	}
-
-	return res, nil
-}

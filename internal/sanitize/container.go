@@ -113,13 +113,13 @@ func (c *Container) checkUtilization(co v1.Container, cmx k8s.Metrics) {
 func (c *Container) checkMetrics(co string, cpu, mem, ccpu, cmem resource.Quantity) {
 	percCPU := ToPerc(toMC(ccpu), toMC(cpu))
 	cpuLimit := int64(c.PodCPULimit())
-	if percCPU >= cpuLimit {
+	if percCPU > cpuLimit {
 		c.AddSubErrorf(c.fqn, co, "CPU Current/Requested (%s/%s) reached user %d%% threshold (%d%%)", asMC(ccpu), asMC(cpu), cpuLimit, percCPU)
 	}
 
 	percMEM := ToPerc(toMB(cmem), toMB(mem))
 	memLimit := int64(c.PodMEMLimit())
-	if percMEM >= memLimit {
+	if percMEM > memLimit {
 		c.AddSubErrorf(c.fqn, co, "Memory Current/Requested (%s/%s) reached user %d%% threshold (%d%%)", asMB(cmem), asMB(mem), memLimit, percMEM)
 	}
 }

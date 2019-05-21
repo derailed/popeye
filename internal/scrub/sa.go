@@ -6,9 +6,7 @@ import (
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/sanitize"
-	"github.com/derailed/popeye/pkg/config"
 )
 
 // ServiceAccouunt represents a ServiceAccouunt sanitizer.
@@ -21,34 +19,34 @@ type ServiceAccouunt struct {
 }
 
 // NewServiceAccount return a new ServiceAccouunt sanitizer.
-func NewServiceAccount(c *k8s.Client, cfg *config.Config) Sanitizer {
-	p := ServiceAccouunt{Collector: issues.NewCollector()}
+func NewServiceAccount(c *Cache) Sanitizer {
+	s := ServiceAccouunt{Collector: issues.NewCollector()}
 
-	ss, err := dag.ListServiceAccounts(c, cfg)
+	sas, err := c.serviceaccounts()
 	if err != nil {
-		p.AddErr("serviceaccounts", err)
+		s.AddErr("serviceaccounts", err)
 	}
-	p.ServiceAccount = cache.NewServiceAccount(ss)
+	s.ServiceAccount = sas
 
-	pp, err := dag.ListPods(c, cfg)
+	pod, err := c.pods()
 	if err != nil {
-		p.AddErr("pod", err)
+		s.AddErr("pods", err)
 	}
-	p.Pod = cache.NewPod(pp)
+	s.Pod = pod
 
-	crbs, err := dag.ListClusterRoleBindings(c, cfg)
+	crbs, err := dag.ListClusterRoleBindings(c.client, c.config)
 	if err != nil {
-		p.AddErr("clusterrolebindings", err)
+		s.AddErr("clusterrolebindings", err)
 	}
-	p.ClusterRoleBinding = cache.NewClusterRoleBinding(crbs)
+	s.ClusterRoleBinding = cache.NewClusterRoleBinding(crbs)
 
-	rbs, err := dag.ListRoleBindings(c, cfg)
+	rbs, err := dag.ListRoleBindings(c.client, c.config)
 	if err != nil {
-		p.AddErr("rolebindings", err)
+		s.AddErr("rolebindings", err)
 	}
-	p.RoleBinding = cache.NewRoleBinding(rbs)
+	s.RoleBinding = cache.NewRoleBinding(rbs)
 
-	return &p
+	return &s
 }
 
 // Sanitize all available ServiceAccouunts.

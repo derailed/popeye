@@ -4,13 +4,10 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal/cache"
-	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/sanitize"
 	"github.com/derailed/popeye/pkg/config"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Deployment represents a Deployment sanitizer.
@@ -25,26 +22,30 @@ type Deployment struct {
 }
 
 // NewDeployment return a new Deployment sanitizer.
-func NewDeployment(c *k8s.Client, cfg *config.Config) Sanitizer {
-	d := Deployment{client: c, Collector: issues.NewCollector(), Config: cfg}
+func NewDeployment(c *Cache) Sanitizer {
+	d := Deployment{
+		client:    c.client,
+		Config:    c.config,
+		Collector: issues.NewCollector(),
+	}
 
-	dps, err := dag.ListDeployments(c, cfg)
+	dps, err := c.deployments()
 	if err != nil {
 		d.AddErr("deployments", err)
 	}
-	d.Deployment = cache.NewDeployment(dps)
+	d.Deployment = dps
 
-	mx, err := dag.ListPodsMetrics(c)
+	pmx, err := c.podsMx()
 	if err != nil {
-		d.AddInfof("podmetrics", "No metric-server detected %v", err)
+		d.AddErr("podmetrics", err)
 	}
-	d.PodsMetrics = cache.NewPodsMetrics(mx)
+	d.PodsMetrics = pmx
 
-	pods, err := dag.ListPods(c, cfg)
+	pod, err := c.pods()
 	if err != nil {
 		d.AddErr("pods", err)
 	}
-	d.Pod = cache.NewPod(pods)
+	d.Pod = pod
 
 	return &d
 }
@@ -52,23 +53,4 @@ func NewDeployment(c *k8s.Client, cfg *config.Config) Sanitizer {
 // Sanitize all available Deployments.
 func (d *Deployment) Sanitize(ctx context.Context) error {
 	return sanitize.NewDeployment(d.Collector, d).Sanitize(ctx)
-}
-
-// ListPodsByLabels retrieves all Pods matching a label selector in the allowed namespaces.
-func (d *Deployment) ListPodsByLabels(sel string) (map[string]*v1.Pod, error) {
-	pods, err := d.client.DialOrDie().CoreV1().Pods("").List(metav1.ListOptions{
-		LabelSelector: sel,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	res := make(map[string]*v1.Pod, len(pods.Items))
-	for _, po := range pods.Items {
-		if d.client.IsActiveNamespace(po.Namespace) && !d.ExcludedNS(po.Namespace) {
-			res[cache.MetaFQN(po.ObjectMeta)] = &po
-		}
-	}
-
-	return res, nil
 }

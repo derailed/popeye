@@ -6,9 +6,7 @@ import (
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/sanitize"
-	"github.com/derailed/popeye/pkg/config"
 )
 
 // Namespace represents a Namespace sanitizer.
@@ -19,20 +17,20 @@ type Namespace struct {
 }
 
 // NewNamespace return a new Namespace sanitizer.
-func NewNamespace(c *k8s.Client, cfg *config.Config) Sanitizer {
+func NewNamespace(c *Cache) Sanitizer {
 	n := Namespace{Collector: issues.NewCollector()}
 
-	ss, err := dag.ListNamespaces(c, cfg)
+	ss, err := dag.ListNamespaces(c.client, c.config)
 	if err != nil {
 		n.AddErr("namespaces", err)
 	}
 	n.Namespace = cache.NewNamespace(ss)
 
-	pods, err := dag.ListPods(c, cfg)
+	pod, err := c.pods()
 	if err != nil {
 		n.AddErr("pods", err)
 	}
-	n.Pod = cache.NewPod(pods)
+	n.Pod = pod
 
 	return &n
 }
