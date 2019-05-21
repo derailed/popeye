@@ -3,6 +3,8 @@ package config
 import (
 	"regexp"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 // RxMarker indicate exclude flag is a regular expression.
@@ -18,7 +20,11 @@ func (e Excludes) excluded(name string) bool {
 	for _, n := range e {
 		if isRegex(n) {
 			n = `\A` + strings.Replace(n, rxMarker, "", 1)
-			rx := regexp.MustCompile(n)
+			rx, err := regexp.Compile(n)
+			if err != nil {
+				log.Error().Err(err).Msgf("Invalid regexp `%s found in yaml", n)
+				continue
+			}
 			if rx.MatchString(name) {
 				return true
 			}

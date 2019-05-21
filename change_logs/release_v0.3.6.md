@@ -26,9 +26,11 @@ exclude:
   - rx:.*-duh
 ```
 
+> NOTE: Malformed regex issues will be surfaced in the logs! Please use `popeye version` for logs location.
+
 ### Performance part Duh
 
-In my speed up excitements, I've spaced checking for clusters that don't currently support metrics. This yield to an npe ;( which should now be resolved. Sorry about this waffle thin disruption in the force!
+In my speed up excitements, I've spaced checking for clusters that don't currently support metrics. This yield to an npe ;(. This should now be resolved. Sorry about this waffle thin disruption in the force!
 
 ---
 
