@@ -55,6 +55,15 @@ Popeye is available on Linux, OSX and Windows platforms.
         go run main.go
         ```
 
+   Quick recipe for the impatient:
+
+   ```shell
+   git clone https://github.com/derailed/popeye ;# clone outside of GOPATH
+   cd popeye
+   go install ;# build and install
+   popeye     ;# run
+   ```
+
 ## Sanitizers
 
 Popeye scans your cluster for best practices and potential issues.
@@ -174,7 +183,7 @@ spec:
 ## Popeye got your RBAC!
 
 In order for Popeye to do his work, the signed in user must have enough RBAC oomph to
-get/list the resources mentioned above as well as metrics-server get/list access.
+get/list the resources mentioned above.
 
 Sample Popeye RBAC Rules (Subject to change!!)
 
