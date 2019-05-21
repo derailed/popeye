@@ -15,7 +15,7 @@ func ListPodsMetrics(c *k8s.Client) (map[string]*mv1beta1.PodMetrics, error) {
 
 	pmx := make(map[string]*mv1beta1.PodMetrics, len(ll.Items))
 	for i := range ll.Items {
-		pmx[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		pmx[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
 	return pmx, nil

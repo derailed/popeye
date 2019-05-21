@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
@@ -96,17 +97,30 @@ func (s *Sanitizer) Comment(msg string) {
 
 // Dump all errors to output.
 func (s *Sanitizer) Dump(l issues.Level, ii issues.Issues) {
-	for _, i := range ii {
-		if i.Level < l {
+	groups := ii.Group()
+	keys := make([]string, len(groups))
+	for k := range groups {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, group := range keys {
+		sev := groups[group].MaxSeverity()
+		if sev < l {
 			continue
 		}
-		if i.Group == issues.Root {
-			s.write(i.Level, 2, i.Message+".")
-			continue
+		if group != issues.Root {
+			s.write(containerLevel, 2, group)
 		}
-		// s.write(i.Level, 2, i.Group+".")
-		s.write(containerLevel, 2, i.Group)
-		s.write(i.Level, 3, i.Message+".")
+		for _, i := range groups[group] {
+			if i.Level < l {
+				continue
+			}
+			if i.Group == issues.Root {
+				s.write(i.Level, 2, i.Message+".")
+				continue
+			}
+			s.write(i.Level, 3, i.Message+".")
+		}
 	}
 }
 

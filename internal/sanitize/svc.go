@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
+	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -54,6 +56,7 @@ func (s *Service) Sanitize(ctx context.Context) error {
 		if in(skipServices, fqn) {
 			continue
 		}
+		s.InitOutcome(fqn)
 		s.checkPorts(fqn, svc.Spec.Selector, svc.Spec.Ports)
 		s.checkEndpoints(fqn, svc.Spec.Selector, svc.Spec.Type)
 		s.checkType(fqn, svc.Spec.Type)
@@ -66,16 +69,27 @@ func (s *Service) checkPorts(fqn string, sel map[string]string, ports []v1.Servi
 	po := s.GetPod(sel)
 	if po == nil {
 		if len(sel) > 0 {
-			s.AddErr(fqn, errors.New("No pods matched service selector"))
+			s.AddErr(fqn, errors.New("No pods match service selector"))
 		}
 		return
 	}
 
+	pports := make(map[string]string)
+	portsForPod(po, pports)
+	pfqn := cache.MetaFQN(po.ObjectMeta)
+	// No explicit pod ports definition -> bail!.
+	if len(pports) == 0 {
+		s.AddInfof(fqn, "Skip ports check. No explicit ports detected on pod %s", pfqn)
+		return
+	}
 	for _, p := range ports {
-		errs := checkServicePort(p, po)
-		if errs != nil {
-			s.AddErr(fqn, errs...)
+		err := checkServicePort(p, pports)
+		if err != nil {
+			s.AddErr(fqn, err)
 			continue
+		}
+		if !checkNamedTargetPort(p) {
+			s.AddInfof(fqn, "Use of target port #%s for service port %s. Prefer named port", p.TargetPort.String(), portAsStr(p))
 		}
 	}
 }
@@ -85,7 +99,7 @@ func (s *Service) checkType(fqn string, kind v1.ServiceType) {
 		s.AddInfo(fqn, "Type Loadbalancer detected. Could be expensive")
 	}
 	if kind == v1.ServiceTypeNodePort {
-		s.AddInfo(fqn, "Type NodePort detected. Do mean it?")
+		s.AddInfo(fqn, "Type NodePort detected. Do you mean it?")
 	}
 }
 
@@ -95,12 +109,10 @@ func (s *Service) checkEndpoints(fqn string, sel map[string]string, kind v1.Serv
 	if len(sel) == 0 {
 		return
 	}
-
 	// External service bail -> no EPs.
 	if kind == v1.ServiceTypeExternalName {
 		return
 	}
-
 	ep := s.GetEndpoints(fqn)
 	if ep == nil || len(ep.Subsets) == 0 {
 		s.AddErr(fqn, errors.New("No associated endpoints"))
@@ -110,33 +122,45 @@ func (s *Service) checkEndpoints(fqn string, sel map[string]string, kind v1.Serv
 // ----------------------------------------------------------------------------
 // Helpers...
 
+func checkNamedTargetPort(port v1.ServicePort) bool {
+	if port.TargetPort.Type == intstr.String {
+		return true
+	}
+	return false
+}
+
 // CheckServicePort
-func checkServicePort(port v1.ServicePort, pod *v1.Pod) []error {
-	var errs []error
-	var match bool
+func checkServicePort(port v1.ServicePort, ports map[string]string) error {
+	fqn := servicePortFQN(port)
+	if _, ok := ports[fqn]; ok {
+		return nil
+	}
+
+	return fmt.Errorf("No target ports match service port `%s", portAsStr(port))
+}
+
+// PortsForPod computes a port map for a given pod.
+func portsForPod(pod *v1.Pod, ports map[string]string) {
 	for _, co := range pod.Spec.Containers {
 		for _, p := range co.Ports {
-			if !matchPort(port, p) {
-				continue
-			}
-			match = true
-			if p.Protocol != port.Protocol {
-				errs = append(
-					errs,
-					fmt.Errorf("Port `%s protocol mismatch %s vs %s", portAsStr(port), port.Protocol, p.Protocol),
-				)
+			ports[portFQN(p.Protocol, strconv.Itoa(int(p.ContainerPort)))] = co.Name
+			if p.Name != "" {
+				ports[portFQN(p.Protocol, p.Name)] = co.Name
 			}
 		}
 	}
+}
 
-	if !match {
-		errs = append(
-			errs,
-			fmt.Errorf("No container ports matches service port `%s", portAsStr(port)),
-		)
+func servicePortFQN(port v1.ServicePort) string {
+	if port.TargetPort.String() != "" {
+		return portFQN(port.Protocol, port.TargetPort.String())
 	}
 
-	return errs
+	return portFQN(port.Protocol, strconv.Itoa(int(port.Port)))
+}
+
+func portFQN(p v1.Protocol, port string) string {
+	return string(p) + ":" + port
 }
 
 // MatchPort check if service port matches a given container port.

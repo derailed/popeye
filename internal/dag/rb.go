@@ -9,15 +9,15 @@ import (
 
 // ListRoleBindings list included RoleBindings.
 func ListRoleBindings(c *k8s.Client, cfg *config.Config) (map[string]*rbacv1.RoleBinding, error) {
-	sas, err := listAllRoleBindings(c)
+	rbs, err := listAllRoleBindings(c)
 	if err != nil {
 		return nil, err
 	}
 
-	res := make(map[string]*rbacv1.RoleBinding, len(sas))
-	for fqn, sa := range sas {
-		if c.IsActiveNamespace(sa.Namespace) && !cfg.ExcludedNS(sa.Namespace) {
-			res[fqn] = sa
+	res := make(map[string]*rbacv1.RoleBinding, len(rbs))
+	for fqn, rb := range rbs {
+		if c.IsActiveNamespace(rb.Namespace) && !cfg.ExcludedNS(rb.Namespace) {
+			res[fqn] = rb
 		}
 	}
 
@@ -31,12 +31,12 @@ func listAllRoleBindings(c *k8s.Client) (map[string]*rbacv1.RoleBinding, error) 
 		return nil, err
 	}
 
-	sas := make(map[string]*rbacv1.RoleBinding, len(ll.Items))
+	rbs := make(map[string]*rbacv1.RoleBinding, len(ll.Items))
 	for i := range ll.Items {
-		sas[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		rbs[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
-	return sas, nil
+	return rbs, nil
 }
 
 // FetchRoleBindings retrieves all RoleBindings on the cluster.

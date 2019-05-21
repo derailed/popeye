@@ -9,15 +9,15 @@ import (
 
 // ListStatefulSets list available StatefulSets.
 func ListStatefulSets(c *k8s.Client, cfg *config.Config) (map[string]*appsv1.StatefulSet, error) {
-	sas, err := listAllStatefulSets(c)
+	sts, err := listAllStatefulSets(c)
 	if err != nil {
 		return nil, err
 	}
 
-	res := make(map[string]*appsv1.StatefulSet, len(sas))
-	for fqn, sa := range sas {
-		if c.IsActiveNamespace(sa.Namespace) && !cfg.ExcludedNS(sa.Namespace) {
-			res[fqn] = sa
+	res := make(map[string]*appsv1.StatefulSet, len(sts))
+	for fqn, st := range sts {
+		if c.IsActiveNamespace(st.Namespace) && !cfg.ExcludedNS(st.Namespace) {
+			res[fqn] = st
 		}
 	}
 
@@ -31,12 +31,12 @@ func listAllStatefulSets(c *k8s.Client) (map[string]*appsv1.StatefulSet, error) 
 		return nil, err
 	}
 
-	sas := make(map[string]*appsv1.StatefulSet, len(ll.Items))
+	sts := make(map[string]*appsv1.StatefulSet, len(ll.Items))
 	for i := range ll.Items {
-		sas[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		sts[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
-	return sas, nil
+	return sts, nil
 }
 
 // FetchStatefulSets retrieves all StatefulSets on the cluster.

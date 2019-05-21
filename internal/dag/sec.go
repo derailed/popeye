@@ -33,7 +33,7 @@ func listAllSecrets(c *k8s.Client) (map[string]*v1.Secret, error) {
 
 	secs := make(map[string]*v1.Secret, len(ll.Items))
 	for i := range ll.Items {
-		secs[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		secs[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
 	return secs, nil

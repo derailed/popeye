@@ -38,7 +38,7 @@ func TestSvcSanitize(t *testing.T) {
 			),
 			1,
 		},
-		"noPod": {
+		"noMatchingPods": {
 			makeSvcLister("s1",
 				svcOpts{
 					kind:         v1.ServiceTypeClusterIP,
@@ -59,7 +59,7 @@ func TestSvcSanitize(t *testing.T) {
 			),
 			1,
 		},
-		"npType": {
+		"nodePortType": {
 			makeSvcLister("s1",
 				svcOpts{
 					kind:         v1.ServiceTypeNodePort,
@@ -108,35 +108,18 @@ func TestSvcSanitize(t *testing.T) {
 			),
 			1,
 		},
-		"noTargetPort": {
+		"badTargetPortNumb": {
 			makeSvcLister("s1",
 				svcOpts{
-					kind:        v1.ServiceTypeExternalName,
-					hasSelector: true,
-					hasPod:      true,
-					ports: []v1.ServicePort{
-						{
-							Name:       "sp1",
-							Port:       80,
-							TargetPort: intstr.FromInt(90),
-							Protocol:   v1.ProtocolTCP,
-						},
-					},
-				},
-			),
-			1,
-		},
-		"noNamedTargetPort": {
-			makeSvcLister("s1",
-				svcOpts{
-					kind:        v1.ServiceTypeExternalName,
-					hasSelector: true,
-					hasPod:      true,
+					kind:         v1.ServiceTypeClusterIP,
+					hasSelector:  true,
+					hasPod:       true,
+					hasEndPoints: true,
 					ports: []v1.ServicePort{
 						{
 							Name:       "p1",
 							Port:       80,
-							TargetPort: intstr.FromString("p3"),
+							TargetPort: intstr.Parse("90"),
 							Protocol:   v1.ProtocolTCP,
 						},
 					},
@@ -144,16 +127,56 @@ func TestSvcSanitize(t *testing.T) {
 			),
 			1,
 		},
-		"noNames": {
+		"badNamedTargetPort": {
 			makeSvcLister("s1",
 				svcOpts{
-					kind:        v1.ServiceTypeExternalName,
-					hasSelector: true,
-					hasPod:      true,
+					kind:         v1.ServiceTypeClusterIP,
+					hasSelector:  true,
+					hasPod:       true,
+					hasEndPoints: true,
 					ports: []v1.ServicePort{
 						{
-							Port:     80,
-							Protocol: v1.ProtocolTCP,
+							Name:       "p1",
+							Port:       80,
+							TargetPort: intstr.Parse("toast"),
+							Protocol:   v1.ProtocolTCP,
+						},
+					},
+				},
+			),
+			1,
+		},
+		"unnamedTargetPort": {
+			makeSvcLister("s1",
+				svcOpts{
+					kind:         v1.ServiceTypeClusterIP,
+					hasSelector:  true,
+					hasPod:       true,
+					hasEndPoints: true,
+					ports: []v1.ServicePort{
+						{
+							Name:       "p1",
+							Port:       80,
+							TargetPort: intstr.Parse("80"),
+							Protocol:   v1.ProtocolTCP,
+						},
+					},
+				},
+			),
+			1,
+		},
+		"unamedSvcPort": {
+			makeSvcLister("s1",
+				svcOpts{
+					kind:         v1.ServiceTypeClusterIP,
+					hasSelector:  true,
+					hasPod:       true,
+					hasEndPoints: true,
+					ports: []v1.ServicePort{
+						{
+							Port:       80,
+							Protocol:   v1.ProtocolTCP,
+							TargetPort: intstr.Parse("p1"),
 						},
 					},
 				},

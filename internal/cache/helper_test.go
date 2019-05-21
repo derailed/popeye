@@ -34,3 +34,47 @@ func TestMetaFQN(t *testing.T) {
 		assert.Equal(t, u.e, MetaFQN(u.m))
 	}
 }
+
+func TestMatchLabels(t *testing.T) {
+	uu := map[string]struct {
+		labels, selector map[string]string
+		e                bool
+	}{
+		"empty": {
+			map[string]string{},
+			map[string]string{},
+			false,
+		},
+		"wrongKey": {
+			map[string]string{"a": "a", "b": "b"},
+			map[string]string{"c": "a"},
+			false,
+		},
+		"wrongValue": {
+			map[string]string{"a": "a", "b": "b"},
+			map[string]string{"a": "z"},
+			false,
+		},
+		"exact": {
+			map[string]string{"a": "a", "b": "b"},
+			map[string]string{"a": "a", "b": "b"},
+			true,
+		},
+		"subset": {
+			map[string]string{"a": "a", "b": "b", "c": "c"},
+			map[string]string{"a": "a", "b": "b"},
+			true,
+		},
+		"superset": {
+			map[string]string{"a": "a", "b": "b"},
+			map[string]string{"a": "a", "b": "b", "c": "c"},
+			false,
+		},
+	}
+
+	for k, u := range uu {
+		t.Run(k, func(t *testing.T) {
+			assert.Equal(t, u.e, matchLabels(u.labels, u.selector))
+		})
+	}
+}

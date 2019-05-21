@@ -9,15 +9,15 @@ import (
 
 // ListNamespaces list all included Namespaces.
 func ListNamespaces(c *k8s.Client, cfg *config.Config) (map[string]*v1.Namespace, error) {
-	secs, err := listAllNamespaces(c)
+	nss, err := listAllNamespaces(c)
 	if err != nil {
 		return nil, err
 	}
 
-	res := make(map[string]*v1.Namespace, len(secs))
-	for fqn, sec := range secs {
-		if c.IsActiveNamespace(sec.Namespace) && !cfg.ExcludedNS(sec.Namespace) {
-			res[fqn] = sec
+	res := make(map[string]*v1.Namespace, len(nss))
+	for fqn, ns := range nss {
+		if c.IsActiveNamespace(ns.Name) && !cfg.ExcludedNS(ns.Name) {
+			res[fqn] = ns
 		}
 	}
 
@@ -31,12 +31,12 @@ func listAllNamespaces(c *k8s.Client) (map[string]*v1.Namespace, error) {
 		return nil, err
 	}
 
-	secs := make(map[string]*v1.Namespace, len(ll.Items))
+	nss := make(map[string]*v1.Namespace, len(ll.Items))
 	for i := range ll.Items {
-		secs[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		nss[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
-	return secs, nil
+	return nss, nil
 }
 
 // FetchNamespaces retrieves all Namespaces on the cluster.

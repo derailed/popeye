@@ -94,7 +94,7 @@ func TestDump(t *testing.T) {
 					issues.New("c1", issues.ErrorLevel, "Yo!"),
 				},
 			},
-			"    🐳 \x1b[38;5;75;mc1\x1b[0m\n      💥 \x1b[38;5;196;mYo Mama!.\x1b[0m\n    🐳 \x1b[38;5;75;mc1\x1b[0m\n      💥 \x1b[38;5;196;mYo!.\x1b[0m\n",
+			"    🐳 \x1b[38;5;75;mc1\x1b[0m\n      💥 \x1b[38;5;196;mYo Mama!.\x1b[0m\n      💥 \x1b[38;5;196;mYo!.\x1b[0m\n",
 		},
 	}
 

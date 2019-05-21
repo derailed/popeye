@@ -9,16 +9,14 @@ import (
 
 // ListPersistentVolumes list all included PersistentVolumes.
 func ListPersistentVolumes(c *k8s.Client, cfg *config.Config) (map[string]*v1.PersistentVolume, error) {
-	secs, err := listAllPersistentVolumes(c)
+	pvs, err := listAllPersistentVolumes(c)
 	if err != nil {
 		return nil, err
 	}
 
-	res := make(map[string]*v1.PersistentVolume, len(secs))
-	for fqn, sec := range secs {
-		if c.IsActiveNamespace(sec.Namespace) && !cfg.ExcludedNS(sec.Namespace) {
-			res[fqn] = sec
-		}
+	res := make(map[string]*v1.PersistentVolume, len(pvs))
+	for fqn, pv := range pvs {
+		res[fqn] = pv
 	}
 
 	return res, nil
@@ -31,12 +29,12 @@ func listAllPersistentVolumes(c *k8s.Client) (map[string]*v1.PersistentVolume, e
 		return nil, err
 	}
 
-	secs := make(map[string]*v1.PersistentVolume, len(ll.Items))
+	pvs := make(map[string]*v1.PersistentVolume, len(ll.Items))
 	for i := range ll.Items {
-		secs[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		pvs[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
-	return secs, nil
+	return pvs, nil
 }
 
 // FetchPersistentVolumes retrieves all PersistentVolumes on the cluster.

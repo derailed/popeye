@@ -151,8 +151,8 @@ func TestPortAsString(t *testing.T) {
 		port v1.ServicePort
 		e    string
 	}{
-		{v1.ServicePort{Name: "p1", Port: 80}, "p1"},
-		{v1.ServicePort{Name: "", Port: 80}, "80"},
+		{v1.ServicePort{Protocol: v1.ProtocolTCP, Name: "p1", Port: 80}, "TCP:p1:80"},
+		{v1.ServicePort{Protocol: v1.ProtocolUDP, Name: "", Port: 80}, "UDP::80"},
 	}
 
 	for _, u := range uu {

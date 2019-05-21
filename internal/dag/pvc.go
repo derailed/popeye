@@ -9,15 +9,15 @@ import (
 
 // ListPersistentVolumeClaims list all included PersistentVolumeClaims.
 func ListPersistentVolumeClaims(c *k8s.Client, cfg *config.Config) (map[string]*v1.PersistentVolumeClaim, error) {
-	secs, err := listAllPersistentVolumeClaims(c)
+	pvcs, err := listAllPersistentVolumeClaims(c)
 	if err != nil {
 		return nil, err
 	}
 
-	res := make(map[string]*v1.PersistentVolumeClaim, len(secs))
-	for fqn, sec := range secs {
-		if c.IsActiveNamespace(sec.Namespace) && !cfg.ExcludedNS(sec.Namespace) {
-			res[fqn] = sec
+	res := make(map[string]*v1.PersistentVolumeClaim, len(pvcs))
+	for fqn, pvc := range pvcs {
+		if c.IsActiveNamespace(pvc.Namespace) && !cfg.ExcludedNS(pvc.Namespace) {
+			res[fqn] = pvc
 		}
 	}
 
@@ -31,12 +31,12 @@ func listAllPersistentVolumeClaims(c *k8s.Client) (map[string]*v1.PersistentVolu
 		return nil, err
 	}
 
-	secs := make(map[string]*v1.PersistentVolumeClaim, len(ll.Items))
+	pvcs := make(map[string]*v1.PersistentVolumeClaim, len(ll.Items))
 	for i := range ll.Items {
-		secs[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		pvcs[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
-	return secs, nil
+	return pvcs, nil
 }
 
 // FetchPersistentVolumeClaims retrieves all PersistentVolumeClaims on the cluster.

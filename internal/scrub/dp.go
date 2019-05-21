@@ -66,7 +66,7 @@ func (d *Deployment) ListPodsByLabels(sel string) (map[string]*v1.Pod, error) {
 	res := make(map[string]*v1.Pod, len(pods.Items))
 	for _, po := range pods.Items {
 		if d.client.IsActiveNamespace(po.Namespace) && !d.ExcludedNS(po.Namespace) {
-			res[dag.MetaFQN(po.ObjectMeta)] = &po
+			res[cache.MetaFQN(po.ObjectMeta)] = &po
 		}
 	}
 

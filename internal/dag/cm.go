@@ -33,7 +33,7 @@ func listAllConfigMaps(c *k8s.Client) (map[string]*v1.ConfigMap, error) {
 
 	cms := make(map[string]*v1.ConfigMap, len(ll.Items))
 	for i := range ll.Items {
-		cms[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		cms[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
 	return cms, nil

@@ -32,7 +32,7 @@ func listAllPods(c *k8s.Client) (map[string]*v1.Pod, error) {
 
 	pods := make(map[string]*v1.Pod, len(ll.Items))
 	for i := range ll.Items {
-		pods[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		pods[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
 	return pods, nil
@@ -50,7 +50,7 @@ func ListPodsByLabels(c k8s.Client, cfg *config.Config, sel string) (map[string]
 	res := make(map[string]*v1.Pod, len(pods.Items))
 	for _, po := range pods.Items {
 		if c.IsActiveNamespace(po.Namespace) && !cfg.ExcludedNS(po.Namespace) {
-			res[MetaFQN(po.ObjectMeta)] = &po
+			res[metaFQN(po.ObjectMeta)] = &po
 		}
 	}
 

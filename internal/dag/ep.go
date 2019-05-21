@@ -9,15 +9,15 @@ import (
 
 // ListEndpoints list all included Endpoints.
 func ListEndpoints(c *k8s.Client, cfg *config.Config) (map[string]*v1.Endpoints, error) {
-	cms, err := listAllEndpoints(c)
+	eps, err := listAllEndpoints(c)
 	if err != nil {
 		return nil, err
 	}
 
-	res := make(map[string]*v1.Endpoints, len(cms))
-	for fqn, cm := range cms {
-		if c.IsActiveNamespace(cm.Namespace) && !cfg.ExcludedNS(cm.Namespace) {
-			res[fqn] = cm
+	res := make(map[string]*v1.Endpoints, len(eps))
+	for fqn, ep := range eps {
+		if c.IsActiveNamespace(ep.Namespace) && !cfg.ExcludedNS(ep.Namespace) {
+			res[fqn] = ep
 		}
 	}
 
@@ -31,12 +31,12 @@ func listAllEndpoints(c *k8s.Client) (map[string]*v1.Endpoints, error) {
 		return nil, err
 	}
 
-	cms := make(map[string]*v1.Endpoints, len(ll.Items))
+	eps := make(map[string]*v1.Endpoints, len(ll.Items))
 	for i := range ll.Items {
-		cms[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		eps[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
-	return cms, nil
+	return eps, nil
 }
 
 // FetchEndpoints retrieves all Endpoints on the cluster.

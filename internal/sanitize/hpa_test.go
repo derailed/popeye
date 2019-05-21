@@ -241,7 +241,7 @@ func (h *hpa) ListPodsMetrics() map[string]*mv1beta1.PodMetrics {
 	}
 }
 
-func (h *hpa) ListClusterMetrics(map[string]*mv1beta1.NodeMetrics) v1.ResourceList {
+func (h *hpa) ListClusterMetrics() v1.ResourceList {
 	return v1.ResourceList{
 		v1.ResourceCPU:    toQty(h.opts.ccpu),
 		v1.ResourceMemory: toQty(h.opts.cmem),

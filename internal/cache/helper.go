@@ -35,6 +35,10 @@ func namespaced(fqn string) (string, string) {
 
 // MatchLabels check if pod labels match a selector.
 func matchLabels(labels, sel map[string]string) bool {
+	if len(sel) == 0 {
+		return false
+	}
+
 	for k, v := range sel {
 		if labels[k] != v {
 			return false

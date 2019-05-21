@@ -138,7 +138,7 @@ func containerResources(co v1.Container) (cpu, mem *resource.Quantity, burstable
 // PortAsString prints service port name or number.
 func portAsStr(p v1.ServicePort) string {
 	if p.Name != "" {
-		return p.Name
+		return string(p.Protocol) + ":" + p.Name + ":" + strconv.Itoa(int(p.Port))
 	}
-	return strconv.Itoa(int(p.Port))
+	return string(p.Protocol) + "::" + strconv.Itoa(int(p.Port))
 }

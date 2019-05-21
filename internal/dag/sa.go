@@ -33,7 +33,7 @@ func listAllServiceAccounts(c *k8s.Client) (map[string]*v1.ServiceAccount, error
 
 	sas := make(map[string]*v1.ServiceAccount, len(ll.Items))
 	for i := range ll.Items {
-		sas[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		sas[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
 	return sas, nil

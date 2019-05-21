@@ -9,15 +9,15 @@ import (
 
 // ListHorizontalPodAutoscalers list all included HorizontalPodAutoscalers.
 func ListHorizontalPodAutoscalers(c *k8s.Client, cfg *config.Config) (map[string]*autoscalingv1.HorizontalPodAutoscaler, error) {
-	secs, err := listAllHorizontalPodAutoscalers(c)
+	hpas, err := listAllHorizontalPodAutoscalers(c)
 	if err != nil {
 		return nil, err
 	}
 
-	res := make(map[string]*autoscalingv1.HorizontalPodAutoscaler, len(secs))
-	for fqn, sec := range secs {
-		if c.IsActiveNamespace(sec.Namespace) && !cfg.ExcludedNS(sec.Namespace) {
-			res[fqn] = sec
+	res := make(map[string]*autoscalingv1.HorizontalPodAutoscaler, len(hpas))
+	for fqn, hpa := range hpas {
+		if c.IsActiveNamespace(hpa.Namespace) && !cfg.ExcludedNS(hpa.Namespace) {
+			res[fqn] = hpa
 		}
 	}
 
@@ -31,12 +31,12 @@ func listAllHorizontalPodAutoscalers(c *k8s.Client) (map[string]*autoscalingv1.H
 		return nil, err
 	}
 
-	secs := make(map[string]*autoscalingv1.HorizontalPodAutoscaler, len(ll.Items))
+	hpas := make(map[string]*autoscalingv1.HorizontalPodAutoscaler, len(ll.Items))
 	for i := range ll.Items {
-		secs[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		hpas[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
-	return secs, nil
+	return hpas, nil
 }
 
 // FetchHorizontalPodAutoscalers retrieves all HorizontalPodAutoscalers on the cluster.

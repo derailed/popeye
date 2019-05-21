@@ -2,7 +2,6 @@ package scrub
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
@@ -43,7 +42,6 @@ func (n *Namespace) ReferencedNamespaces(res map[string]struct{}) {
 	refs := cache.ObjReferences{}
 	n.Pod.PodRefs(refs)
 	if nss, ok := refs["ns"]; ok {
-		fmt.Println("NSS", nss)
 		for ns := range nss {
 			res[ns] = struct{}{}
 		}

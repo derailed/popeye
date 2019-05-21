@@ -38,26 +38,16 @@ func (p *Pod) ListPodsBySelector(sel *metav1.LabelSelector) map[string]*v1.Pod {
 
 // GetPod returns a pod via a label query.
 func (p *Pod) GetPod(sel map[string]string) *v1.Pod {
+	// if len(sel) == 0 {
+	// 	return nil
+	// }
+
 	res := p.ListPodsBySelector(&metav1.LabelSelector{MatchLabels: sel})
 	for _, v := range res {
 		return v
 	}
 
 	return nil
-}
-
-// PodsNamespaces fetch a list of all namespaces used by pods.
-func (p *Pod) PodsNamespaces(nss []string) {
-	set := make(map[string]struct{})
-	for _, p := range p.pods {
-		set[p.Namespace] = struct{}{}
-	}
-
-	var i int
-	for k := range set {
-		nss[i] = k
-		i++
-	}
 }
 
 // PodRefs computes all pods external references.

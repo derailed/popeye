@@ -8,23 +8,23 @@ import (
 
 // NodesMetrics represents a Node metrics cache.
 type NodesMetrics struct {
-	mx map[string]*mv1beta1.NodeMetrics
+	nmx map[string]*mv1beta1.NodeMetrics
 }
 
 // NewNodesMetrics returns new Node metrics cache.
 func NewNodesMetrics(mx map[string]*mv1beta1.NodeMetrics) *NodesMetrics {
-	return &NodesMetrics{mx: mx}
+	return &NodesMetrics{nmx: mx}
 }
 
 // ListNodesMetrics returns all available NodeMetrics on the cluster.
 func (n *NodesMetrics) ListNodesMetrics() map[string]*mv1beta1.NodeMetrics {
-	return n.mx
+	return n.nmx
 }
 
 // ListClusterMetrics collects total available cpu and mem on the cluster.
-func (n *NodesMetrics) ListClusterMetrics(nmx map[string]*mv1beta1.NodeMetrics) v1.ResourceList {
+func (n *NodesMetrics) ListClusterMetrics() v1.ResourceList {
 	cpu, mem := new(resource.Quantity), new(resource.Quantity)
-	for _, mx := range nmx {
+	for _, mx := range n.nmx {
 		cpu.Add(*mx.Usage.Cpu())
 		mem.Add(*mx.Usage.Memory())
 	}

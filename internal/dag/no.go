@@ -9,16 +9,13 @@ import (
 
 // ListNodes list all included Nodes.
 func ListNodes(c *k8s.Client, cfg *config.Config) (map[string]*v1.Node, error) {
-	secs, err := listAllNodes(c)
+	nos, err := listAllNodes(c)
 	if err != nil {
 		return nil, err
 	}
-
-	res := make(map[string]*v1.Node, len(secs))
-	for fqn, sec := range secs {
-		if c.IsActiveNamespace(sec.Namespace) && !cfg.ExcludedNS(sec.Namespace) {
-			res[fqn] = sec
-		}
+	res := make(map[string]*v1.Node, len(nos))
+	for fqn, no := range nos {
+		res[fqn] = no
 	}
 
 	return res, nil
@@ -31,12 +28,12 @@ func listAllNodes(c *k8s.Client) (map[string]*v1.Node, error) {
 		return nil, err
 	}
 
-	secs := make(map[string]*v1.Node, len(ll.Items))
+	nos := make(map[string]*v1.Node, len(ll.Items))
 	for i := range ll.Items {
-		secs[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		nos[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
-	return secs, nil
+	return nos, nil
 }
 
 // FetchNodes retrieves all Nodes on the cluster.

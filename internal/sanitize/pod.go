@@ -47,17 +47,16 @@ func NewPod(co *issues.Collector, lister PodMXLister) *Pod {
 
 // Sanitize a Pod.
 func (p *Pod) Sanitize(ctx context.Context) error {
+	mx := p.ListPodsMetrics()
 	for fqn, po := range p.ListPods() {
 		p.InitOutcome(fqn)
 		p.checkStatus(po)
 		p.checkContainerStatus(fqn, po)
 		p.checkContainers(fqn, po)
 		p.checkServiceAccount(fqn, po.Spec.ServiceAccountName)
-		pmx := p.ListPodsMetrics()[fqn]
-		cmx := k8s.ContainerMetrics{}
+		pmx, cmx := mx[fqn], k8s.ContainerMetrics{}
 		containerMetrics(fqn, pmx, cmx)
 		p.checkUtilization(fqn, po, cmx)
-		// p.checkReferences(po)
 	}
 	return nil
 }

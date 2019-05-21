@@ -2,7 +2,6 @@ package k8s
 
 import (
 	"github.com/derailed/popeye/pkg/config"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	clientcmd "k8s.io/client-go/tools/clientcmd"
@@ -179,21 +178,6 @@ func (c *Client) ClusterHasMetrics() (bool, error) {
 	}
 
 	return false, nil
-}
-
-// FetchNodesMetrics retrieve metrics from metrics server.
-func (c *Client) FetchNodesMetrics() ([]mv1beta1.NodeMetrics, error) {
-	vClient, err := c.DialVersioned()
-	if err != nil {
-		return nil, err
-	}
-
-	list, err := vClient.Metrics().NodeMetricses().List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	return list.Items, nil
 }
 
 // DialVersioned connects to the versioned client to pull cluster metrics.

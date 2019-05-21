@@ -114,12 +114,12 @@ func (c *Container) checkMetrics(co string, cpu, mem, ccpu, cmem resource.Quanti
 	percCPU := ToPerc(toMC(ccpu), toMC(cpu))
 	cpuLimit := int64(c.PodCPULimit())
 	if percCPU >= cpuLimit {
-		c.AddSubErrorf(c.fqn, co, "CPU C:%s|R:%s reached user %d%% threshold (%d%%)", asMC(ccpu), asMC(cpu), cpuLimit, percCPU)
+		c.AddSubErrorf(c.fqn, co, "CPU Current/Requested (%s/%s) reached user %d%% threshold (%d%%)", asMC(ccpu), asMC(cpu), cpuLimit, percCPU)
 	}
 
 	percMEM := ToPerc(toMB(cmem), toMB(mem))
 	memLimit := int64(c.PodMEMLimit())
 	if percMEM >= memLimit {
-		c.AddSubErrorf(c.fqn, co, "Memory C:%s|R:%s reached user %d%% threshold (%d%%)", asMB(cmem), asMB(mem), memLimit, percMEM)
+		c.AddSubErrorf(c.fqn, co, "Memory Current/Requested (%s/%s) reached user %d%% threshold (%d%%)", asMB(cmem), asMB(mem), memLimit, percMEM)
 	}
 }

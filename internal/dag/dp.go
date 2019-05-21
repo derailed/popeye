@@ -33,7 +33,7 @@ func listAllDeployments(c *k8s.Client) (map[string]*appsv1.Deployment, error) {
 
 	dps := make(map[string]*appsv1.Deployment, len(ll.Items))
 	for i := range ll.Items {
-		dps[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		dps[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
 	return dps, nil

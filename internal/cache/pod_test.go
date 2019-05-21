@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +10,91 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
+
+func TestGetPod(t *testing.T) {
+	pods := map[string]*v1.Pod{
+		"default/p1": makePodLabels("p1", map[string]string{"a": "a", "b": "b"}),
+		"default/p2": makePodLabels("p2", map[string]string{"a": "a", "b": "b"}),
+		"default/p3": makePodLabels("p3", map[string]string{"a": "c"}),
+	}
+
+	uu := map[string]struct {
+		sel map[string]string
+		e   string
+	}{
+		"noSelector": {
+			map[string]string{},
+			"",
+		},
+		"p1": {
+			map[string]string{"a": "a"},
+			"default/p1",
+		},
+		"p3": {
+			map[string]string{"a": "c"},
+			"default/p3",
+		},
+		"none": {
+			map[string]string{"a": "x"},
+			"",
+		},
+	}
+
+	p := NewPod(pods)
+	for k, u := range uu {
+		t.Run(k, func(t *testing.T) {
+			po := p.GetPod(u.sel)
+			if po == nil {
+				assert.Equal(t, u.e, "")
+			} else {
+				assert.Equal(t, u.e, MetaFQN(po.ObjectMeta))
+			}
+		})
+	}
+}
+
+func TestListPodsBySelector(t *testing.T) {
+	pods := map[string]*v1.Pod{
+		"default/p1": makePodLabels("p1", map[string]string{"a": "a", "b": "b"}),
+		"default/p2": makePodLabels("p2", map[string]string{"a": "a", "b": "b"}),
+		"default/p3": makePodLabels("p3", map[string]string{"a": "c"}),
+	}
+
+	uu := map[string]struct {
+		sel *metav1.LabelSelector
+		e   []string
+	}{
+		"noSelector": {
+			nil,
+			[]string{},
+		},
+		"p1p2": {
+			&metav1.LabelSelector{MatchLabels: map[string]string{"a": "a"}},
+			[]string{"default/p1", "default/p2"},
+		},
+		"p3": {
+			&metav1.LabelSelector{MatchLabels: map[string]string{"a": "c"}},
+			[]string{"default/p3"},
+		},
+		"none": {
+			&metav1.LabelSelector{MatchLabels: map[string]string{"a": "x"}},
+			[]string{},
+		},
+	}
+
+	p := NewPod(pods)
+	for k, u := range uu {
+		t.Run(k, func(t *testing.T) {
+			res := p.ListPodsBySelector(u.sel)
+			keys := []string{}
+			for k := range res {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			assert.Equal(t, u.e, keys)
+		})
+	}
+}
 
 func TestPodRefsVolume(t *testing.T) {
 	pods := map[string]*v1.Pod{
@@ -214,6 +300,13 @@ func makePod(n string) *v1.Pod {
 	}
 
 	return &po
+}
+
+func makePodLabels(n string, labels map[string]string) *v1.Pod {
+	po := makePod(n)
+	po.ObjectMeta.Labels = labels
+
+	return po
 }
 
 func makeMxPod(name, cpu, mem string) v1beta1.PodMetrics {

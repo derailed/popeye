@@ -23,6 +23,16 @@ func (i Issues) MaxSeverity() Level {
 	return max
 }
 
+// Group collect issues as groups.
+func (i Issues) Group() map[string]Issues {
+	res := make(map[string]Issues)
+	for _, item := range i {
+		res[item.Group] = append(res[item.Group], item)
+	}
+
+	return res
+}
+
 // MaxSeverity scans the issues and reports the highest severity.
 func (o Outcome) MaxSeverity(section string) Level {
 	return o[section].MaxSeverity()

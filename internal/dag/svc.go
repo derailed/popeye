@@ -9,15 +9,15 @@ import (
 
 // ListServices list all included Services.
 func ListServices(c *k8s.Client, cfg *config.Config) (map[string]*v1.Service, error) {
-	secs, err := listAllServices(c)
+	svcs, err := listAllServices(c)
 	if err != nil {
 		return nil, err
 	}
 
-	res := make(map[string]*v1.Service, len(secs))
-	for fqn, sec := range secs {
-		if c.IsActiveNamespace(sec.Namespace) && !cfg.ExcludedNS(sec.Namespace) {
-			res[fqn] = sec
+	res := make(map[string]*v1.Service, len(svcs))
+	for fqn, svc := range svcs {
+		if c.IsActiveNamespace(svc.Namespace) && !cfg.ExcludedNS(svc.Namespace) {
+			res[fqn] = svc
 		}
 	}
 
@@ -31,12 +31,12 @@ func listAllServices(c *k8s.Client) (map[string]*v1.Service, error) {
 		return nil, err
 	}
 
-	secs := make(map[string]*v1.Service, len(ll.Items))
+	svcs := make(map[string]*v1.Service, len(ll.Items))
 	for i := range ll.Items {
-		secs[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		svcs[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
-	return secs, nil
+	return svcs, nil
 }
 
 // FetchServices retrieves all Services on the cluster.

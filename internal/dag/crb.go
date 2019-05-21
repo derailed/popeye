@@ -19,12 +19,12 @@ func listAllClusterRoleBindings(c *k8s.Client) (map[string]*rbacv1.ClusterRoleBi
 		return nil, err
 	}
 
-	sas := make(map[string]*rbacv1.ClusterRoleBinding, len(ll.Items))
+	crbs := make(map[string]*rbacv1.ClusterRoleBinding, len(ll.Items))
 	for i := range ll.Items {
-		sas[MetaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
+		crbs[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
 
-	return sas, nil
+	return crbs, nil
 }
 
 // FetchClusterRoleBindings retrieves all ClusterRoleBindings on the cluster.

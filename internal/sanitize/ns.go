@@ -44,6 +44,7 @@ func (n *Namespace) Sanitize(ctx context.Context) error {
 	used := make(map[string]struct{}, len(available))
 	n.ReferencedNamespaces(used)
 	for fqn, ns := range available {
+		n.InitOutcome(fqn)
 		if n.checkActive(fqn, ns.Status.Phase) {
 			if _, ok := used[fqn]; !ok {
 				n.AddInfof(fqn, "Used?")
