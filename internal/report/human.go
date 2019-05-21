@@ -37,5 +37,8 @@ func Titleize(r string, count int) string {
 		t = r
 	}
 
+	if count < 0 {
+		return strings.ToUpper(fmt.Sprintf("%s", t))
+	}
 	return strings.ToUpper(fmt.Sprintf("%s (%d scanned)", t+"s", count))
 }

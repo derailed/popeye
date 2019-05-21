@@ -79,10 +79,16 @@ func (p *Popeye) dump(printHeader bool) {
 	default:
 		w := bufio.NewWriter(p.outputTarget)
 		defer w.Flush()
+
 		s := report.NewSanitizer(w, p.outputTarget.Fd(), jurassicMode)
 		if printHeader {
 			p.builder.PrintHeader(s)
 		}
+		mx, err := p.client.ClusterHasMetrics()
+		if err != nil {
+			mx = false
+		}
+		p.builder.PrintClusterInfo(s, p.client.ActiveCluster(), mx)
 		p.builder.PrintReport(issues.Level(p.config.LinterLevel()), s)
 		p.builder.PrintSummary(s)
 	}
@@ -120,18 +126,15 @@ func (p *Popeye) sanitize() {
 		if !in(p.config.Sections(), k) {
 			continue
 		}
-
 		// Skip node checks if active namespace is set.
 		if k == "no" && p.client.ActiveNamespace() != "" {
 			continue
 		}
-
 		s := f(cache)
 		if err := s.Sanitize(ctx); err != nil {
 			p.builder.AddError(err)
 			continue
 		}
-
 		tally := report.NewTally()
 		tally.Rollup(s.Outcome())
 		p.builder.AddSection(k, s.Outcome(), tally)

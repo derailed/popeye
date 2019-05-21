@@ -298,13 +298,20 @@ popeye:
     limits:
       cpu:    80
       memory: 75
+    exclude:
+      # Regex matches any pod name that starts with nginx
+      - rx:nginx
+      # Regex matches any pod that contains -telemetry
+      - rx:.*-telemetry
+      # String matcher any pod with this exact name
+      - blee
 
   # Service ...
   service:
     # Excludes these services from the scan.
     exclude:
-      - default/kubernetes
-      - blee-ns/fred
+      - kubernetes
+      - fred
 ```
 
 ## Report Morphology

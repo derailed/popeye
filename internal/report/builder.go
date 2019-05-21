@@ -125,6 +125,23 @@ func (b *Builder) PrintSummary(s *Sanitizer) {
 	s.Close()
 }
 
+// PrintClusterInfo displays cluster information.
+func (b *Builder) PrintClusterInfo(s *Sanitizer, name string, metrics bool) {
+	if name == "" {
+		name = "n/a"
+	}
+	s.Open(Titleize(fmt.Sprintf("Cluster [%s]", name), -1), nil)
+	{
+		s.Print(issues.OkLevel, 1, "Connectivity")
+		if metrics {
+			s.Print(issues.OkLevel, 1, "MetricServer")
+		} else {
+			s.Print(issues.ErrorLevel, 1, "MetricServer")
+		}
+	}
+	s.Close()
+}
+
 // PrintHeader prints report header to screen.
 func (b *Builder) PrintHeader(s *Sanitizer) {
 	fmt.Fprintln(s)
