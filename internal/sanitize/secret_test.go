@@ -72,8 +72,8 @@ func makeSecret(n string) *v1.Secret {
 			Namespace: "default",
 		},
 		Data: map[string][]byte{
-			"k1": []byte{},
-			"k2": []byte{},
+			"k1": {},
+			"k2": {},
 		},
 	}
 }

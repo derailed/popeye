@@ -14,7 +14,7 @@ Also if you dig this tool, please make some noise on social! [@kitesurfer](https
 
 ### Spring Cleaning!
 
-Lost of work happened under the hood in this release. Mainly refactoring, bugs and cleanup items. If you notice any breakage from the previous release, please file an issue so we can address. Thank you!
+Lost of work happened under the hood in this release. Mainly refactoring, bugs and cleanup items. If you notice any breakage from the previous release, please file an issue so we can improve Popeye. Thank you!
 
 ---
 

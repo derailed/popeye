@@ -16,13 +16,13 @@ func TestListClusterMetrics(t *testing.T) {
 	}{
 		"cool": {
 			map[string]*mv1beta1.NodeMetrics{
-				"n1": &mv1beta1.NodeMetrics{
+				"n1": {
 					Usage: v1.ResourceList{
 						v1.ResourceCPU:    toQty("100m"),
 						v1.ResourceMemory: toQty("100Mi"),
 					},
 				},
-				"n2": &mv1beta1.NodeMetrics{
+				"n2": {
 					Usage: v1.ResourceList{
 						v1.ResourceCPU:    toQty("100m"),
 						v1.ResourceMemory: toQty("100Mi"),

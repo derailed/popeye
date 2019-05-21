@@ -227,7 +227,7 @@ func (n *node) ListPodsMetrics() map[string]*v1beta1.PodMetrics {
 func makePodToleration(n, k, v string) *v1.Pod {
 	p := makePod(n)
 	p.Spec.Tolerations = []v1.Toleration{
-		v1.Toleration{Key: k, Value: v},
+		{Key: k, Value: v},
 	}
 	return p
 }
@@ -240,7 +240,7 @@ func makeCondNode(n string, c v1.NodeConditionType, s v1.ConditionStatus) *v1.No
 	no := makeNode(n, "100m", "100Mi")
 	no.Status = v1.NodeStatus{
 		Conditions: []v1.NodeCondition{
-			v1.NodeCondition{Type: c, Status: s},
+			{Type: c, Status: s},
 		},
 	}
 	return no
@@ -254,7 +254,7 @@ func makeNode(n, cpu, mem string) *v1.Node {
 		Spec: v1.NodeSpec{},
 		Status: v1.NodeStatus{
 			Conditions: []v1.NodeCondition{
-				v1.NodeCondition{Type: v1.NodeReady, Status: v1.ConditionTrue},
+				{Type: v1.NodeReady, Status: v1.ConditionTrue},
 			},
 		},
 	}
