@@ -22,7 +22,7 @@ popeye:
     # Excludes these namespaces from the scan.
     exclude:
       - rx:kube
-      # - rx:istio
+      - rx:istio
 
   # Pod...
   pod:
