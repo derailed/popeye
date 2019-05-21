@@ -26,8 +26,8 @@ func TestGetPod(t *testing.T) {
 			map[string]string{},
 			"",
 		},
-		"p2": {
-			map[string]string{"a": "a", "b": "b"},
+		"p1": {
+			map[string]string{"a": "a", "b": "b", "c": "c"},
 			"default/p1",
 		},
 		"p3": {
