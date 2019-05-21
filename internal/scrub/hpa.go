@@ -25,45 +25,45 @@ type HorizontalPodAutoscaler struct {
 
 // NewHorizontalPodAutoscaler return a new HorizontalPodAutoscaler sanitizer.
 func NewHorizontalPodAutoscaler(c *k8s.Client, cfg *config.Config) Sanitizer {
-	p := HorizontalPodAutoscaler{Collector: issues.NewCollector(), Config: cfg}
+	h := HorizontalPodAutoscaler{Collector: issues.NewCollector(), Config: cfg}
 
 	ss, err := dag.ListHorizontalPodAutoscalers(c, cfg)
 	if err != nil {
-		p.AddErr("services", err)
+		h.AddErr("services", err)
 	}
-	p.HorizontalPodAutoscaler = cache.NewHorizontalPodAutoscaler(ss)
+	h.HorizontalPodAutoscaler = cache.NewHorizontalPodAutoscaler(ss)
 
 	dps, err := dag.ListDeployments(c, cfg)
 	if err != nil {
-		p.AddErr("deployments", err)
+		h.AddErr("deployments", err)
 	}
-	p.Deployment = cache.NewDeployment(dps)
+	h.Deployment = cache.NewDeployment(dps)
 
 	sts, err := dag.ListStatefulSets(c, cfg)
 	if err != nil {
-		p.AddErr("statefulsets", err)
+		h.AddErr("statefulsets", err)
 	}
-	p.StatefulSet = cache.NewStatefulSet(sts)
+	h.StatefulSet = cache.NewStatefulSet(sts)
 
 	nmx, err := dag.ListNodesMetrics(c)
 	if err != nil {
-		p.AddErr("nodemetrics", err)
+		h.AddInfof("nodemetrics", "No metric-server detected %v", err)
 	}
-	p.NodesMetrics = cache.NewNodesMetrics(nmx)
+	h.NodesMetrics = cache.NewNodesMetrics(nmx)
 
 	pods, err := dag.ListPods(c, cfg)
 	if err != nil {
-		p.AddErr("pods", err)
+		h.AddErr("pods", err)
 	}
-	p.Pod = cache.NewPod(pods)
+	h.Pod = cache.NewPod(pods)
 
 	pmx, err := dag.ListPodsMetrics(c)
 	if err != nil {
-		p.AddErr("podsmetrics", err)
+		h.AddInfof("podmetrics", "No metric-server detected %v", err)
 	}
-	p.PodsMetrics = cache.NewPodsMetrics(pmx)
+	h.PodsMetrics = cache.NewPodsMetrics(pmx)
 
-	return &p
+	return &h
 }
 
 // Sanitize all available HorizontalPodAutoscalers.

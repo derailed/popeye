@@ -29,7 +29,7 @@ func NewPod(c *k8s.Client, cfg *config.Config) Sanitizer {
 	}
 	pmx, err := dag.ListPodsMetrics(c)
 	if err != nil {
-		p.AddErr("podmetrics", err)
+		p.AddInfof("podmetrics", "No metric-server detected %v", err)
 	}
 	p.Pod, p.PodsMetrics = cache.NewPod(pods), cache.NewPodsMetrics(pmx)
 

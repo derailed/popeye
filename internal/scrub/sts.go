@@ -38,7 +38,7 @@ func NewStatefulSet(c *k8s.Client, cfg *config.Config) Sanitizer {
 
 	pmx, err := dag.ListPodsMetrics(c)
 	if err != nil {
-		s.AddErr("podmetrics", err)
+		s.AddInfof("podmetrics", "No metric-server detected %v", err)
 	}
 	s.PodsMetrics = cache.NewPodsMetrics(pmx)
 

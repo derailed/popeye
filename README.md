@@ -325,7 +325,6 @@ This initial drop is brittle. Popeye will most likely blow up...
 
 * You're running older versions of Kubernetes. Popeye works best Kubernetes 1.13+.
 * You don't have enough RBAC fu to manage your cluster (see RBAC section)
-* Your cluster does not run a metric server.
 
 ## Disclaimer
 

@@ -26,27 +26,27 @@ type Deployment struct {
 
 // NewDeployment return a new Deployment sanitizer.
 func NewDeployment(c *k8s.Client, cfg *config.Config) Sanitizer {
-	s := Deployment{client: c, Collector: issues.NewCollector(), Config: cfg}
+	d := Deployment{client: c, Collector: issues.NewCollector(), Config: cfg}
 
 	dps, err := dag.ListDeployments(c, cfg)
 	if err != nil {
-		s.AddErr("deployments", err)
+		d.AddErr("deployments", err)
 	}
-	s.Deployment = cache.NewDeployment(dps)
+	d.Deployment = cache.NewDeployment(dps)
 
 	mx, err := dag.ListPodsMetrics(c)
 	if err != nil {
-		s.AddErr("podmetrics", err)
+		d.AddInfof("podmetrics", "No metric-server detected %v", err)
 	}
-	s.PodsMetrics = cache.NewPodsMetrics(mx)
+	d.PodsMetrics = cache.NewPodsMetrics(mx)
 
 	pods, err := dag.ListPods(c, cfg)
 	if err != nil {
-		s.AddErr("pods", err)
+		d.AddErr("pods", err)
 	}
-	s.Pod = cache.NewPod(pods)
+	d.Pod = cache.NewPod(pods)
 
-	return &s
+	return &d
 }
 
 // Sanitize all available Deployments.

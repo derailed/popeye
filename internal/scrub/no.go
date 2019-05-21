@@ -38,7 +38,7 @@ func NewNode(c *k8s.Client, cfg *config.Config) Sanitizer {
 
 	nmx, err := dag.ListNodesMetrics(c)
 	if err != nil {
-		n.AddErr("nodemetrics", err)
+		n.AddInfof("nodemetrics", "No metric-server detected %v", err)
 	}
 	n.NodesMetrics = cache.NewNodesMetrics(nmx)
 

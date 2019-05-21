@@ -131,7 +131,7 @@ func (n *Node) checkConditions(no *v1.Node) bool {
 
 func (n *Node) checkUtilization(no string, mx k8s.NodeMetrics) {
 	if mx.Empty() {
-		n.AddWarn(no, "No node metrics available")
+		n.AddInfo(no, "No node metrics available")
 		return
 	}
 

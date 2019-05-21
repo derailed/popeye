@@ -117,6 +117,11 @@ func (p *Pod) checkStatus(po *v1.Pod) {
 // Helpers...
 
 func containerMetrics(fqn string, pmx *mv1beta1.PodMetrics, mx k8s.ContainerMetrics) {
+	// No metrics -> Bail!
+	if pmx == nil {
+		return
+	}
+
 	for _, co := range pmx.Containers {
 		mx[co.Name] = k8s.Metrics{
 			CurrentCPU: *co.Usage.Cpu(),
