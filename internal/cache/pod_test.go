@@ -13,7 +13,7 @@ import (
 
 func TestGetPod(t *testing.T) {
 	pods := map[string]*v1.Pod{
-		"default/p1": makePodLabels("p1", map[string]string{"a": "a", "b": "b"}),
+		"default/p1": makePodLabels("p1", map[string]string{"a": "a", "b": "b", "c": "c"}),
 		"default/p2": makePodLabels("p2", map[string]string{"a": "a", "b": "b"}),
 		"default/p3": makePodLabels("p3", map[string]string{"a": "c"}),
 	}
@@ -26,8 +26,8 @@ func TestGetPod(t *testing.T) {
 			map[string]string{},
 			"",
 		},
-		"p1": {
-			map[string]string{"a": "a"},
+		"p2": {
+			map[string]string{"a": "a", "b": "b"},
 			"default/p1",
 		},
 		"p3": {
