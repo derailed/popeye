@@ -312,12 +312,12 @@ popeye:
 The sanitizer report outputs each resource group scanned and their potential issues.
 The report is color/emoji coded in term of Sanitizer severity levels:
 
-| Level | Icon | Text | Color     | Description     |
-|-------|------|------|-----------|-----------------|
-| Ok    | ✅    | OK   | Green     | Happy!          |
-| Info  | 🔊   | I    | BlueGreen | FYI             |
-| Warn  | 😱   | W    | Yellow    | Potential Issue |
-| Error | 💥   | E    | Red       | Action required |
+| Level | Icon | Jurassic | Color     | Description     |
+|-------|------|----------|-----------|-----------------|
+| Ok    | ✅    | OK       | Green     | Happy!          |
+| Info  | 🔊   | I        | BlueGreen | FYI             |
+| Warn  | 😱   | W        | Yellow    | Potential Issue |
+| Error | 💥   | E        | Red       | Action required |
 
 The heading section for each Kubenertes resource scanned,  provides an issue rollup summary count
 for each of the categories above.
