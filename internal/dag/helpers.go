@@ -17,5 +17,5 @@ func metaFQN(m metav1.ObjectMeta) string {
 
 // IncludeNS checks if namespace should be included.
 func includeNS(c *k8s.Client, cfg *config.Config, ns string) bool {
-	return c.IsActiveNamespace(ns) && !cfg.ExcludedNS(ns)
+	return c.IsActiveNamespace(ns) && !cfg.ShouldExclude("namespace", ns)
 }

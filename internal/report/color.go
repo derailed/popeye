@@ -8,20 +8,21 @@ import (
 
 // Color ANSI palette (256!)
 const (
-	ColorOrangish  Color = 220
-	ColorOrange    Color = 208
-	ColorGray      Color = 250
 	ColorWhite     Color = 15
-	ColorBlue      Color = 105
-	ColorRed       Color = 196
+	ColorLighSlate Color = 75
+	ColorGreen     Color = 82
 	ColorCoolBlue  Color = 99
+	ColorBlue      Color = 105
+	ColorGreenPale Color = 114
 	ColorAqua      Color = 122
 	ColorDarkOlive Color = 155
-	ColorLighSlate Color = 75
-	ColorYellow    Color = 226
 	ColorYellow2   Color = 190
-	ColorGreenPale Color = 114
-	ColorGreen     Color = 82
+	ColorRed       Color = 196
+	ColorOrangRed  Color = 202
+	ColorOrange    Color = 208
+	ColorOrangish  Color = 220
+	ColorYellow    Color = 226
+	ColorGray      Color = 250
 )
 
 // Color tracks the output color.

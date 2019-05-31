@@ -15,7 +15,7 @@ func ListPods(c *k8s.Client, cfg *config.Config) (map[string]*v1.Pod, error) {
 	}
 	res := make(map[string]*v1.Pod, len(pods))
 	for fqn, po := range pods {
-		if includeNS(c, cfg, po.Namespace) && !cfg.ExcludedPod(po.Name) {
+		if includeNS(c, cfg, po.Namespace) && !cfg.ShouldExclude("pod", fqn) {
 			res[fqn] = po
 		}
 	}

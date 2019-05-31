@@ -30,7 +30,7 @@ func NewFlags() *Flags {
 
 // OutputFormat returns the report output format.
 func (f *Flags) OutputFormat() string {
-	if f.Output != nil {
+	if f.Output != nil && *f.Output != "" {
 		return *f.Output
 	}
 

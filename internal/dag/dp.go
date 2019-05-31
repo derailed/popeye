@@ -16,7 +16,7 @@ func ListDeployments(c *k8s.Client, cfg *config.Config) (map[string]*appsv1.Depl
 
 	res := make(map[string]*appsv1.Deployment, len(dps))
 	for fqn, dp := range dps {
-		if includeNS(c, cfg, dp.Namespace) {
+		if includeNS(c, cfg, dp.Namespace) && !cfg.ShouldExclude("deployment", fqn) {
 			res[fqn] = dp
 		}
 	}

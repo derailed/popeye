@@ -254,14 +254,21 @@ roleRef:
 
 <img src="assets/a_score.png"/>
 
-## The SpinachYAML Configuration
+## The SpinachYAML Configuration (RELOADED!)
 
 NOTE: This file will change as Popeye matures!
+
+As of this release the spinach.yml format has changed slightly. There is now a new `exludes` section that allows one to exclude any Kubernetes resources from the sanitizer run. A resource is identified by a resource kind and a fully qualified resource name ie `namespace/resource_name`. For example a pod named fred-1234 in namespace blee FQN will be `blee/fred-1234`. This provides for differentiating `fred/p1` and `blee/p1`. For cluster wide resources, `FQN=name`. Exclude rules can have either a straight string match or a regular expression. In the later case the regular expression must be indicated using the `rx:` prefix.
+
+NOTE! Please thread carefully here with your regex as more resources than expected may get excluded from the report via a *loose* regex rule. When your cluster resources change, this could lead to rendering sanitization sub-optimal. Once in a while it might be a good idea to run Popeye `Config less` to make sure you're trapping any new issues with your clusters...
+
+Here is an example spinach file as it stands in this release:
 
 ```yaml
 # A Popeye sample configuration file
 popeye:
-  # Checks allocations and trip report based on over or under allocations for CPU and Memory.
+  # Checks allocations against reported metrics if over or under these thresholds a sanitization
+  # warning will be issued. Your cluster must run a metrics-server for these to take place.
   allocations:
     cpu:
       over: 100
@@ -269,6 +276,28 @@ popeye:
     memory:
       over: 100
       under: 50
+
+  # NEW SECTION!
+  # Excludes section provides for excluding certain resources scanned by Poppeye.
+  excludes:
+    # Exclude any configmaps within namespace fred that ends with a version#
+    configmap:
+      - rx:fred*\.v\d+
+    # Exclude kube-system + any namespace the start with either kube or istio
+    namespace:
+      - kube-public
+      - rx:kube
+      - rx:istio
+    # Exclude node named n1 from the scan.
+    node:
+      - n1
+    # Exclude any pods that start with nginx or contains -telemetry
+    pod:
+      - rx:nginx
+      - rx:.*-telemetry
+    # Exclude any service containing -dash in their name.
+    service:
+      - rx:*-dash
 
   # Configure node resources.
   node:
@@ -278,16 +307,6 @@ popeye:
       cpu:    90
       # Memory checks if current Memory utilization on a node is greater than 80%.
       memory: 80
-    # Exclude lists node names to exclude from the scan.
-    exclude:
-    - master
-
-  # Configure namespace resources
-  namespace:
-    # Exclude list out namespaces to be excluded from the scan.
-    exclude:
-      - kube-system
-      - kube-public
 
   # Configure pod resources
   pod:
@@ -299,20 +318,6 @@ popeye:
     limits:
       cpu:    80
       memory: 75
-    exclude:
-      # Regex matches any pod name that starts with nginx
-      - rx:nginx
-      # Regex matches any pod that contains -telemetry
-      - rx:.*-telemetry
-      # String matcher any pod with this exact name
-      - blee
-
-  # Service ...
-  service:
-    # Excludes these services from the scan.
-    exclude:
-      - kubernetes
-      - fred
 ```
 
 ## Report Morphology

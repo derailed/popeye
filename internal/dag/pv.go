@@ -16,7 +16,9 @@ func ListPersistentVolumes(c *k8s.Client, cfg *config.Config) (map[string]*v1.Pe
 
 	res := make(map[string]*v1.PersistentVolume, len(pvs))
 	for fqn, pv := range pvs {
-		res[fqn] = pv
+		if !cfg.ShouldExclude("persistentvolume", fqn) {
+			res[fqn] = pv
+		}
 	}
 
 	return res, nil

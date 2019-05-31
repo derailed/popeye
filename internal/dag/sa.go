@@ -16,7 +16,7 @@ func ListServiceAccounts(c *k8s.Client, cfg *config.Config) (map[string]*v1.Serv
 
 	res := make(map[string]*v1.ServiceAccount, len(sas))
 	for fqn, sa := range sas {
-		if includeNS(c, cfg, sa.Namespace) {
+		if includeNS(c, cfg, sa.Namespace) && !cfg.ShouldExclude("serviceaccount", fqn) {
 			res[fqn] = sa
 		}
 	}

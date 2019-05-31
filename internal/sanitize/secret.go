@@ -48,7 +48,7 @@ func (s *Secret) Sanitize(context.Context) error {
 }
 
 func (s *Secret) checkInUse(refs cache.ObjReferences) {
-	for fqn, cm := range s.ListSecrets() {
+	for fqn, sec := range s.ListSecrets() {
 		s.InitOutcome(fqn)
 
 		keys, ok := refs[cache.ResFqn(cache.SecretKey, fqn)]
@@ -60,8 +60,8 @@ func (s *Secret) checkInUse(refs cache.ObjReferences) {
 			continue
 		}
 
-		kk := make(cache.StringSet, len(cm.Data))
-		for k := range cm.Data {
+		kk := make(cache.StringSet, len(sec.Data))
+		for k := range sec.Data {
 			kk.Add(k)
 		}
 		deltas := keys.Diff(kk)

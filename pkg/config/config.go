@@ -6,11 +6,15 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const defaultLintLevel = "ok"
+const (
+	defaultLintLevel = "ok"
+	// AllNamespaces represents all namespaces.
+	AllNamespaces string = ""
+)
 
 // Config tracks Popeye configuration options.
 type Config struct {
-	Popeye    Popeye `yaml:"popeye"`
+	Popeye    `yaml:"popeye"`
 	Flags     *Flags
 	LintLevel int
 }
@@ -28,12 +32,11 @@ func NewConfig(flags *Flags) (*Config, error) {
 			return nil, err
 		}
 	}
-
 	cfg.Flags = flags
 
 	if flags.AllNamespaces != nil && *flags.AllNamespaces {
-		var allNS string
-		flags.Namespace = &allNS
+		all := AllNamespaces
+		flags.Namespace = &all
 	}
 	cfg.LintLevel = int(ToIssueLevel(flags.LintLevel))
 
@@ -56,17 +59,17 @@ func (c *Config) Sections() []string {
 
 // CPUResourceLimits returns memory over/under allocation thresholds.
 func (c *Config) CPUResourceLimits() Allocations {
-	return c.Popeye.Allocations.CPU
+	return c.CPU
 }
 
 // MEMResourceLimits returns memory over/under allocation thresholds.
 func (c *Config) MEMResourceLimits() Allocations {
-	return c.Popeye.Allocations.MEM
+	return c.MEM
 }
 
 // NodeCPULimit returns the node cpu threshold if set otherwise the default.
 func (c *Config) NodeCPULimit() float64 {
-	l := c.Popeye.Node.Limits.CPU
+	l := c.Node.Limits.CPU
 	if l == 0 {
 		return defaultCPULimit
 	}
@@ -75,36 +78,16 @@ func (c *Config) NodeCPULimit() float64 {
 
 // PodCPULimit returns the pod cpu threshold if set otherwise the default.
 func (c *Config) PodCPULimit() float64 {
-	l := c.Popeye.Pod.Limits.CPU
+	l := c.Pod.Limits.CPU
 	if l == 0 {
 		return defaultCPULimit
 	}
 	return l
 }
 
-// ExcludedNode returns excluded nodes if any.
-func (c *Config) ExcludedNode(n string) bool {
-	return c.Popeye.Node.excluded(n)
-}
-
-// ExcludedService returns excluded services if any.
-func (c *Config) ExcludedService(s string) bool {
-	return c.Popeye.Service.excluded(s)
-}
-
-// ExcludedPod checks if a pod should be excluded from the scan.
-func (c *Config) ExcludedPod(n string) bool {
-	return c.Popeye.Pod.excluded(n)
-}
-
-// ExcludedNS checks if a namespace should be excluded from the scan.
-func (c *Config) ExcludedNS(n string) bool {
-	return c.Popeye.Namespace.excluded(n)
-}
-
 // RestartsLimit returns pod restarts limit.
 func (c *Config) RestartsLimit() int {
-	l := c.Popeye.Pod.Restarts
+	l := c.Pod.Restarts
 	if l == 0 {
 		return defaultRestarts
 	}
@@ -113,7 +96,7 @@ func (c *Config) RestartsLimit() int {
 
 // PodMEMLimit returns the pod mem threshold if set otherwise the default.
 func (c *Config) PodMEMLimit() float64 {
-	l := c.Popeye.Pod.Limits.Memory
+	l := c.Pod.Limits.Memory
 	if l == 0 {
 		return defaultMEMLimit
 	}
@@ -122,7 +105,7 @@ func (c *Config) PodMEMLimit() float64 {
 
 // NodeMEMLimit returns the pod mem threshold if set otherwise the default.
 func (c *Config) NodeMEMLimit() float64 {
-	l := c.Popeye.Node.Limits.Memory
+	l := c.Node.Limits.Memory
 	if l == 0 {
 		return defaultMEMLimit
 	}

@@ -16,7 +16,7 @@ func ListConfigMaps(c *k8s.Client, cfg *config.Config) (map[string]*v1.ConfigMap
 
 	res := make(map[string]*v1.ConfigMap, len(cms))
 	for fqn, cm := range cms {
-		if includeNS(c, cfg, cm.Namespace) {
+		if includeNS(c, cfg, cm.Namespace) && !cfg.ShouldExclude("configmap", fqn) {
 			res[fqn] = cm
 		}
 	}

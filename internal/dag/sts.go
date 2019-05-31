@@ -16,7 +16,7 @@ func ListStatefulSets(c *k8s.Client, cfg *config.Config) (map[string]*appsv1.Sta
 
 	res := make(map[string]*appsv1.StatefulSet, len(sts))
 	for fqn, st := range sts {
-		if includeNS(c, cfg, st.Namespace) {
+		if includeNS(c, cfg, st.Namespace) && !cfg.ShouldExclude("statefulset", fqn) {
 			res[fqn] = st
 		}
 	}

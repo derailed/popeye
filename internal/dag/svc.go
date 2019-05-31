@@ -16,7 +16,7 @@ func ListServices(c *k8s.Client, cfg *config.Config) (map[string]*v1.Service, er
 
 	res := make(map[string]*v1.Service, len(svcs))
 	for fqn, svc := range svcs {
-		if includeNS(c, cfg, svc.Namespace) && !cfg.ExcludedService(svc.Name) {
+		if includeNS(c, cfg, svc.Namespace) && !cfg.ShouldExclude("service", fqn) {
 			res[fqn] = svc
 		}
 	}

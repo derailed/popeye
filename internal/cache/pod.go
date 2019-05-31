@@ -48,6 +48,7 @@ func (p *Pod) GetPod(sel map[string]string) *v1.Pod {
 // PodRefs computes all pods external references.
 func (p *Pod) PodRefs(refs ObjReferences) {
 	for fqn, po := range p.pods {
+		p.imagePullSecRefs(po.Namespace, po.Spec.ImagePullSecrets, refs)
 		p.namespaceRefs(po.Namespace, refs)
 		for _, co := range po.Spec.InitContainers {
 			p.containerRefs(fqn, co, refs)
@@ -56,6 +57,17 @@ func (p *Pod) PodRefs(refs ObjReferences) {
 			p.containerRefs(fqn, co, refs)
 		}
 		p.volumeRefs(po.Namespace, po.Spec.Volumes, refs)
+	}
+}
+
+func (p *Pod) imagePullSecRefs(ns string, sRefs []v1.LocalObjectReference, refs ObjReferences) {
+	for _, s := range sRefs {
+		key := ResFqn(SecretKey, FQN(ns, s.Name))
+		if c, ok := refs[key]; ok {
+			c.Add(AllKeys)
+		} else {
+			refs[key] = StringSet{AllKeys: Blank}
+		}
 	}
 }
 

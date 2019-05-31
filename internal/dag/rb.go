@@ -16,7 +16,7 @@ func ListRoleBindings(c *k8s.Client, cfg *config.Config) (map[string]*rbacv1.Rol
 
 	res := make(map[string]*rbacv1.RoleBinding, len(rbs))
 	for fqn, rb := range rbs {
-		if includeNS(c, cfg, rb.Namespace) {
+		if includeNS(c, cfg, rb.Namespace) && !cfg.ShouldExclude("rolebinding", fqn) {
 			res[fqn] = rb
 		}
 	}

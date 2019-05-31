@@ -20,24 +20,23 @@ type (
 
 	// Popeye tracks Popeye configuration options.
 	Popeye struct {
-		Namespace   Namespace        `yaml:"namespace"`
-		Node        Node             `yaml:"node"`
-		Pod         Pod              `yaml:"pod"`
-		Service     Service          `yaml:"service"`
-		Allocations AllocationLimits `yaml:"allocations"`
+		AllocationLimits `yaml:"allocations"`
+		Excludes         `yaml:"excludes"`
+
+		Node Node `yaml:"node"`
+		Pod  Pod  `yaml:"pod"`
 	}
 )
 
 // NewPopeye create a new Popeye configuration.
 func NewPopeye() Popeye {
 	return Popeye{
-		Allocations: AllocationLimits{
+		AllocationLimits: AllocationLimits{
 			CPU: Allocations{Over: overDefault, Under: underDefault},
 			MEM: Allocations{Over: overDefault, Under: underDefault},
 		},
-		Namespace: newNamespace(),
-		Node:      newNode(),
-		Pod:       newPod(),
-		Service:   newService(),
+		Excludes: newExcludes(),
+		Node:     newNode(),
+		Pod:      newPod(),
 	}
 }

@@ -22,8 +22,8 @@ func Grade(score int) string {
 
 // Badge returns a popeye grade.
 func (s *Sanitizer) Badge(score int) []string {
-	ic := make([]string, len(grader))
-	for i, l := range grader {
+	ic := make([]string, len(GraderLogo))
+	for i, l := range GraderLogo {
 		switch i {
 		case 0, 2:
 			if score < 70 {
@@ -42,7 +42,8 @@ func (s *Sanitizer) Badge(score int) []string {
 	return ic
 }
 
-var grader = []string{
+// GraderLogo affords for replacing logo parts.
+var GraderLogo = []string{
 	"o          .-'-.     ",
 	" o     __| K    `\\  ",
 	"  o   `-,-`--._   `\\",

@@ -138,9 +138,7 @@ func TestPodRefsEnv(t *testing.T) {
 		"default/p1": makePodEnv("p1", "r1", false),
 		"default/p2": makePodEnv("p2", "r2", true),
 	}
-
 	p := NewPod(pods)
-
 	refs := ObjReferences{}
 	p.PodRefs(refs)
 
@@ -148,6 +146,22 @@ func TestPodRefsEnv(t *testing.T) {
 	assert.Equal(t, 2, len(refs["cm:default/r2"]))
 	assert.Equal(t, 1, len(refs["sec:default/r1"]))
 	assert.Equal(t, 1, len(refs["sec:default/r2"]))
+}
+
+func TestPodPullImageSecrets(t *testing.T) {
+	pods := map[string]*v1.Pod{
+		"default/p1": makePodPull("p1", "r1", false),
+		"default/p2": makePodPull("p2", "r2", true),
+	}
+
+	p := NewPod(pods)
+	refs := ObjReferences{}
+	p.PodRefs(refs)
+
+	assert.Equal(t, 1, len(refs["sec:default/r1"]))
+	assert.Equal(t, 1, len(refs["sec:default/r2"]))
+	assert.Equal(t, 1, len(refs["sec:default/s1"]))
+	assert.Equal(t, 1, len(refs["sec:default/s2"]))
 }
 
 func TestNamespaced(t *testing.T) {
@@ -195,6 +209,17 @@ func makePodVolume(n, cm, sec string, optional bool) *v1.Pod {
 				},
 			},
 		},
+	}
+
+	return po
+}
+
+func makePodPull(n, ref string, optional bool) *v1.Pod {
+	po := makePodEnv(n, ref, optional)
+
+	po.Spec.ImagePullSecrets = []v1.LocalObjectReference{
+		v1.LocalObjectReference{Name: "s1"},
+		v1.LocalObjectReference{Name: "s2"},
 	}
 
 	return po

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/debug"
+	"strings"
 
 	"github.com/derailed/popeye/internal/report"
 	"github.com/derailed/popeye/pkg"
@@ -45,7 +46,8 @@ func doIt(cmd *cobra.Command, args []string) {
 
 	defer func() {
 		if err := recover(); err != nil {
-			bomb(fmt.Sprintf("Boom! %v", err))
+			printSosLogo(report.ColorOrangish, report.ColorRed)
+			fmt.Printf("\n\nBoom! %v\n", err)
 			log.Error().Msgf("%v", err)
 			log.Error().Msg(string(debug.Stack()))
 			os.Exit(1)
@@ -61,7 +63,7 @@ func doIt(cmd *cobra.Command, args []string) {
 }
 
 func bomb(msg string) {
-	fmt.Printf("💥 %s\n", report.Colorize(msg, report.ColorRed))
+	panic(fmt.Sprintf("💥 %s\n", report.Colorize(msg, report.ColorRed)))
 }
 
 func initFlags() {
@@ -205,6 +207,7 @@ func initFlags() {
 	)
 }
 
+// ----------------------------------------------------------------------------
 // Helpers...
 
 func clearScreen() {
@@ -212,4 +215,28 @@ func clearScreen() {
 		return
 	}
 	fmt.Print("\033[H\033[2J")
+}
+
+func printSosLogo(title, logo report.Color) {
+	for i, s := range report.GraderLogo {
+		switch i {
+		case 0, 2:
+			s = strings.Replace(s, "o", "S", 1)
+		case 3:
+			s = strings.Replace(s, "a", "O", 1)
+		}
+
+		if i < len(report.Popeye) {
+			fmt.Printf(report.Colorize(report.Popeye[i], title))
+			fmt.Printf(strings.Repeat(" ", 22))
+		} else {
+			if i == 4 {
+				fmt.Printf(report.Colorize("  Biffs`em and Buffs`em!", logo))
+				fmt.Printf(strings.Repeat(" ", 26))
+			} else {
+				fmt.Printf(strings.Repeat(" ", 50))
+			}
+		}
+		fmt.Println(report.Colorize(s, logo))
+	}
 }

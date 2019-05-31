@@ -16,7 +16,7 @@ func ListHorizontalPodAutoscalers(c *k8s.Client, cfg *config.Config) (map[string
 
 	res := make(map[string]*autoscalingv1.HorizontalPodAutoscaler, len(hpas))
 	for fqn, hpa := range hpas {
-		if includeNS(c, cfg, hpa.Namespace) {
+		if includeNS(c, cfg, hpa.Namespace) && !cfg.ShouldExclude("horizontalpodautoscaler", fqn) {
 			res[fqn] = hpa
 		}
 	}

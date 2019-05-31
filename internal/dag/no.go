@@ -15,7 +15,9 @@ func ListNodes(c *k8s.Client, cfg *config.Config) (map[string]*v1.Node, error) {
 	}
 	res := make(map[string]*v1.Node, len(nos))
 	for fqn, no := range nos {
-		res[fqn] = no
+		if !cfg.ShouldExclude("node", fqn) {
+			res[fqn] = no
+		}
 	}
 
 	return res, nil

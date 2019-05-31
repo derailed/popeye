@@ -16,7 +16,7 @@ func ListPersistentVolumeClaims(c *k8s.Client, cfg *config.Config) (map[string]*
 
 	res := make(map[string]*v1.PersistentVolumeClaim, len(pvcs))
 	for fqn, pvc := range pvcs {
-		if includeNS(c, cfg, pvc.Namespace) {
+		if includeNS(c, cfg, pvc.Namespace) && !cfg.ShouldExclude("persistentvolumeclaim", fqn) {
 			res[fqn] = pvc
 		}
 	}

@@ -9,7 +9,18 @@ import (
 
 // ListClusterRoleBindings list included ClusterRoleBindings.
 func ListClusterRoleBindings(c *k8s.Client, cfg *config.Config) (map[string]*rbacv1.ClusterRoleBinding, error) {
-	return listAllClusterRoleBindings(c)
+	crbs, err := listAllClusterRoleBindings(c)
+	if err != nil {
+		return map[string]*rbacv1.ClusterRoleBinding{}, err
+	}
+	res := make(map[string]*rbacv1.ClusterRoleBinding, len(crbs))
+	for fqn, crb := range crbs {
+		if !cfg.ShouldExclude("clusterrolebinding", fqn) {
+			res[fqn] = crb
+		}
+	}
+
+	return res, nil
 }
 
 // ListAllClusterRoleBindings fetch all ClusterRoleBindings on the cluster.
