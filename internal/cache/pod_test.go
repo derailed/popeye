@@ -218,8 +218,8 @@ func makePodPull(n, ref string, optional bool) *v1.Pod {
 	po := makePodEnv(n, ref, optional)
 
 	po.Spec.ImagePullSecrets = []v1.LocalObjectReference{
-		v1.LocalObjectReference{Name: "s1"},
-		v1.LocalObjectReference{Name: "s2"},
+		{Name: "s1"},
+		{Name: "s2"},
 	}
 
 	return po
