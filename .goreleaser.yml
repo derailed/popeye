@@ -65,7 +65,7 @@ snapcraft:
   description: |
     Popeye scans your Kubernetes clusters and reports potential resource issues.
   name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-  publish: false
+  publish: true
   replacements:
     amd64: 64-bit
     386: 32-bit
