@@ -12,8 +12,6 @@ If you dig this tool, please make some noise on social! [@kitesurfer](https://tw
 
 ## Change Logs
 
-### Spinach Config Reloaded!
-
 Bugs and clean up...
 
 ---
