@@ -81,5 +81,6 @@ snapcraft:
       plugs: ["home", "network", "kube-config"]
   plugs:
     kube-config:
+      interface: personal-files
       read:
       - $HOME/.kube
