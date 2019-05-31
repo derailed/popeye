@@ -108,7 +108,7 @@ func TestHPASanitizeSTS(t *testing.T) {
 					max:  1,
 					coOpts: coOpts{
 						rcpu: "1m",
-						rmem: "10Mi",
+						rmem: "1Mi",
 					},
 				}),
 			0,

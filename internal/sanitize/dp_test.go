@@ -93,7 +93,7 @@ func TestDPSanitize(t *testing.T) {
 				collisions: 0,
 				coOpts: coOpts{
 					image: "fred:0.0.1",
-					rcpu:  "10m",
+					rcpu:  "20m",
 					rmem:  "10Mi",
 					lcpu:  "20m",
 					lmem:  "10Mi",
@@ -110,9 +110,9 @@ func TestDPSanitize(t *testing.T) {
 				collisions: 0,
 				coOpts: coOpts{
 					image: "fred:0.0.1",
-					rcpu:  "10m",
+					rcpu:  "1m",
 					rmem:  "10Mi",
-					lcpu:  "1m",
+					lcpu:  "10m",
 					lmem:  "10Mi",
 				},
 				ccpu: "10m",
@@ -128,7 +128,7 @@ func TestDPSanitize(t *testing.T) {
 				coOpts: coOpts{
 					image: "fred:0.0.1",
 					rcpu:  "10m",
-					rmem:  "10Mi",
+					rmem:  "20Mi",
 					lcpu:  "10m",
 					lmem:  "20Mi",
 				},
@@ -145,9 +145,9 @@ func TestDPSanitize(t *testing.T) {
 				coOpts: coOpts{
 					image: "fred:0.0.1",
 					rcpu:  "10m",
-					rmem:  "10Mi",
+					rmem:  "2Mi",
 					lcpu:  "10m",
-					lmem:  "2Mi",
+					lmem:  "20Mi",
 				},
 				ccpu: "10m",
 				cmem: "10Mi",

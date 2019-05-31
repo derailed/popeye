@@ -124,7 +124,7 @@ func containerResources(co v1.Container) (cpu, mem *resource.Quantity, burstable
 	req, limit := co.Resources.Requests, co.Resources.Limits
 	switch {
 	case len(req) != 0 && len(limit) != 0:
-		cpu, mem = limit.Cpu(), limit.Memory()
+		cpu, mem = req.Cpu(), req.Memory()
 		burstable = true
 	case len(req) != 0:
 		cpu, mem = req.Cpu(), req.Memory()
