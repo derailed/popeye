@@ -3,6 +3,7 @@ package dag
 import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/rs/zerolog/log"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -28,6 +29,7 @@ func ListStatefulSets(c *k8s.Client, cfg *config.Config) (map[string]*appsv1.Sta
 func listAllStatefulSets(c *k8s.Client) (map[string]*appsv1.StatefulSet, error) {
 	ll, err := fetchStatefulSets(c)
 	if err != nil {
+		log.Debug().Err(err).Msg("ListAll")
 		return nil, err
 	}
 
@@ -41,5 +43,5 @@ func listAllStatefulSets(c *k8s.Client) (map[string]*appsv1.StatefulSet, error) 
 
 // FetchStatefulSets retrieves all StatefulSets on the cluster.
 func fetchStatefulSets(c *k8s.Client) (*appsv1.StatefulSetList, error) {
-	return c.DialOrDie().AppsV1().StatefulSets("").List(metav1.ListOptions{})
+	return c.DialOrDie().AppsV1().StatefulSets(c.ActiveNamespace()).List(metav1.ListOptions{})
 }

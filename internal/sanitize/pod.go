@@ -7,6 +7,7 @@ import (
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/k8s"
 	v1 "k8s.io/api/core/v1"
+	pv1beta1 "k8s.io/api/policy/v1beta1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
@@ -22,11 +23,18 @@ type (
 		PodMXLister
 	}
 
+	// PdbLister list pdb matching a given selector
+	PdbLister interface {
+		ListPodDisruptionBudgets() map[string]*pv1beta1.PodDisruptionBudget
+		ForLabels(labels map[string]string) *pv1beta1.PodDisruptionBudget
+	}
+
 	// PodMXLister list available pods.
 	PodMXLister interface {
 		PodLimiter
 		PodMetricsLister
 		PodLister
+		PdbLister
 	}
 
 	// PodMetric tracks node metrics available and current range.
@@ -53,6 +61,7 @@ func (p *Pod) Sanitize(ctx context.Context) error {
 		p.checkStatus(po)
 		p.checkContainerStatus(fqn, po)
 		p.checkContainers(fqn, po)
+		p.checkPdb(fqn, po.ObjectMeta.Labels)
 		p.checkServiceAccount(fqn, po.Spec.ServiceAccountName)
 		pmx, cmx := mx[fqn], k8s.ContainerMetrics{}
 		containerMetrics(fqn, pmx, cmx)
@@ -61,17 +70,23 @@ func (p *Pod) Sanitize(ctx context.Context) error {
 	return nil
 }
 
-func (p *Pod) checkUtilization(fqn string, po *v1.Pod, mx k8s.ContainerMetrics) {
-	if len(mx) == 0 {
+func (p *Pod) checkPdb(fqn string, labels map[string]string) {
+	if p.ForLabels(labels) == nil {
+		p.AddInfo(fqn, "No PodDisruptionBudget found")
+	}
+}
+
+func (p *Pod) checkUtilization(fqn string, po *v1.Pod, cmx k8s.ContainerMetrics) {
+	if len(cmx) == 0 {
 		return
 	}
+
 	for _, co := range po.Spec.Containers {
-		cmx, ok := mx[co.Name]
+		cmx, ok := cmx[co.Name]
 		if !ok {
 			continue
 		}
-		c := NewContainer(fqn, p)
-		c.checkUtilization(co, cmx)
+		NewContainer(fqn, p).checkUtilization(co, cmx)
 	}
 }
 
@@ -82,12 +97,12 @@ func (p *Pod) checkServiceAccount(fqn, sa string) {
 }
 
 func (p *Pod) checkContainers(fqn string, po *v1.Pod) {
-	l := NewContainer(fqn, p)
+	co := NewContainer(fqn, p)
 	for _, c := range po.Spec.InitContainers {
-		l.sanitize(c, false)
+		co.sanitize(c, false)
 	}
 	for _, c := range po.Spec.Containers {
-		l.sanitize(c, !isPartOfJob(po))
+		co.sanitize(c, !isPartOfJob(po))
 	}
 }
 

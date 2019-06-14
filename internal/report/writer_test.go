@@ -56,9 +56,9 @@ func TestPrint(t *testing.T) {
 			"  · \x1b[38;5;155;mYo mama\x1b[0m\x1b[38;5;250;m" + strings.Repeat(".", Width-12) + "\x1b[0m✅\n",
 		},
 		{
-			strings.Repeat("#", Width),
+			strings.Repeat("#", Width-8),
 			1,
-			"  · \x1b[38;5;155;m" + strings.Repeat("#", Width-7) + "...\x1b[0m\x1b[38;5;250;m\x1b[0m✅\n",
+			"  · \x1b[38;5;155;m" + strings.Repeat("#", Width-8) + "\x1b[0m\x1b[38;5;250;m...\x1b[0m✅\n",
 		},
 		{
 			"Yo mama",
@@ -151,18 +151,17 @@ func TestOpenClose(t *testing.T) {
 	assert.Equal(t, "\n\x1b[38;5;75;mfred\x1b[0m\n\x1b[38;5;75;m"+strings.Repeat("┅", Width)+"\x1b[0m\n\n", w.String())
 }
 
-func TestTruncate(t *testing.T) {
+func TestFormatLine(t *testing.T) {
 	uu := []struct {
-		s string
-		l int
-		e string
+		msg           string
+		indent, width int
+		e             string
 	}{
-		{"fred", 3, "..."},
-		{"freddy", 5, "fr..."},
-		{"fred", 10, "fred"},
+		{"fred blee", 1, 10, "fred blee"},
+		{"fred blee duh", 1, 10, " fred blee\n     duh"},
 	}
 
 	for _, u := range uu {
-		assert.Equal(t, u.e, truncate(u.s, u.l))
+		assert.Equal(t, u.e, formatLine(u.msg, 1, u.width))
 	}
 }

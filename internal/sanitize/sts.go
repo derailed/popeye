@@ -54,11 +54,11 @@ func (s *StatefulSet) checkStatefulSet(fqn string, st *appsv1.StatefulSet) {
 	}
 
 	if st.Status.CurrentReplicas == 0 {
-		s.AddWarn(fqn, "Used?")
+		s.AddWarn(fqn, "Used? No available replicas found")
 	}
 
 	if st.Status.CollisionCount != nil && *st.Status.CollisionCount > 0 {
-		s.AddErrorf(fqn, "ReplicaSet collisions detected %d", *st.Status.CollisionCount)
+		s.AddErrorf(fqn, "ReplicaSet collisions detected (%d)", *st.Status.CollisionCount)
 	}
 }
 
@@ -76,55 +76,47 @@ func (s *StatefulSet) checkContainers(fqn string, st *appsv1.StatefulSet) {
 }
 
 func (s *StatefulSet) checkUtilization(fqn string, st *appsv1.StatefulSet, pmx k8s.PodsMetrics) error {
-	mx, err := s.statefulsetUsage(st, pmx)
-	if err != nil {
-		return err
-	}
-
-	// No resources bail!
-	if mx.RequestedCPU.IsZero() && mx.RequestedMEM.IsZero() {
+	mx := s.statefulsetUsage(st, pmx)
+	if mx.RequestCPU.IsZero() && mx.RequestMEM.IsZero() {
 		return nil
 	}
 
 	cpuPerc := mx.ReqCPURatio()
-	if cpuPerc > int64(s.CPUResourceLimits().Over) {
-		s.AddWarnf(fqn, "CPU over allocated. Requested:%s - Current:%s (%s)", asMC(mx.RequestedCPU), asMC(mx.CurrentCPU), asPerc(cpuPerc))
+	if cpuPerc > float64(s.CPUResourceLimits().UnderPerc) {
+		s.AddWarnf(fqn, utilFmt, "CPU under allocated", asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
 	}
-
-	if cpuPerc > 0 && cpuPerc < int64(s.CPUResourceLimits().Under) {
-		s.AddWarnf(fqn, "CPU under allocated. Requested:%s - Current:%s (%s)", asMC(mx.RequestedCPU), asMC(mx.CurrentCPU), asPerc(cpuPerc))
+	if cpuPerc > 0 && cpuPerc < float64(s.CPUResourceLimits().OverPerc) {
+		s.AddWarnf(fqn, utilFmt, "CPU over allocated", asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
 	}
 
 	memPerc := mx.ReqMEMRatio()
-	if memPerc > int64(s.MEMResourceLimits().Over) {
-		s.AddWarnf(fqn, "Memory over allocated. Requested:%s - Current:%s (%s)", asMB(mx.RequestedMEM), asMB(mx.CurrentMEM), asPerc(memPerc))
+	if memPerc > float64(s.MEMResourceLimits().UnderPerc) {
+		s.AddWarnf(fqn, utilFmt, "Memory under allocated", asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
 	}
-
-	if memPerc > 0 && memPerc < int64(s.MEMResourceLimits().Under) {
-		s.AddWarnf(fqn, "Memory under allocated. Requested:%s - Current:%s (%s)", asMB(mx.RequestedMEM), asMB(mx.CurrentMEM), asPerc(memPerc))
+	if memPerc > 0 && memPerc < float64(s.MEMResourceLimits().OverPerc) {
+		s.AddWarnf(fqn, utilFmt, "Memory over allocated", asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
 	}
 
 	return nil
 }
 
-func (s *StatefulSet) statefulsetUsage(st *appsv1.StatefulSet, pmx k8s.PodsMetrics) (ConsumptionMetrics, error) {
+func (s *StatefulSet) statefulsetUsage(st *appsv1.StatefulSet, pmx k8s.PodsMetrics) ConsumptionMetrics {
 	var mx ConsumptionMetrics
-	rc, rm := podResources(st.Spec.Template.Spec)
-	if st.Spec.Replicas != nil {
-		for i := 0; i < int(*st.Spec.Replicas); i++ {
-			mx.RequestedCPU.Add(rc)
-			mx.RequestedMEM.Add(rm)
+	for pfqn, pod := range s.ListPodsBySelector(st.Spec.Selector) {
+		cpu, mem := computePodResources(pod.Spec)
+		mx.QOS = pod.Status.QOSClass
+		mx.RequestCPU.Add(cpu)
+		mx.RequestMEM.Add(mem)
+
+		ccx, ok := pmx[pfqn]
+		if !ok {
+			continue
+		}
+		for _, cx := range ccx {
+			mx.CurrentCPU.Add(cx.CurrentCPU)
+			mx.CurrentMEM.Add(cx.CurrentMEM)
 		}
 	}
 
-	for pfqn := range s.ListPodsBySelector(st.Spec.Selector) {
-		if ccx, ok := pmx[pfqn]; ok {
-			for _, cx := range ccx {
-				mx.CurrentCPU.Add(cx.CurrentCPU)
-				mx.CurrentMEM.Add(cx.CurrentMEM)
-			}
-		}
-	}
-
-	return mx, nil
+	return mx
 }

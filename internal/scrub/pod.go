@@ -15,6 +15,7 @@ type Pod struct {
 	*cache.Pod
 	*cache.PodsMetrics
 	*config.Config
+	*cache.PodDisruptionBudget
 }
 
 // NewPod return a new Pod sanitizer.
@@ -32,9 +33,15 @@ func NewPod(c *Cache) Sanitizer {
 
 	pmx, err := c.podsMx()
 	if err != nil {
-		p.AddInfof("podmetrics", "No metric-server detected %v", err)
+		p.AddInfof("podmetrics", "%v", err)
 	}
 	p.PodsMetrics = pmx
+
+	pdb, err := c.podDisruptionBudgets()
+	if err != nil {
+		p.AddErr("podDisruptionBudget", err)
+	}
+	p.PodDisruptionBudget = pdb
 
 	return &p
 }

@@ -18,8 +18,8 @@ func TestNewConfig(t *testing.T) {
 	assert.False(t, cfg.ShouldExclude("namespace", "kube-public"))
 	assert.False(t, cfg.ShouldExclude("service", "default/kubernetes"))
 	assert.Equal(t, 5, cfg.RestartsLimit())
-	assert.Equal(t, Allocations{Over: 100, Under: 50}, cfg.CPUResourceLimits())
-	assert.Equal(t, Allocations{Over: 100, Under: 50}, cfg.MEMResourceLimits())
+	assert.Equal(t, Allocations{UnderPerc: 200, OverPerc: 50}, cfg.CPUResourceLimits())
+	assert.Equal(t, Allocations{UnderPerc: 200, OverPerc: 50}, cfg.MEMResourceLimits())
 	assert.Equal(t, 0, cfg.LinterLevel())
 }
 

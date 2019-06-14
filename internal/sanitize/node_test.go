@@ -220,6 +220,10 @@ func (n *node) ListPods() map[string]*v1.Pod {
 	return n.opts.pods
 }
 
+func (n *node) GetPod(map[string]string) *v1.Pod {
+	return nil
+}
+
 func (n *node) ListPodsMetrics() map[string]*v1beta1.PodMetrics {
 	return map[string]*v1beta1.PodMetrics{}
 }

@@ -72,7 +72,7 @@ func TestIn(t *testing.T) {
 func TestToMCRatio(t *testing.T) {
 	uu := []struct {
 		q1, q2 resource.Quantity
-		r      int64
+		r      float64
 	}{
 		{toQty("100m"), toQty("200m"), 50},
 		{toQty("100m"), toQty("50m"), 200},
@@ -88,7 +88,7 @@ func TestToMCRatio(t *testing.T) {
 func TestToMEMRatio(t *testing.T) {
 	uu := []struct {
 		q1, q2 resource.Quantity
-		r      int64
+		r      float64
 	}{
 		{toQty("10Mi"), toQty("20Mi"), 50},
 		{toQty("20Mi"), toQty("10Mi"), 200},
@@ -102,47 +102,59 @@ func TestToMEMRatio(t *testing.T) {
 }
 
 func TestContainerResources(t *testing.T) {
-	uu := []struct {
-		co    v1.Container
-		res   v1.ResourceList
-		burst bool
+	uu := map[string]struct {
+		co       v1.Container
+		cpu, mem *resource.Quantity
+		qos      qos
 	}{
-		{
-			makeContainer("c1", coOpts{
+		"none": {
+			co: makeContainer("c1", coOpts{
+				image: "fred:1.0.1",
+			}),
+			qos: qosBestEffort,
+		},
+		"guaranteed": {
+			co: makeContainer("c1", coOpts{
 				image: "fred:1.0.1",
 				rcpu:  "100m",
 				rmem:  "10Mi",
 				lcpu:  "100m",
 				lmem:  "10Mi",
 			}),
-			makeRes("100m", "10Mi"),
-			true,
+			cpu: makeQty("100m"),
+			mem: makeQty("10Mi"),
+			qos: qosGuaranteed,
 		},
-		{
-			makeContainer("c1", coOpts{
+		"bustableLimit": {
+			co: makeContainer("c1", coOpts{
 				image: "fred:1.0.1",
 				lcpu:  "100m",
 				lmem:  "10Mi",
 			}),
-			makeRes("100m", "10Mi"),
-			false,
+			cpu: makeQty("100m"),
+			mem: makeQty("10Mi"),
+			qos: qosBurstable,
 		},
-		{
-			makeContainer("c1", coOpts{
+		"burstableRequest": {
+			co: makeContainer("c1", coOpts{
 				image: "fred:1.0.1",
 				rcpu:  "100m",
 				rmem:  "10Mi",
 			}),
-			makeRes("100m", "10Mi"),
-			false,
+			cpu: makeQty("100m"),
+			mem: makeQty("10Mi"),
+			qos: qosBurstable,
 		},
 	}
 
-	for _, u := range uu {
-		cpu, mem, burst := containerResources(u.co)
-		assert.Equal(t, cpu, u.res.Cpu())
-		assert.Equal(t, mem, u.res.Memory())
-		assert.Equal(t, u.burst, burst)
+	for k, u := range uu {
+		t.Run(k, func(t *testing.T) {
+			cpu, mem, qos := containerResources(u.co)
+
+			assert.Equal(t, cpu, u.cpu)
+			assert.Equal(t, mem, u.mem)
+			assert.Equal(t, u.qos, qos)
+		})
 	}
 }
 

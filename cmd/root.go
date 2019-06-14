@@ -71,7 +71,7 @@ func initFlags() {
 		flags.Output,
 		"out",
 		"o",
-		"pimpy",
+		"standard",
 		"Specify the output type (standard, jurassic, yaml, json)",
 	)
 

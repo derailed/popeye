@@ -9,7 +9,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/derailed/popeye/internal/issues"
-	runewidth "github.com/mattn/go-runewidth"
 	"github.com/onsi/ginkgo/reporters/stenographer/support/go-isatty"
 )
 
@@ -142,7 +141,7 @@ func (s *Sanitizer) write(l issues.Level, indent int, msg string) {
 		extra--
 	}
 	maxWidth := Width - tabSize*indent - utf8.RuneCountInString(emoji) - 1
-	msg = truncate(msg, maxWidth)
+	msg = formatLine(msg, indent, maxWidth)
 	if indent == 1 {
 		dots := maxWidth - len(msg) - extra
 		if dots < 0 {
@@ -173,8 +172,32 @@ func (s *Sanitizer) Color(msg string, c Color) string {
 // Helpers...
 
 // Truncate a string to the given l and suffix ellipsis if needed.
-func truncate(str string, width int) string {
-	return runewidth.Truncate(str, width, "...")
+func formatLine(str string, indent, width int) string {
+	if len(str) <= width {
+		return str
+	}
+
+	tokens, length := strings.Split(str, " "), 0
+	var lines []string
+	for len(tokens) > 0 {
+		var line string
+		if len(lines) > 0 {
+			line = strings.Repeat("  ", tabSize*indent)
+			length += tabSize * indent * 2
+		}
+		for _, t := range tokens {
+			l := len(t) + 1
+			if length+l > width {
+				break
+			}
+			line += " " + t
+			length += l
+			tokens = tokens[1:]
+		}
+		lines = append(lines, line)
+		length = 0
+	}
+	return strings.Join(lines, "\n")
 }
 
 // Check terminal specs, returns true if lame term is effect. False otherwise.

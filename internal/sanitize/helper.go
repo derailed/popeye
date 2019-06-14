@@ -2,7 +2,6 @@ package sanitize
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 
@@ -10,8 +9,16 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-// MegaByte represents a Mb.
-const megaByte = 1024 * 1024
+const (
+	qosBestEffort qos = iota
+	qosBurstable
+	qosGuaranteed
+
+	// MegaByte represents a Mb.
+	megaByte = 1024 * 1024
+)
+
+type qos = int
 
 // Poor man plural...
 func pluralOf(s string, count int) string {
@@ -61,28 +68,27 @@ func toMB(q resource.Quantity) int64 {
 }
 
 // AsPec prints value as percentage.
-func asPerc(n int64) string {
-	return fmt.Sprintf("%d%%", n)
+func asPerc(n float64) string {
+	return fmt.Sprintf("%0.2f%%", n)
 }
 
 // ToMCRatio computes millicore ratio.
-func toMCRatio(q1, q2 resource.Quantity) int64 {
+func toMCRatio(q1, q2 resource.Quantity) float64 {
 	if q2.IsZero() {
 		return 0
 	}
 	v1, v2 := toMC(q1), toMC(q2)
-
-	return int64(math.Round((float64(v1) / float64(v2)) * 100))
+	return (float64(v1) / float64(v2)) * 100
 }
 
 // ToMEMRatio computes mem MB ratio.
-func toMEMRatio(q1, q2 resource.Quantity) int64 {
+func toMEMRatio(q1, q2 resource.Quantity) float64 {
 	if q2.IsZero() {
 		return 0
 	}
 	v1, v2 := toMB(q1), toMB(q2)
 
-	return int64(math.Round((float64(v1) / float64(v2)) * 100))
+	return (float64(v1) / float64(v2)) * 100
 }
 
 // AsMC prints millicore value.
@@ -96,9 +102,12 @@ func asMB(q resource.Quantity) string {
 }
 
 // PodResources computes pod resouces as sum of containers allocations.
-func podResources(spec v1.PodSpec) (cpu, mem resource.Quantity) {
+func podResources(spec v1.PodSpec) (cpu, mem resource.Quantity, qos v1.PodQOSClass) {
+	totalCo, totalQOS := len(spec.InitContainers)+len(spec.Containers), 0
+
 	for _, co := range spec.InitContainers {
-		c, m, _ := containerResources(co)
+		c, m, q := containerResources(co)
+		totalQOS += q
 		if c != nil {
 			cpu.Add(*c)
 		}
@@ -106,30 +115,46 @@ func podResources(spec v1.PodSpec) (cpu, mem resource.Quantity) {
 			mem.Add(*m)
 		}
 	}
+
 	for _, co := range spec.Containers {
-		c, m, _ := containerResources(co)
+		c, m, q := containerResources(co)
+		totalQOS += q
 		if c != nil {
 			cpu.Add(*c)
 		}
 		if m != nil {
 			mem.Add(*m)
 		}
+	}
+
+	qos = v1.PodQOSBestEffort
+	switch totalQOS / totalCo {
+	case qosGuaranteed:
+		qos = v1.PodQOSGuaranteed
+	case qosBurstable:
+		qos = v1.PodQOSBurstable
+	default:
+		qos = v1.PodQOSBurstable
 	}
 
 	return
 }
 
 // ContainerResources gathers container resources setting.
-func containerResources(co v1.Container) (cpu, mem *resource.Quantity, burstable bool) {
-	req, limit := co.Resources.Requests, co.Resources.Limits
+func containerResources(co v1.Container) (cpu, mem *resource.Quantity, qos qos) {
+	req, limit, qos := co.Resources.Requests, co.Resources.Limits, qosBurstable
 	switch {
 	case len(req) != 0 && len(limit) != 0:
+		if req.Cpu().Cmp(*limit.Cpu()) == 0 && req.Memory().Cmp(*limit.Memory()) == 0 {
+			qos = qosGuaranteed
+		}
 		cpu, mem = req.Cpu(), req.Memory()
-		burstable = true
 	case len(req) != 0:
 		cpu, mem = req.Cpu(), req.Memory()
 	case len(limit) != 0:
 		cpu, mem = limit.Cpu(), limit.Memory()
+	default:
+		qos = qosBestEffort
 	}
 
 	return

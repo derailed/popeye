@@ -40,7 +40,7 @@ func matchLabels(labels, sel map[string]string) bool {
 	}
 
 	for k, v := range sel {
-		if labels[k] != v {
+		if v1, ok := labels[k]; !ok || v1 != v {
 			return false
 		}
 	}

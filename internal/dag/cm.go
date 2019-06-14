@@ -3,6 +3,7 @@ package dag
 import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/rs/zerolog/log"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -28,6 +29,7 @@ func ListConfigMaps(c *k8s.Client, cfg *config.Config) (map[string]*v1.ConfigMap
 func listAllConfigMaps(c *k8s.Client) (map[string]*v1.ConfigMap, error) {
 	ll, err := fetchConfigMaps(c)
 	if err != nil {
+		log.Debug().Err(err).Msg("ListAll")
 		return nil, err
 	}
 
@@ -41,5 +43,5 @@ func listAllConfigMaps(c *k8s.Client) (map[string]*v1.ConfigMap, error) {
 
 // FetchConfigMaps retrieves all ConfigMaps on the cluster.
 func fetchConfigMaps(c *k8s.Client) (*v1.ConfigMapList, error) {
-	return c.DialOrDie().CoreV1().ConfigMaps("").List(metav1.ListOptions{})
+	return c.DialOrDie().CoreV1().ConfigMaps(c.ActiveNamespace()).List(metav1.ListOptions{})
 }

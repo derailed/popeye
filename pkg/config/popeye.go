@@ -1,8 +1,10 @@
 package config
 
 const (
-	overDefault  = 100
-	underDefault = 50
+	// DefaultUnderPerc indicates the default percentage for under allocation
+	defaultUnderPerc = 200
+	// DefaultOverPerc indicates the default percentage for over allocation
+	defaultOverPerc = 50
 )
 
 type (
@@ -14,8 +16,8 @@ type (
 
 	// Allocations track under/over allocation limits.
 	Allocations struct {
-		Over  int `yaml:"over"`
-		Under int `yanl:"under"`
+		UnderPerc int `yaml:"underPercUtilization"`
+		OverPerc  int `yanl:"overPercUtilization"`
 	}
 
 	// Popeye tracks Popeye configuration options.
@@ -32,8 +34,8 @@ type (
 func NewPopeye() Popeye {
 	return Popeye{
 		AllocationLimits: AllocationLimits{
-			CPU: Allocations{Over: overDefault, Under: underDefault},
-			MEM: Allocations{Over: overDefault, Under: underDefault},
+			CPU: Allocations{UnderPerc: defaultUnderPerc, OverPerc: defaultOverPerc},
+			MEM: Allocations{UnderPerc: defaultUnderPerc, OverPerc: defaultOverPerc},
 		},
 		Excludes: newExcludes(),
 		Node:     newNode(),

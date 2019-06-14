@@ -61,7 +61,7 @@ func (h *HorizontalPodAutoscaler) Sanitize(ctx context.Context) error {
 		case "Deployment":
 			dfqn, dps := cache.FQN(ns, hpa.Spec.ScaleTargetRef.Name), h.ListDeployments()
 			if dp, ok := dps[dfqn]; ok {
-				rcpu, rmem = podResources(dp.Spec.Template.Spec)
+				rcpu, rmem, _ = podResources(dp.Spec.Template.Spec)
 				current = dp.Status.AvailableReplicas
 			} else {
 				h.AddErrorf(fqn, "HPA %s references a deployment %s which does not exist", fqn, dfqn)
@@ -70,7 +70,7 @@ func (h *HorizontalPodAutoscaler) Sanitize(ctx context.Context) error {
 		case "StatefulSet":
 			sfqn, sts := cache.FQN(ns, hpa.Spec.ScaleTargetRef.Name), h.ListStatefulSets()
 			if st, ok := sts[sfqn]; ok {
-				rcpu, rmem = podResources(st.Spec.Template.Spec)
+				rcpu, rmem, _ = podResources(st.Spec.Template.Spec)
 				current = st.Status.CurrentReplicas
 			} else {
 				h.AddErrorf(fqn, "HPA %s references a statefulset %s which does not exist", fqn, sfqn)

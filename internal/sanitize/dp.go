@@ -8,9 +8,12 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
+
+const utilFmt = "At current load, %s. Current:%s vs Requested:%s (%s)"
 
 type (
 	// Deployment tracks Deployment sanitization.
@@ -28,15 +31,15 @@ type (
 	Collector interface {
 		Outcome() issues.Outcome
 		AddError(s, desc string)
-		AddErrorf(s, fmat string, args ...interface{})
+		AddErrorf(s, utilFmt string, args ...interface{})
 		AddSubOk(p, s, desc string)
-		AddSubOkf(p, s, fmat string, args ...interface{})
+		AddSubOkf(p, s, utilFmt string, args ...interface{})
 		AddSubInfo(p, s, desc string)
-		AddSubInfof(p, s, fmat string, args ...interface{})
+		AddSubInfof(p, s, utilFmt string, args ...interface{})
 		AddSubWarn(p, s, desc string)
-		AddSubWarnf(p, s, fmat string, args ...interface{})
+		AddSubWarnf(p, s, utilFmt string, args ...interface{})
 		AddSubError(p, s, desc string)
-		AddSubErrorf(p, s, fmat string, args ...interface{})
+		AddSubErrorf(p, s, utilFmt string, args ...interface{})
 	}
 
 	// PodLimiter tracks metrics limit range.
@@ -98,15 +101,15 @@ func (d *Deployment) Sanitize(context.Context) error {
 // CheckDeployment checks if deployment contract is currently happy or not.
 func (d *Deployment) checkDeployment(fqn string, dp *appsv1.Deployment) {
 	if dp.Spec.Replicas == nil || (dp.Spec.Replicas != nil && *dp.Spec.Replicas == 0) {
-		d.AddInfo(fqn, "Zero scale detected")
+		d.AddWarn(fqn, "Zero scale detected")
 	}
 
 	if dp.Status.AvailableReplicas == 0 {
-		d.AddWarn(fqn, "Used?")
+		d.AddWarn(fqn, "Used? No available replicas found")
 	}
 
 	if dp.Status.CollisionCount != nil && *dp.Status.CollisionCount > 0 {
-		d.AddErrorf(fqn, "ReplicaSet collisions detected %d", *dp.Status.CollisionCount)
+		d.AddErrorf(fqn, "ReplicaSet collisions detected (%d)", *dp.Status.CollisionCount)
 	}
 }
 
@@ -123,58 +126,48 @@ func (d *Deployment) checkContainers(fqn string, spec v1.PodSpec) {
 
 // CheckUtilization checks deployments requested resources vs current utilization.
 func (d *Deployment) checkUtilization(fqn string, dp *appsv1.Deployment, pmx k8s.PodsMetrics) error {
-	mx, err := d.deploymentUsage(dp, pmx)
-	if err != nil {
-		return err
-	}
-
-	// No resources bail!
-	if mx.RequestedCPU.IsZero() && mx.RequestedMEM.IsZero() {
+	mx := d.deploymentUsage(dp, pmx)
+	if mx.RequestCPU.IsZero() && mx.RequestMEM.IsZero() {
 		return nil
 	}
 
 	cpuPerc := mx.ReqCPURatio()
-	if cpuPerc > int64(d.CPUResourceLimits().Over) {
-		d.AddWarnf(fqn, "CPU over allocated. Current/Requested (%s/%s) ratio %s", asMC(mx.CurrentCPU), asMC(mx.RequestedCPU), asPerc(cpuPerc))
-	}
-
-	if cpuPerc > 0 && cpuPerc < int64(d.CPUResourceLimits().Under) {
-		d.AddWarnf(fqn, "CPU under allocated. Current/Requested (%s/%s) ratio %s", asMC(mx.CurrentCPU), asMC(mx.RequestedCPU), asPerc(cpuPerc))
+	if cpuPerc > 1 && cpuPerc > float64(d.CPUResourceLimits().UnderPerc) {
+		d.AddWarnf(fqn, utilFmt, "CPU under allocated", asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
+	} else if cpuPerc < float64(d.CPUResourceLimits().OverPerc) {
+		d.AddWarnf(fqn, utilFmt, "CPU over allocated", asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(mx.ReqAbsCPURatio()))
 	}
 
 	memPerc := mx.ReqMEMRatio()
-	if memPerc > int64(d.MEMResourceLimits().Over) {
-		d.AddWarnf(fqn, "Memory over allocated. Current/Requested (%s/%s) ratio %s", asMB(mx.CurrentMEM), asMB(mx.RequestedMEM), asPerc(memPerc))
-	}
-
-	if memPerc > 0 && memPerc < int64(d.MEMResourceLimits().Under) {
-		d.AddWarnf(fqn, "Memory under allocated. Current/Requested (%s/%s) ratio %s", asMB(mx.CurrentMEM), asMB(mx.RequestedMEM), asPerc(memPerc))
+	if memPerc > 1 && memPerc > float64(d.MEMResourceLimits().UnderPerc) {
+		d.AddWarnf(fqn, utilFmt, "Memory under allocated", asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
+	} else if memPerc < float64(d.MEMResourceLimits().OverPerc) {
+		d.AddWarnf(fqn, utilFmt, "Memory over allocated", asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(mx.ReqAbsMEMRatio()))
 	}
 
 	return nil
 }
 
 // DeploymentUsage finds deployment running pods and compute current vs requested resource usage.
-func (d *Deployment) deploymentUsage(dp *appsv1.Deployment, pmx k8s.PodsMetrics) (ConsumptionMetrics, error) {
+func (d *Deployment) deploymentUsage(dp *appsv1.Deployment, pmx k8s.PodsMetrics) ConsumptionMetrics {
 	var mx ConsumptionMetrics
-	rc, rm := podResources(dp.Spec.Template.Spec)
-	if dp.Spec.Replicas != nil {
-		for i := 0; i < int(*dp.Spec.Replicas); i++ {
-			mx.RequestedCPU.Add(rc)
-			mx.RequestedMEM.Add(rm)
+	for pfqn, pod := range d.ListPodsBySelector(dp.Spec.Selector) {
+		cpu, mem := computePodResources(pod.Spec)
+		mx.QOS = pod.Status.QOSClass
+		mx.RequestCPU.Add(cpu)
+		mx.RequestMEM.Add(mem)
+
+		ccx, ok := pmx[pfqn]
+		if !ok {
+			continue
+		}
+		for _, cx := range ccx {
+			mx.CurrentCPU.Add(cx.CurrentCPU)
+			mx.CurrentMEM.Add(cx.CurrentMEM)
 		}
 	}
 
-	for pfqn := range d.ListPodsBySelector(dp.Spec.Selector) {
-		if ccx, ok := pmx[pfqn]; ok {
-			for _, cx := range ccx {
-				mx.CurrentCPU.Add(cx.CurrentCPU)
-				mx.CurrentMEM.Add(cx.CurrentMEM)
-			}
-		}
-	}
-
-	return mx, nil
+	return mx
 }
 
 // PodsMetrics gathers pod's container metrics from metrics server.
@@ -194,4 +187,28 @@ func podToContainerMetrics(pmx *mv1beta1.PodMetrics, cmx k8s.ContainerMetrics) {
 			CurrentMEM: *co.Usage.Memory(),
 		}
 	}
+}
+
+func computePodResources(spec v1.PodSpec) (cpu, mem resource.Quantity) {
+	for _, co := range spec.InitContainers {
+		c, m, _ := containerResources(co)
+		if c != nil {
+			cpu.Add(*c)
+		}
+		if m != nil {
+			mem.Add(*m)
+		}
+	}
+
+	for _, co := range spec.Containers {
+		c, m, _ := containerResources(co)
+		if c != nil {
+			cpu.Add(*c)
+		}
+		if m != nil {
+			mem.Add(*m)
+		}
+	}
+
+	return
 }

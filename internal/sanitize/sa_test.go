@@ -69,6 +69,10 @@ func (s sa) ListPods() map[string]*v1.Pod {
 	}
 }
 
+func (s sa) GetPod(map[string]string) *v1.Pod {
+	return nil
+}
+
 func (s sa) ListServiceAccounts() map[string]*v1.ServiceAccount {
 	return map[string]*v1.ServiceAccount{
 		cache.FQN("default", s.name): makeSa(s.name),

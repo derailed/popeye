@@ -78,45 +78,45 @@ live clusters and sanitize resources as they are in the wild!
 Here is a list of sanitizers in place for the current release.
 
 
-|    | Resource                | Sanitizers                                                              | Section |
-|----|-------------------------|-------------------------------------------------------------------------|---------|
-| 🛀 | Node                    |                                                                         | no      |
-|    |                         | Conditions ie not ready, out of mem/disk, network, pids, etc            |         |
-|    |                         | Pod tolerations referencing node taints                                 |         |
-|    |                         | CPU/MEM utilization metrics, trips if over limits (default 80% CPU/MEM) |         |
-| 🛀 | Namespace               |                                                                         | ns      |
-|    |                         | Inactive                                                                |         |
-|    |                         | Dead namespaces                                                         |         |
-| 🛀 | Pod                     |                                                                         | po      |
-|    |                         | Pod status                                                              |         |
-|    |                         | Containers statuses                                                     |         |
-|    |                         | ServiceAccount presence                                                 |         |
-|    |                         | CPU/MEM on containers over a set CPU/MEM limit (default 80% CPU/MEM)    |         |
-|    |                         | Container image with no tags                                            |         |
-|    |                         | Container image using `latest` tag                                      |         |
-|    |                         | Resources request/limits presence                                       |         |
-|    |                         | Probes liveness/readiness presence                                      |         |
-|    |                         | Named ports and their references                                        |         |
-| 🛀 | Service                 |                                                                         | svc     |
-|    |                         | Endpoints presence                                                      |         |
-|    |                         | Matching pods labels                                                    |         |
-|    |                         | Named ports and their references                                        |         |
-| 🛀 | ServiceAccount          |                                                                         | sa      |
-|    |                         | Unused, detects potentially unused SAs                                  |         |
-| 🛀 | Secrets                 |                                                                         | sec     |
-|    |                         | Unused, detects potentially unused secrets or associated keys           |         |
-| 🛀 | ConfigMap               |                                                                         | cm      |
-|    |                         | Unused, detects potentially unused cm or associated keys                |         |
-| 🛀 | Deployment              |                                                                         | dp      |
-|    |                         | Unused, pod template validation, resource utilization                   |         |
-| 🛀 | StatefulSet             |                                                                         | sts     |
-|    |                         | Unsed, pod template validation, resource utilization                    |         |
-| 🛀 | PersistentVolume        |                                                                         | pv      |
-|    |                         | Unused, check volume bound or volume error                              |         |
-| 🛀 | PersistentVolumeClaim   |                                                                         | pvc     |
-|    |                         | Unused, check bounded or volume mount error                             |         |
-| 🛀 | HorizontalPodAutoscaler |                                                                         | hpa     |
-|    |                         | Unused, Utilization, Max burst checks                                   |         |
+|     | Resource                | Sanitizers                                                              | Section |
+| --- | ----------------------- | ----------------------------------------------------------------------- | ------- |
+| 🛀  | Node                    |                                                                         | no      |
+|     |                         | Conditions ie not ready, out of mem/disk, network, pids, etc            |         |
+|     |                         | Pod tolerations referencing node taints                                 |         |
+|     |                         | CPU/MEM utilization metrics, trips if over limits (default 80% CPU/MEM) |         |
+| 🛀  | Namespace               |                                                                         | ns      |
+|     |                         | Inactive                                                                |         |
+|     |                         | Dead namespaces                                                         |         |
+| 🛀  | Pod                     |                                                                         | po      |
+|     |                         | Pod status                                                              |         |
+|     |                         | Containers statuses                                                     |         |
+|     |                         | ServiceAccount presence                                                 |         |
+|     |                         | CPU/MEM on containers over a set CPU/MEM limit (default 80% CPU/MEM)    |         |
+|     |                         | Container image with no tags                                            |         |
+|     |                         | Container image using `latest` tag                                      |         |
+|     |                         | Resources request/limits presence                                       |         |
+|     |                         | Probes liveness/readiness presence                                      |         |
+|     |                         | Named ports and their references                                        |         |
+| 🛀  | Service                 |                                                                         | svc     |
+|     |                         | Endpoints presence                                                      |         |
+|     |                         | Matching pods labels                                                    |         |
+|     |                         | Named ports and their references                                        |         |
+| 🛀  | ServiceAccount          |                                                                         | sa      |
+|     |                         | Unused, detects potentially unused SAs                                  |         |
+| 🛀  | Secrets                 |                                                                         | sec     |
+|     |                         | Unused, detects potentially unused secrets or associated keys           |         |
+| 🛀  | ConfigMap               |                                                                         | cm      |
+|     |                         | Unused, detects potentially unused cm or associated keys                |         |
+| 🛀  | Deployment              |                                                                         | dp      |
+|     |                         | Unused, pod template validation, resource utilization                   |         |
+| 🛀  | StatefulSet             |                                                                         | sts     |
+|     |                         | Unsed, pod template validation, resource utilization                    |         |
+| 🛀  | PersistentVolume        |                                                                         | pv      |
+|     |                         | Unused, check volume bound or volume error                              |         |
+| 🛀  | PersistentVolumeClaim   |                                                                         | pvc     |
+|     |                         | Unused, check bounded or volume mount error                             |         |
+| 🛀  | HorizontalPodAutoscaler |                                                                         | hpa     |
+|     |                         | Unused, Utilization, Max burst checks                                   |         |
 
 
 ## The Command Line
@@ -254,7 +254,7 @@ roleRef:
 
 <img src="assets/a_score.png"/>
 
-## The SpinachYAML Configuration (RELOADED!)
+## The SpinachYAML Configuration
 
 NOTE: This file will change as Popeye matures!
 
@@ -267,17 +267,17 @@ Here is an example spinach file as it stands in this release:
 ```yaml
 # A Popeye sample configuration file
 popeye:
-  # Checks allocations against reported metrics if over or under these thresholds a sanitization
-  # warning will be issued. Your cluster must run a metrics-server for these to take place.
+  # Checks resources against reported metrics usage.
+  # If over/under these thresholds a sanitization warning will be issued.
+  # Your cluster must run a metrics-server for these to take place!
   allocations:
     cpu:
-      over: 100
-      under: 50
+      underPercUtilization: 200 # Checks if cpu is under allocated by more than 200% at current load.
+      overPercUtilization: 50   # Checks if cpu is over allocated by more than 50% at current load.
     memory:
-      over: 100
-      under: 50
+      underPercUtilization: 200 # Checks if mem is under allocated by more than 200% at current load.
+      overPercUtilization: 50   # Checks if mem is over allocated by more than 50% usage at current load.
 
-  # NEW SECTION!
   # Excludes section provides for excluding certain resources scanned by Poppeye.
   excludes:
     # Exclude any configmaps within namespace fred that ends with a version#
@@ -326,7 +326,7 @@ The sanitizer report outputs each resource group scanned and their potential iss
 The report is color/emoji coded in term of Sanitizer severity levels:
 
 | Level | Icon | Jurassic | Color     | Description     |
-|-------|------|----------|-----------|-----------------|
+| ----- | ---- | -------- | --------- | --------------- |
 | Ok    | ✅    | OK       | Green     | Happy!          |
 | Info  | 🔊   | I        | BlueGreen | FYI             |
 | Warn  | 😱   | W        | Yellow    | Potential Issue |

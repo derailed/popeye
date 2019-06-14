@@ -17,11 +17,11 @@ import (
 
 func TestDPSanitize(t *testing.T) {
 	uu := map[string]struct {
-		dpl    DeploymentLister
-		issues int
+		lister DeploymentLister
+		issues issues.Issues
 	}{
 		"good": {
-			makeDPLister("d1", dpOpts{
+			lister: makeDPLister("d1", dpOpts{
 				reps:      1,
 				availReps: 1,
 				coOpts: coOpts{
@@ -34,10 +34,10 @@ func TestDPSanitize(t *testing.T) {
 				ccpu: "10m",
 				cmem: "10Mi",
 			}),
-			0,
+			issues: issues.Issues{},
 		},
-		"noReps": {
-			makeDPLister("d1", dpOpts{
+		"zeroReps": {
+			lister: makeDPLister("d1", dpOpts{
 				reps:      0,
 				availReps: 1,
 				coOpts: coOpts{
@@ -50,10 +50,12 @@ func TestDPSanitize(t *testing.T) {
 				ccpu: "10m",
 				cmem: "10Mi",
 			}),
-			1,
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "Zero scale detected"),
+			},
 		},
 		"noAvailReps": {
-			makeDPLister("d1", dpOpts{
+			lister: makeDPLister("d1", dpOpts{
 				reps:       1,
 				availReps:  0,
 				collisions: 0,
@@ -67,10 +69,12 @@ func TestDPSanitize(t *testing.T) {
 				ccpu: "10m",
 				cmem: "10Mi",
 			}),
-			1,
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "Used? No available replicas found"),
+			},
 		},
 		"collisions": {
-			makeDPLister("d1", dpOpts{
+			lister: makeDPLister("d1", dpOpts{
 				reps:       1,
 				availReps:  1,
 				collisions: 1,
@@ -84,84 +88,205 @@ func TestDPSanitize(t *testing.T) {
 				ccpu: "10m",
 				cmem: "10Mi",
 			}),
-			1,
-		},
-		"cpuOver": {
-			makeDPLister("d1", dpOpts{
-				reps:       1,
-				availReps:  1,
-				collisions: 0,
-				coOpts: coOpts{
-					image: "fred:0.0.1",
-					rcpu:  "20m",
-					rmem:  "10Mi",
-					lcpu:  "20m",
-					lmem:  "10Mi",
-				},
-				ccpu: "10m",
-				cmem: "10Mi",
-			}),
-			1,
-		},
-		"cpuUnder": {
-			makeDPLister("d1", dpOpts{
-				reps:       1,
-				availReps:  1,
-				collisions: 0,
-				coOpts: coOpts{
-					image: "fred:0.0.1",
-					rcpu:  "1m",
-					rmem:  "10Mi",
-					lcpu:  "10m",
-					lmem:  "10Mi",
-				},
-				ccpu: "10m",
-				cmem: "10Mi",
-			}),
-			1,
-		},
-		"memOver": {
-			makeDPLister("d1", dpOpts{
-				reps:       1,
-				availReps:  1,
-				collisions: 0,
-				coOpts: coOpts{
-					image: "fred:0.0.1",
-					rcpu:  "10m",
-					rmem:  "20Mi",
-					lcpu:  "10m",
-					lmem:  "20Mi",
-				},
-				ccpu: "10m",
-				cmem: "10Mi",
-			}),
-			1,
-		},
-		"memUnder": {
-			makeDPLister("d1", dpOpts{
-				reps:       1,
-				availReps:  1,
-				collisions: 0,
-				coOpts: coOpts{
-					image: "fred:0.0.1",
-					rcpu:  "10m",
-					rmem:  "2Mi",
-					lcpu:  "10m",
-					lmem:  "20Mi",
-				},
-				ccpu: "10m",
-				cmem: "10Mi",
-			}),
-			1,
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.ErrorLevel, "ReplicaSet collisions detected (1)"),
+			},
 		},
 	}
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			dp := NewDeployment(issues.NewCollector(), u.dpl)
+			dp := NewDeployment(issues.NewCollector(), u.lister)
 			dp.Sanitize(context.Background())
 
-			assert.Equal(t, u.issues, len(dp.Outcome()["default/d1"]))
+			assert.Equal(t, u.issues, dp.Outcome()["default/d1"])
+		})
+	}
+}
+
+func TestDPSanitizeUtilization(t *testing.T) {
+	uu := map[string]struct {
+		lister DeploymentLister
+		issues issues.Issues
+	}{
+		"bestEffort": {
+			lister: makeDPLister("d1", dpOpts{
+				reps:       2,
+				availReps:  2,
+				collisions: 0,
+				coOpts: coOpts{
+					image: "fred:0.0.1",
+				},
+				ccpu: "10m",
+				cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.New("i1", issues.WarnLevel, "No resources defined"),
+				issues.New("c1", issues.WarnLevel, "No resources defined"),
+			},
+		},
+		"cpuUnderBurstable": {
+			lister: makeDPLister("d1", dpOpts{
+				reps:       2,
+				availReps:  2,
+				collisions: 0,
+				coOpts: coOpts{
+					image: "fred:0.0.1",
+					rcpu:  "5m",
+					rmem:  "10Mi",
+					lcpu:  "10m",
+					lmem:  "10Mi",
+				},
+				ccpu: "10m",
+				cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU under allocated. Current:20m vs Requested:10m (200.00%)"),
+			},
+		},
+		"cpuUnderGuaranteed": {
+			lister: makeDPLister("d1", dpOpts{
+				reps:       2,
+				availReps:  2,
+				collisions: 0,
+				coOpts: coOpts{
+					image: "fred:0.0.1",
+					rcpu:  "5m",
+					rmem:  "10Mi",
+					lcpu:  "5m",
+					lmem:  "10Mi",
+				},
+				ccpu: "10m",
+				cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU under allocated. Current:20m vs Requested:10m (200.00%)"),
+			},
+		},
+		// c=20 r=60 20/60=1/3 over is 50% req=3*c 33 > 100
+		// c=60 r=20 60/20 3 under
+		"cpuOverBustable": {
+			lister: makeDPLister("d1", dpOpts{
+				reps:       2,
+				availReps:  2,
+				collisions: 0,
+				coOpts: coOpts{
+					image: "fred:0.0.1",
+					rcpu:  "30m",
+					rmem:  "10Mi",
+					lcpu:  "50m",
+					lmem:  "10Mi",
+				},
+				ccpu: "10m",
+				cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU over allocated. Current:20m vs Requested:60m (300.00%)"),
+			},
+		},
+		"cpuOverGuaranteed": {
+			lister: makeDPLister("d1", dpOpts{
+				reps:       2,
+				availReps:  2,
+				collisions: 0,
+				coOpts: coOpts{
+					image: "fred:0.0.1",
+					rcpu:  "30m",
+					rmem:  "10Mi",
+					lcpu:  "30m",
+					lmem:  "10Mi",
+				},
+				ccpu: "10m",
+				cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU over allocated. Current:20m vs Requested:60m (300.00%)"),
+			},
+		},
+		"memUnderBurstable": {
+			lister: makeDPLister("d1", dpOpts{
+				reps:       2,
+				availReps:  2,
+				collisions: 0,
+				coOpts: coOpts{
+					image: "fred:0.0.1",
+					rcpu:  "10m",
+					rmem:  "5Mi",
+					lcpu:  "20m",
+					lmem:  "20Mi",
+				},
+				ccpu: "10m",
+				cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory under allocated. Current:20Mi vs Requested:10Mi (200.00%)"),
+			},
+		},
+		"memUnderGuaranteed": {
+			lister: makeDPLister("d1", dpOpts{
+				reps:       2,
+				availReps:  2,
+				collisions: 0,
+				coOpts: coOpts{
+					image: "fred:0.0.1",
+					rcpu:  "10m",
+					rmem:  "5Mi",
+					lcpu:  "10m",
+					lmem:  "5Mi",
+				},
+				ccpu: "10m",
+				cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory under allocated. Current:20Mi vs Requested:10Mi (200.00%)"),
+			},
+		},
+		"memOverBurstable": {
+			lister: makeDPLister("d1", dpOpts{
+				reps:       2,
+				availReps:  2,
+				collisions: 0,
+				coOpts: coOpts{
+					image: "fred:0.0.1",
+					rcpu:  "10m",
+					rmem:  "30Mi",
+					lcpu:  "20m",
+					lmem:  "60Mi",
+				},
+				ccpu: "10m",
+				cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory over allocated. Current:20Mi vs Requested:60Mi (300.00%)"),
+			},
+		},
+		"memOverGuaranteed": {
+			lister: makeDPLister("d1", dpOpts{
+				reps:       2,
+				availReps:  2,
+				collisions: 0,
+				coOpts: coOpts{
+					image: "fred:0.0.1",
+					rcpu:  "10m",
+					rmem:  "30Mi",
+					lcpu:  "10m",
+					lmem:  "30Mi",
+				},
+				ccpu: "10m",
+				cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory over allocated. Current:20Mi vs Requested:60Mi (300.00%)"),
+			},
+		},
+	}
+
+	for k, u := range uu {
+		t.Run(k, func(t *testing.T) {
+			dp := NewDeployment(issues.NewCollector(), u.lister)
+			dp.Sanitize(context.Background())
+
+			assert.Equal(t, u.issues, dp.Outcome()["default/d1"])
 		})
 	}
 }
@@ -193,15 +318,15 @@ func makeDPLister(n string, opts dpOpts) *dp {
 
 func (d *dp) CPUResourceLimits() config.Allocations {
 	return config.Allocations{
-		Over:  100,
-		Under: 50,
+		UnderPerc: 100,
+		OverPerc:  50,
 	}
 }
 
 func (d *dp) MEMResourceLimits() config.Allocations {
 	return config.Allocations{
-		Over:  100,
-		Under: 50,
+		UnderPerc: 100,
+		OverPerc:  50,
 	}
 }
 
@@ -276,29 +401,3 @@ func makeDP(n string, o dpOpts) *appsv1.Deployment {
 		},
 	}
 }
-
-// func makePodRes(n, cpu, mem string) *v1.Pod {
-// 	po := makePod(n)
-// 	po.Spec.Containers = []v1.Container{
-// 		{
-// 			Name:  "c1",
-// 			Image: "fred:1.2.3",
-// 			Resources: v1.ResourceRequirements{
-// 				Requests: makeRes("cpu", cpu),
-// 				Limits:   makeRes("mem", mem),
-// 			},
-// 		},
-// 	}
-// 	po.Spec.InitContainers = []v1.Container{
-// 		{
-// 			Name:  "ic1",
-// 			Image: "fred:1.2.3",
-// 			Resources: v1.ResourceRequirements{
-// 				Requests: makeRes("cpu", cpu),
-// 				Limits:   makeRes("mem", mem),
-// 			},
-// 		},
-// 	}
-
-// 	return po
-// }

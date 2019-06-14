@@ -17,104 +17,190 @@ import (
 func TestSTSSanitizer(t *testing.T) {
 	uu := map[string]struct {
 		lister StatefulSetLister
-		issues map[string]int
+		issues issues.Issues
 	}{
 		"good": {
-			makeSTSLister("sts1", stsOpts{
-				coOpts: coOpts{
-					rcpu: "100m",
-					rmem: "10Mi",
-				},
+			lister: makeSTSLister("sts1", stsOpts{
+				coOpts:      coOpts{rcpu: "100m", rmem: "10Mi"},
 				replicas:    1,
 				currentReps: 1,
+				ccpu:        "100m", cmem: "10Mi",
 			}),
-			map[string]int{"default/sts1": 0},
 		},
-		"noReplicas": {
-			makeSTSLister("sts1", stsOpts{
-				coOpts: coOpts{
-					rcpu: "100m",
-					rmem: "10Mi",
-				},
-				replicas:    0,
+		"used?": {
+			lister: makeSTSLister("sts1", stsOpts{
+				coOpts:      coOpts{rcpu: "100m", rmem: "10Mi"},
+				replicas:    1,
 				currentReps: 0,
+				ccpu:        "100m", cmem: "10Mi",
 			}),
-			map[string]int{"default/sts1": 2},
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "Used? No available replicas found"),
+			},
+		},
+		"zeroReplicas": {
+			lister: makeSTSLister("sts1", stsOpts{
+				coOpts:      coOpts{rcpu: "100m", rmem: "10Mi"},
+				replicas:    0,
+				currentReps: 1,
+				ccpu:        "100m", cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.InfoLevel, "Zero scale detected"),
+			},
 		},
 		"collisions": {
-			makeSTSLister("sts1", stsOpts{
-				coOpts: coOpts{
-					rcpu: "100m",
-					rmem: "10Mi",
-				},
+			lister: makeSTSLister("sts1", stsOpts{
+				coOpts:      coOpts{rcpu: "100m", rmem: "10Mi"},
 				replicas:    1,
 				currentReps: 1,
 				collisions:  1,
+				ccpu:        "100m", cmem: "10Mi",
 			}),
-			map[string]int{"default/sts1": 1},
-		},
-		"overCPU": {
-			makeSTSLister("sts1", stsOpts{
-				coOpts: coOpts{
-					rcpu: "200m",
-					rmem: "10Mi",
-					lcpu: "200m",
-					lmem: "10Mi",
-				},
-				replicas:    1,
-				currentReps: 1,
-			}),
-			map[string]int{"default/sts1": 1},
-		},
-		"overMem": {
-			makeSTSLister("sts1", stsOpts{
-				coOpts: coOpts{
-					rcpu: "100m",
-					rmem: "20Mi",
-					lcpu: "100m",
-					lmem: "20Mi",
-				},
-				replicas:    1,
-				currentReps: 1,
-			}),
-			map[string]int{"default/sts1": 1},
-		},
-		"underCPU": {
-			makeSTSLister("sts1", stsOpts{
-				coOpts: coOpts{
-					rcpu: "10m",
-					rmem: "10Mi",
-					lcpu: "10m",
-					lmem: "10Mi",
-				},
-				replicas:    1,
-				currentReps: 1,
-			}),
-			map[string]int{"default/sts1": 1},
-		},
-		"underMem": {
-			makeSTSLister("sts1", stsOpts{
-				coOpts: coOpts{
-					rcpu: "100m",
-					rmem: "1Mi",
-					lcpu: "100m",
-					lmem: "1Mi",
-				},
-				replicas:    1,
-				currentReps: 1,
-			}),
-			map[string]int{"default/sts1": 1},
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.ErrorLevel, "ReplicaSet collisions detected (1)"),
+			},
 		},
 	}
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			s := NewStatefulSet(issues.NewCollector(), u.lister)
-			s.Sanitize(context.Background())
+			sts := NewStatefulSet(issues.NewCollector(), u.lister)
+			sts.Sanitize(context.Background())
 
-			for sts, v := range u.issues {
-				assert.Equal(t, v, len(s.Outcome()[sts]))
-			}
+			assert.Equal(t, u.issues, sts.Outcome()["default/sts1"])
+		})
+	}
+}
+
+func TestSTSSanitizerUtilization(t *testing.T) {
+	uu := map[string]struct {
+		lister StatefulSetLister
+		issues issues.Issues
+	}{
+		"bestEffort": {
+			lister: makeSTSLister("sts1", stsOpts{
+				replicas:    1,
+				currentReps: 1,
+				ccpu:        "200m", cmem: "10Mi",
+			}),
+		},
+		"underCPUBurstable": {
+			lister: makeSTSLister("sts1", stsOpts{
+				coOpts: coOpts{
+					rcpu: "100m", rmem: "10Mi",
+				},
+				replicas:    1,
+				currentReps: 1,
+				ccpu:        "200m", cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU under allocated. Current:400m vs Requested:200m (200.00%)"),
+			},
+		},
+		"underCPUGuaranteed": {
+			lister: makeSTSLister("sts1", stsOpts{
+				coOpts: coOpts{
+					rcpu: "100m", rmem: "10Mi",
+					lcpu: "100m", lmem: "10Mi",
+				},
+				replicas:    1,
+				currentReps: 1,
+				ccpu:        "200m", cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU under allocated. Current:400m vs Requested:200m (200.00%)"),
+			},
+		},
+		"overCPUBurstable": {
+			lister: makeSTSLister("sts1", stsOpts{
+				coOpts: coOpts{
+					rcpu: "400m", rmem: "10Mi",
+				},
+				replicas:    1,
+				currentReps: 1,
+				ccpu:        "100m", cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU over allocated. Current:200m vs Requested:800m (25.00%)"),
+			},
+		},
+		"overCPUGuarenteed": {
+			lister: makeSTSLister("sts1", stsOpts{
+				coOpts: coOpts{
+					rcpu: "400m", rmem: "10Mi",
+					lcpu: "400m", lmem: "10Mi",
+				},
+				replicas:    1,
+				currentReps: 1,
+				ccpu:        "100m", cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU over allocated. Current:200m vs Requested:800m (25.00%)"),
+			},
+		},
+		"underMEMBurstable": {
+			lister: makeSTSLister("sts1", stsOpts{
+				coOpts: coOpts{
+					rcpu: "100m", rmem: "10Mi",
+				},
+				replicas:    1,
+				currentReps: 1,
+				ccpu:        "100m", cmem: "20Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory under allocated. Current:40Mi vs Requested:20Mi (200.00%)"),
+			},
+		},
+		"underMEMGuaranteed": {
+			lister: makeSTSLister("sts1", stsOpts{
+				coOpts: coOpts{
+					rcpu: "100m", rmem: "10Mi",
+					lcpu: "100m", lmem: "10Mi",
+				},
+				replicas:    1,
+				currentReps: 1,
+				ccpu:        "100m", cmem: "20Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory under allocated. Current:40Mi vs Requested:20Mi (200.00%)"),
+			},
+		},
+		"overMEMBurstable": {
+			lister: makeSTSLister("sts1", stsOpts{
+				coOpts: coOpts{
+					rcpu: "100m", rmem: "100Mi",
+				},
+				replicas:    1,
+				currentReps: 1,
+				ccpu:        "100m", cmem: "20Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory over allocated. Current:40Mi vs Requested:200Mi (20.00%)"),
+			},
+		},
+		"overMEMGuaranteed": {
+			lister: makeSTSLister("sts1", stsOpts{
+				coOpts: coOpts{
+					rcpu: "100m", rmem: "100Mi",
+					lcpu: "100m", lmem: "100Mi",
+				},
+				replicas:    1,
+				currentReps: 1,
+				ccpu:        "100m", cmem: "20Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory over allocated. Current:40Mi vs Requested:200Mi (20.00%)"),
+			},
+		},
+	}
+
+	for k, u := range uu {
+		t.Run(k, func(t *testing.T) {
+			sts := NewStatefulSet(issues.NewCollector(), u.lister)
+			sts.Sanitize(context.Background())
+
+			assert.Equal(t, u.issues, sts.Outcome()["default/sts1"])
 		})
 	}
 }
@@ -128,6 +214,7 @@ type (
 		replicas    int32
 		currentReps int32
 		collisions  int32
+		ccpu, cmem  string
 	}
 
 	sts struct {
@@ -145,15 +232,15 @@ func makeSTSLister(n string, opts stsOpts) *sts {
 
 func (s *sts) CPUResourceLimits() config.Allocations {
 	return config.Allocations{
-		Under: 50,
-		Over:  100,
+		UnderPerc: 100,
+		OverPerc:  50,
 	}
 }
 
 func (s *sts) MEMResourceLimits() config.Allocations {
 	return config.Allocations{
-		Under: 50,
-		Over:  100,
+		UnderPerc: 100,
+		OverPerc:  50,
 	}
 }
 
@@ -177,13 +264,19 @@ func (s *sts) ListStatefulSets() map[string]*appsv1.StatefulSet {
 
 func (s *sts) ListPodsBySelector(sel *metav1.LabelSelector) map[string]*v1.Pod {
 	return map[string]*v1.Pod{
-		"default/p1": makePod("p1"),
+		"default/p1": makeFullPod("p1", podOpts{
+			coOpts: coOpts{
+				rcpu: s.opts.rcpu,
+				rmem: s.opts.rmem,
+				lcpu: s.opts.lcpu,
+				lmem: s.opts.lmem,
+			}}),
 	}
 }
 
 func (s *sts) ListPodsMetrics() map[string]*mv1beta1.PodMetrics {
 	return map[string]*mv1beta1.PodMetrics{
-		"default/p1": makeMxPod("1", "100m", "10Mi"),
+		"default/p1": makeMxPod("p1", s.opts.ccpu, s.opts.cmem),
 	}
 }
 

@@ -22,7 +22,7 @@ func Titleize(r string, count int) string {
 	case "cm":
 		t = "configmap"
 	case "sec":
-		t = "Secret"
+		t = "secret"
 	case "pv":
 		t = "persistentvolume"
 	case "pvc":
@@ -33,6 +33,9 @@ func Titleize(r string, count int) string {
 		t = "deployment"
 	case "sts":
 		t = "statefulset"
+	case "pdb":
+		t = "poddisruptionbudget"
+
 	default:
 		t = r
 	}

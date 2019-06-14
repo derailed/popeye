@@ -60,6 +60,10 @@ func (p pvc) ListPods() map[string]*v1.Pod {
 	}
 }
 
+func (p pvc) GetPod(map[string]string) *v1.Pod {
+	return nil
+}
+
 func makePVC(n string, p v1.PersistentVolumeClaimPhase) *v1.PersistentVolumeClaim {
 	return &v1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{

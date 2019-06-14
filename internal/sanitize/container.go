@@ -104,22 +104,30 @@ func (c *Container) checkNamedPorts(co v1.Container) {
 }
 
 func (c *Container) checkUtilization(co v1.Container, cmx k8s.Metrics) {
-	cpu, mem, _ := containerResources(co)
+	cpu, mem, qos := containerResources(co)
 	if cpu != nil && mem != nil {
-		c.checkMetrics(co.Name, *cpu, *mem, cmx.CurrentCPU, cmx.CurrentMEM)
+		c.checkMetrics(qos, co.Name, *cpu, *mem, cmx.CurrentCPU, cmx.CurrentMEM)
 	}
 }
 
-func (c *Container) checkMetrics(co string, cpu, mem, ccpu, cmem resource.Quantity) {
-	percCPU := ToPerc(toMC(ccpu), toMC(cpu))
-	cpuLimit := int64(c.PodCPULimit())
-	if percCPU > cpuLimit {
-		c.AddSubErrorf(c.fqn, co, "CPU Current/Requested (%s/%s) reached user %d%% threshold (%d%%)", asMC(ccpu), asMC(cpu), cpuLimit, percCPU)
-	}
+func (c *Container) checkMetrics(qos qos, co string, cpu, mem, ccpu, cmem resource.Quantity) {
+	percCPU, cpuLimit := ToPerc(toMC(ccpu), toMC(cpu)), int64(c.PodCPULimit())
+	percMEM, memLimit := ToPerc(toMB(cmem), toMB(mem)), int64(c.PodMEMLimit())
 
-	percMEM := ToPerc(toMB(cmem), toMB(mem))
-	memLimit := int64(c.PodMEMLimit())
-	if percMEM > memLimit {
-		c.AddSubErrorf(c.fqn, co, "Memory Current/Requested (%s/%s) reached user %d%% threshold (%d%%)", asMB(cmem), asMB(mem), memLimit, percMEM)
+	switch qos {
+	case qosBurstable:
+		if percCPU > cpuLimit {
+			c.AddSubWarnf(c.fqn, co, "CPU Current/Request (%s/%s) reached user %d%% threshold (%d%%)", asMC(ccpu), asMC(cpu), cpuLimit, percCPU)
+		}
+		if percMEM > memLimit {
+			c.AddSubWarnf(c.fqn, co, "Memory Current/Request (%s/%s) reached user %d%% threshold (%d%%)", asMB(cmem), asMB(mem), memLimit, percMEM)
+		}
+	case qosGuaranteed:
+		if percCPU > cpuLimit {
+			c.AddSubErrorf(c.fqn, co, "CPU Current/Limit (%s/%s) reached user %d%% threshold (%d%%)", asMC(ccpu), asMC(cpu), cpuLimit, percCPU)
+		}
+		if percMEM > memLimit {
+			c.AddSubErrorf(c.fqn, co, "Memory Current/Limit (%s/%s) reached user %d%% threshold (%d%%)", asMB(cmem), asMB(mem), memLimit, percMEM)
+		}
 	}
 }

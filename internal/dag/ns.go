@@ -3,6 +3,7 @@ package dag
 import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/rs/zerolog/log"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -28,6 +29,7 @@ func ListNamespaces(c *k8s.Client, cfg *config.Config) (map[string]*v1.Namespace
 func listAllNamespaces(c *k8s.Client) (map[string]*v1.Namespace, error) {
 	ll, err := fetchNamespaces(c)
 	if err != nil {
+		log.Debug().Err(err).Msg("ListAll")
 		return nil, err
 	}
 

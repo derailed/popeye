@@ -7,6 +7,7 @@ import (
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
+	pv1beta1 "k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
@@ -120,6 +121,10 @@ func (p *pod) ListPods() map[string]*v1.Pod {
 	return p.opts.pods
 }
 
+func (p *pod) GetPod(map[string]string) *v1.Pod {
+	return nil
+}
+
 func (*pod) RestartsLimit() int {
 	return 10
 }
@@ -136,6 +141,14 @@ func (p *pod) ListPodsMetrics() map[string]*v1beta1.PodMetrics {
 	return map[string]*v1beta1.PodMetrics{
 		"default/p1": makeMxPod("p1", "10m", "10Mi"),
 	}
+}
+
+func (p *pod) ForLabels(l map[string]string) *pv1beta1.PodDisruptionBudget {
+	return &pv1beta1.PodDisruptionBudget{}
+}
+
+func (p *pod) ListPodDisruptionBudgets() map[string]*pv1beta1.PodDisruptionBudget {
+	return nil
 }
 
 func makePod(n string) *v1.Pod {

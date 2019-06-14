@@ -16,6 +16,7 @@ type (
 	// PodLister lists available pods.
 	PodLister interface {
 		ListPods() map[string]*v1.Pod
+		GetPod(sel map[string]string) *v1.Pod
 	}
 
 	// ServiceAccountLister list available ServiceAccounts on a cluster.

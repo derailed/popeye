@@ -254,8 +254,8 @@ func (*rangeCollector) PodMEMLimit() float64 {
 
 type coOpts struct {
 	image        string
-	rcpu, lcpu   string
-	rmem, lmem   string
+	rcpu, rmem   string
+	lcpu, lmem   string
 	lprob, rprob bool
 }
 
@@ -278,15 +278,22 @@ func makeContainer(n string, opts coOpts) v1.Container {
 	if opts.rprob {
 		co.ReadinessProbe = &v1.Probe{}
 	}
+
 	return co
 }
 
 func makeRes(c, m string) v1.ResourceList {
-	cpu, _ := resource.ParseQuantity(c)
-	mem, _ := resource.ParseQuantity(m)
-
 	return v1.ResourceList{
-		v1.ResourceCPU:    cpu,
-		v1.ResourceMemory: mem,
+		v1.ResourceCPU:    *makeQty(c),
+		v1.ResourceMemory: *makeQty(m),
 	}
+}
+
+func makeQty(s string) *resource.Quantity {
+	if s == "" {
+		return nil
+	}
+
+	qty, _ := resource.ParseQuantity(s)
+	return &qty
 }

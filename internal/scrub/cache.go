@@ -17,6 +17,7 @@ type Cache struct {
 	dp     *cache.Deployment
 	sts    *cache.StatefulSet
 	sa     *cache.ServiceAccount
+	pdb    *cache.PodDisruptionBudget
 }
 
 // NewCache returns a new resource cache
@@ -89,4 +90,15 @@ func (c *Cache) serviceaccounts() (*cache.ServiceAccount, error) {
 	c.sa = cache.NewServiceAccount(sas)
 
 	return c.sa, err
+}
+
+// PodDisruptionBudgets retrieves podDisruptionBudgets from cache if present or populate if not.
+func (c *Cache) podDisruptionBudgets() (*cache.PodDisruptionBudget, error) {
+	if c.pdb != nil {
+		return c.pdb, nil
+	}
+	pdbs, err := dag.ListPodDisruptionBudgets(c.client, c.config)
+	c.pdb = cache.NewPodDisruptionBudget(pdbs)
+
+	return c.pdb, err
 }

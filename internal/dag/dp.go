@@ -3,6 +3,7 @@ package dag
 import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/rs/zerolog/log"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -28,6 +29,7 @@ func ListDeployments(c *k8s.Client, cfg *config.Config) (map[string]*appsv1.Depl
 func listAllDeployments(c *k8s.Client) (map[string]*appsv1.Deployment, error) {
 	ll, err := fetchDeployments(c)
 	if err != nil {
+		log.Debug().Err(err).Msg("ListAll")
 		return nil, err
 	}
 
@@ -41,5 +43,5 @@ func listAllDeployments(c *k8s.Client) (map[string]*appsv1.Deployment, error) {
 
 // FetchDeployments retrieves all Deployments on the cluster.
 func fetchDeployments(c *k8s.Client) (*appsv1.DeploymentList, error) {
-	return c.DialOrDie().AppsV1().Deployments("").List(metav1.ListOptions{})
+	return c.DialOrDie().AppsV1().Deployments(c.ActiveNamespace()).List(metav1.ListOptions{})
 }

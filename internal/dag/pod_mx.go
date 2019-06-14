@@ -2,6 +2,7 @@ package dag
 
 import (
 	"github.com/derailed/popeye/internal/k8s"
+	"github.com/rs/zerolog/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
@@ -10,6 +11,7 @@ import (
 func ListPodsMetrics(c *k8s.Client) (map[string]*mv1beta1.PodMetrics, error) {
 	ll, err := fetchPodsMetrics(c)
 	if err != nil {
+		log.Debug().Err(err).Msg("ListAll")
 		return map[string]*mv1beta1.PodMetrics{}, err
 	}
 
@@ -28,5 +30,5 @@ func fetchPodsMetrics(c *k8s.Client) (*mv1beta1.PodMetricsList, error) {
 		return nil, err
 	}
 
-	return vc.Metrics().PodMetricses("").List(metav1.ListOptions{})
+	return vc.Metrics().PodMetricses(c.ActiveNamespace()).List(metav1.ListOptions{})
 }
