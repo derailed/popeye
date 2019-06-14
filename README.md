@@ -31,7 +31,7 @@ Popeye is available on Linux, OSX and Windows platforms.
 * For OSX using Homebrew
 
    ```shell
-   brew tap derailed/popeye && brew install popeye
+   brew install derailed/popeye/popeye
    ```
 
 * Building from source
@@ -78,45 +78,47 @@ live clusters and sanitize resources as they are in the wild!
 Here is a list of sanitizers in place for the current release.
 
 
-|     | Resource                | Sanitizers                                                              | Section |
-| --- | ----------------------- | ----------------------------------------------------------------------- | ------- |
-| 🛀  | Node                    |                                                                         | no      |
-|     |                         | Conditions ie not ready, out of mem/disk, network, pids, etc            |         |
-|     |                         | Pod tolerations referencing node taints                                 |         |
-|     |                         | CPU/MEM utilization metrics, trips if over limits (default 80% CPU/MEM) |         |
-| 🛀  | Namespace               |                                                                         | ns      |
-|     |                         | Inactive                                                                |         |
-|     |                         | Dead namespaces                                                         |         |
-| 🛀  | Pod                     |                                                                         | po      |
-|     |                         | Pod status                                                              |         |
-|     |                         | Containers statuses                                                     |         |
-|     |                         | ServiceAccount presence                                                 |         |
-|     |                         | CPU/MEM on containers over a set CPU/MEM limit (default 80% CPU/MEM)    |         |
-|     |                         | Container image with no tags                                            |         |
-|     |                         | Container image using `latest` tag                                      |         |
-|     |                         | Resources request/limits presence                                       |         |
-|     |                         | Probes liveness/readiness presence                                      |         |
-|     |                         | Named ports and their references                                        |         |
-| 🛀  | Service                 |                                                                         | svc     |
-|     |                         | Endpoints presence                                                      |         |
-|     |                         | Matching pods labels                                                    |         |
-|     |                         | Named ports and their references                                        |         |
-| 🛀  | ServiceAccount          |                                                                         | sa      |
-|     |                         | Unused, detects potentially unused SAs                                  |         |
-| 🛀  | Secrets                 |                                                                         | sec     |
-|     |                         | Unused, detects potentially unused secrets or associated keys           |         |
-| 🛀  | ConfigMap               |                                                                         | cm      |
-|     |                         | Unused, detects potentially unused cm or associated keys                |         |
-| 🛀  | Deployment              |                                                                         | dp      |
-|     |                         | Unused, pod template validation, resource utilization                   |         |
-| 🛀  | StatefulSet             |                                                                         | sts     |
-|     |                         | Unsed, pod template validation, resource utilization                    |         |
-| 🛀  | PersistentVolume        |                                                                         | pv      |
-|     |                         | Unused, check volume bound or volume error                              |         |
-| 🛀  | PersistentVolumeClaim   |                                                                         | pvc     |
-|     |                         | Unused, check bounded or volume mount error                             |         |
-| 🛀  | HorizontalPodAutoscaler |                                                                         | hpa     |
-|     |                         | Unused, Utilization, Max burst checks                                   |         |
+|    | Resource                | Sanitizers                                                              | Section |
+|----|-------------------------|-------------------------------------------------------------------------|---------|
+| 🛀 | Node                    |                                                                         | no      |
+|    |                         | Conditions ie not ready, out of mem/disk, network, pids, etc            |         |
+|    |                         | Pod tolerations referencing node taints                                 |         |
+|    |                         | CPU/MEM utilization metrics, trips if over limits (default 80% CPU/MEM) |         |
+| 🛀 | Namespace               |                                                                         | ns      |
+|    |                         | Inactive                                                                |         |
+|    |                         | Dead namespaces                                                         |         |
+| 🛀 | Pod                     |                                                                         | po      |
+|    |                         | Pod status                                                              |         |
+|    |                         | Containers statuses                                                     |         |
+|    |                         | ServiceAccount presence                                                 |         |
+|    |                         | CPU/MEM on containers over a set CPU/MEM limit (default 80% CPU/MEM)    |         |
+|    |                         | Container image with no tags                                            |         |
+|    |                         | Container image using `latest` tag                                      |         |
+|    |                         | Resources request/limits presence                                       |         |
+|    |                         | Probes liveness/readiness presence                                      |         |
+|    |                         | Named ports and their references                                        |         |
+| 🛀 | Service                 |                                                                         | svc     |
+|    |                         | Endpoints presence                                                      |         |
+|    |                         | Matching pods labels                                                    |         |
+|    |                         | Named ports and their references                                        |         |
+| 🛀 | ServiceAccount          |                                                                         | sa      |
+|    |                         | Unused, detects potentially unused SAs                                  |         |
+| 🛀 | Secrets                 |                                                                         | sec     |
+|    |                         | Unused, detects potentially unused secrets or associated keys           |         |
+| 🛀 | ConfigMap               |                                                                         | cm      |
+|    |                         | Unused, detects potentially unused cm or associated keys                |         |
+| 🛀 | Deployment              |                                                                         | dp      |
+|    |                         | Unused, pod template validation, resource utilization                   |         |
+| 🛀 | StatefulSet             |                                                                         | sts     |
+|    |                         | Unsed, pod template validation, resource utilization                    |         |
+| 🛀 | PersistentVolume        |                                                                         | pv      |
+|    |                         | Unused, check volume bound or volume error                              |         |
+| 🛀 | PersistentVolumeClaim   |                                                                         | pvc     |
+|    |                         | Unused, check bounded or volume mount error                             |         |
+| 🛀 | HorizontalPodAutoscaler |                                                                         | hpa     |
+|    |                         | Unused, Utilization, Max burst checks                                   |         |
+| 🛀 | PodDisruptionBudget     |                                                                         | hpa     |
+|    |                         | Unused, Check minAvailable configuration                                | pdb     |
 
 
 ## The Command Line
@@ -326,7 +328,7 @@ The sanitizer report outputs each resource group scanned and their potential iss
 The report is color/emoji coded in term of Sanitizer severity levels:
 
 | Level | Icon | Jurassic | Color     | Description     |
-| ----- | ---- | -------- | --------- | --------------- |
+|-------|------|----------|-----------|-----------------|
 | Ok    | ✅    | OK       | Green     | Happy!          |
 | Info  | 🔊   | I        | BlueGreen | FYI             |
 | Warn  | 😱   | W        | Yellow    | Potential Issue |
