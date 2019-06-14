@@ -5,43 +5,33 @@ import (
 	"strings"
 )
 
+func resToTitle() map[string]string {
+	return map[string]string{
+		"po":  "pod",
+		"svc": "service",
+		"no":  "node",
+		"ns":  "namespace",
+		"sa":  "serviceaccount",
+		"cm":  "configmap",
+		"sec": "secret",
+		"pv":  "persistentvolume",
+		"pvc": "persistentvolumeclaim",
+		"hpa": "horizontalpodautoscaler",
+		"dp":  "deployment",
+		"sts": "statefulset",
+		"pdb": "poddisruptionbudget",
+	}
+}
+
 // Titleize returns a human readable resource name.
 func Titleize(r string, count int) string {
-	var t string
-	switch r {
-	case "po":
-		t = "pod"
-	case "svc":
-		t = "service"
-	case "no":
-		t = "node"
-	case "ns":
-		t = "namespace"
-	case "sa":
-		t = "serviceaccount"
-	case "cm":
-		t = "configmap"
-	case "sec":
-		t = "secret"
-	case "pv":
-		t = "persistentvolume"
-	case "pvc":
-		t = "persistentvolumeclaim"
-	case "hpa":
-		t = "horizontalpodautoscaler"
-	case "dp":
-		t = "deployment"
-	case "sts":
-		t = "statefulset"
-	case "pdb":
-		t = "poddisruptionbudget"
-
-	default:
-		t = r
+	title := r
+	if t, ok := resToTitle()[r]; ok {
+		title = t
 	}
 
 	if count < 0 {
-		return strings.ToUpper(fmt.Sprintf("%s", t))
+		return strings.ToUpper(fmt.Sprintf("%s", title))
 	}
-	return strings.ToUpper(fmt.Sprintf("%s (%d scanned)", t+"s", count))
+	return strings.ToUpper(fmt.Sprintf("%s (%d scanned)", title+"s", count))
 }
