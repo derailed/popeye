@@ -47,10 +47,7 @@ func (c *PodDisruptionBudget) checkInUse(fqn string, pdb *pv1beta1.PodDisruption
 	}
 
 	min := pdb.Spec.MinAvailable
-	switch min.Type {
-	case intstr.Int:
-		if min.IntValue() > int(pdb.Status.CurrentHealthy) {
-			c.AddWarnf(fqn, "MinAvailable (%d) is greater than the number of pods(%d) currently running", min.IntValue(), pdb.Status.CurrentHealthy)
-		}
+	if min != nil && min.Type == intstr.Int && min.IntValue() > int(pdb.Status.CurrentHealthy) {
+		c.AddWarnf(fqn, "MinAvailable (%d) is greater than the number of pods(%d) currently running", min.IntValue(), pdb.Status.CurrentHealthy)
 	}
 }
