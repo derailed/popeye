@@ -152,13 +152,23 @@ func TestOpenClose(t *testing.T) {
 }
 
 func TestFormatLine(t *testing.T) {
-	uu := []struct {
+	uu := map[string]struct {
 		msg           string
 		indent, width int
 		e             string
 	}{
-		{"fred blee", 1, 10, "fred blee"},
-		{"fred blee duh", 1, 10, " fred blee\n     duh"},
+		"single": {
+			msg:    "fred blee",
+			indent: 1,
+			width:  10,
+			e:      "fred blee",
+		},
+		"newline": {
+			msg:    "fred bleeduhblablabla blee",
+			indent: 1,
+			width:  10,
+			e:      " fred\n    bleeduhblablabla\n    blee",
+		},
 	}
 
 	for _, u := range uu {

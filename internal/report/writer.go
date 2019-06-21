@@ -188,10 +188,14 @@ func formatLine(str string, indent, width int) string {
 		for _, t := range tokens {
 			l := len(t) + 1
 			if length+l > width {
-				break
+				lines = append(lines, line)
+				spacer := strings.Repeat("  ", tabSize*indent)
+				line = spacer + t
+				length = len(spacer) + l
+			} else {
+				line += " " + t
+				length += l
 			}
-			line += " " + t
-			length += l
 			tokens = tokens[1:]
 		}
 		lines = append(lines, line)
