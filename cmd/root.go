@@ -29,7 +29,6 @@ var (
 
 func init() {
 	rootCmd.AddCommand(versionCmd())
-
 	initFlags()
 }
 
@@ -89,6 +88,14 @@ func initFlags() {
 		"c",
 		false,
 		"Clears the screen before a run",
+	)
+
+	rootCmd.Flags().BoolVarP(
+		flags.CheckOverAllocs,
+		"over-allocs",
+		"",
+		false,
+		"Check for cpu/memory over allocations",
 	)
 
 	rootCmd.Flags().BoolVarP(

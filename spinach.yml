@@ -2,8 +2,8 @@
 popeye:
   allocations:
     cpu:
-      underPercUtilization: 10000 # Checks if cpu is under allocated by more than 200% at current load.
-      overPercUtilization: 10000   # Checks if cpu is over allocated by more than 50% at current load.
+      underPercUtilization: 200 # Checks if cpu is under allocated by more than 200% at current load.
+      overPercUtilization: 50   # Checks if cpu is over allocated by more than 50% at current load.
     memory:
       underPercUtilization: 200 # Checks if mem is under allocated by more than 200% at current load.
       overPercUtilization: 50

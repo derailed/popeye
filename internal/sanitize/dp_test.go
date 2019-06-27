@@ -281,10 +281,11 @@ func TestDPSanitizeUtilization(t *testing.T) {
 		},
 	}
 
+	ctx := context.WithValue(context.Background(), PopeyeKey("OverAllocs"), true)
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			dp := NewDeployment(issues.NewCollector(), u.lister)
-			dp.Sanitize(context.Background())
+			dp.Sanitize(ctx)
 
 			assert.Equal(t, u.issues, dp.Outcome()["default/d1"])
 		})

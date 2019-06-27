@@ -39,10 +39,11 @@ func (s *StatefulSet) Sanitize(ctx context.Context) error {
 	pmx := k8s.PodsMetrics{}
 	podsMetrics(s, pmx)
 
+	over := pullOverAllocs(ctx)
 	for fqn, st := range s.ListStatefulSets() {
 		s.checkStatefulSet(fqn, st)
 		s.checkContainers(fqn, st)
-		s.checkUtilization(fqn, st, pmx)
+		s.checkUtilization(over, fqn, st, pmx)
 	}
 
 	return nil
@@ -75,7 +76,7 @@ func (s *StatefulSet) checkContainers(fqn string, st *appsv1.StatefulSet) {
 	}
 }
 
-func (s *StatefulSet) checkUtilization(fqn string, st *appsv1.StatefulSet, pmx k8s.PodsMetrics) error {
+func (s *StatefulSet) checkUtilization(over bool, fqn string, st *appsv1.StatefulSet, pmx k8s.PodsMetrics) error {
 	mx := s.statefulsetUsage(st, pmx)
 	if mx.RequestCPU.IsZero() && mx.RequestMEM.IsZero() {
 		return nil
@@ -84,16 +85,14 @@ func (s *StatefulSet) checkUtilization(fqn string, st *appsv1.StatefulSet, pmx k
 	cpuPerc := mx.ReqCPURatio()
 	if cpuPerc > float64(s.CPUResourceLimits().UnderPerc) {
 		s.AddWarnf(fqn, utilFmt, "CPU under allocated", asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
-	}
-	if cpuPerc > 0 && cpuPerc < float64(s.CPUResourceLimits().OverPerc) {
+	} else if over && cpuPerc > 0 && cpuPerc < float64(s.CPUResourceLimits().OverPerc) {
 		s.AddWarnf(fqn, utilFmt, "CPU over allocated", asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
 	}
 
 	memPerc := mx.ReqMEMRatio()
 	if memPerc > float64(s.MEMResourceLimits().UnderPerc) {
 		s.AddWarnf(fqn, utilFmt, "Memory under allocated", asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
-	}
-	if memPerc > 0 && memPerc < float64(s.MEMResourceLimits().OverPerc) {
+	} else if over && memPerc > 0 && memPerc < float64(s.MEMResourceLimits().OverPerc) {
 		s.AddWarnf(fqn, utilFmt, "Memory over allocated", asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
 	}
 

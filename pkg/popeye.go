@@ -10,6 +10,7 @@ import (
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/report"
+	"github.com/derailed/popeye/internal/sanitize"
 	"github.com/derailed/popeye/internal/scrub"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/rs/zerolog"
@@ -121,6 +122,7 @@ func (p *Popeye) sanitizers() map[string]scrubFn {
 func (p *Popeye) sanitize() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	ctx = context.WithValue(ctx, sanitize.PopeyeKey("OverAllocs"), *p.flags.CheckOverAllocs)
 
 	cache := scrub.NewCache(p.client, p.config)
 	for k, f := range p.sanitizers() {

@@ -195,10 +195,11 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 		},
 	}
 
+	ctx := context.WithValue(context.Background(), PopeyeKey("OverAllocs"), true)
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			sts := NewStatefulSet(issues.NewCollector(), u.lister)
-			sts.Sanitize(context.Background())
+			sts.Sanitize(ctx)
 
 			assert.Equal(t, u.issues, sts.Outcome()["default/sts1"])
 		})

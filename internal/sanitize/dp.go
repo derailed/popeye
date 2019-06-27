@@ -16,6 +16,9 @@ import (
 const utilFmt = "At current load, %s. Current:%s vs Requested:%s (%s)"
 
 type (
+	// PopeyeKey tracks context keys.
+	PopeyeKey string
+
 	// Deployment tracks Deployment sanitization.
 	Deployment struct {
 		*issues.Collector
@@ -84,7 +87,8 @@ func NewDeployment(co *issues.Collector, lister DeploymentLister) *Deployment {
 }
 
 // Sanitize configmaps.
-func (d *Deployment) Sanitize(context.Context) error {
+func (d *Deployment) Sanitize(ctx context.Context) error {
+	over := pullOverAllocs(ctx)
 	for fqn, dp := range d.ListDeployments() {
 		d.InitOutcome(fqn)
 
@@ -92,7 +96,8 @@ func (d *Deployment) Sanitize(context.Context) error {
 		d.checkContainers(fqn, dp.Spec.Template.Spec)
 		pmx := k8s.PodsMetrics{}
 		podsMetrics(d, pmx)
-		d.checkUtilization(fqn, dp, pmx)
+
+		d.checkUtilization(over, fqn, dp, pmx)
 	}
 
 	return nil
@@ -125,7 +130,7 @@ func (d *Deployment) checkContainers(fqn string, spec v1.PodSpec) {
 }
 
 // CheckUtilization checks deployments requested resources vs current utilization.
-func (d *Deployment) checkUtilization(fqn string, dp *appsv1.Deployment, pmx k8s.PodsMetrics) error {
+func (d *Deployment) checkUtilization(over bool, fqn string, dp *appsv1.Deployment, pmx k8s.PodsMetrics) error {
 	mx := d.deploymentUsage(dp, pmx)
 	if mx.RequestCPU.IsZero() && mx.RequestMEM.IsZero() {
 		return nil
@@ -134,14 +139,14 @@ func (d *Deployment) checkUtilization(fqn string, dp *appsv1.Deployment, pmx k8s
 	cpuPerc := mx.ReqCPURatio()
 	if cpuPerc > 1 && cpuPerc > float64(d.CPUResourceLimits().UnderPerc) {
 		d.AddWarnf(fqn, utilFmt, "CPU under allocated", asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
-	} else if cpuPerc < float64(d.CPUResourceLimits().OverPerc) {
+	} else if over && cpuPerc < float64(d.CPUResourceLimits().OverPerc) {
 		d.AddWarnf(fqn, utilFmt, "CPU over allocated", asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(mx.ReqAbsCPURatio()))
 	}
 
 	memPerc := mx.ReqMEMRatio()
 	if memPerc > 1 && memPerc > float64(d.MEMResourceLimits().UnderPerc) {
 		d.AddWarnf(fqn, utilFmt, "Memory under allocated", asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
-	} else if memPerc < float64(d.MEMResourceLimits().OverPerc) {
+	} else if over && memPerc < float64(d.MEMResourceLimits().OverPerc) {
 		d.AddWarnf(fqn, utilFmt, "Memory over allocated", asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(mx.ReqAbsMEMRatio()))
 	}
 
@@ -168,6 +173,17 @@ func (d *Deployment) deploymentUsage(dp *appsv1.Deployment, pmx k8s.PodsMetrics)
 	}
 
 	return mx
+}
+
+// Helpers...
+
+// PullOverAllocs check for over allocation setting in context.
+func pullOverAllocs(ctx context.Context) bool {
+	over := ctx.Value(PopeyeKey("OverAllocs"))
+	if over == nil {
+		return false
+	}
+	return over.(bool)
 }
 
 // PodsMetrics gathers pod's container metrics from metrics server.
