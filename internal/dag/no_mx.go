@@ -30,5 +30,5 @@ func fetchNodesMetrics(c *k8s.Client) (*mv1beta1.NodeMetricsList, error) {
 		return nil, err
 	}
 
-	return vc.Metrics().NodeMetricses().List(metav1.ListOptions{})
+	return vc.MetricsV1beta1().NodeMetricses().List(metav1.ListOptions{})
 }

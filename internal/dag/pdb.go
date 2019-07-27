@@ -43,5 +43,5 @@ func listAllPodDisruptionBudgets(c *k8s.Client) (map[string]*pv1beta1.PodDisrupt
 
 // fetchPodDisruptionBudgets retrieves all PodDisruptionBudgets on the cluster.
 func fetchPodDisruptionBudgets(c *k8s.Client) (*pv1beta1.PodDisruptionBudgetList, error) {
-	return c.DialOrDie().Policy().PodDisruptionBudgets(c.ActiveNamespace()).List(metav1.ListOptions{})
+	return c.DialOrDie().PolicyV1beta1().PodDisruptionBudgets(c.ActiveNamespace()).List(metav1.ListOptions{})
 }

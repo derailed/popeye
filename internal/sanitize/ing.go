@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/derailed/popeye/internal/issues"
-	ev1beta1 "k8s.io/api/extensions/v1beta1"
+	nv1beta1 "k8s.io/api/networking/v1beta1"
 )
 
 type (
@@ -17,7 +17,7 @@ type (
 
 	// IngLister list deployments.
 	IngLister interface {
-		ListIngresses() map[string]*ev1beta1.Ingress
+		ListIngresses() map[string]*nv1beta1.Ingress
 	}
 
 	// IngressLister list available Ingresss on a cluster.
@@ -44,7 +44,7 @@ func (d *Ingress) Sanitize(ctx context.Context) error {
 	return nil
 }
 
-func (d *Ingress) checkDeprecation(fqn string, ing *ev1beta1.Ingress) {
+func (d *Ingress) checkDeprecation(fqn string, ing *nv1beta1.Ingress) {
 	const current = "networking.k8s.io/v1beta1"
 
 	rev, err := resourceRev(fqn, ing.Annotations)

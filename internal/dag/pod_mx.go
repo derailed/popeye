@@ -30,5 +30,5 @@ func fetchPodsMetrics(c *k8s.Client) (*mv1beta1.PodMetricsList, error) {
 		return nil, err
 	}
 
-	return vc.Metrics().PodMetricses(c.ActiveNamespace()).List(metav1.ListOptions{})
+	return vc.MetricsV1beta1().PodMetricses(c.ActiveNamespace()).List(metav1.ListOptions{})
 }
