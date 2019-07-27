@@ -64,7 +64,7 @@ func (h *HorizontalPodAutoscaler) Sanitize(ctx context.Context) error {
 				rcpu, rmem, _ = podResources(dp.Spec.Template.Spec)
 				current = dp.Status.AvailableReplicas
 			} else {
-				h.AddErrorf(fqn, "HPA %s references a deployment %s which does not exist", fqn, dfqn)
+				h.AddCode(600, fqn, fqn, dfqn)
 				continue
 			}
 		case "StatefulSet":
@@ -73,7 +73,7 @@ func (h *HorizontalPodAutoscaler) Sanitize(ctx context.Context) error {
 				rcpu, rmem, _ = podResources(st.Spec.Template.Spec)
 				current = st.Status.CurrentReplicas
 			} else {
-				h.AddErrorf(fqn, "HPA %s references a statefulset %s which does not exist", fqn, sfqn)
+				h.AddCode(601, fqn, fqn, sfqn)
 				continue
 			}
 		}
@@ -97,28 +97,30 @@ func (h *HorizontalPodAutoscaler) checkResources(fqn string, max, current int32,
 	if toMC(*trcpu) > toMC(acpu) {
 		cpu := trcpu.Copy()
 		cpu.Sub(acpu)
-		h.AddWarnf(fqn, "Replicas (%d/%d) at burst will match/exceed cluster CPU(%s) capacity by %s", current, max, asMC(acpu), asMC(*cpu))
+		h.AddCode(602, fqn, current, max, asMC(acpu), asMC(*cpu))
 	}
 	if toMB(*trmem) > toMB(amem) {
 		mem := trmem.Copy()
 		mem.Sub(amem)
-		h.AddWarnf(fqn, "Replicas (%d/%d) at burst will match/exceed cluster memory(%s) capacity by %s", current, max, asMB(amem), asMB(*mem))
+		h.AddCode(603, fqn, current, max, asMB(amem), asMB(*mem))
 	}
 
 	return trcpu, trmem
 }
 
 func (h *HorizontalPodAutoscaler) checkUtilization(tcpu, tmem resource.Quantity, res v1.ResourceList) {
+	const hpa = "HPA"
+
 	acpu, amem := *res.Cpu(), *res.Memory()
 
 	if toMC(tcpu) > toMC(acpu) {
 		cpu := tcpu.Copy()
 		cpu.Sub(acpu)
-		h.AddWarnf("HPA", "If ALL HPAs triggered, %s will match/exceed cluster CPU(%s) capacity by %s", asMC(tcpu), asMC(acpu), asMC(*cpu))
+		h.AddCode(604, hpa, asMC(tcpu), asMC(acpu), asMC(*cpu))
 	}
 	if toMB(tmem) > toMB(amem) {
 		mem := tmem.Copy()
 		mem.Sub(amem)
-		h.AddWarnf("HPA", "If ALL HPAs triggered, %s will match/exceed cluster memory(%s) capacity by %s", asMB(tmem), asMB(amem), asMB(*mem))
+		h.AddCode(605, hpa, asMB(tmem), asMB(amem), asMB(*mem))
 	}
 }

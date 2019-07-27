@@ -1,13 +1,16 @@
 package issues
 
+import "fmt"
+
 // Collector represents a sanitizer issue container.
 type Collector struct {
 	outcomes Outcome
+	codes    *Codes
 }
 
 // NewCollector returns a new issue collector.
-func NewCollector() *Collector {
-	return &Collector{Outcome{}}
+func NewCollector(codes *Codes) *Collector {
+	return &Collector{outcomes: Outcome{}, codes: codes}
 }
 
 // Outcome returns scan outcome.
@@ -30,44 +33,22 @@ func (c *Collector) MaxSeverity(section string) Level {
 	return c.outcomes.MaxSeverity(section)
 }
 
-// AddSubOk add a sub ok issue.
-func (c *Collector) AddSubOk(section, group, desc string) {
-	c.addIssue(section, New(group, OkLevel, desc))
+// AddSubCode add a sub error code.
+func (c *Collector) AddSubCode(code ID, section, group string, args ...interface{}) {
+	co, ok := c.codes.Glossary[code]
+	if !ok {
+		panic(fmt.Sprintf("No code with ID %d", code))
+	}
+	c.addIssue(section, New(group, co.Severity, co.Format(code, args...)))
 }
 
-// AddSubOkf add a sub ok issue.
-func (c *Collector) AddSubOkf(section, group, fmat string, args ...interface{}) {
-	c.addIssue(section, Newf(group, OkLevel, fmat, args...))
-}
-
-// AddSubInfo add a sub info issue.
-func (c *Collector) AddSubInfo(section, group, desc string) {
-	c.addIssue(section, New(group, InfoLevel, desc))
-}
-
-// AddSubInfof add a sub info issue.
-func (c *Collector) AddSubInfof(section, group, fmat string, args ...interface{}) {
-	c.addIssue(section, Newf(group, InfoLevel, fmat, args...))
-}
-
-// AddSubWarn add a sub warning issue.
-func (c *Collector) AddSubWarn(section, group, desc string) {
-	c.addIssue(section, New(group, WarnLevel, desc))
-}
-
-// AddSubWarnf add a sub warning issue.
-func (c *Collector) AddSubWarnf(section, group, fmat string, args ...interface{}) {
-	c.addIssue(section, Newf(group, WarnLevel, fmat, args...))
-}
-
-// AddSubError add a sub error issue.
-func (c *Collector) AddSubError(section, group, desc string) {
-	c.addIssue(section, New(group, ErrorLevel, desc))
-}
-
-// AddSubErrorf add a sub error issue.
-func (c *Collector) AddSubErrorf(section, group, fmat string, args ...interface{}) {
-	c.addIssue(section, Newf(group, ErrorLevel, fmat, args...))
+// AddCode add an error code.
+func (c *Collector) AddCode(code ID, section string, args ...interface{}) {
+	co, ok := c.codes.Glossary[code]
+	if !ok {
+		panic(fmt.Sprintf("No code with ID %d", code))
+	}
+	c.addIssue(section, New(Root, co.Severity, co.Format(code, args...)))
 }
 
 // AddErr adds a collection of errors.
@@ -75,46 +56,6 @@ func (c *Collector) AddErr(res string, errs ...error) {
 	for _, e := range errs {
 		c.addIssue(res, New(Root, ErrorLevel, e.Error()))
 	}
-}
-
-// AddOk adds an ok issue.
-func (c *Collector) AddOk(res, msg string) {
-	c.addIssue(res, New(Root, OkLevel, msg))
-}
-
-// AddOkf adds an ok issue.
-func (c *Collector) AddOkf(res, fmat string, args ...interface{}) {
-	c.addIssue(res, Newf(Root, OkLevel, fmat, args...))
-}
-
-// AddInfo adds an info issue.
-func (c *Collector) AddInfo(res, msg string) {
-	c.addIssue(res, New(Root, InfoLevel, msg))
-}
-
-// AddInfof adds an info issue.
-func (c *Collector) AddInfof(res, fmat string, args ...interface{}) {
-	c.addIssue(res, Newf(Root, InfoLevel, fmat, args...))
-}
-
-// AddWarn adds a warning issue.
-func (c *Collector) AddWarn(res, msg string) {
-	c.addIssue(res, New(Root, WarnLevel, msg))
-}
-
-// AddWarnf adds a warning issue.
-func (c *Collector) AddWarnf(res, fmat string, args ...interface{}) {
-	c.addIssue(res, Newf(Root, WarnLevel, fmat, args...))
-}
-
-// AddError adds an error issue.
-func (c *Collector) AddError(res, msg string) {
-	c.addIssue(res, New(Root, ErrorLevel, msg))
-}
-
-// AddErrorf adds an info issue.
-func (c *Collector) AddErrorf(res, fmat string, args ...interface{}) {
-	c.addIssue(res, Newf(Root, ErrorLevel, fmat, args...))
 }
 
 // AddIssue adds 1 or more concerns to the collector.

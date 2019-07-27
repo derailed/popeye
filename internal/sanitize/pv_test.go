@@ -23,7 +23,7 @@ func TestPVSanitize(t *testing.T) {
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			p := NewPersistentVolume(issues.NewCollector(), u.lister)
+			p := NewPersistentVolume(issues.NewCollector(loadCodes(t)), u.lister)
 			p.Sanitize(context.Background())
 
 			assert.Equal(t, u.issues, len(p.Outcome()["default/pv1"]))

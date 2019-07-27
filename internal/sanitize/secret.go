@@ -53,7 +53,7 @@ func (s *Secret) checkInUse(refs cache.ObjReferences) {
 
 		keys, ok := refs[cache.ResFqn(cache.SecretKey, fqn)]
 		if !ok {
-			s.AddInfo(fqn, "Used?")
+			s.AddCode(400, fqn)
 			continue
 		}
 		if keys.Has(cache.AllKeys) {
@@ -69,7 +69,7 @@ func (s *Secret) checkInUse(refs cache.ObjReferences) {
 			continue
 		}
 		for k := range deltas {
-			s.AddInfof(fqn, "Key `%s` might not be used?", k)
+			s.AddCode(401, fqn, k)
 		}
 	}
 }

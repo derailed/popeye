@@ -47,7 +47,7 @@ func (n *Namespace) Sanitize(ctx context.Context) error {
 		n.InitOutcome(fqn)
 		if n.checkActive(fqn, ns.Status.Phase) {
 			if _, ok := used[fqn]; !ok {
-				n.AddInfof(fqn, "Used?")
+				n.AddCode(400, fqn)
 			}
 		}
 	}
@@ -57,7 +57,7 @@ func (n *Namespace) Sanitize(ctx context.Context) error {
 
 func (n *Namespace) checkActive(fqn string, p v1.NamespacePhase) bool {
 	if !isNSActive(p) {
-		n.AddErrorf(fqn, "Namespace is inactive")
+		n.AddCode(800, fqn)
 		return false
 	}
 

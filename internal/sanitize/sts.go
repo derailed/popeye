@@ -2,6 +2,7 @@ package sanitize
 
 import (
 	"context"
+	"errors"
 
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/k8s"
@@ -41,6 +42,8 @@ func (s *StatefulSet) Sanitize(ctx context.Context) error {
 
 	over := pullOverAllocs(ctx)
 	for fqn, st := range s.ListStatefulSets() {
+		s.InitOutcome(fqn)
+		s.checkDeprecation(fqn, st)
 		s.checkStatefulSet(fqn, st)
 		s.checkContainers(fqn, st)
 		s.checkUtilization(over, fqn, st, pmx)
@@ -49,17 +52,34 @@ func (s *StatefulSet) Sanitize(ctx context.Context) error {
 	return nil
 }
 
+func (s *StatefulSet) checkDeprecation(fqn string, st *appsv1.StatefulSet) {
+	const current = "apps/v1"
+
+	rev, err := resourceRev(fqn, st.Annotations)
+	if err != nil {
+		rev = revFromLink(st.SelfLink)
+		if rev == "" {
+			s.AddCode(404, fqn, errors.New("Unable to assert resource version"))
+			return
+		}
+	}
+
+	if rev != current {
+		s.AddCode(403, fqn, "StatefulSet", rev, current)
+	}
+}
+
 func (s *StatefulSet) checkStatefulSet(fqn string, st *appsv1.StatefulSet) {
 	if st.Spec.Replicas == nil || (st.Spec.Replicas != nil && *st.Spec.Replicas == 0) {
-		s.AddInfo(fqn, "Zero scale detected")
+		s.AddCode(500, fqn)
 	}
 
 	if st.Status.CurrentReplicas == 0 {
-		s.AddWarn(fqn, "Used? No available replicas found")
+		s.AddCode(501, fqn)
 	}
 
 	if st.Status.CollisionCount != nil && *st.Status.CollisionCount > 0 {
-		s.AddErrorf(fqn, "ReplicaSet collisions detected (%d)", *st.Status.CollisionCount)
+		s.AddCode(502, fqn, *st.Status.CollisionCount)
 	}
 }
 
@@ -84,16 +104,16 @@ func (s *StatefulSet) checkUtilization(over bool, fqn string, st *appsv1.Statefu
 
 	cpuPerc := mx.ReqCPURatio()
 	if cpuPerc > float64(s.CPUResourceLimits().UnderPerc) {
-		s.AddWarnf(fqn, utilFmt, "CPU under allocated", asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
+		s.AddCode(503, fqn, asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
 	} else if over && cpuPerc > 0 && cpuPerc < float64(s.CPUResourceLimits().OverPerc) {
-		s.AddWarnf(fqn, utilFmt, "CPU over allocated", asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
+		s.AddCode(504, fqn, asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
 	}
 
 	memPerc := mx.ReqMEMRatio()
 	if memPerc > float64(s.MEMResourceLimits().UnderPerc) {
-		s.AddWarnf(fqn, utilFmt, "Memory under allocated", asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
+		s.AddCode(505, fqn, asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
 	} else if over && memPerc > 0 && memPerc < float64(s.MEMResourceLimits().OverPerc) {
-		s.AddWarnf(fqn, utilFmt, "Memory over allocated", asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
+		s.AddCode(506, fqn, asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
 	}
 
 	return nil

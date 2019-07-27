@@ -67,7 +67,7 @@ func (t *Tally) computeScore() int {
 // Write out a tally.
 func (t *Tally) write(w io.Writer, s *Sanitizer) {
 	for i := len(t.counts) - 1; i >= 0; i-- {
-		emoji := s.EmojiForLevel(issues.Level(i))
+		emoji := EmojiForLevel(issues.Level(i), s.jurassicMode)
 		fmat := "%s %d "
 		if s.jurassicMode {
 			fmat = "%s:%d "
@@ -120,6 +120,32 @@ func (t *Tally) MarshalYAML() (interface{}, error) {
 	}
 
 	return y, nil
+}
+
+// UnmarshalYAML renders a tally to YAML.
+func (t *Tally) UnmarshalYAML(f func(interface{}) error) error {
+	type tally struct {
+		OK    int `yaml:"ok"`
+		Info  int `yaml:"info"`
+		Warn  int `yaml:"warning"`
+		Error int `yaml:"error"`
+		Score int `yaml:"score"`
+	}
+	var tmp tally
+
+	if err := f(&tmp); err != nil {
+		return err
+	}
+
+	t.counts = make([]int, 4)
+	t.counts[0] = tmp.Error
+	t.counts[1] = tmp.Warn
+	t.counts[2] = tmp.Info
+	t.counts[3] = tmp.OK
+	t.score = tmp.Score
+	t.valid = true
+
+	return nil
 }
 
 // MarshalJSON renders a tally to JSON.

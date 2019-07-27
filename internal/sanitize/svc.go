@@ -2,7 +2,6 @@ package sanitize
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -69,7 +68,7 @@ func (s *Service) checkPorts(fqn string, sel map[string]string, ports []v1.Servi
 	po := s.GetPod(sel)
 	if po == nil {
 		if len(sel) > 0 {
-			s.AddErr(fqn, errors.New("No pods match service selector"))
+			s.AddCode(2000, fqn)
 		}
 		return
 	}
@@ -79,7 +78,7 @@ func (s *Service) checkPorts(fqn string, sel map[string]string, ports []v1.Servi
 	pfqn := cache.MetaFQN(po.ObjectMeta)
 	// No explicit pod ports definition -> bail!.
 	if len(pports) == 0 {
-		s.AddInfof(fqn, "Skip ports check. No explicit ports detected on pod %s", pfqn)
+		s.AddCode(2001, fqn, pfqn)
 		return
 	}
 	for _, p := range ports {
@@ -89,17 +88,17 @@ func (s *Service) checkPorts(fqn string, sel map[string]string, ports []v1.Servi
 			continue
 		}
 		if !checkNamedTargetPort(p) {
-			s.AddInfof(fqn, "Use of target port #%s for service port %s. Prefer named port", p.TargetPort.String(), portAsStr(p))
+			s.AddCode(2002, fqn, p.TargetPort.String(), portAsStr(p))
 		}
 	}
 }
 
 func (s *Service) checkType(fqn string, kind v1.ServiceType) {
 	if kind == v1.ServiceTypeLoadBalancer {
-		s.AddInfo(fqn, "Type Loadbalancer detected. Could be expensive")
+		s.AddCode(2003, fqn)
 	}
 	if kind == v1.ServiceTypeNodePort {
-		s.AddInfo(fqn, "Type NodePort detected. Do you mean it?")
+		s.AddCode(2004, fqn)
 	}
 }
 
@@ -115,7 +114,7 @@ func (s *Service) checkEndpoints(fqn string, sel map[string]string, kind v1.Serv
 	}
 	ep := s.GetEndpoints(fqn)
 	if ep == nil || len(ep.Subsets) == 0 {
-		s.AddErr(fqn, errors.New("No associated endpoints"))
+		s.AddCode(2005, fqn)
 	}
 }
 

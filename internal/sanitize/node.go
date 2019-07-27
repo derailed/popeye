@@ -72,7 +72,7 @@ func (n *Node) checkTaints(fqn string, taints []v1.Taint) {
 	tols := n.fetchPodTolerations()
 	for _, ta := range taints {
 		if _, ok := tols[mkKey(ta.Key, ta.Value)]; !ok {
-			n.AddWarnf(fqn, "Found taint `%s but no pod can tolerate", ta.Key)
+			n.AddCode(700, fqn, ta.Key)
 		}
 	}
 }
@@ -97,14 +97,14 @@ func (n *Node) checkConditions(no *v1.Node) bool {
 	for _, c := range no.Status.Conditions {
 		// Unknow type
 		if c.Status == v1.ConditionUnknown {
-			n.AddErrorf(no.Name, "Node is in an unknown condition")
+			n.AddCode(701, no.Name)
 			continue
 		}
 
 		// Node is not ready bail other checks
 		if c.Status == v1.ConditionFalse {
 			if c.Type == v1.NodeReady {
-				n.AddError(no.Name, "Node is not in ready state")
+				n.AddCode(702, no.Name)
 				return ready
 			}
 			continue
@@ -112,15 +112,15 @@ func (n *Node) checkConditions(no *v1.Node) bool {
 
 		switch c.Type {
 		case v1.NodeOutOfDisk:
-			n.AddError(no.Name, "Out of disk space")
+			n.AddCode(703, no.Name)
 		case v1.NodeMemoryPressure:
-			n.AddWarn(no.Name, "Insuficient memory")
+			n.AddCode(704, no.Name)
 		case v1.NodeDiskPressure:
-			n.AddWarn(no.Name, "Insuficient disk space")
+			n.AddCode(705, no.Name)
 		case v1.NodePIDPressure:
-			n.AddError(no.Name, "Insuficient PIDS on node")
+			n.AddCode(706, no.Name)
 		case v1.NodeNetworkUnavailable:
-			n.AddError(no.Name, "No network configured on node")
+			n.AddCode(707, no.Name)
 		case v1.NodeReady:
 			ready = true
 		}
@@ -131,20 +131,20 @@ func (n *Node) checkConditions(no *v1.Node) bool {
 
 func (n *Node) checkUtilization(no string, mx k8s.NodeMetrics) {
 	if mx.Empty() {
-		n.AddInfo(no, "No node metrics available")
+		n.AddCode(708, no)
 		return
 	}
 
 	percCPU := ToPerc(toMC(mx.CurrentCPU), toMC(mx.AvailableCPU))
 	cpuLimit := int64(n.NodeCPULimit())
 	if percCPU > cpuLimit {
-		n.AddWarnf(no, "CPU threshold (%d%%) reached %d%%", cpuLimit, percCPU)
+		n.AddCode(709, no, cpuLimit, percCPU)
 	}
 
 	percMEM := ToPerc(toMB(mx.CurrentMEM), toMB(mx.AvailableMEM))
 	memLimit := int64(n.NodeMEMLimit())
 	if percMEM > memLimit {
-		n.AddWarnf(no, "Memory threshold (%d%%) reached %d%%", memLimit, percMEM)
+		n.AddCode(710, no, memLimit, percMEM)
 	}
 }
 

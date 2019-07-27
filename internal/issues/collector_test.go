@@ -25,7 +25,7 @@ func TestNoConcerns(t *testing.T) {
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			c := NewCollector()
+			c := NewCollector(nil)
 			c.addIssue("fred", u.issues...)
 
 			assert.Equal(t, u.e, c.NoConcerns("fred"))
@@ -77,7 +77,7 @@ func TestMaxSeverity(t *testing.T) {
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			c := NewCollector()
+			c := NewCollector(nil)
 			c.addIssue(u.section, u.issues...)
 
 			assert.Equal(t, u.count, len(c.outcomes[u.section]))
@@ -111,7 +111,7 @@ func TestAddErr(t *testing.T) {
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			c := NewCollector()
+			c := NewCollector(nil)
 			c.AddErr(u.section, u.errors...)
 
 			assert.Equal(t, u.count, len(c.outcomes[u.section]))
@@ -120,102 +120,79 @@ func TestAddErr(t *testing.T) {
 	}
 }
 
-func TestAddOkIssue(t *testing.T) {
-	group := "g1"
-	c := NewCollector()
-	c.AddOk(group, "blee")
-	c.AddOkf(group, "blee %s", "duh")
+func TestAddCode(t *testing.T) {
+	uu := map[string]struct {
+		code    ID
+		section string
+		args    []interface{}
+		level   Level
+		e       string
+	}{
+		"No params": {
+			code:    100,
+			section: Root,
+			level:   ErrorLevel,
+			e:       "[POP-100] Untagged docker image in use",
+		},
+		"Params": {
+			code:    108,
+			section: Root,
+			level:   InfoLevel,
+			args:    []interface{}{80},
+			e:       "[POP-108] Unamed port 80",
+		},
+	}
 
-	assert.Equal(t, 2, len(c.outcomes[group]))
-	assert.Equal(t, "blee", c.outcomes[group][0].Message)
-	assert.Equal(t, "blee duh", c.outcomes[group][1].Message)
-	assert.Equal(t, OkLevel, c.MaxSeverity(group))
+	for k, u := range uu {
+		t.Run(k, func(t *testing.T) {
+			c := NewCollector(loadCodes(t))
+			c.AddCode(u.code, u.section, u.args...)
+
+			assert.Equal(t, u.e, c.outcomes[u.section][0].Message)
+			assert.Equal(t, u.level, c.outcomes[u.section][0].Level)
+		})
+	}
 }
 
-func TestAddInfoIssue(t *testing.T) {
-	group := "g1"
-	c := NewCollector()
-	c.AddInfo(group, "blee")
-	c.AddInfof(group, "blee %s", "duh")
+func TestAddSubCode(t *testing.T) {
+	uu := map[string]struct {
+		code           ID
+		section, group string
+		args           []interface{}
+		level          Level
+		e              string
+	}{
+		"No params": {
+			code:    100,
+			section: Root,
+			group:   "blee",
+			level:   ErrorLevel,
+			e:       "[POP-100] Untagged docker image in use",
+		},
+		"Params": {
+			code:    108,
+			section: Root,
+			group:   "blee",
+			level:   InfoLevel,
+			args:    []interface{}{80},
+			e:       "[POP-108] Unamed port 80",
+		},
+	}
 
-	assert.Equal(t, 2, len(c.outcomes[group]))
-	assert.Equal(t, "blee", c.outcomes[group][0].Message)
-	assert.Equal(t, "blee duh", c.outcomes[group][1].Message)
-	assert.Equal(t, InfoLevel, c.MaxSeverity(group))
+	for k, u := range uu {
+		t.Run(k, func(t *testing.T) {
+			c := NewCollector(loadCodes(t))
+			c.InitOutcome(u.section)
+			c.AddSubCode(u.code, u.section, u.group, u.args...)
+
+			assert.Equal(t, u.e, c.Outcome()[u.section][0].Message)
+			assert.Equal(t, u.level, c.Outcome()[u.section][0].Level)
+		})
+	}
 }
 
-func TestAddWarnIssue(t *testing.T) {
-	group := "g1"
-	c := NewCollector()
-	c.AddWarn(group, "blee")
-	c.AddWarnf(group, "blee %s", "duh")
-
-	assert.Equal(t, 2, len(c.outcomes[group]))
-	assert.Equal(t, "blee", c.outcomes[group][0].Message)
-	assert.Equal(t, "blee duh", c.outcomes[group][1].Message)
-	assert.Equal(t, WarnLevel, c.MaxSeverity(group))
-}
-
-func TestAddErrorIssue(t *testing.T) {
-	group := "g1"
-	c := NewCollector()
-	c.AddError(group, "blee")
-	c.AddErrorf(group, "blee %s", "duh")
-
-	assert.Equal(t, 2, len(c.outcomes[group]))
-	assert.Equal(t, "blee", c.outcomes[group][0].Message)
-	assert.Equal(t, "blee duh", c.outcomes[group][1].Message)
-	assert.Equal(t, ErrorLevel, c.MaxSeverity(group))
-}
-
-func TestAddSubOk(t *testing.T) {
-	section, group := "s1", "g1"
-	c := NewCollector()
-	c.AddSubOk(section, group, "blee")
-	c.AddSubOkf(section, group, "blee %s", "duh")
-
-	ii := c.outcomes.For(section, group)
-	assert.Equal(t, 2, len(ii))
-	assert.Equal(t, "blee", ii[0].Message)
-	assert.Equal(t, "blee duh", ii[1].Message)
-	assert.Equal(t, OkLevel, c.outcomes.MaxGroupSeverity(section, group))
-}
-
-func TestAddSubInfo(t *testing.T) {
-	section, group := "s1", "g1"
-	c := NewCollector()
-	c.AddSubInfo(section, group, "blee")
-	c.AddSubInfof(section, group, "blee %s", "duh")
-
-	ii := c.outcomes.For(section, group)
-	assert.Equal(t, 2, len(ii))
-	assert.Equal(t, "blee", ii[0].Message)
-	assert.Equal(t, "blee duh", ii[1].Message)
-	assert.Equal(t, InfoLevel, c.outcomes.MaxGroupSeverity(section, group))
-}
-
-func TestAddSubWarn(t *testing.T) {
-	section, group := "s1", "g1"
-	c := NewCollector()
-	c.AddSubWarn(section, group, "blee")
-	c.AddSubWarnf(section, group, "blee %s", "duh")
-
-	ii := c.outcomes.For(section, group)
-	assert.Equal(t, 2, len(ii))
-	assert.Equal(t, "blee", ii[0].Message)
-	assert.Equal(t, "blee duh", ii[1].Message)
-	assert.Equal(t, WarnLevel, c.outcomes.MaxGroupSeverity(section, group))
-}
-
-func TestAddSubError(t *testing.T) {
-	section, group := "s1", "g1"
-	c := NewCollector()
-	c.AddSubError(section, group, "blee")
-	c.AddSubErrorf(section, group, "blee %s", "duh")
-
-	ii := c.outcomes.For(section, group)
-	assert.Equal(t, 2, len(ii))
-	assert.Equal(t, "blee", ii[0].Message)
-	assert.Equal(t, "blee duh", ii[1].Message)
-	assert.Equal(t, ErrorLevel, c.outcomes.MaxGroupSeverity(section, group))
+func loadCodes(t *testing.T) *Codes {
+	codes, err := LoadCodes("../../assets/codes.yml")
+	assert.Nil(t, err)
+	return codes
 }

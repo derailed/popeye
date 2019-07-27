@@ -1,12 +1,19 @@
 package dag
 
 import (
+	"fmt"
+
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/rs/zerolog/log"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// DeploymentPreferredRev check preferred server API group/version.
+func DeploymentPreferredRev(c *k8s.Client) (string, error) {
+	return preferredRev(c, "extensions")
+}
 
 // ListDeployments list all included Deployments.
 func ListDeployments(c *k8s.Client, cfg *config.Config) (map[string]*appsv1.Deployment, error) {
@@ -44,4 +51,20 @@ func listAllDeployments(c *k8s.Client) (map[string]*appsv1.Deployment, error) {
 // FetchDeployments retrieves all Deployments on the cluster.
 func fetchDeployments(c *k8s.Client) (*appsv1.DeploymentList, error) {
 	return c.DialOrDie().AppsV1().Deployments(c.ActiveNamespace()).List(metav1.ListOptions{})
+}
+
+func preferredRev(c *k8s.Client, group string) (string, error) {
+	apiGroups, err := c.DialOrDie().Discovery().ServerGroups()
+	if err != nil {
+		return "", err
+	}
+
+	for _, grp := range apiGroups.Groups {
+		if grp.Name != group {
+			continue
+		}
+		return grp.PreferredVersion.GroupVersion, nil
+	}
+
+	return "", fmt.Errorf("No matching API group %s", group)
 }

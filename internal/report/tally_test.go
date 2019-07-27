@@ -20,7 +20,7 @@ func TestTallyWrite(t *testing.T) {
 	for _, u := range uu {
 		ta := NewTally()
 		b := bytes.NewBuffer([]byte(""))
-		s := NewSanitizer(b, 0, u.jurassic)
+		s := NewSanitizer(b, u.jurassic)
 		ta.write(b, s)
 
 		assert.Equal(t, u.e, b.String())

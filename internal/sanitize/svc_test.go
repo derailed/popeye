@@ -187,7 +187,7 @@ func TestSvcSanitize(t *testing.T) {
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			s := NewService(issues.NewCollector(), u.lister)
+			s := NewService(issues.NewCollector(loadCodes(t)), u.lister)
 			s.Sanitize(context.Background())
 
 			assert.Equal(t, u.issues, len(s.Outcome()["default/s1"]))

@@ -26,6 +26,7 @@ func TestSTSSanitizer(t *testing.T) {
 				currentReps: 1,
 				ccpu:        "100m", cmem: "10Mi",
 			}),
+			issues: issues.Issues{},
 		},
 		"used?": {
 			lister: makeSTSLister("sts1", stsOpts{
@@ -35,7 +36,7 @@ func TestSTSSanitizer(t *testing.T) {
 				ccpu:        "100m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "Used? No available replicas found"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-501] Used? No available replicas found"),
 			},
 		},
 		"zeroReplicas": {
@@ -46,7 +47,7 @@ func TestSTSSanitizer(t *testing.T) {
 				ccpu:        "100m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.InfoLevel, "Zero scale detected"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-500] Zero scale detected"),
 			},
 		},
 		"collisions": {
@@ -58,14 +59,14 @@ func TestSTSSanitizer(t *testing.T) {
 				ccpu:        "100m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.ErrorLevel, "ReplicaSet collisions detected (1)"),
+				issues.New(issues.Root, issues.ErrorLevel, "[POP-502] ReplicaSet collisions detected (1)"),
 			},
 		},
 	}
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			sts := NewStatefulSet(issues.NewCollector(), u.lister)
+			sts := NewStatefulSet(issues.NewCollector(loadCodes(t)), u.lister)
 			sts.Sanitize(context.Background())
 
 			assert.Equal(t, u.issues, sts.Outcome()["default/sts1"])
@@ -84,6 +85,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				currentReps: 1,
 				ccpu:        "200m", cmem: "10Mi",
 			}),
+			issues: issues.Issues{},
 		},
 		"underCPUBurstable": {
 			lister: makeSTSLister("sts1", stsOpts{
@@ -95,7 +97,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				ccpu:        "200m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU under allocated. Current:400m vs Requested:200m (200.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-503] At current load, CPU under allocated. Current:400m vs Requested:200m (200.00%)"),
 			},
 		},
 		"underCPUGuaranteed": {
@@ -109,7 +111,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				ccpu:        "200m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU under allocated. Current:400m vs Requested:200m (200.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-503] At current load, CPU under allocated. Current:400m vs Requested:200m (200.00%)"),
 			},
 		},
 		"overCPUBurstable": {
@@ -122,7 +124,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				ccpu:        "100m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU over allocated. Current:200m vs Requested:800m (25.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-504] At current load, CPU over allocated. Current:200m vs Requested:800m (25.00%)"),
 			},
 		},
 		"overCPUGuarenteed": {
@@ -136,7 +138,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				ccpu:        "100m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU over allocated. Current:200m vs Requested:800m (25.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-504] At current load, CPU over allocated. Current:200m vs Requested:800m (25.00%)"),
 			},
 		},
 		"underMEMBurstable": {
@@ -149,7 +151,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				ccpu:        "100m", cmem: "20Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory under allocated. Current:40Mi vs Requested:20Mi (200.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-505] At current load, Memory under allocated. Current:40Mi vs Requested:20Mi (200.00%)"),
 			},
 		},
 		"underMEMGuaranteed": {
@@ -163,7 +165,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				ccpu:        "100m", cmem: "20Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory under allocated. Current:40Mi vs Requested:20Mi (200.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-505] At current load, Memory under allocated. Current:40Mi vs Requested:20Mi (200.00%)"),
 			},
 		},
 		"overMEMBurstable": {
@@ -176,7 +178,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				ccpu:        "100m", cmem: "20Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory over allocated. Current:40Mi vs Requested:200Mi (20.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-506] At current load, Memory over allocated. Current:40Mi vs Requested:200Mi (20.00%)"),
 			},
 		},
 		"overMEMGuaranteed": {
@@ -190,7 +192,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				ccpu:        "100m", cmem: "20Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory over allocated. Current:40Mi vs Requested:200Mi (20.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-506] At current load, Memory over allocated. Current:40Mi vs Requested:200Mi (20.00%)"),
 			},
 		},
 	}
@@ -198,7 +200,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 	ctx := context.WithValue(context.Background(), PopeyeKey("OverAllocs"), true)
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			sts := NewStatefulSet(issues.NewCollector(), u.lister)
+			sts := NewStatefulSet(issues.NewCollector(loadCodes(t)), u.lister)
 			sts.Sanitize(ctx)
 
 			assert.Equal(t, u.issues, sts.Outcome()["default/sts1"])
@@ -286,6 +288,7 @@ func makeSTS(n string, opts stsOpts) *appsv1.StatefulSet {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      n,
 			Namespace: "default",
+			SelfLink:  "/api/apps/v1/blee/blah",
 		},
 		Spec: appsv1.StatefulSetSpec{
 			Replicas: &opts.replicas,

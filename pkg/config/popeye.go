@@ -1,5 +1,9 @@
 package config
 
+import (
+	"github.com/derailed/popeye/internal/issues"
+)
+
 const (
 	// DefaultUnderPerc indicates the default percentage for under allocation
 	defaultUnderPerc = 200
@@ -25,8 +29,9 @@ type (
 		AllocationLimits `yaml:"allocations"`
 		Excludes         `yaml:"excludes"`
 
-		Node Node `yaml:"node"`
-		Pod  Pod  `yaml:"pod"`
+		Node  Node            `yaml:"node"`
+		Pod   Pod             `yaml:"pod"`
+		Codes issues.Glossary `yaml:"codes"`
 	}
 )
 

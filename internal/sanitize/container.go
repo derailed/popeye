@@ -44,28 +44,28 @@ func (c *Container) sanitize(co v1.Container, checkProbes bool) {
 func (c *Container) checkImageTags(name, image string) {
 	tokens := strings.Split(image, ":")
 	if len(tokens) < 2 {
-		c.AddSubError(c.fqn, name, "Untagged docker image in use")
+		c.AddSubCode(100, c.fqn, name)
 		return
 	}
 
 	if tokens[1] == imageTagLatest {
-		c.AddSubWarn(c.fqn, name, "Image tagged `latest in use")
+		c.AddSubCode(101, c.fqn, name)
 	}
 }
 
 func (c *Container) checkProbes(co v1.Container) {
 	if co.LivenessProbe == nil && co.ReadinessProbe == nil {
-		c.AddSubWarn(c.fqn, co.Name, "No probes defined")
+		c.AddSubCode(102, c.fqn, co.Name)
 		return
 	}
 
 	if co.LivenessProbe == nil {
-		c.AddSubWarn(c.fqn, co.Name, "No liveness probe")
+		c.AddSubCode(103, c.fqn, co.Name)
 	}
 	c.checkNamedProbe(co.Name, co.LivenessProbe, true)
 
 	if co.ReadinessProbe == nil {
-		c.AddSubWarn(c.fqn, co.Name, "No readiness probe")
+		c.AddSubCode(104, c.fqn, co.Name)
 	}
 	c.checkNamedProbe(co.Name, co.ReadinessProbe, false)
 }
@@ -80,25 +80,25 @@ func (c *Container) checkNamedProbe(co string, p *v1.Probe, liveness bool) {
 		kind = "Liveness"
 	}
 	if p.Handler.HTTPGet != nil && p.Handler.HTTPGet.Port.Type == intstr.Int {
-		c.AddSubInfof(c.fqn, co, "%s probe uses a port#, prefer a named port", kind)
+		c.AddSubCode(105, c.fqn, co, kind)
 	}
 }
 
 func (c *Container) checkResources(co v1.Container) {
 	if len(co.Resources.Limits) == 0 && len(co.Resources.Requests) == 0 {
-		c.AddSubWarn(c.fqn, co.Name, "No resources defined")
+		c.AddSubCode(106, c.fqn, co.Name)
 		return
 	}
 
 	if len(co.Resources.Requests) > 0 && len(co.Resources.Limits) == 0 {
-		c.AddSubWarn(c.fqn, co.Name, "No resource limits defined")
+		c.AddSubCode(107, c.fqn, co.Name)
 	}
 }
 
 func (c *Container) checkNamedPorts(co v1.Container) {
 	for _, p := range co.Ports {
 		if len(p.Name) == 0 {
-			c.AddSubWarnf(c.fqn, co.Name, "Unnamed port `%d", p.ContainerPort)
+			c.AddSubCode(108, c.fqn, co.Name, p.ContainerPort)
 		}
 	}
 }
@@ -117,17 +117,17 @@ func (c *Container) checkMetrics(qos qos, co string, cpu, mem, ccpu, cmem resour
 	switch qos {
 	case qosBurstable:
 		if percCPU > cpuLimit {
-			c.AddSubWarnf(c.fqn, co, "CPU Current/Request (%s/%s) reached user %d%% threshold (%d%%)", asMC(ccpu), asMC(cpu), cpuLimit, percCPU)
+			c.AddSubCode(109, c.fqn, co, asMC(ccpu), asMC(cpu), cpuLimit, percCPU)
 		}
 		if percMEM > memLimit {
-			c.AddSubWarnf(c.fqn, co, "Memory Current/Request (%s/%s) reached user %d%% threshold (%d%%)", asMB(cmem), asMB(mem), memLimit, percMEM)
+			c.AddSubCode(110, c.fqn, co, asMB(cmem), asMB(mem), memLimit, percMEM)
 		}
 	case qosGuaranteed:
 		if percCPU > cpuLimit {
-			c.AddSubErrorf(c.fqn, co, "CPU Current/Limit (%s/%s) reached user %d%% threshold (%d%%)", asMC(ccpu), asMC(cpu), cpuLimit, percCPU)
+			c.AddSubCode(111, c.fqn, co, asMC(ccpu), asMC(cpu), cpuLimit, percCPU)
 		}
 		if percMEM > memLimit {
-			c.AddSubErrorf(c.fqn, co, "Memory Current/Limit (%s/%s) reached user %d%% threshold (%d%%)", asMB(cmem), asMB(mem), memLimit, percMEM)
+			c.AddSubCode(112, c.fqn, co, asMB(cmem), asMB(mem), memLimit, percMEM)
 		}
 	}
 }

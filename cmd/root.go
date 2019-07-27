@@ -28,7 +28,7 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(versionCmd())
+	rootCmd.AddCommand(versionCmd(), diffCmd())
 	initFlags()
 }
 
@@ -54,11 +54,16 @@ func doIt(cmd *cobra.Command, args []string) {
 	}()
 
 	clearScreen()
-	popeye, err := pkg.NewPopeye(flags, &log.Logger, os.Stdout)
+	popeye, err := pkg.NewPopeye(flags, &log.Logger)
 	if err != nil {
 		bomb(fmt.Sprintf("Popeye configuration load failed %v", err))
 	}
-	popeye.Sanitize()
+	if err := popeye.Init(); err != nil {
+		bomb(err.Error())
+	}
+	if err := popeye.Sanitize(); err != nil {
+		bomb(err.Error())
+	}
 }
 
 func bomb(msg string) {
@@ -66,7 +71,7 @@ func bomb(msg string) {
 }
 
 func initFlags() {
-	rootCmd.Flags().StringVarP(
+	rootCmd.PersistentFlags().StringVarP(
 		flags.Output,
 		"out",
 		"o",
@@ -74,7 +79,15 @@ func initFlags() {
 		"Specify the output type (standard, jurassic, yaml, json)",
 	)
 
-	rootCmd.Flags().StringVarP(
+	rootCmd.Flags().BoolVarP(
+		flags.Save,
+		"save",
+		"",
+		false,
+		"Specify if you want Popeye to persist the output to a file",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
 		flags.LintLevel,
 		"lint",
 		"l",
@@ -82,7 +95,7 @@ func initFlags() {
 		"Specify a lint level (ok, info, warn, error)",
 	)
 
-	rootCmd.Flags().BoolVarP(
+	rootCmd.PersistentFlags().BoolVarP(
 		flags.ClearScreen,
 		"clear",
 		"c",
@@ -101,7 +114,7 @@ func initFlags() {
 	rootCmd.Flags().BoolVarP(
 		flags.AllNamespaces,
 		"all-namespaces",
-		"",
+		"A",
 		false,
 		"Sanitize all namespaces",
 	)

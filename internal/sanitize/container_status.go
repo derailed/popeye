@@ -52,29 +52,29 @@ func (c *containerStatus) sanitize(s v1.ContainerStatus) {
 
 	if c.terminated > 0 && c.ready != 0 && !c.isInit {
 		if c.reason == "" {
-			c.collector.AddSubWarnf(c.fqn, s.Name, "Pod is terminating [%d/%d]", c.ready, c.count)
+			c.collector.AddSubCode(200, c.fqn, s.Name, c.ready, c.count)
 		} else {
-			c.collector.AddSubWarnf(c.fqn, s.Name, "Pod is terminating [%d/%d] %s", c.ready, c.count, c.reason)
+			c.collector.AddSubCode(201, c.fqn, s.Name, c.ready, c.count, c.reason)
 		}
 		return
 	}
 
 	if c.waiting > 0 {
 		if c.reason == "" {
-			c.collector.AddSubErrorf(c.fqn, s.Name, "Pod is waiting [%d/%d]", c.ready, c.count)
+			c.collector.AddSubCode(202, c.fqn, s.Name, c.ready, c.count)
 		} else {
-			c.collector.AddSubErrorf(c.fqn, s.Name, "Pod is waiting [%d/%d] %s", c.ready, c.count, c.reason)
+			c.collector.AddSubCode(203, c.fqn, s.Name, c.ready, c.count, c.reason)
 		}
 		return
 	}
 
 	if c.ready == 0 {
-		c.collector.AddSubErrorf(c.fqn, s.Name, "Pod is not ready [%d/%d]", c.ready, c.count)
+		c.collector.AddSubCode(204, c.fqn, s.Name, c.ready, c.count)
 		return
 	}
 
 	if c.restarts > c.restartsLimit {
-		c.collector.AddSubWarnf(c.fqn, s.Name, "Pod was restarted (%d) %s", c.restarts, pluralOf("time", c.restarts))
+		c.collector.AddSubCode(205, c.fqn, s.Name, c.restarts, pluralOf("time", c.restarts))
 	}
 
 	return

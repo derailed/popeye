@@ -25,9 +25,8 @@ var emojisUgry = map[string]string{
 }
 
 // EmojiForLevel maps lint levels to emojis.
-func (s *Sanitizer) EmojiForLevel(l issues.Level) string {
+func EmojiForLevel(l issues.Level, jurassic bool) string {
 	var key string
-
 	switch l {
 	case containerLevel:
 		key = "container"
@@ -41,7 +40,7 @@ func (s *Sanitizer) EmojiForLevel(l issues.Level) string {
 		key = "peachy"
 	}
 
-	if s.jurassicMode {
+	if jurassic {
 		return emojisUgry[key]
 	}
 

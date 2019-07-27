@@ -32,7 +32,7 @@ func TestCSSanitize(t *testing.T) {
 				State:        v1.ContainerState{},
 			},
 			1,
-			issues.New("c1", issues.ErrorLevel, "Pod is not ready [0/1]"),
+			issues.New("c1", issues.ErrorLevel, "[POP-204] Pod is not ready [0/1]"),
 		},
 		"waitingNoReason": {
 			v1.ContainerStatus{
@@ -44,7 +44,7 @@ func TestCSSanitize(t *testing.T) {
 				},
 			},
 			1,
-			issues.New("c1", issues.ErrorLevel, "Pod is waiting [0/1] blah"),
+			issues.New("c1", issues.ErrorLevel, "[POP-203] Pod is waiting [0/1] blah"),
 		},
 		"waiting": {
 			v1.ContainerStatus{
@@ -56,7 +56,7 @@ func TestCSSanitize(t *testing.T) {
 				},
 			},
 			1,
-			issues.New("c1", issues.ErrorLevel, "Pod is waiting [0/1]"),
+			issues.New("c1", issues.ErrorLevel, "[POP-202] Pod is waiting [0/1]"),
 		},
 		"terminatedReason": {
 			v1.ContainerStatus{
@@ -68,7 +68,7 @@ func TestCSSanitize(t *testing.T) {
 				},
 			},
 			1,
-			issues.New("c1", issues.WarnLevel, "Pod is terminating [1/1] blah"),
+			issues.New("c1", issues.WarnLevel, "[POP-201] Pod is terminating [1/1] blah"),
 		},
 		"terminated": {
 			v1.ContainerStatus{
@@ -80,7 +80,7 @@ func TestCSSanitize(t *testing.T) {
 				},
 			},
 			1,
-			issues.New("c1", issues.WarnLevel, "Pod is terminating [1/1]"),
+			issues.New("c1", issues.WarnLevel, "[POP-200] Pod is terminating [1/1]"),
 		},
 		"terminatedNotReady": {
 			v1.ContainerStatus{
@@ -101,13 +101,13 @@ func TestCSSanitize(t *testing.T) {
 				RestartCount: 11,
 			},
 			1,
-			issues.New("c1", issues.WarnLevel, "Pod was restarted (11) times"),
+			issues.New("c1", issues.WarnLevel, "[POP-205] Pod was restarted (11) times"),
 		},
 	}
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			co := issues.NewCollector()
+			co := issues.NewCollector(loadCodes(t))
 			c := newContainerStatus(co, "default/p1", 1, false, 10)
 			c.sanitize(u.cs)
 

@@ -26,7 +26,8 @@ const (
 	FontBold = 1
 
 	// Width denotes the maximum width of the sanitizer report.
-	Width   = 100
+	Width = 100
+
 	tabSize = 2
 )
 
@@ -40,11 +41,11 @@ type Sanitizer struct {
 //
 
 // NewSanitizer returns a new sanitizer report writer.
-func NewSanitizer(w io.Writer, fd uintptr, jurassic bool) *Sanitizer {
-	s := Sanitizer{Writer: w, jurassicMode: jurassicTerm(fd)}
-	s.jurassicMode = jurassic
-
-	return &s
+func NewSanitizer(w io.Writer, jurassic bool) *Sanitizer {
+	return &Sanitizer{
+		Writer:       w,
+		jurassicMode: jurassic,
+	}
 }
 
 // Open begins a new report section.
@@ -134,7 +135,7 @@ func (s *Sanitizer) write(l issues.Level, indent int, msg string) {
 		return
 	}
 
-	spacer, emoji := strings.Repeat(" ", tabSize*indent), s.EmojiForLevel(l)
+	spacer, emoji := strings.Repeat(" ", tabSize*indent), EmojiForLevel(l, s.jurassicMode)
 
 	extra := 1
 	if s.jurassicMode {

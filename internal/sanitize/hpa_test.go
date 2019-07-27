@@ -83,7 +83,7 @@ func TestHPASanitizeDP(t *testing.T) {
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			h := NewHorizontalPodAutoscaler(issues.NewCollector(), u.l)
+			h := NewHorizontalPodAutoscaler(issues.NewCollector(loadCodes(t)), u.l)
 			h.Sanitize(context.Background())
 
 			assert.Equal(t, u.issues, len(h.Outcome()["default/h1"]))
@@ -169,7 +169,7 @@ func TestHPASanitizeSTS(t *testing.T) {
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			h := NewHorizontalPodAutoscaler(issues.NewCollector(), u.l)
+			h := NewHorizontalPodAutoscaler(issues.NewCollector(loadCodes(t)), u.l)
 			h.Sanitize(context.Background())
 
 			assert.Equal(t, u.issues, len(h.Outcome()["default/h1"]))

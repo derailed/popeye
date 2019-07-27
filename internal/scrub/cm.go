@@ -29,8 +29,8 @@ type Collector interface {
 }
 
 // NewConfigMap return a new ConfigMap sanitizer.
-func NewConfigMap(c *Cache) Sanitizer {
-	s := ConfigMap{Collector: issues.NewCollector()}
+func NewConfigMap(c *Cache, codes *issues.Codes) Sanitizer {
+	s := ConfigMap{Collector: issues.NewCollector(codes)}
 
 	cms, err := dag.ListConfigMaps(c.client, c.config)
 	if err != nil {

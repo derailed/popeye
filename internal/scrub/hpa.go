@@ -23,9 +23,9 @@ type HorizontalPodAutoscaler struct {
 }
 
 // NewHorizontalPodAutoscaler return a new HorizontalPodAutoscaler sanitizer.
-func NewHorizontalPodAutoscaler(c *Cache) Sanitizer {
+func NewHorizontalPodAutoscaler(c *Cache, codes *issues.Codes) Sanitizer {
 	h := HorizontalPodAutoscaler{
-		Collector: issues.NewCollector(),
+		Collector: issues.NewCollector(codes),
 		Config:    c.config,
 	}
 
@@ -49,7 +49,7 @@ func NewHorizontalPodAutoscaler(c *Cache) Sanitizer {
 
 	nmx, err := c.nodesMx()
 	if err != nil {
-		h.AddInfof("nodemetrics", "No metric-server detected %v", err)
+		h.AddCode(402, "nodemetrics", err)
 	}
 	h.NodesMetrics = nmx
 
@@ -61,7 +61,7 @@ func NewHorizontalPodAutoscaler(c *Cache) Sanitizer {
 
 	pmx, err := c.podsMx()
 	if err != nil {
-		h.AddInfof("podmetrics", "No metric-server detected %v", err)
+		h.AddCode(402, "podmetrics", err)
 	}
 	h.PodsMetrics = pmx
 

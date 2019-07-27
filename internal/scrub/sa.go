@@ -9,18 +9,19 @@ import (
 	"github.com/derailed/popeye/internal/sanitize"
 )
 
-// ServiceAccouunt represents a ServiceAccouunt sanitizer.
-type ServiceAccouunt struct {
+// ServiceAccount represents a ServiceAccount sanitizer.
+type ServiceAccount struct {
 	*issues.Collector
 	*cache.ServiceAccount
 	*cache.Pod
 	*cache.ClusterRoleBinding
 	*cache.RoleBinding
+	*cache.Secret
 }
 
-// NewServiceAccount return a new ServiceAccouunt sanitizer.
-func NewServiceAccount(c *Cache) Sanitizer {
-	s := ServiceAccouunt{Collector: issues.NewCollector()}
+// NewServiceAccount return a new ServiceAccount sanitizer.
+func NewServiceAccount(c *Cache, codes *issues.Codes) Sanitizer {
+	s := ServiceAccount{Collector: issues.NewCollector(codes)}
 
 	sas, err := c.serviceaccounts()
 	if err != nil {
@@ -46,10 +47,16 @@ func NewServiceAccount(c *Cache) Sanitizer {
 	}
 	s.RoleBinding = cache.NewRoleBinding(rbs)
 
+	secrets, err := dag.ListSecrets(c.client, c.config)
+	if err != nil {
+		s.AddErr("secrets", err)
+	}
+	s.Secret = cache.NewSecret(secrets)
+
 	return &s
 }
 
-// Sanitize all available ServiceAccouunts.
-func (s *ServiceAccouunt) Sanitize(ctx context.Context) error {
+// Sanitize all available ServiceAccounts.
+func (s *ServiceAccount) Sanitize(ctx context.Context) error {
 	return sanitize.NewServiceAccount(s.Collector, s).Sanitize(ctx)
 }

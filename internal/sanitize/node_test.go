@@ -156,7 +156,7 @@ func TestNodeSanitizer(t *testing.T) {
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			n := NewNode(issues.NewCollector(), u.lister)
+			n := NewNode(issues.NewCollector(loadCodes(t)), u.lister)
 			n.Sanitize(context.Background())
 
 			assert.Equal(t, u.issues, len(n.Outcome()["n1"]))

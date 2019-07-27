@@ -42,12 +42,12 @@ func (c *PodDisruptionBudget) Sanitize(context.Context) error {
 
 func (c *PodDisruptionBudget) checkInUse(fqn string, pdb *pv1beta1.PodDisruptionBudget) {
 	if c.GetPod(pdb.Spec.Selector.MatchLabels) == nil {
-		c.AddWarnf(fqn, "Used? No pods match selector")
+		c.AddCode(900, fqn)
 		return
 	}
 
 	min := pdb.Spec.MinAvailable
 	if min != nil && min.Type == intstr.Int && min.IntValue() > int(pdb.Status.CurrentHealthy) {
-		c.AddWarnf(fqn, "MinAvailable (%d) is greater than the number of pods(%d) currently running", min.IntValue(), pdb.Status.CurrentHealthy)
+		c.AddCode(901, fqn, min.IntValue(), pdb.Status.CurrentHealthy)
 	}
 }

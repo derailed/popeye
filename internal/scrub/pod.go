@@ -19,9 +19,9 @@ type Pod struct {
 }
 
 // NewPod return a new Pod sanitizer.
-func NewPod(c *Cache) Sanitizer {
+func NewPod(c *Cache, codes *issues.Codes) Sanitizer {
 	p := Pod{
-		Collector: issues.NewCollector(),
+		Collector: issues.NewCollector(codes),
 		Config:    c.config,
 	}
 
@@ -33,7 +33,7 @@ func NewPod(c *Cache) Sanitizer {
 
 	pmx, err := c.podsMx()
 	if err != nil {
-		p.AddInfof("podmetrics", "%v", err)
+		p.AddCode(402, "podmetrics", err)
 	}
 	p.PodsMetrics = pmx
 

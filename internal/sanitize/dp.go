@@ -2,6 +2,11 @@ package sanitize
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"path"
+	"strings"
 
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/k8s"
@@ -33,16 +38,7 @@ type (
 	// Collector collects sub issues.
 	Collector interface {
 		Outcome() issues.Outcome
-		AddError(s, desc string)
-		AddErrorf(s, utilFmt string, args ...interface{})
-		AddSubOk(p, s, desc string)
-		AddSubOkf(p, s, utilFmt string, args ...interface{})
-		AddSubInfo(p, s, desc string)
-		AddSubInfof(p, s, utilFmt string, args ...interface{})
-		AddSubWarn(p, s, desc string)
-		AddSubWarnf(p, s, utilFmt string, args ...interface{})
-		AddSubError(p, s, desc string)
-		AddSubErrorf(p, s, utilFmt string, args ...interface{})
+		AddSubCode(id issues.ID, p, s string, args ...interface{})
 	}
 
 	// PodLimiter tracks metrics limit range.
@@ -66,6 +62,7 @@ type (
 	// DeployLister list deployments.
 	DeployLister interface {
 		ListDeployments() map[string]*appsv1.Deployment
+		DeploymentPreferredRev() string
 	}
 
 	// DeploymentLister list available Deployments on a cluster.
@@ -91,7 +88,7 @@ func (d *Deployment) Sanitize(ctx context.Context) error {
 	over := pullOverAllocs(ctx)
 	for fqn, dp := range d.ListDeployments() {
 		d.InitOutcome(fqn)
-
+		d.checkDeprecation(fqn, dp)
 		d.checkDeployment(fqn, dp)
 		d.checkContainers(fqn, dp.Spec.Template.Spec)
 		pmx := k8s.PodsMetrics{}
@@ -103,18 +100,34 @@ func (d *Deployment) Sanitize(ctx context.Context) error {
 	return nil
 }
 
+func (d *Deployment) checkDeprecation(fqn string, dp *appsv1.Deployment) {
+	const current = "apps/v1"
+
+	rev, err := resourceRev(fqn, dp.Annotations)
+	if err != nil {
+		rev = revFromLink(dp.SelfLink)
+		if rev == "" {
+			d.AddCode(404, fqn, errors.New("Unable to assert resource version"))
+			return
+		}
+	}
+	if rev != current {
+		d.AddCode(403, fqn, "Deployment", rev, current)
+	}
+}
+
 // CheckDeployment checks if deployment contract is currently happy or not.
 func (d *Deployment) checkDeployment(fqn string, dp *appsv1.Deployment) {
 	if dp.Spec.Replicas == nil || (dp.Spec.Replicas != nil && *dp.Spec.Replicas == 0) {
-		d.AddWarn(fqn, "Zero scale detected")
+		d.AddCode(500, fqn)
 	}
 
 	if dp.Status.AvailableReplicas == 0 {
-		d.AddWarn(fqn, "Used? No available replicas found")
+		d.AddCode(501, fqn)
 	}
 
 	if dp.Status.CollisionCount != nil && *dp.Status.CollisionCount > 0 {
-		d.AddErrorf(fqn, "ReplicaSet collisions detected (%d)", *dp.Status.CollisionCount)
+		d.AddCode(502, fqn, *dp.Status.CollisionCount)
 	}
 }
 
@@ -138,16 +151,16 @@ func (d *Deployment) checkUtilization(over bool, fqn string, dp *appsv1.Deployme
 
 	cpuPerc := mx.ReqCPURatio()
 	if cpuPerc > 1 && cpuPerc > float64(d.CPUResourceLimits().UnderPerc) {
-		d.AddWarnf(fqn, utilFmt, "CPU under allocated", asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
+		d.AddCode(503, fqn, asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
 	} else if over && cpuPerc < float64(d.CPUResourceLimits().OverPerc) {
-		d.AddWarnf(fqn, utilFmt, "CPU over allocated", asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(mx.ReqAbsCPURatio()))
+		d.AddCode(504, fqn, asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(mx.ReqAbsCPURatio()))
 	}
 
 	memPerc := mx.ReqMEMRatio()
 	if memPerc > 1 && memPerc > float64(d.MEMResourceLimits().UnderPerc) {
-		d.AddWarnf(fqn, utilFmt, "Memory under allocated", asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
+		d.AddCode(505, fqn, asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
 	} else if over && memPerc < float64(d.MEMResourceLimits().OverPerc) {
-		d.AddWarnf(fqn, utilFmt, "Memory over allocated", asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(mx.ReqAbsMEMRatio()))
+		d.AddCode(506, fqn, asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(mx.ReqAbsMEMRatio()))
 	}
 
 	return nil
@@ -227,4 +240,40 @@ func computePodResources(spec v1.PodSpec) (cpu, mem resource.Quantity) {
 	}
 
 	return
+}
+
+// ResourceRev is resource was deployed via kubectl check annotation for manifest rev.
+func resourceRev(fqn string, a map[string]string) (string, error) {
+	raw, ok := a["kubectl.kubernetes.io/last-applied-configuration"]
+	if !ok {
+		return "", fmt.Errorf("Raw resource manifest not available for %s", fqn)
+	}
+
+	var m map[string]interface{}
+	if err := json.Unmarshal([]byte(raw), &m); err != nil {
+		return "", err
+	}
+	return m["apiVersion"].(string), nil
+}
+
+// RevFromLink. extract resource version from selflink.
+func revFromLink(link string) string {
+	tokens := strings.Split(link, "/")
+	if len(tokens) < 4 {
+		return ""
+	}
+	if isVersion(tokens[2]) {
+		return tokens[2]
+	}
+	return path.Join(tokens[2], tokens[3])
+}
+
+func isVersion(s string) bool {
+	vers := []string{"v1", "v1beta1", "v1beta2", "v2beta1", "v2beta2"}
+	for _, v := range vers {
+		if s == v {
+			return true
+		}
+	}
+	return false
 }

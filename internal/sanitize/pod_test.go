@@ -22,6 +22,7 @@ func TestPodSanitize(t *testing.T) {
 				pods: map[string]*v1.Pod{
 					"default/p1": makeFullPod("p1", podOpts{
 						serviceAcct: "fred",
+						certs:       false,
 						coOpts: coOpts{
 							rcpu: "100m",
 							rmem: "20Mi",
@@ -61,7 +62,7 @@ func TestPodSanitize(t *testing.T) {
 			}),
 			1,
 		},
-		"noSA": {
+		"defaultSA": {
 			makePodLister("p1", podOpts{
 				pods: map[string]*v1.Pod{
 					"default/p1": makeFullPod("p1", podOpts{
@@ -71,7 +72,9 @@ func TestPodSanitize(t *testing.T) {
 							lcpu: "100m",
 							lmem: "200Mi",
 						},
-						phase: v1.PodRunning,
+						serviceAcct: "default",
+						certs:       true,
+						phase:       v1.PodRunning,
 						csOpts: csOpts{
 							ready:    true,
 							restarts: 0,
@@ -80,13 +83,13 @@ func TestPodSanitize(t *testing.T) {
 					}),
 				},
 			}),
-			1,
+			2,
 		},
 	}
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			p := NewPod(issues.NewCollector(), u.lister)
+			p := NewPod(issues.NewCollector(loadCodes(t)), u.lister)
 			p.Sanitize(context.Background())
 
 			assert.Equal(t, u.issues, len(p.Outcome()["default/p1"]))
@@ -104,6 +107,7 @@ type (
 		phase       v1.PodPhase
 		pods        map[string]*v1.Pod
 		serviceAcct string
+		certs       bool
 	}
 
 	pod struct {
@@ -211,6 +215,7 @@ func makeFullPod(n string, opts podOpts) *v1.Pod {
 	if opts.serviceAcct != "" {
 		po.Spec.ServiceAccountName = opts.serviceAcct
 	}
+	po.Spec.AutomountServiceAccountToken = &opts.certs
 
 	po.Status = v1.PodStatus{
 		Phase: opts.phase,

@@ -15,9 +15,12 @@ type Cache struct {
 	podMx  *cache.PodsMetrics
 	nodeMx *cache.NodesMetrics
 	dp     *cache.Deployment
+	ds     *cache.DaemonSet
 	sts    *cache.StatefulSet
 	sa     *cache.ServiceAccount
+	rs     *cache.ReplicaSet
 	pdb    *cache.PodDisruptionBudget
+	ing    *cache.Ingress
 }
 
 // NewCache returns a new resource cache
@@ -58,18 +61,58 @@ func (c *Cache) nodesMx() (*cache.NodesMetrics, error) {
 	return c.nodeMx, err
 }
 
+// Ingresses retrieves ingress from cache if present or populate if not.
+func (c *Cache) ingresses() (*cache.Ingress, error) {
+	if c.ing != nil {
+		return c.ing, nil
+	}
+	ings, err := dag.ListIngresses(c.client, c.config)
+	c.ing = cache.NewIngress(ings)
+
+	return c.ing, err
+}
+
 // Deployments retrieves deployments from cache if present or populate if not.
 func (c *Cache) deployments() (*cache.Deployment, error) {
 	if c.dp != nil {
 		return c.dp, nil
 	}
 	dps, err := dag.ListDeployments(c.client, c.config)
-	c.dp = cache.NewDeployment(dps)
+	if err != nil {
+		return nil, err
+	}
+	rev, err := dag.DeploymentPreferredRev(c.client)
+	if err != nil {
+		return nil, err
+	}
+	c.dp = cache.NewDeployment(dps, rev)
 
 	return c.dp, err
 }
 
-// Deployments retrieves deployments from cache if present or populate if not.
+// ReplicaSets retrieves rs from cache if present or populate if not.
+func (c *Cache) replicasets() (*cache.ReplicaSet, error) {
+	if c.rs != nil {
+		return c.rs, nil
+	}
+	rss, err := dag.ListReplicaSets(c.client, c.config)
+	c.rs = cache.NewReplicaSet(rss)
+
+	return c.rs, err
+}
+
+// DaemonSet retrieves ds from cache if present or populate if not.
+func (c *Cache) daemonSets() (*cache.DaemonSet, error) {
+	if c.ds != nil {
+		return c.ds, nil
+	}
+	ds, err := dag.ListDaemonSets(c.client, c.config)
+	c.ds = cache.NewDaemonSet(ds)
+
+	return c.ds, err
+}
+
+// StatefulSets retrieves sts from cache if present or populate if not.
 func (c *Cache) statefulsets() (*cache.StatefulSet, error) {
 	if c.sts != nil {
 		return c.sts, nil

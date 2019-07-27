@@ -17,8 +17,8 @@ type PodDisruptionBudget struct {
 }
 
 // NewPodDisruptionBudget return a new PodDisruptionBudget sanitizer.
-func NewPodDisruptionBudget(c *Cache) Sanitizer {
-	s := PodDisruptionBudget{Collector: issues.NewCollector()}
+func NewPodDisruptionBudget(c *Cache, codes *issues.Codes) Sanitizer {
+	s := PodDisruptionBudget{Collector: issues.NewCollector(codes)}
 
 	cms, err := dag.ListPodDisruptionBudgets(c.client, c.config)
 	if err != nil {

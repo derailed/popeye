@@ -17,9 +17,9 @@ type PersistentVolumeClaim struct {
 }
 
 // NewPersistentVolumeClaim return a new PersistentVolumeClaim sanitizer.
-func NewPersistentVolumeClaim(c *Cache) Sanitizer {
+func NewPersistentVolumeClaim(c *Cache, codes *issues.Codes) Sanitizer {
 	p := PersistentVolumeClaim{
-		Collector: issues.NewCollector(),
+		Collector: issues.NewCollector(codes),
 	}
 
 	ss, err := dag.ListPersistentVolumeClaims(c.client, c.config)

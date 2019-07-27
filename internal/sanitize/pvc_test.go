@@ -23,7 +23,7 @@ func TestPVCSanitize(t *testing.T) {
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			p := NewPersistentVolumeClaim(issues.NewCollector(), u.lister)
+			p := NewPersistentVolumeClaim(issues.NewCollector(loadCodes(t)), u.lister)
 			p.Sanitize(context.Background())
 
 			assert.Equal(t, u.issues, len(p.Outcome()["default/pvc1"]))

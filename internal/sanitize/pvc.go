@@ -49,7 +49,7 @@ func (p *PersistentVolumeClaim) Sanitize(ctx context.Context) error {
 			continue
 		}
 		if _, ok := refs[fqn]; !ok {
-			p.AddWarn(fqn, "Used?")
+			p.AddCode(400, fqn)
 		}
 	}
 
@@ -59,9 +59,9 @@ func (p *PersistentVolumeClaim) Sanitize(ctx context.Context) error {
 func (p *PersistentVolumeClaim) checkBound(fqn string, phase v1.PersistentVolumeClaimPhase) bool {
 	switch phase {
 	case v1.ClaimPending:
-		p.AddError(fqn, "Pending claim detected")
+		p.AddCode(1003, fqn)
 	case v1.ClaimLost:
-		p.AddError(fqn, "Lost claim detected")
+		p.AddCode(1004, fqn)
 	case v1.ClaimBound:
 		return true
 	}

@@ -24,6 +24,8 @@ type (
 		PodLister
 		ClusterRoleBindingLister
 		RoleBindingLister
+		SecretLister
+
 		ListServiceAccounts() map[string]*v1.ServiceAccount
 	}
 
@@ -40,6 +42,7 @@ type (
 	// ServiceAccount tracks ServiceAccount sanitizer.
 	ServiceAccount struct {
 		*issues.Collector
+
 		ServiceAccountLister
 	}
 )
@@ -67,14 +70,42 @@ func (s *ServiceAccount) Sanitize(ctx context.Context) error {
 		return err
 	}
 
-	for fqn := range s.ListServiceAccounts() {
+	for fqn, sa := range s.ListServiceAccounts() {
 		s.InitOutcome(fqn)
+		s.checkMounts(fqn, sa.AutomountServiceAccountToken)
+		s.checkSecretRefs(fqn, sa.Secrets)
+		s.checkPullSecretRefs(fqn, sa.ImagePullSecrets)
 		if _, ok := refs[fqn]; !ok {
-			s.AddInfof(fqn, "Used?")
+			s.AddCode(400, fqn)
 		}
 	}
 
 	return nil
+}
+
+func (s *ServiceAccount) checkSecretRefs(fqn string, refs []v1.ObjectReference) {
+	for _, ref := range refs {
+		sfqn := cache.FQN(ref.Namespace, ref.Name)
+		if _, ok := s.ListSecrets()[sfqn]; !ok {
+			s.AddCode(304, fqn, sfqn)
+		}
+	}
+}
+
+func (s *ServiceAccount) checkPullSecretRefs(fqn string, refs []v1.LocalObjectReference) {
+	ns, _ := namespaced(fqn)
+	for _, ref := range refs {
+		sfqn := cache.FQN(ns, ref.Name)
+		if _, ok := s.ListSecrets()[sfqn]; !ok {
+			s.AddCode(305, fqn, sfqn)
+		}
+	}
+}
+
+func (s *ServiceAccount) checkMounts(fqn string, b *bool) {
+	if b != nil && *b {
+		s.AddCode(303, fqn)
+	}
 }
 
 func (s *ServiceAccount) crbRefs(refs map[string]struct{}) error {

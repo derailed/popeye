@@ -17,8 +17,8 @@ type PersistentVolume struct {
 }
 
 // NewPersistentVolume return a new PersistentVolume sanitizer.
-func NewPersistentVolume(c *Cache) Sanitizer {
-	p := PersistentVolume{Collector: issues.NewCollector()}
+func NewPersistentVolume(c *Cache, codes *issues.Codes) Sanitizer {
+	p := PersistentVolume{Collector: issues.NewCollector(codes)}
 
 	ss, err := dag.ListPersistentVolumes(c.client, c.config)
 	if err != nil {

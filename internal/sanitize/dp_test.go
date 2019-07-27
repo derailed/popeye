@@ -15,6 +15,35 @@ import (
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
+func TestRevFromLink(t *testing.T) {
+	uu := map[string]struct {
+		l, e string
+	}{
+		"single.namespaced": {
+			"/api/v1/namespaces/fred/pods/blee",
+			"v1",
+		},
+		"single.notnamespaced": {
+			"/api/v1/pv/blee",
+			"v1",
+		},
+		"multi.namespaced": {
+			"/api/extensions/v1beta1/namespaces/fred/pods/blee",
+			"extensions/v1beta1",
+		},
+		"multi.notnamespaced": {
+			"/api/rbac.authorization.k8s.io/v1beta1/blee/duh",
+			"rbac.authorization.k8s.io/v1beta1",
+		},
+	}
+
+	for k, u := range uu {
+		t.Run(k, func(t *testing.T) {
+			assert.Equal(t, u.e, revFromLink(u.l))
+		})
+	}
+}
+
 func TestDPSanitize(t *testing.T) {
 	uu := map[string]struct {
 		lister DeploymentLister
@@ -51,7 +80,7 @@ func TestDPSanitize(t *testing.T) {
 				cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "Zero scale detected"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-500] Zero scale detected"),
 			},
 		},
 		"noAvailReps": {
@@ -70,7 +99,7 @@ func TestDPSanitize(t *testing.T) {
 				cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "Used? No available replicas found"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-501] Used? No available replicas found"),
 			},
 		},
 		"collisions": {
@@ -89,14 +118,14 @@ func TestDPSanitize(t *testing.T) {
 				cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.ErrorLevel, "ReplicaSet collisions detected (1)"),
+				issues.New(issues.Root, issues.ErrorLevel, "[POP-502] ReplicaSet collisions detected (1)"),
 			},
 		},
 	}
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			dp := NewDeployment(issues.NewCollector(), u.lister)
+			dp := NewDeployment(issues.NewCollector(loadCodes(t)), u.lister)
 			dp.Sanitize(context.Background())
 
 			assert.Equal(t, u.issues, dp.Outcome()["default/d1"])
@@ -121,8 +150,8 @@ func TestDPSanitizeUtilization(t *testing.T) {
 				cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New("i1", issues.WarnLevel, "No resources defined"),
-				issues.New("c1", issues.WarnLevel, "No resources defined"),
+				issues.New("i1", issues.WarnLevel, "[POP-106] No resources defined"),
+				issues.New("c1", issues.WarnLevel, "[POP-106] No resources defined"),
 			},
 		},
 		"cpuUnderBurstable": {
@@ -141,7 +170,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 				cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU under allocated. Current:20m vs Requested:10m (200.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-503] At current load, CPU under allocated. Current:20m vs Requested:10m (200.00%)"),
 			},
 		},
 		"cpuUnderGuaranteed": {
@@ -160,11 +189,9 @@ func TestDPSanitizeUtilization(t *testing.T) {
 				cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU under allocated. Current:20m vs Requested:10m (200.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-503] At current load, CPU under allocated. Current:20m vs Requested:10m (200.00%)"),
 			},
 		},
-		// c=20 r=60 20/60=1/3 over is 50% req=3*c 33 > 100
-		// c=60 r=20 60/20 3 under
 		"cpuOverBustable": {
 			lister: makeDPLister("d1", dpOpts{
 				reps:       2,
@@ -181,7 +208,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 				cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU over allocated. Current:20m vs Requested:60m (300.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-504] At current load, CPU over allocated. Current:20m vs Requested:60m (300.00%)"),
 			},
 		},
 		"cpuOverGuaranteed": {
@@ -200,7 +227,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 				cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, CPU over allocated. Current:20m vs Requested:60m (300.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-504] At current load, CPU over allocated. Current:20m vs Requested:60m (300.00%)"),
 			},
 		},
 		"memUnderBurstable": {
@@ -219,7 +246,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 				cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory under allocated. Current:20Mi vs Requested:10Mi (200.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-505] At current load, Memory under allocated. Current:20Mi vs Requested:10Mi (200.00%)"),
 			},
 		},
 		"memUnderGuaranteed": {
@@ -238,7 +265,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 				cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory under allocated. Current:20Mi vs Requested:10Mi (200.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-505] At current load, Memory under allocated. Current:20Mi vs Requested:10Mi (200.00%)"),
 			},
 		},
 		"memOverBurstable": {
@@ -257,7 +284,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 				cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory over allocated. Current:20Mi vs Requested:60Mi (300.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-506] At current load, Memory over allocated. Current:20Mi vs Requested:60Mi (300.00%)"),
 			},
 		},
 		"memOverGuaranteed": {
@@ -276,7 +303,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 				cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "At current load, Memory over allocated. Current:20Mi vs Requested:60Mi (300.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-506] At current load, Memory over allocated. Current:20Mi vs Requested:60Mi (300.00%)"),
 			},
 		},
 	}
@@ -284,7 +311,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 	ctx := context.WithValue(context.Background(), PopeyeKey("OverAllocs"), true)
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			dp := NewDeployment(issues.NewCollector(), u.lister)
+			dp := NewDeployment(issues.NewCollector(loadCodes(t)), u.lister)
 			dp.Sanitize(ctx)
 
 			assert.Equal(t, u.issues, dp.Outcome()["default/d1"])
@@ -363,6 +390,10 @@ func (d *dp) ListDeployments() map[string]*appsv1.Deployment {
 	}
 }
 
+func (d *dp) DeploymentPreferredRev() string {
+	return "apps/v1"
+}
+
 func makeContainerMx(n, cpu, mem string) k8s.ContainerMetrics {
 	return k8s.ContainerMetrics{
 		n: k8s.Metrics{
@@ -377,6 +408,7 @@ func makeDP(n string, o dpOpts) *appsv1.Deployment {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      n,
 			Namespace: "default",
+			SelfLink:  "/api/apps/v1/blee/blah",
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &o.reps,

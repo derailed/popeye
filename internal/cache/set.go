@@ -7,7 +7,7 @@ const AllKeys = "all"
 var Blank = Empty{}
 
 type (
-	// ObjReferences tracks kubernetest object references.
+	// ObjReferences tracks kubernetes object references.
 	ObjReferences map[string]StringSet
 
 	// Empty denotes an empty value.

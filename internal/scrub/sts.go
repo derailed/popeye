@@ -19,9 +19,9 @@ type StatefulSet struct {
 }
 
 // NewStatefulSet return a new StatefulSet sanitizer.
-func NewStatefulSet(c *Cache) Sanitizer {
+func NewStatefulSet(c *Cache, codes *issues.Codes) Sanitizer {
 	s := StatefulSet{
-		Collector: issues.NewCollector(),
+		Collector: issues.NewCollector(codes),
 		Config:    c.config,
 	}
 
@@ -39,7 +39,7 @@ func NewStatefulSet(c *Cache) Sanitizer {
 
 	pmx, err := c.podsMx()
 	if err != nil {
-		s.AddInfof("podmetrics", "No metric-server detected %v", err)
+		s.AddCode(402, "podmetrics", err)
 	}
 	s.PodsMetrics = pmx
 

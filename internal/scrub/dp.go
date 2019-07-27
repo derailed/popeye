@@ -22,11 +22,11 @@ type Deployment struct {
 }
 
 // NewDeployment return a new Deployment sanitizer.
-func NewDeployment(c *Cache) Sanitizer {
+func NewDeployment(c *Cache, codes *issues.Codes) Sanitizer {
 	d := Deployment{
 		client:    c.client,
 		Config:    c.config,
-		Collector: issues.NewCollector(),
+		Collector: issues.NewCollector(codes),
 	}
 
 	dps, err := c.deployments()
@@ -37,7 +37,7 @@ func NewDeployment(c *Cache) Sanitizer {
 
 	pmx, err := c.podsMx()
 	if err != nil {
-		d.AddInfof("podmetrics", "No metric-server detected %v", err)
+		d.AddCode(402, "podmetrics", err)
 	}
 	d.PodsMetrics = pmx
 

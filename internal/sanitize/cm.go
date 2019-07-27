@@ -50,7 +50,7 @@ func (c *ConfigMap) checkInUse(refs cache.ObjReferences) {
 
 		keys, ok := refs[cache.ResFqn(cache.ConfigMapKey, fqn)]
 		if !ok {
-			c.AddInfo(fqn, "Used?")
+			c.AddCode(400, fqn)
 			continue
 		}
 		if keys.Has(cache.AllKeys) {
@@ -66,7 +66,7 @@ func (c *ConfigMap) checkInUse(refs cache.ObjReferences) {
 			continue
 		}
 		for k := range deltas {
-			c.AddInfof(fqn, "Key `%s` might not be used?", k)
+			c.AddCode(401, fqn, k)
 		}
 	}
 }

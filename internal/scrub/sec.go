@@ -18,8 +18,8 @@ type Secret struct {
 }
 
 // NewSecret return a new Secret sanitizer.
-func NewSecret(c *Cache) Sanitizer {
-	s := Secret{Collector: issues.NewCollector()}
+func NewSecret(c *Cache, codes *issues.Codes) Sanitizer {
+	s := Secret{Collector: issues.NewCollector(codes)}
 
 	secs, err := dag.ListSecrets(c.client, c.config)
 	if err != nil {

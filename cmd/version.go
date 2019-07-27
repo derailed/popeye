@@ -27,7 +27,7 @@ func printVersion() {
 	printTuple(secFmt, "Version", version)
 	printTuple(secFmt, "Commit", commit)
 	printTuple(secFmt, "Date", date)
-	printTuple(secFmt, "Logs", pkg.PopeyeLog)
+	printTuple(secFmt, "Logs", pkg.LogFile)
 }
 
 func printTuple(format, section, value string) {

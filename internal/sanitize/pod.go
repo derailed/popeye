@@ -62,7 +62,7 @@ func (p *Pod) Sanitize(ctx context.Context) error {
 		p.checkContainerStatus(fqn, po)
 		p.checkContainers(fqn, po)
 		p.checkPdb(fqn, po.ObjectMeta.Labels)
-		p.checkServiceAccount(fqn, po.Spec.ServiceAccountName)
+		p.checkSecure(fqn, po.Spec)
 		pmx, cmx := mx[fqn], k8s.ContainerMetrics{}
 		containerMetrics(fqn, pmx, cmx)
 		p.checkUtilization(fqn, po, cmx)
@@ -72,7 +72,7 @@ func (p *Pod) Sanitize(ctx context.Context) error {
 
 func (p *Pod) checkPdb(fqn string, labels map[string]string) {
 	if p.ForLabels(labels) == nil {
-		p.AddInfo(fqn, "No PodDisruptionBudget found")
+		p.AddCode(206, fqn)
 	}
 }
 
@@ -90,9 +90,21 @@ func (p *Pod) checkUtilization(fqn string, po *v1.Pod, cmx k8s.ContainerMetrics)
 	}
 }
 
-func (p *Pod) checkServiceAccount(fqn, sa string) {
-	if len(sa) == 0 {
-		p.AddInfo(fqn, "No service account specified")
+func (p *Pod) checkSecure(fqn string, spec v1.PodSpec) {
+	if spec.ServiceAccountName == "default" {
+		p.AddCode(300, fqn)
+	}
+
+	if spec.AutomountServiceAccountToken == nil || *spec.AutomountServiceAccountToken {
+		p.AddCode(301, fqn)
+	}
+
+	if spec.SecurityContext == nil {
+		return
+	}
+
+	if spec.SecurityContext.RunAsNonRoot == nil || !*spec.SecurityContext.RunAsNonRoot {
+		p.AddCode(302, fqn)
 	}
 }
 
@@ -124,7 +136,7 @@ func (p *Pod) checkStatus(po *v1.Pod) {
 	case v1.PodRunning:
 	case v1.PodSucceeded:
 	default:
-		p.AddErrorf(cache.MetaFQN(po.ObjectMeta), "Pod is in an unhappy phase (%s)", po.Status.Phase)
+		p.AddCode(207, cache.MetaFQN(po.ObjectMeta), po.Status.Phase)
 	}
 }
 

@@ -1,6 +1,7 @@
 package report
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/derailed/popeye/internal/issues"
@@ -27,6 +28,11 @@ const (
 
 // Color tracks the output color.
 type Color int
+
+// Colorizef colorizes a formatted string.
+func Colorizef(c Color, fmat string, args ...interface{}) string {
+	return Colorize(fmt.Sprintf(fmat, args...), c)
+}
 
 // Colorize a string based on given color.
 func Colorize(s string, c Color) string {

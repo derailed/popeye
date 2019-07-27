@@ -57,7 +57,7 @@ func TestPrintSummary(t *testing.T) {
 	b.AddError(errors.New("boom"))
 
 	buff := bytes.NewBuffer([]byte(""))
-	san := NewSanitizer(buff, 0, false)
+	san := NewSanitizer(buff, false)
 	b.PrintSummary(san)
 
 	assert.Equal(t, summary, buff.String())
@@ -76,7 +76,7 @@ func TestPrintHeader(t *testing.T) {
 	b.AddError(errors.New("boom"))
 
 	buff := bytes.NewBuffer([]byte(""))
-	san := NewSanitizer(buff, 0, false)
+	san := NewSanitizer(buff, false)
 	b.PrintHeader(san)
 
 	assert.Equal(t, header, buff.String())
@@ -95,7 +95,7 @@ func TestPrintReport(t *testing.T) {
 	b.AddError(errors.New("boom"))
 
 	buff := bytes.NewBuffer([]byte(""))
-	san := NewSanitizer(buff, 0, false)
+	san := NewSanitizer(buff, false)
 	b.PrintReport(issues.OkLevel, san)
 
 	assert.Equal(t, report, buff.String())

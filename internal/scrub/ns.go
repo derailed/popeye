@@ -17,8 +17,8 @@ type Namespace struct {
 }
 
 // NewNamespace return a new Namespace sanitizer.
-func NewNamespace(c *Cache) Sanitizer {
-	n := Namespace{Collector: issues.NewCollector()}
+func NewNamespace(c *Cache, codes *issues.Codes) Sanitizer {
+	n := Namespace{Collector: issues.NewCollector(codes)}
 
 	ss, err := dag.ListNamespaces(c.client, c.config)
 	if err != nil {

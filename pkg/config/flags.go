@@ -11,6 +11,7 @@ type Flags struct {
 	LintLevel       *string
 	Output          *string
 	ClearScreen     *bool
+	Save            *bool
 	CheckOverAllocs *bool
 	AllNamespaces   *bool
 	Spinach         *string
@@ -23,6 +24,7 @@ func NewFlags() *Flags {
 		LintLevel:       strPtr(defaultLintLevel),
 		Output:          strPtr("standard"),
 		AllNamespaces:   boolPtr(false),
+		Save:            boolPtr(false),
 		ClearScreen:     boolPtr(false),
 		CheckOverAllocs: boolPtr(false),
 		Spinach:         strPtr(""),

@@ -13,7 +13,7 @@ import (
 
 func TestComment(t *testing.T) {
 	w := bytes.NewBufferString("")
-	s := NewSanitizer(w, 0, false)
+	s := NewSanitizer(w, false)
 
 	s.Comment("blee")
 
@@ -37,7 +37,7 @@ func TestError(t *testing.T) {
 
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
-		s := NewSanitizer(w, 0, false)
+		s := NewSanitizer(w, false)
 		s.Error("blee", u.err)
 
 		assert.Equal(t, u.e, w.String())
@@ -69,7 +69,7 @@ func TestPrint(t *testing.T) {
 
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
-		s := NewSanitizer(w, 0, false)
+		s := NewSanitizer(w, false)
 		s.Print(issues.OkLevel, u.indent, u.m)
 
 		assert.Equal(t, u.e, w.String())
@@ -100,7 +100,7 @@ func TestDump(t *testing.T) {
 
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
-		s := NewSanitizer(w, 0, false)
+		s := NewSanitizer(w, false)
 		s.Dump(issues.OkLevel, u.o["fred"])
 
 		assert.Equal(t, u.e, w.String())
@@ -108,7 +108,7 @@ func TestDump(t *testing.T) {
 }
 
 func BenchmarkPrint(b *testing.B) {
-	s := NewSanitizer(ioutil.Discard, 0, false)
+	s := NewSanitizer(ioutil.Discard, false)
 
 	b.ResetTimer()
 	b.ReportAllocs()
@@ -132,7 +132,7 @@ func TestOpen(t *testing.T) {
 
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
-		s := NewSanitizer(w, 0, false)
+		s := NewSanitizer(w, false)
 
 		ta := NewTally().Rollup(u.o)
 		s.Open("blee", ta)
@@ -143,7 +143,7 @@ func TestOpen(t *testing.T) {
 
 func TestOpenClose(t *testing.T) {
 	w := bytes.NewBufferString("")
-	s := NewSanitizer(w, 0, false)
+	s := NewSanitizer(w, false)
 
 	s.Open("fred", nil)
 	s.Close()

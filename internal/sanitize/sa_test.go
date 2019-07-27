@@ -17,13 +17,31 @@ func TestSASanitize(t *testing.T) {
 		lister ServiceAccountLister
 		issues int
 	}{
-		"cool":    {makeSALister("sa1", "sa1"), 0},
-		"notUsed": {makeSALister("sa1", "sa2"), 1},
+		"cool": {
+			makeSALister("sa1", saOpts{
+				used: "sa1",
+			}),
+			0,
+		},
+		"notUsed": {
+			makeSALister("sa1", saOpts{
+				used: "sa2",
+			}),
+			1,
+		},
+		"missingSecret": {
+			makeSALister("sa1", saOpts{
+				used:       "sa1",
+				secret:     "blee",
+				pullSecret: "fred",
+			}),
+			2,
+		},
 	}
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			s := NewServiceAccount(issues.NewCollector(), u.lister)
+			s := NewServiceAccount(issues.NewCollector(loadCodes(t)), u.lister)
 			s.Sanitize(context.Background())
 
 			assert.Equal(t, u.issues, len(s.Outcome()["default/sa1"]))
@@ -34,13 +52,18 @@ func TestSASanitize(t *testing.T) {
 // ----------------------------------------------------------------------------
 // Helpers...
 
-type sa struct {
-	name string
-	used string
+type saOpts struct {
+	used               string
+	secret, pullSecret string
 }
 
-func makeSALister(n, used string) sa {
-	return sa{name: n, used: used}
+type sa struct {
+	name string
+	opts saOpts
+}
+
+func makeSALister(n string, opts saOpts) sa {
+	return sa{name: n, opts: opts}
 }
 
 func (s sa) ActiveNamespace() string {
@@ -53,19 +76,30 @@ func (s sa) ExcludedNS(ns string) bool {
 
 func (s sa) ListClusterRoleBindings() map[string]*rbacv1.ClusterRoleBinding {
 	return map[string]*rbacv1.ClusterRoleBinding{
-		"crb1": makeCRB("crb1", s.used),
+		"crb1": makeCRB("crb1", s.opts.used),
 	}
 }
 
 func (s sa) ListRoleBindings() map[string]*rbacv1.RoleBinding {
 	return map[string]*rbacv1.RoleBinding{
-		"default/rb1": makeRB("rb1", s.used),
+		"default/rb1": makeRB("rb1", s.opts.used),
 	}
 }
 
 func (s sa) ListPods() map[string]*v1.Pod {
 	return map[string]*v1.Pod{
-		"default/p1": makePodSa("p1", s.used),
+		"default/p1": makePodSa("p1", s.opts.used),
+	}
+}
+
+func (s sa) ServiceAccountRefs(cache.ObjReferences) {}
+
+func (s sa) PodRefs(cache.ObjReferences) {}
+
+func (s sa) ListSecrets() map[string]*v1.Secret {
+	return map[string]*v1.Secret{
+		"default/s1":   makeSecret("s1"),
+		"default/dks1": makeDockerSecret("dks1"),
 	}
 }
 
@@ -75,17 +109,31 @@ func (s sa) GetPod(map[string]string) *v1.Pod {
 
 func (s sa) ListServiceAccounts() map[string]*v1.ServiceAccount {
 	return map[string]*v1.ServiceAccount{
-		cache.FQN("default", s.name): makeSa(s.name),
+		cache.FQN("default", s.name): makeSa(s.name, s.opts.secret, s.opts.pullSecret),
 	}
 }
 
-func makeSa(n string) *v1.ServiceAccount {
-	return &v1.ServiceAccount{
+func makeSa(n, secret, pullSecret string) *v1.ServiceAccount {
+	sa := v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      n,
 			Namespace: "default",
 		},
 	}
+
+	if secret != "" {
+		sa.Secrets = []v1.ObjectReference{
+			{Namespace: "default", Name: secret, Kind: "secret"},
+		}
+	}
+
+	if pullSecret != "" {
+		sa.ImagePullSecrets = []v1.LocalObjectReference{
+			{Name: pullSecret},
+		}
+	}
+
+	return &sa
 }
 
 func makePodSa(s, sa string) *v1.Pod {

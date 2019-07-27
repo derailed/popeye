@@ -11,19 +11,19 @@ import (
 )
 
 func TestSecretSanitize(t *testing.T) {
-	s := NewSecret(issues.NewCollector(), newSecret())
+	s := NewSecret(issues.NewCollector(loadCodes(t)), newSecret())
 	s.Sanitize(nil)
 
 	assert.Equal(t, 5, len(s.Outcome()))
 
 	ii := s.Outcome()["default/sec3"]
 	assert.Equal(t, 1, len(ii))
-	assert.Equal(t, "Used?", ii[0].Message)
+	assert.Equal(t, "[POP-400] Used? Unable to locate resource reference", ii[0].Message)
 	assert.Equal(t, issues.InfoLevel, ii[0].Level)
 
 	ii = s.Outcome()["default/sec4"]
 	assert.Equal(t, 1, len(ii))
-	assert.Equal(t, "Key `k2` might not be used?", ii[0].Message)
+	assert.Equal(t, "[POP-401] Key `k2` used? Unable to locate key reference", ii[0].Message)
 	assert.Equal(t, issues.InfoLevel, ii[0].Level)
 }
 
@@ -71,6 +71,20 @@ func makeSecret(n string) *v1.Secret {
 			Name:      n,
 			Namespace: "default",
 		},
+		Data: map[string][]byte{
+			"k1": {},
+			"k2": {},
+		},
+	}
+}
+
+func makeDockerSecret(n string) *v1.Secret {
+	return &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      n,
+			Namespace: "default",
+		},
+		Type: v1.SecretTypeDockercfg,
 		Data: map[string][]byte{
 			"k1": {},
 			"k2": {},

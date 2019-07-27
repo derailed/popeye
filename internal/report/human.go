@@ -18,6 +18,7 @@ func resToTitle() map[string]string {
 		"pvc": "persistentvolumeclaim",
 		"hpa": "horizontalpodautoscaler",
 		"dp":  "deployment",
+		"ds":  "daemonset",
 		"sts": "statefulset",
 		"pdb": "poddisruptionbudget",
 	}

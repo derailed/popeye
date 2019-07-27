@@ -18,8 +18,8 @@ type Service struct {
 }
 
 // NewService return a new Service sanitizer.
-func NewService(c *Cache) Sanitizer {
-	s := Service{Collector: issues.NewCollector()}
+func NewService(c *Cache, codes *issues.Codes) Sanitizer {
+	s := Service{Collector: issues.NewCollector(codes)}
 
 	ss, err := dag.ListServices(c.client, c.config)
 	if err != nil {

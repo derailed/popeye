@@ -70,7 +70,7 @@ func TestContainerCheckUtilization(t *testing.T) {
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
-			c := NewContainer("default/p1", newRangeCollector())
+			c := NewContainer("default/p1", newRangeCollector(t))
 			c.checkUtilization(u.co, u.mx)
 
 			assert.Equal(t, u.issues, len(c.Outcome().For("default/p1", "c1")))
@@ -102,7 +102,7 @@ func TestContainerCheckResources(t *testing.T) {
 			opts.lmem = "10Mi"
 		}
 		co := makeContainer("c1", opts)
-		l := NewContainer("default/p1", newRangeCollector())
+		l := NewContainer("default/p1", newRangeCollector(t))
 
 		t.Run(k, func(t *testing.T) {
 			l.checkResources(co)
@@ -143,7 +143,7 @@ func TestContainerCheckProbes(t *testing.T) {
 			co.ReadinessProbe = probe
 		}
 
-		c := NewContainer("default/p1", newRangeCollector())
+		c := NewContainer("default/p1", newRangeCollector(t))
 		t.Run(k, func(t *testing.T) {
 			c.checkProbes(co)
 
@@ -171,7 +171,7 @@ func TestContainerCheckImageTags(t *testing.T) {
 		co := makeContainer("c1", coOpts{})
 		co.Image = u.image
 
-		l := NewContainer("default/p1", newRangeCollector())
+		l := NewContainer("default/p1", newRangeCollector(t))
 		t.Run(k, func(t *testing.T) {
 			l.checkImageTags(co.Name, co.Image)
 
@@ -198,7 +198,7 @@ func TestContainerCheckNamedPorts(t *testing.T) {
 		co := makeContainer("c1", coOpts{})
 		co.Ports = []v1.ContainerPort{{Name: u.port}}
 
-		l := NewContainer("p1", newRangeCollector())
+		l := NewContainer("p1", newRangeCollector(t))
 		t.Run(k, func(t *testing.T) {
 			l.checkNamedPorts(co)
 
@@ -219,7 +219,7 @@ func TestContainerSanitize(t *testing.T) {
 	}
 
 	for k, u := range uu {
-		c := NewContainer("default/p1", newRangeCollector())
+		c := NewContainer("default/p1", newRangeCollector(t))
 		t.Run(k, func(t *testing.T) {
 			c.sanitize(u.co, true)
 
@@ -236,8 +236,8 @@ type rangeCollector struct {
 	*issues.Collector
 }
 
-func newRangeCollector() *rangeCollector {
-	return &rangeCollector{issues.NewCollector()}
+func newRangeCollector(t *testing.T) *rangeCollector {
+	return &rangeCollector{issues.NewCollector(loadCodes(t))}
 }
 
 func (*rangeCollector) RestartsLimit() int {

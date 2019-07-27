@@ -41,10 +41,10 @@ func (p *PersistentVolume) Sanitize(ctx context.Context) error {
 func (p *PersistentVolume) checkBound(fqn string, phase v1.PersistentVolumePhase) {
 	switch phase {
 	case v1.VolumeAvailable:
-		p.AddInfo(fqn, "Available")
+		p.AddCode(1000, fqn)
 	case v1.VolumePending:
-		p.AddError(fqn, "Pending volume detected")
+		p.AddCode(1001, fqn)
 	case v1.VolumeFailed:
-		p.AddError(fqn, "Lost volume detected")
+		p.AddCode(1002, fqn)
 	}
 }

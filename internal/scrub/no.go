@@ -20,9 +20,9 @@ type Node struct {
 }
 
 // NewNode return a new Node sanitizer.
-func NewNode(c *Cache) Sanitizer {
+func NewNode(c *Cache, codes *issues.Codes) Sanitizer {
 	n := Node{
-		Collector: issues.NewCollector(),
+		Collector: issues.NewCollector(codes),
 		Config:    c.config,
 	}
 
@@ -40,7 +40,7 @@ func NewNode(c *Cache) Sanitizer {
 
 	nmx, err := c.nodesMx()
 	if err != nil {
-		n.AddInfof("nodemetrics", "No metric-server detected %v", err)
+		n.AddCode(402, "nodemetrics", err)
 	}
 	n.NodesMetrics = nmx
 
