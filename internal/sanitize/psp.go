@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/derailed/popeye/internal/issues"
-	pv1beta1 "k8s.io/api/policy/v1beta1"
+	pv1beta1 "k8s.io/api/extensions/v1beta1"
 )
 
 type (
