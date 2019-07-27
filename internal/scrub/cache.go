@@ -9,23 +9,59 @@ import (
 
 // Cache caches commonly used resources.
 type Cache struct {
-	client *k8s.Client
-	config *config.Config
-	pod    *cache.Pod
-	podMx  *cache.PodsMetrics
-	nodeMx *cache.NodesMetrics
-	dp     *cache.Deployment
-	ds     *cache.DaemonSet
-	sts    *cache.StatefulSet
-	sa     *cache.ServiceAccount
-	rs     *cache.ReplicaSet
-	pdb    *cache.PodDisruptionBudget
-	ing    *cache.Ingress
+	client    *k8s.Client
+	config    *config.Config
+	namespace *cache.Namespace
+	pod       *cache.Pod
+	podMx     *cache.PodsMetrics
+	nodeMx    *cache.NodesMetrics
+	dp        *cache.Deployment
+	ds        *cache.DaemonSet
+	sts       *cache.StatefulSet
+	sa        *cache.ServiceAccount
+	rs        *cache.ReplicaSet
+	pdb       *cache.PodDisruptionBudget
+	ing       *cache.Ingress
+	np        *cache.NetworkPolicy
+	psp       *cache.PodSecurityPolicy
 }
 
 // NewCache returns a new resource cache
 func NewCache(c *k8s.Client, cfg *config.Config) *Cache {
 	return &Cache{client: c, config: cfg}
+}
+
+// PodSecurityPolicies retrieves np from cache if present or populate if not.
+func (c *Cache) podsecuritypolicies() (*cache.PodSecurityPolicy, error) {
+	if c.psp != nil {
+		return c.psp, nil
+	}
+	psps, err := dag.ListPodSecurityPolicies(c.client, c.config)
+	c.psp = cache.NewPodSecurityPolicy(psps)
+
+	return c.psp, err
+}
+
+// NetworkPolicies retrieves np from cache if present or populate if not.
+func (c *Cache) networkpolicies() (*cache.NetworkPolicy, error) {
+	if c.np != nil {
+		return c.np, nil
+	}
+	nps, err := dag.ListNetworkPolicies(c.client, c.config)
+	c.np = cache.NewNetworkPolicy(nps)
+
+	return c.np, err
+}
+
+// Namespaces retrieves ns from cache if present or populate if not.
+func (c *Cache) namespaces() (*cache.Namespace, error) {
+	if c.namespace != nil {
+		return c.namespace, nil
+	}
+	nss, err := dag.ListNamespaces(c.client, c.config)
+	c.namespace = cache.NewNamespace(nss)
+
+	return c.namespace, err
 }
 
 // Pods retrieves pods from cache if present or populate if not.
@@ -78,14 +114,7 @@ func (c *Cache) deployments() (*cache.Deployment, error) {
 		return c.dp, nil
 	}
 	dps, err := dag.ListDeployments(c.client, c.config)
-	if err != nil {
-		return nil, err
-	}
-	rev, err := dag.DeploymentPreferredRev(c.client)
-	if err != nil {
-		return nil, err
-	}
-	c.dp = cache.NewDeployment(dps, rev)
+	c.dp = cache.NewDeployment(dps)
 
 	return c.dp, err
 }

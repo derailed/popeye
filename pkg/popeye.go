@@ -141,6 +141,8 @@ func (p *Popeye) sanitizers() map[string]scrubFn {
 		"sts": scrub.NewStatefulSet,
 		"pdb": scrub.NewPodDisruptionBudget,
 		"ing": scrub.NewIngress,
+		"np":  scrub.NewNetworkPolicy,
+		"psp": scrub.NewPodSecurityPolicy,
 	}
 }
 

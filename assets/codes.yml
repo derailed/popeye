@@ -200,21 +200,30 @@ codes:
   1004:
     message:  Lost claim detected
     severity: 3
-  2000:
+  # Service
+  1100:
     message:  No pods match service selector
     severity: 3
-  2001:
+  1101:
     message:  Skip ports check. No explicit ports detected on pod %s
     severity: 1
-  2002:
+  1102:
     message:  "Use of target port #%s for service port %s. Prefer named port"
     severity: 1
-  2003:
+  1103:
     message:  Type Loadbalancer detected. Could be expensive
     severity: 1
-  2004:
+  1104:
     message:  Do you mean it? Type NodePort detected
     severity: 1
-  2005:
+  1105:
     message:  No associated endpoints
     severity: 3
+  # NetworkPolicies
+  1200:
+    message:  No pods matches %s selector %s
+    severity: 2
+  1201:
+    message:  No namespaces matches %s selector %s
+    severity: 2
+

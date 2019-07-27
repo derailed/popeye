@@ -62,7 +62,6 @@ type (
 	// DeployLister list deployments.
 	DeployLister interface {
 		ListDeployments() map[string]*appsv1.Deployment
-		DeploymentPreferredRev() string
 	}
 
 	// DeploymentLister list available Deployments on a cluster.

@@ -21,6 +21,8 @@ func resToTitle() map[string]string {
 		"ds":  "daemonset",
 		"sts": "statefulset",
 		"pdb": "poddisruptionbudget",
+		"np":  "networkpolicy",
+		"psp": "podsecuritypolicie",
 	}
 }
 

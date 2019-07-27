@@ -68,7 +68,7 @@ func (s *Service) checkPorts(fqn string, sel map[string]string, ports []v1.Servi
 	po := s.GetPod(sel)
 	if po == nil {
 		if len(sel) > 0 {
-			s.AddCode(2000, fqn)
+			s.AddCode(1100, fqn)
 		}
 		return
 	}
@@ -78,7 +78,7 @@ func (s *Service) checkPorts(fqn string, sel map[string]string, ports []v1.Servi
 	pfqn := cache.MetaFQN(po.ObjectMeta)
 	// No explicit pod ports definition -> bail!.
 	if len(pports) == 0 {
-		s.AddCode(2001, fqn, pfqn)
+		s.AddCode(1101, fqn, pfqn)
 		return
 	}
 	for _, p := range ports {
@@ -88,17 +88,17 @@ func (s *Service) checkPorts(fqn string, sel map[string]string, ports []v1.Servi
 			continue
 		}
 		if !checkNamedTargetPort(p) {
-			s.AddCode(2002, fqn, p.TargetPort.String(), portAsStr(p))
+			s.AddCode(1102, fqn, p.TargetPort.String(), portAsStr(p))
 		}
 	}
 }
 
 func (s *Service) checkType(fqn string, kind v1.ServiceType) {
 	if kind == v1.ServiceTypeLoadBalancer {
-		s.AddCode(2003, fqn)
+		s.AddCode(1103, fqn)
 	}
 	if kind == v1.ServiceTypeNodePort {
-		s.AddCode(2004, fqn)
+		s.AddCode(1104, fqn)
 	}
 }
 
@@ -114,7 +114,7 @@ func (s *Service) checkEndpoints(fqn string, sel map[string]string, kind v1.Serv
 	}
 	ep := s.GetEndpoints(fqn)
 	if ep == nil || len(ep.Subsets) == 0 {
-		s.AddCode(2005, fqn)
+		s.AddCode(1105, fqn)
 	}
 }
 

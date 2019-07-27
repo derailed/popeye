@@ -10,11 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// DeploymentPreferredRev check preferred server API group/version.
-func DeploymentPreferredRev(c *k8s.Client) (string, error) {
-	return preferredRev(c, "extensions")
-}
-
 // ListDeployments list all included Deployments.
 func ListDeployments(c *k8s.Client, cfg *config.Config) (map[string]*appsv1.Deployment, error) {
 	dps, err := listAllDeployments(c)
