@@ -54,7 +54,11 @@ func (r *DiffReport) Build() {
 	for _, section := range r.r2.Sections {
 		s := findSection(r.r1.Sections, section.Title)
 		if s == nil {
-			r.addError(fmt.Errorf("Unable to find matching sanitizer section `%s", section.Title))
+			if section.Title == "" {
+				continue
+			}
+			r.addError(fmt.Errorf("Unable to find matching sanitizer section `%s", resToTitle()[section.Title]))
+			continue
 		}
 		r.addSection(*s, section)
 	}
@@ -94,7 +98,6 @@ func namespaced(fqn string) (string, string) {
 }
 
 func podName(n string) string {
-	fmt.Println("Pod name", n)
 	podNameRX := regexp.MustCompile(`\A.+/(\w+)-`)
 	m := podNameRX.FindStringSubmatch(n)
 	if len(m) < 2 {
@@ -121,7 +124,6 @@ func (r *DiffReport) diffOutcome(section string, o, n issues.Outcome) {
 				continue
 			}
 		}
-		fmt.Println("\n", k)
 		r.sections[section].outcomes[k] = r.surface(oldIssues, newIssues)
 	}
 }

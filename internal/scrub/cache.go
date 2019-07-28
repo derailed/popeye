@@ -24,11 +24,23 @@ type Cache struct {
 	ing       *cache.Ingress
 	np        *cache.NetworkPolicy
 	psp       *cache.PodSecurityPolicy
+	cl        *cache.Cluster
 }
 
 // NewCache returns a new resource cache
 func NewCache(c *k8s.Client, cfg *config.Config) *Cache {
 	return &Cache{client: c, config: cfg}
+}
+
+// PodSecurityPolicies retrieves np from cache if present or populate if not.
+func (c *Cache) cluster() (*cache.Cluster, error) {
+	if c.cl != nil {
+		return c.cl, nil
+	}
+	major, minor, err := dag.ListVersion(c.client, c.config)
+	c.cl = cache.NewCluster(major, minor)
+
+	return c.cl, err
 }
 
 // PodSecurityPolicies retrieves np from cache if present or populate if not.

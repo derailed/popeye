@@ -58,29 +58,29 @@ brew:
   test: |
     system "popeye version"
 
-# Snapcraft
-snapcraft:
-  name: popeye
-  summary: A Kubernetes Cluster sanitizer and linter.
-  description: |
-    Popeye scans your Kubernetes clusters and reports potential resource issues.
-  name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-  publish: true
-  replacements:
-    amd64: 64-bit
-    386: 32-bit
-    darwin: macOS
-    linux: Tux
-    bit: Arm
-    bitv6: Arm6
-    bitv7: Arm7
-  grade: stable
-  confinement: strict
-  apps:
-    popeye:
-      plugs: ["home", "network", "kube-config"]
-  plugs:
-    kube-config:
-      interface: personal-files
-      read:
-      - $HOME/.kube
+# # Snapcraft
+# snapcraft:
+#   name: popeye
+#   summary: A Kubernetes Cluster sanitizer and linter.
+#   description: |
+#     Popeye scans your Kubernetes clusters and reports potential resource issues.
+#   name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+#   publish: true
+#   replacements:
+#     amd64: 64-bit
+#     386: 32-bit
+#     darwin: macOS
+#     linux: Tux
+#     bit: Arm
+#     bitv6: Arm6
+#     bitv7: Arm7
+#   grade: stable
+#   confinement: strict
+#   apps:
+#     popeye:
+#       plugs: ["home", "network", "kube-config"]
+#   plugs:
+#     kube-config:
+#       interface: personal-files
+#       read:
+#       - $HOME/.kube

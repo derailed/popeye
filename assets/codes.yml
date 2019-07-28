@@ -99,6 +99,12 @@ codes:
   404:
     message:  Deprecation check failed. %v
     severity: 1
+  405:
+    message:  Is this a jurassic cluster? Might want to upgrade K8s a bit
+    severity: 2
+  406:
+    message:  K8s version OK
+    severity: 0
   # Deployment + StatefulSet
   500:
     message:  Zero scale detected

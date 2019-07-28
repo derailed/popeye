@@ -125,6 +125,7 @@ func (p *Popeye) dump(printHeader bool) error {
 
 func (p *Popeye) sanitizers() map[string]scrubFn {
 	return map[string]scrubFn{
+		"cl":  scrub.NewCluster,
 		"cm":  scrub.NewConfigMap,
 		"sec": scrub.NewSecret,
 		"dp":  scrub.NewDeployment,

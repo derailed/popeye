@@ -33,6 +33,7 @@ type (
 
 	// Report represents the output of a sanitization pass.
 	Report struct {
+		Version       string
 		Score         int       `json:"score" yaml:"score"`
 		Grade         string    `json:"grade" yaml:"grade"`
 		Sections      []Section `json:"sanitizers,omitempty" yaml:"sanitizers,omitempty"`
@@ -130,7 +131,7 @@ func (b *Builder) PrintClusterInfo(s *Sanitizer, name string, metrics bool) {
 	if name == "" {
 		name = "n/a"
 	}
-	s.Open(Titleize(fmt.Sprintf("Cluster [%s]", name), -1), nil)
+	s.Open(Titleize(fmt.Sprintf("General [%s]", name), -1), nil)
 	{
 		s.Print(issues.OkLevel, 1, "Connectivity")
 		if metrics {

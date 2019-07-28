@@ -3,7 +3,6 @@ package sanitize
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/derailed/popeye/internal/issues"
 	pv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -52,7 +51,6 @@ func (p *PodSecurityPolicy) checkDeprecation(fqn string, psp *pv1beta1.PodSecuri
 			return
 		}
 	}
-	fmt.Println(fqn, rev, current, psp.SelfLink)
 	if rev != current {
 		p.AddCode(403, fqn, "PodSecurityPolicy", rev, current)
 	}

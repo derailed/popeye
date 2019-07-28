@@ -22,7 +22,9 @@ func resToTitle() map[string]string {
 		"sts": "statefulset",
 		"pdb": "poddisruptionbudget",
 		"np":  "networkpolicy",
-		"psp": "podsecuritypolicie",
+		"psp": "podsecuritypolicy",
+		"rs":  "replicatset",
+		"cl":  "cluster",
 	}
 }
 
@@ -33,7 +35,7 @@ func Titleize(r string, count int) string {
 		title = t
 	}
 
-	if count < 0 {
+	if count == 0 || title == "cluster" {
 		return strings.ToUpper(fmt.Sprintf("%s", title))
 	}
 	return strings.ToUpper(fmt.Sprintf("%s (%d scanned)", title+"s", count))
