@@ -227,9 +227,9 @@ codes:
     severity: 3
   # NetworkPolicies
   1200:
-    message:  No pods matches %s selector %s
+    message:  No pods matches %s pod selector
     severity: 2
   1201:
-    message:  No namespaces matches %s selector %s
+    message:  No namespaces matches %s namespace selector
     severity: 2
 

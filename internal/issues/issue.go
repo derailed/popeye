@@ -47,19 +47,3 @@ func (i Issue) Blank() bool {
 func (i Issue) IsSubIssue() bool {
 	return i.Group != Root
 }
-
-// Compare computes deltas betweeen 2 issues.
-func (i Issue) Compare(issue Issue) map[string]string {
-	diff := make(map[string]string)
-	if i.Group != issue.Group {
-		diff["group"] = fmt.Sprintf("%s vs %s", issue.Group, i.Group)
-	}
-	if i.Level != issue.Level {
-		diff["level"] = fmt.Sprintf("%d vs %d", issue.Level, i.Level)
-	}
-	if i.Message != issue.Message {
-		diff["message"] = fmt.Sprintf("%s vs %s", issue.Message, i.Message)
-	}
-
-	return diff
-}

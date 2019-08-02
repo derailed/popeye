@@ -5,7 +5,6 @@ import (
 
 	"github.com/derailed/popeye/internal/issues"
 	pv1beta1 "k8s.io/api/policy/v1beta1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 type (
@@ -44,10 +43,5 @@ func (c *PodDisruptionBudget) checkInUse(fqn string, pdb *pv1beta1.PodDisruption
 	if c.GetPod(pdb.Spec.Selector.MatchLabels) == nil {
 		c.AddCode(900, fqn)
 		return
-	}
-
-	min := pdb.Spec.MinAvailable
-	if min != nil && min.Type == intstr.Int && min.IntValue() > int(pdb.Status.CurrentHealthy) {
-		c.AddCode(901, fqn, min.IntValue(), pdb.Status.CurrentHealthy)
 	}
 }

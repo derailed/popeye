@@ -161,32 +161,3 @@ func servicePortFQN(port v1.ServicePort) string {
 func portFQN(p v1.Protocol, port string) string {
 	return string(p) + ":" + port
 }
-
-// MatchPort check if service port matches a given container port.
-// Return true if service port or target port matches container port, false otherwise.
-func matchPort(sp v1.ServicePort, cp v1.ContainerPort) bool {
-	found, hasTarget := false, false
-	switch sp.TargetPort.Type {
-	case intstr.Int:
-		if sp.TargetPort.IntValue() != 0 {
-			hasTarget = true
-			found = sp.TargetPort.IntValue() == int(cp.ContainerPort)
-		}
-	case intstr.String:
-		if sp.TargetPort.String() != "" {
-			hasTarget = true
-			found = sp.TargetPort.String() == cp.Name
-		}
-	}
-	if found {
-		return found
-	}
-	if hasTarget && !found {
-		return found
-	}
-	if sp.Port == cp.ContainerPort {
-		return true
-	}
-
-	return false
-}

@@ -59,5 +59,3 @@ func (d *Ingress) checkDeprecation(fqn string, ing *nv1beta1.Ingress) {
 		d.AddCode(403, fqn, "Ingress", rev, current)
 	}
 }
-
-// Helpers...

@@ -33,7 +33,6 @@ type (
 
 	// Report represents the output of a sanitization pass.
 	Report struct {
-		Version       string
 		Score         int       `json:"score" yaml:"score"`
 		Grade         string    `json:"grade" yaml:"grade"`
 		Sections      []Section `json:"sanitizers,omitempty" yaml:"sanitizers,omitempty"`

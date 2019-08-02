@@ -24,15 +24,29 @@ func TestSTSSanitizer(t *testing.T) {
 				coOpts:      coOpts{rcpu: "100m", rmem: "10Mi"},
 				replicas:    1,
 				currentReps: 1,
+				rev:         "apps/v1",
 				ccpu:        "100m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{},
+		},
+		"deprecated": {
+			lister: makeSTSLister("sts1", stsOpts{
+				coOpts:      coOpts{rcpu: "100m", rmem: "10Mi"},
+				replicas:    1,
+				currentReps: 1,
+				rev:         "extensions/v1",
+				ccpu:        "100m", cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.Issue{Group: "__root__", Level: 2, Message: "[POP-403] Deprecated StatefulSet API group `extensions/v1. Use `apps/v1 instead"},
+			},
 		},
 		"used?": {
 			lister: makeSTSLister("sts1", stsOpts{
 				coOpts:      coOpts{rcpu: "100m", rmem: "10Mi"},
 				replicas:    1,
 				currentReps: 0,
+				rev:         "apps/v1",
 				ccpu:        "100m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
@@ -44,6 +58,7 @@ func TestSTSSanitizer(t *testing.T) {
 				coOpts:      coOpts{rcpu: "100m", rmem: "10Mi"},
 				replicas:    0,
 				currentReps: 1,
+				rev:         "apps/v1",
 				ccpu:        "100m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
@@ -56,6 +71,7 @@ func TestSTSSanitizer(t *testing.T) {
 				replicas:    1,
 				currentReps: 1,
 				collisions:  1,
+				rev:         "apps/v1",
 				ccpu:        "100m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
@@ -83,6 +99,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 			lister: makeSTSLister("sts1", stsOpts{
 				replicas:    1,
 				currentReps: 1,
+				rev:         "apps/v1",
 				ccpu:        "200m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{},
@@ -94,6 +111,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				},
 				replicas:    1,
 				currentReps: 1,
+				rev:         "apps/v1",
 				ccpu:        "200m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
@@ -108,6 +126,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				},
 				replicas:    1,
 				currentReps: 1,
+				rev:         "apps/v1",
 				ccpu:        "200m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
@@ -121,6 +140,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				},
 				replicas:    1,
 				currentReps: 1,
+				rev:         "apps/v1",
 				ccpu:        "100m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
@@ -135,6 +155,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				},
 				replicas:    1,
 				currentReps: 1,
+				rev:         "apps/v1",
 				ccpu:        "100m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
@@ -148,6 +169,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				},
 				replicas:    1,
 				currentReps: 1,
+				rev:         "apps/v1",
 				ccpu:        "100m", cmem: "20Mi",
 			}),
 			issues: issues.Issues{
@@ -162,6 +184,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				},
 				replicas:    1,
 				currentReps: 1,
+				rev:         "apps/v1",
 				ccpu:        "100m", cmem: "20Mi",
 			}),
 			issues: issues.Issues{
@@ -175,6 +198,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				},
 				replicas:    1,
 				currentReps: 1,
+				rev:         "apps/v1",
 				ccpu:        "100m", cmem: "20Mi",
 			}),
 			issues: issues.Issues{
@@ -189,6 +213,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				},
 				replicas:    1,
 				currentReps: 1,
+				rev:         "apps/v1",
 				ccpu:        "100m", cmem: "20Mi",
 			}),
 			issues: issues.Issues{
@@ -218,6 +243,7 @@ type (
 		currentReps int32
 		collisions  int32
 		ccpu, cmem  string
+		rev         string
 	}
 
 	sts struct {
@@ -288,7 +314,7 @@ func makeSTS(n string, opts stsOpts) *appsv1.StatefulSet {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      n,
 			Namespace: "default",
-			SelfLink:  "/api/apps/v1/blee/blah",
+			SelfLink:  "/api/" + opts.rev,
 		},
 		Spec: appsv1.StatefulSetSpec{
 			Replicas: &opts.replicas,

@@ -6,6 +6,7 @@ import (
 	"runtime/debug"
 
 	"github.com/derailed/popeye/internal/report"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -34,12 +35,12 @@ func diffCmd() *cobra.Command {
 }
 
 func run(cmd *cobra.Command, args []string) {
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println("YO!!")
 			printSosLogo(report.ColorOrangish, report.ColorRed)
 			fmt.Printf("\n\nBoom! %v\n", err)
-			fmt.Println(string(debug.Stack()))
 			log.Error().Msgf("%v", err)
 			log.Error().Msg(string(debug.Stack()))
 			os.Exit(1)
@@ -55,6 +56,6 @@ func run(cmd *cobra.Command, args []string) {
 
 	diff := report.NewDiff(os.Stdout, *flags.Output == "jurassic")
 	if err := diff.Run(cluster); err != nil {
-		panic(err)
+		fmt.Println(report.Colorize(err.Error(), report.ColorRed))
 	}
 }

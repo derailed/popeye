@@ -43,7 +43,7 @@ func (d *Diff) Run(cluster string) error {
 		return err
 	}
 
-	r1, r2, err := loadReports(reports)
+	r1, r2, err := loadReports(sanitizerDir, reports)
 	if err != nil {
 		return err
 	}
@@ -54,8 +54,8 @@ func (d *Diff) Run(cluster string) error {
 	const dateFmt = "2006-01-02 15:04:05"
 	open(d, fmt.Sprintf("Candidate Reports [%s]", cluster))
 	{
-		fmt.Fprintf(d, Colorizef(ColorAqua, "🛀 %-15s: %s\n", reports[1].ModTime().Format(dateFmt), reports[1].Name()))
-		fmt.Fprintf(d, Colorizef(ColorAqua, "🛀 %-15s: %s\n", reports[0].ModTime().Format(dateFmt), reports[0].Name()))
+		fmt.Fprintf(d, Colorizef(ColorAqua, "🛀 %-15s: %s\n", reports[1].ModTime().Format(dateFmt), fullPath(reports[1].Name())))
+		fmt.Fprintf(d, Colorizef(ColorAqua, "🛀 %-15s: %s\n", reports[0].ModTime().Format(dateFmt), fullPath(reports[0].Name())))
 	}
 	close(d)
 	report.Build()
@@ -65,12 +65,12 @@ func (d *Diff) Run(cluster string) error {
 	return nil
 }
 
-func loadReports(reports []os.FileInfo) (*Report, *Report, error) {
-	b1, err := loadBuilder(reports[1].Name())
+func loadReports(dir string, reports []os.FileInfo) (*Report, *Report, error) {
+	b1, err := loadBuilder(dir, reports[1].Name())
 	if err != nil {
 		return nil, nil, err
 	}
-	b2, err := loadBuilder(reports[0].Name())
+	b2, err := loadBuilder(dir, reports[0].Name())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -81,8 +81,8 @@ func loadReports(reports []os.FileInfo) (*Report, *Report, error) {
 // ----------------------------------------------------------------------------
 // Helpers...
 
-func loadBuilder(r string) (*Builder, error) {
-	f, err := ioutil.ReadFile(path.Join(sanitizerDir, r))
+func loadBuilder(dir, file string) (*Builder, error) {
+	f, err := ioutil.ReadFile(path.Join(dir, file))
 	if err != nil {
 		return nil, err
 	}
@@ -116,4 +116,8 @@ func lastReports(cluster string) ([]os.FileInfo, error) {
 	})
 
 	return files[:2], nil
+}
+
+func fullPath(p string) string {
+	return path.Join(sanitizerDir, p)
 }

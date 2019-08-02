@@ -17,7 +17,6 @@ type (
 
 	// PodSecurityPolicyLister list available PodSecurityPolicys on a cluster.
 	PodSecurityPolicyLister interface {
-		ConfigLister
 		ListPodSecurityPolicies() map[string]*pv1beta1.PodSecurityPolicy
 	}
 )

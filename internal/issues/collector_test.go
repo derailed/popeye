@@ -141,15 +141,30 @@ func TestAddCode(t *testing.T) {
 			args:    []interface{}{80},
 			e:       "[POP-108] Unamed port 80",
 		},
+		"Dud!": {
+			code:    0,
+			section: Root,
+			level:   InfoLevel,
+			args:    []interface{}{80},
+			e:       "[POP-108] Unamed port 80",
+		},
 	}
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			c := NewCollector(loadCodes(t))
-			c.AddCode(u.code, u.section, u.args...)
 
-			assert.Equal(t, u.e, c.outcomes[u.section][0].Message)
-			assert.Equal(t, u.level, c.outcomes[u.section][0].Level)
+			if k == "Dud!" {
+				subCode := func() {
+					c.AddCode(u.code, u.section, u.args...)
+				}
+				assert.Panics(t, subCode, "blee")
+			} else {
+				c.AddCode(u.code, u.section, u.args...)
+
+				assert.Equal(t, u.e, c.outcomes[u.section][0].Message)
+				assert.Equal(t, u.level, c.outcomes[u.section][0].Level)
+			}
 		})
 	}
 }
@@ -177,16 +192,32 @@ func TestAddSubCode(t *testing.T) {
 			args:    []interface{}{80},
 			e:       "[POP-108] Unamed port 80",
 		},
+		"Dud!": {
+			code:    0,
+			section: Root,
+			group:   "blee",
+			level:   InfoLevel,
+			args:    []interface{}{80},
+			e:       "[POP-108] Unamed port 80",
+		},
 	}
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			c := NewCollector(loadCodes(t))
 			c.InitOutcome(u.section)
-			c.AddSubCode(u.code, u.section, u.group, u.args...)
 
-			assert.Equal(t, u.e, c.Outcome()[u.section][0].Message)
-			assert.Equal(t, u.level, c.Outcome()[u.section][0].Level)
+			if k == "Dud!" {
+				subCode := func() {
+					c.AddSubCode(u.code, u.section, u.group, u.args)
+				}
+				assert.Panics(t, subCode, "blee")
+			} else {
+				c.AddSubCode(u.code, u.section, u.group, u.args...)
+
+				assert.Equal(t, u.e, c.Outcome()[u.section][0].Message)
+				assert.Equal(t, u.level, c.Outcome()[u.section][0].Level)
+			}
 		})
 	}
 }

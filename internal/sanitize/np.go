@@ -26,7 +26,6 @@ type (
 	NetworkPolicyLister interface {
 		PodSelectorLister
 		NamespaceSelectorLister
-		ConfigLister
 		ListNetworkPolicies() map[string]*nv1.NetworkPolicy
 	}
 )
@@ -56,13 +55,13 @@ func (n *NetworkPolicy) checkRefs(fqn string, np *nv1.NetworkPolicy) {
 			if f.PodSelector != nil {
 				pods := n.ListPodsBySelector(f.PodSelector)
 				if len(pods) == 0 {
-					n.AddCode(1200, fqn, "Ingress", f.PodSelector.String())
+					n.AddCode(1200, fqn, "Ingress")
 				}
 			}
 			if f.NamespaceSelector != nil {
 				nss := n.ListNamespacesBySelector(f.NamespaceSelector)
 				if len(nss) == 0 {
-					n.AddCode(1201, fqn, "Ingress", f.NamespaceSelector.String())
+					n.AddCode(1201, fqn, "Ingress")
 				}
 			}
 		}
@@ -73,13 +72,13 @@ func (n *NetworkPolicy) checkRefs(fqn string, np *nv1.NetworkPolicy) {
 			if f.PodSelector != nil {
 				pods := n.ListPodsBySelector(f.PodSelector)
 				if len(pods) == 0 {
-					n.AddCode(1200, fqn, "Egress", f.PodSelector.String())
+					n.AddCode(1200, fqn, "Egress")
 				}
 			}
 			if f.NamespaceSelector != nil {
 				nss := n.ListNamespacesBySelector(f.NamespaceSelector)
 				if len(nss) == 0 {
-					n.AddCode(1201, fqn, "Egress", f.NamespaceSelector.String())
+					n.AddCode(1201, fqn, "Egress")
 				}
 			}
 		}
@@ -101,5 +100,3 @@ func (n *NetworkPolicy) checkDeprecation(fqn string, np *nv1.NetworkPolicy) {
 		n.AddCode(403, fqn, "NetworkPolicy", rev, current)
 	}
 }
-
-// Helpers...

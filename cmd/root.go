@@ -71,7 +71,7 @@ func bomb(msg string) {
 }
 
 func initFlags() {
-	rootCmd.PersistentFlags().StringVarP(
+	rootCmd.Flags().StringVarP(
 		flags.Output,
 		"out",
 		"o",
@@ -87,7 +87,7 @@ func initFlags() {
 		"Specify if you want Popeye to persist the output to a file",
 	)
 
-	rootCmd.PersistentFlags().StringVarP(
+	rootCmd.Flags().StringVarP(
 		flags.LintLevel,
 		"lint",
 		"l",

@@ -51,6 +51,7 @@ func TestDPSanitize(t *testing.T) {
 	}{
 		"good": {
 			lister: makeDPLister("d1", dpOpts{
+				rev:       "apps/v1",
 				reps:      1,
 				availReps: 1,
 				coOpts: coOpts{
@@ -65,8 +66,32 @@ func TestDPSanitize(t *testing.T) {
 			}),
 			issues: issues.Issues{},
 		},
+		"deprecated": {
+			lister: makeDPLister("d1", dpOpts{
+				rev:       "extensions/v1",
+				reps:      1,
+				availReps: 1,
+				coOpts: coOpts{
+					image: "fred:0.0.1",
+					rcpu:  "10m",
+					rmem:  "10Mi",
+					lcpu:  "10m",
+					lmem:  "10Mi",
+				},
+				ccpu: "10m",
+				cmem: "10Mi",
+			}),
+			issues: issues.Issues{
+				issues.New(
+					issues.Root,
+					issues.WarnLevel,
+					"[POP-403] Deprecated Deployment API group `extensions/v1. Use `apps/v1 instead",
+				),
+			},
+		},
 		"zeroReps": {
 			lister: makeDPLister("d1", dpOpts{
+				rev:       "apps/v1",
 				reps:      0,
 				availReps: 1,
 				coOpts: coOpts{
@@ -85,6 +110,7 @@ func TestDPSanitize(t *testing.T) {
 		},
 		"noAvailReps": {
 			lister: makeDPLister("d1", dpOpts{
+				rev:        "apps/v1",
 				reps:       1,
 				availReps:  0,
 				collisions: 0,
@@ -104,6 +130,7 @@ func TestDPSanitize(t *testing.T) {
 		},
 		"collisions": {
 			lister: makeDPLister("d1", dpOpts{
+				rev:        "apps/v1",
 				reps:       1,
 				availReps:  1,
 				collisions: 1,
@@ -140,6 +167,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 	}{
 		"bestEffort": {
 			lister: makeDPLister("d1", dpOpts{
+				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
 				collisions: 0,
@@ -156,6 +184,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 		},
 		"cpuUnderBurstable": {
 			lister: makeDPLister("d1", dpOpts{
+				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
 				collisions: 0,
@@ -175,6 +204,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 		},
 		"cpuUnderGuaranteed": {
 			lister: makeDPLister("d1", dpOpts{
+				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
 				collisions: 0,
@@ -194,6 +224,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 		},
 		"cpuOverBustable": {
 			lister: makeDPLister("d1", dpOpts{
+				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
 				collisions: 0,
@@ -213,6 +244,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 		},
 		"cpuOverGuaranteed": {
 			lister: makeDPLister("d1", dpOpts{
+				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
 				collisions: 0,
@@ -232,6 +264,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 		},
 		"memUnderBurstable": {
 			lister: makeDPLister("d1", dpOpts{
+				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
 				collisions: 0,
@@ -251,6 +284,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 		},
 		"memUnderGuaranteed": {
 			lister: makeDPLister("d1", dpOpts{
+				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
 				collisions: 0,
@@ -270,6 +304,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 		},
 		"memOverBurstable": {
 			lister: makeDPLister("d1", dpOpts{
+				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
 				collisions: 0,
@@ -289,6 +324,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 		},
 		"memOverGuaranteed": {
 			lister: makeDPLister("d1", dpOpts{
+				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
 				collisions: 0,
@@ -325,6 +361,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 type (
 	dpOpts struct {
 		coOpts
+		rev        string
 		reps       int32
 		availReps  int32
 		collisions int32
@@ -408,7 +445,7 @@ func makeDP(n string, o dpOpts) *appsv1.Deployment {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      n,
 			Namespace: "default",
-			SelfLink:  "/api/apps/v1/blee/blah",
+			SelfLink:  "/api/" + o.rev,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &o.reps,

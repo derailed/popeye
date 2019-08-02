@@ -59,17 +59,3 @@ func (d *ReplicaSet) checkDeprecation(fqn string, rs *appsv1.ReplicaSet) {
 		d.AddCode(403, fqn, "ReplicaSet", rev, current)
 	}
 }
-
-// CheckReplicaSet checks if deployment contract is currently happy or not.
-func (d *ReplicaSet) checkReplicaSet(fqn string, rs *appsv1.ReplicaSet) {
-	if rs.Spec.Replicas == nil || (rs.Spec.Replicas != nil && *rs.Spec.Replicas == 0) {
-		d.AddCode(500, fqn)
-	}
-
-	if rs.Status.AvailableReplicas == 0 {
-		d.AddCode(501, fqn)
-	}
-
-}
-
-// Helpers...

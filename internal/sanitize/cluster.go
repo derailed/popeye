@@ -2,15 +2,14 @@ package sanitize
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	"github.com/derailed/popeye/internal/issues"
 )
 
 const (
-	TolerableMajor = 1
-	TolerableMinor = 12
+	tolerableMajor = 1
+	tolerableMinor = 12
 )
 
 type (
@@ -47,8 +46,7 @@ func (c *Cluster) Sanitize(ctx context.Context) error {
 		return err
 	}
 
-	fmt.Println("Rev", m, p)
-	if m != TolerableMajor || p < TolerableMinor {
+	if m != tolerableMajor || p < tolerableMinor {
 		c.AddCode(405, "Version")
 	} else {
 		c.AddCode(406, "Version")

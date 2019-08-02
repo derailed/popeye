@@ -30,8 +30,26 @@ func TestDSSanitize(t *testing.T) {
 				},
 				ccpu: "10m",
 				cmem: "10Mi",
+				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{},
+		},
+		"deprecated": {
+			lister: makeDSLister("d1", dsOpts{
+				coOpts: coOpts{
+					image: "fred:0.0.1",
+					rcpu:  "10m",
+					rmem:  "10Mi",
+					lcpu:  "10m",
+					lmem:  "10Mi",
+				},
+				ccpu: "10m",
+				cmem: "10Mi",
+				rev:  "extensions/v1",
+			}),
+			issues: issues.Issues{
+				issues.Issue{Group: "__root__", Level: issues.WarnLevel, Message: "[POP-403] Deprecated DaemonSet API group `extensions/v1. Use `apps/v1 instead"},
+			},
 		},
 	}
 
@@ -57,6 +75,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				},
 				ccpu: "10m",
 				cmem: "10Mi",
+				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
 				issues.New("i1", issues.WarnLevel, "[POP-106] No resources defined"),
@@ -74,6 +93,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				},
 				ccpu: "10m",
 				cmem: "10Mi",
+				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
 				issues.New(issues.Root, issues.WarnLevel, "[POP-503] At current load, CPU under allocated. Current:20m vs Requested:10m (200.00%)"),
@@ -90,6 +110,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				},
 				ccpu: "10m",
 				cmem: "10Mi",
+				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
 				issues.New(issues.Root, issues.WarnLevel, "[POP-503] At current load, CPU under allocated. Current:20m vs Requested:10m (200.00%)"),
@@ -108,6 +129,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				},
 				ccpu: "10m",
 				cmem: "10Mi",
+				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
 				issues.New(issues.Root, issues.WarnLevel, "[POP-504] At current load, CPU over allocated. Current:20m vs Requested:60m (300.00%)"),
@@ -124,6 +146,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				},
 				ccpu: "10m",
 				cmem: "10Mi",
+				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
 				issues.New(issues.Root, issues.WarnLevel, "[POP-504] At current load, CPU over allocated. Current:20m vs Requested:60m (300.00%)"),
@@ -140,6 +163,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				},
 				ccpu: "10m",
 				cmem: "10Mi",
+				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
 				issues.New(issues.Root, issues.WarnLevel, "[POP-505] At current load, Memory under allocated. Current:20Mi vs Requested:10Mi (200.00%)"),
@@ -156,6 +180,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				},
 				ccpu: "10m",
 				cmem: "10Mi",
+				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
 				issues.New(issues.Root, issues.WarnLevel, "[POP-505] At current load, Memory under allocated. Current:20Mi vs Requested:10Mi (200.00%)"),
@@ -172,6 +197,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				},
 				ccpu: "10m",
 				cmem: "10Mi",
+				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
 				issues.New(issues.Root, issues.WarnLevel, "[POP-506] At current load, Memory over allocated. Current:20Mi vs Requested:60Mi (300.00%)"),
@@ -188,6 +214,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				},
 				ccpu: "10m",
 				cmem: "10Mi",
+				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
 				issues.New(issues.Root, issues.WarnLevel, "[POP-506] At current load, Memory over allocated. Current:20Mi vs Requested:60Mi (300.00%)"),
@@ -212,6 +239,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 type (
 	dsOpts struct {
 		coOpts
+		rev        string
 		ccpu, cmem string
 	}
 
@@ -279,7 +307,7 @@ func makeDS(n string, o dsOpts) *appsv1.DaemonSet {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      n,
 			Namespace: "default",
-			SelfLink:  "/api/apps/v1/blee/blah",
+			SelfLink:  "/api/" + o.rev,
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
