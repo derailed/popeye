@@ -171,15 +171,17 @@ func (p *Popeye) ensureOutput() error {
 	}
 
 	if p.flags.Output == nil {
-		*p.flags.Output = "yaml"
+		*p.flags.Output = "standard"
 	}
 
-	ext := "yaml"
+	ext := "txt"
 	switch *p.flags.Output {
 	case "json":
 		ext = "json"
-	case "xml":
+	case "junit":
 		ext = "xml"
+	case "yaml":
+		ext = "yml"
 	}
 
 	const outFmt = "sanitizer_%s_%d.%s"
