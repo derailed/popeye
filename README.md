@@ -30,7 +30,7 @@ Popeye is available on Linux, OSX and Windows platforms.
   the [release](https://github.com/derailed/popeye/releases) page or
   via the SnapCraft link above.
 
-* For OSX using Homebrew
+* For OSX/Unit using Homebrew/LinuxBrew
 
    ```shell
    brew install derailed/popeye/popeye
@@ -39,8 +39,7 @@ Popeye is available on Linux, OSX and Windows platforms.
 * Building from source
    Popeye was built using go 1.12+. In order to build Popeye from source you must:
    1. Clone the repo
-   2. Set env var *GO111MODULE=on*
-   3. Add the following command in your go.mod file
+   2. Add the following command in your go.mod file
 
       ```text
       replace (
@@ -48,7 +47,7 @@ Popeye is available on Linux, OSX and Windows platforms.
       )
       ```
 
-   4. Build and run the executable
+   3. Build and run the executable
 
         ```shell
         go run main.go
@@ -57,10 +56,13 @@ Popeye is available on Linux, OSX and Windows platforms.
    Quick recipe for the impatient:
 
    ```shell
-   git clone https://github.com/derailed/popeye ;# clone outside of GOPATH
+   # Clone outside of GOPATH
+   git clone https://github.com/derailed/popeye
    cd popeye
-   go install ;# build and install
-   popeye     ;# run
+   # Build and install
+   go install
+   # Run
+   popeye
    ```
 
 ## Sanitizers
@@ -122,7 +124,6 @@ Here is a list of sanitizers in place for the current release.
 | 🛀 | PodDisruptionBudget     |                                                                         | hpa     |
 |    |                         | Unused, Check minAvailable configuration                                | pdb     |
 
-
 ## The Command Line
 
 You can use Popeye standalone or using a spinach yaml config to
@@ -154,7 +155,7 @@ kubectl apply -f k8s/popeye/ns.yml && kubectl apply -f k8s/popeye
 
 ```yaml
 ---
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
   name:      popeye
@@ -183,7 +184,7 @@ spec:
 
 ## Popeye got your RBAC!
 
-In order for Popeye to do his work, the signed in user must have enough RBAC oomph to
+In order for Popeye to do his work, the signed-in user must have enough RBAC oomph to
 get/list the resources mentioned above.
 
 Sample Popeye RBAC Rules (Subject to change!!)
@@ -262,9 +263,9 @@ roleRef:
 
 NOTE: This file will change as Popeye matures!
 
-As of this release the spinach.yml format has changed slightly. There is now a new `exludes` section that allows one to exclude any Kubernetes resources from the sanitizer run. A resource is identified by a resource kind and a fully qualified resource name ie `namespace/resource_name`. For example a pod named fred-1234 in namespace blee FQN will be `blee/fred-1234`. This provides for differentiating `fred/p1` and `blee/p1`. For cluster wide resources, `FQN=name`. Exclude rules can have either a straight string match or a regular expression. In the later case the regular expression must be indicated using the `rx:` prefix.
+As of this release the spinach.yml format has changed slightly. There is now a new `excludes` section that allows one to exclude any Kubernetes resources from the sanitizer run. A resource is identified by a resource kind and a fully qualified resource name ie `namespace/resource_name`. For example a pod named fred-1234 in namespace blee FQN will be `blee/fred-1234`. This provides for differentiating `fred/p1` and `blee/p1`. For cluster wide resources, `FQN=name`. Exclude rules can have either a straight string match or a regular expression. In the later case the regular expression must be indicated using the `rx:` prefix.
 
-NOTE! Please thread carefully here with your regex as more resources than expected may get excluded from the report via a *loose* regex rule. When your cluster resources change, this could lead to rendering sanitization sub-optimal. Once in a while it might be a good idea to run Popeye `Config less` to make sure you're trapping any new issues with your clusters...
+NOTE! Please thread carefully here with your regex as more resources than expected may get excluded from the report via a *loose* regex rule. When your cluster resources change, this could lead to rendering sanitization sub-optimal. Once in a while it might be a good idea to run Popeye `Config less` to make sure you are trapping any new issues with your clusters...
 
 Here is an example spinach file as it stands in this release:
 

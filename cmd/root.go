@@ -76,7 +76,7 @@ func initFlags() {
 		"out",
 		"o",
 		"standard",
-		"Specify the output type (standard, jurassic, yaml, json)",
+		"Specify the output type (standard, jurassic, yaml, json, junit)",
 	)
 
 	rootCmd.Flags().BoolVarP(
