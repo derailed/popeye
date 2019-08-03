@@ -132,8 +132,8 @@ func (b *Builder) PrintSummary(s *Sanitizer) {
 	b.augment()
 	s.Open("SUMMARY", nil)
 	{
-		fmt.Fprintf(s, "Your cluster score: %d -- %s\n", b.Report.totalScore, b.Report.Grade)
-		for _, l := range s.Badge(b.Report.totalScore) {
+		fmt.Fprintf(s, "Your cluster score: %d -- %s\n", b.Report.Score, b.Report.Grade)
+		for _, l := range s.Badge(b.Report.Score) {
 			fmt.Fprintf(s, "%s%s\n", strings.Repeat(" ", Width-20), l)
 		}
 	}
