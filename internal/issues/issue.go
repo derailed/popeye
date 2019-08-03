@@ -47,3 +47,17 @@ func (i Issue) Blank() bool {
 func (i Issue) IsSubIssue() bool {
 	return i.Group != Root
 }
+
+// LevelToStr returns a severity level as a string.
+func LevelToStr(l Level) string {
+	switch l {
+	case ErrorLevel:
+		return "error"
+	case WarnLevel:
+		return "warn"
+	case InfoLevel:
+		return "info"
+	default:
+		return "ok"
+	}
+}

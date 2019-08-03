@@ -28,7 +28,7 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(versionCmd(), diffCmd())
+	rootCmd.AddCommand(versionCmd())
 	initFlags()
 }
 
@@ -45,7 +45,7 @@ func doIt(cmd *cobra.Command, args []string) {
 
 	defer func() {
 		if err := recover(); err != nil {
-			printSosLogo(report.ColorOrangish, report.ColorRed)
+			printMsgLogo("DOH", "X", report.ColorOrangish, report.ColorRed)
 			fmt.Printf("\n\nBoom! %v\n", err)
 			log.Error().Msgf("%v", err)
 			log.Error().Msg(string(debug.Stack()))
@@ -238,12 +238,16 @@ func clearScreen() {
 }
 
 func printSosLogo(title, logo report.Color) {
+	printMsgLogo("SOS", "O", title, logo)
+}
+
+func printMsgLogo(msg, eye string, title, logo report.Color) {
 	for i, s := range report.GraderLogo {
 		switch i {
-		case 0, 2:
-			s = strings.Replace(s, "o", "S", 1)
+		case 0, 1, 2:
+			s = strings.Replace(s, "o", string(msg[i]), 1)
 		case 3:
-			s = strings.Replace(s, "a", "O", 1)
+			s = strings.Replace(s, "a", eye, 1)
 		}
 
 		if i < len(report.Popeye) {

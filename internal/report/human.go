@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func resToTitle() map[string]string {
+func human() map[string]string {
 	return map[string]string{
 		"po":  "pod",
 		"svc": "service",
@@ -28,10 +28,20 @@ func resToTitle() map[string]string {
 	}
 }
 
+// ResToTitle converts a resource name to a title if any.
+func ResToTitle(r string) string {
+	title := r
+	if t, ok := human()[r]; ok {
+		title = t
+	}
+
+	return title
+}
+
 // Titleize returns a human readable resource name.
 func Titleize(r string, count int) string {
 	title := r
-	if t, ok := resToTitle()[r]; ok {
+	if t, ok := human()[r]; ok {
 		title = t
 	}
 

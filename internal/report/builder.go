@@ -2,7 +2,6 @@ package report
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -18,11 +17,14 @@ const (
 	// JurassicFormat dumps sanitizer with 0 fancyness.
 	JurassicFormat = "jurassic"
 
-	// YAMLFormat dumps sanitizer as YAML
+	// YAMLFormat dumps sanitizer as YAML.
 	YAMLFormat = "yaml"
 
-	// JSONFormat dumps sanitizer as JSON
+	// JSONFormat dumps sanitizer as JSON.
 	JSONFormat = "json"
+
+	// JunitFormat dumps sanitizer as JUnit report.
+	JunitFormat = "junit"
 )
 
 type (
@@ -54,6 +56,11 @@ func NewBuilder() *Builder {
 	return &Builder{}
 }
 
+// HasContent checks if we actually have anything to report.
+func (b *Builder) HasContent() bool {
+	return b.Report.sectionsCount != 0
+}
+
 // AddError record an error associted with the report.
 func (b *Builder) AddError(err error) {
 	b.Report.Errors = append(b.Report.Errors, err)
@@ -73,16 +80,30 @@ func (b *Builder) AddSection(name string, o issues.Outcome, t *Tally) {
 	}
 }
 
-// ToYAML dumps sanitizer to YAML.
-func (b *Builder) ToYAML() (string, error) {
-	if b.Report.sectionsCount == 0 {
-		return "", errors.New("Nothing to report, check permissions")
+// ToJunit dumps sanitizer to JUnit.
+func (b *Builder) ToJunit() (string, error) {
+	b.augment()
+	raw, err := junitMarshal(b)
+	if err != nil {
+		return "", err
 	}
 
+	return string(raw), nil
+}
+
+func (b *Builder) augment() {
 	score := b.Report.totalScore / b.Report.sectionsCount
 	b.Report.Score = score
 	b.Report.Grade = Grade(score)
 
+	for i, s := range b.Report.Sections {
+		b.Report.Sections[i].Title = ResToTitle(s.Title)
+	}
+}
+
+// ToYAML dumps sanitizer to YAML.
+func (b *Builder) ToYAML() (string, error) {
+	b.augment()
 	raw, err := yaml.Marshal(b)
 	if err != nil {
 		return "", err
@@ -93,13 +114,7 @@ func (b *Builder) ToYAML() (string, error) {
 
 // ToJSON dumps sanitizer to JSON.
 func (b *Builder) ToJSON() (string, error) {
-	if b.Report.sectionsCount == 0 {
-		return "", errors.New("Nothing to report, check permissions")
-	}
-	score := b.Report.totalScore / b.Report.sectionsCount
-	b.Report.Score = score
-	b.Report.Grade = Grade(score)
-
+	b.augment()
 	raw, err := json.Marshal(b)
 	if err != nil {
 		return "", err
@@ -114,11 +129,11 @@ func (b *Builder) PrintSummary(s *Sanitizer) {
 		return
 	}
 
+	b.augment()
 	s.Open("SUMMARY", nil)
 	{
-		score := b.Report.totalScore / b.Report.sectionsCount
-		fmt.Fprintf(s, "Your cluster score: %d -- %s\n", score, Grade(score))
-		for _, l := range s.Badge(score) {
+		fmt.Fprintf(s, "Your cluster score: %d -- %s\n", b.Report.totalScore, b.Report.Grade)
+		for _, l := range s.Badge(b.Report.totalScore) {
 			fmt.Fprintf(s, "%s%s\n", strings.Repeat(" ", Width-20), l)
 		}
 	}

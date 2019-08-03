@@ -59,14 +59,14 @@ codes:
     message:  Pod was restarted (%d) %s
     severity: 2
   206:
-    message:  No DisruptionBudget in effect
+    message:  No PodDisruptionBudget defined
     severity: 1
   207:
     message:  Pod is in an unhappy phase (%s)
     severity: 3
   # Security
   300:
-    message:  Pod uses the `default` ServiceAccount
+    message:  Using `default` ServiceAccount
     severity: 2
   301:
     message:  Connects to API Server? ServiceAccount token is mounted

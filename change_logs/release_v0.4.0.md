@@ -18,34 +18,24 @@ breakage. So please proceed with caution and please do file issues so we can all
 ### Popeye's Memoires...
 
 Until now Popeye did not really handle any kind of sanitizer run histories. We've now added a `--save` option that allows
-sanitizer runs to be persisted to disk. We've also added a Popeye `diff` subcommand that diffs the last 2 runs and reports
-on the deltas so you can track your cluster score deltas. The saved reports are currently defaulting to yaml.
-
-Provided Popeye has at least 2 saved sanitizer runs, it will perform at diff using the following command:
+sanitizer runs to be persisted to disk.
 
 ```shell
-# Perform a cluster blee sanitization and persis results to disk.
-popeye -A --cluster blee --save
-# Runs a sanitizer diff report on a Kubernetes cluster named blee
-popeye diff --cluster blee
+# Perform a cluster blee sanitization and persists results to disk.
+popeye -A  --save
 ```
-
-NOTE: The diff could have issues if a managed pod is reincarnated into a new pod in the set. At that time Popeye may have a tough time locating the correct diff from the previous run. We've tried our best to match, but please vet the results or report a bug if that is not the case.
-
-NOTE: Given the code flux and the current state of affairs, we can't guarantee the quality of the diffs as the sanitizer report format are still work in progress and could change in the future. Will do our best to keep things stable, but there is a good chance the diff may yield false-positive/negative in the interim. So please take this initial pass with a grain of salt.
 
 ### Codes
 
-We've refactored the sanitizer report to now include sanitizer codes. Each report section have a different set of codes depending on the sanitization check. For instances code `POP-106 No resource defined` will now be indicated in the report. We will document the various codes, their meanings and resolutions once we've got a chance to vet the changes and make sure we're all happy with the reports!
+We've refactored the sanitizer report to now include sanitizer codes. Each report section have a different set of codes depending on the sanitization checks. For instances code `POP-106 No resource defined` will now be indicated in the report. We will document the various codes, their meanings and resolutions once we've got a chance to vet the changes and make sure we're all happy with the reports!
 
-On this note, and an interesting side effect, you can now change the code severity level in your spinchyaml file. There has been some reports, that manifested a need to change the message severity based on your cluster policies. That said, I would warn against it, as the end goal here is to come up with a set of standard best practices across all clusters. The reason I've decided to open this up a bit was so that we can zero in as a community for clusters best practices and not my sol insights. So I will ask, that if you do feel the urge to modify a sanitizer code severity, you file an issue so that we can discuss as a community and come up with the best directives so we all win.
-So let's all optimize for correctness and not cluster scores. This
-is a total backdoor for going from F->A by setting all severities to OK! ;)
+On this note, and an interesting side effect, you can now change the code severity level in your `Spinchyaml` config file. There has been some reports, that voiced a need to change the message severity based on your cluster policies. That said, I would warn against it, as the end goal here is to come up with a set of standard best practices across all clusters. The reason I've decided to open this up a bit was so that we can zero in as a community for clusters best practices and not my sol insights. So I will ask, that if you do feel the urge to modify a sanitizer code severity, you file an issue so that we can discuss as a group and come up with the best directives so in the end we all win.
+So let's all optimize for correctness and not cluster scores. This is a total backdoor for going from F->A by setting all severities to OK! ;)
 
 Here is a sample spinach.yml config to override a code severity:
 
 ```yaml
-# Severity: Ok: 0, Info: 1, Warn: 2, Error: 3
+# Severities: Ok: 0, Info: 1, Warn: 2, Error: 3
 popeye:
   codes:
     206:
@@ -58,11 +48,11 @@ In this drop we've also added a few security rules as sanitizer checks. This is 
 
 As a results Popeye will notify if the following conditions are true on your clusters:
 
-1. Running Pods' in the default serviceaccount
-1. Running containers are root
-1. Mounting API server certs.
+1. Running Pods in the `default` serviceaccount
+2. Pod Running containers are root
+3. Pod Mounting API server certs.
 
-We're going to be more active in this area in the next few drops so please let us know what other checks might be useful so we can prioritize accordingly.
+We're going to be more active in this area in the next few drops so please let us know which checks might be most useful so we can prioritize accordingly.
 
 ### Mo' Resources
 
@@ -76,7 +66,7 @@ In this release we've added a few new resources to the sanitization pass. Some c
 
 ### Linux Brewed!
 
-Sadly, we're are still having issues deploying Popeye as a snap ;( Though we're hopefull these will be resolved soon, we've decided to offer a brewed version of Popeye as an alternate for our Linux friends.
+Sadly, we're are still having issues deploying Popeye as a snap ;( Though we're hopefull these will be resolved soon, we've decided to offer a brewed version of Popeye as an alternate for our [Linux](https://docs.brew.sh/Homebrew-on-Linux) friends.
 
 ```shell
 brew install derailed/popeye/popeye
@@ -84,13 +74,11 @@ brew install derailed/popeye/popeye
 
 ### Deprecation
 
-Saving the best for last. As you might be aware K8s 1.6 drop is going to actually remove some resources group/version and hence operators are going to need to not only change their application manifests but also update their dependencies in the shape of Helm charts, custom resources, operator, etc... This is going to most likely cause some serious disturbances in the force.
+Saving the best for last. As you might be aware K8s 1.6 drop is going to actually remove some resources group/version and hence cluster admins/operators are going to need to not only change their application manifests but also update their dependencies in the shape of Helm charts, custom resources, operator, etc... This is going to most likely cause some disturbence in the force.
 
 No worries Popeye has your back!
 
-In this drop, we've added some very basic check for potential use of deprecated API that are going away. Since Popeye looks at a live cluster and what is actually deploy, the sanitizers will alert you of potential deprecation problems before you update your entire Kubernetes cluster to 1.6 or in having to spin up a 1.6 cluster.
-
-To be fair, we are not entirely certain Popeye will pick up or correctly report on all issue, but it should do a fairly decent job in picking up all resources that were `kubectl` applied. Potentially Popeye may fail on operator or CRDS that potentially spin off controlled resources.
+In this drop, we've added some very basic check for potential use of deprecated API that are going away in the next K8s release in September. Since Popeye looks at a live cluster and what is actually deployed and running, the sanitizers will alert you of potential deprecation problems before you update your entire Kubernetes cluster to 1.6.
 
 That said, we expect Popeye to report on the following deprecated API that will soon be removed in your updated clusters:
 

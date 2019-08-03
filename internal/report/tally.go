@@ -185,3 +185,16 @@ func toPerc(v1, v2 float64) float64 {
 	}
 	return (v1 / v2) * 100
 }
+
+func indexToTally(i int) string {
+	switch i {
+	case 1:
+		return "Info"
+	case 2:
+		return "Warn"
+	case 3:
+		return "Error"
+	default:
+		return "OK"
+	}
+}

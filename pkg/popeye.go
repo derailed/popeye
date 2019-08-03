@@ -3,6 +3,8 @@ package pkg
 import (
 	"bufio"
 	"context"
+	"encoding/xml"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,7 +17,6 @@ import (
 	"github.com/derailed/popeye/internal/scrub"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -73,7 +74,11 @@ func (p *Popeye) Init() error {
 
 // Sanitize scans a cluster for potential issues.
 func (p *Popeye) Sanitize() error {
-	defer p.outputTarget.Close()
+	defer func() {
+		if p.outputTarget != os.Stdout {
+			p.outputTarget.Close()
+		}
+	}()
 
 	if err := p.sanitize(); err != nil {
 		return err
@@ -85,18 +90,30 @@ func (p *Popeye) Sanitize() error {
 func (p *Popeye) dump(printHeader bool) error {
 	var jurassicMode bool
 
+	if !p.builder.HasContent() {
+		return errors.New("Nothing to report, check section name or permissions")
+	}
+
 	switch p.flags.OutputFormat() {
+	case report.JunitFormat:
+		res, err := p.builder.ToJunit()
+		if err != nil {
+			// log.().Err(err).Msg("Unable to dump Junit report")
+			return err
+		}
+		p.outputTarget.WriteString(xml.Header)
+		fmt.Fprintf(p.outputTarget, "%v\n", res)
 	case report.YAMLFormat:
 		res, err := p.builder.ToYAML()
 		if err != nil {
-			log.Fatal().Err(err).Msg("Unable to dump YAML report")
+			// log.Fatal().Err(err).Msg("Unable to dump YAML report")
 			return err
 		}
 		fmt.Fprintf(p.outputTarget, "%v\n", res)
 	case report.JSONFormat:
 		res, err := p.builder.ToJSON()
 		if err != nil {
-			log.Fatal().Err(err).Msg("Unable to dump JSON report")
+			// log.Fatal().Err(err).Msg("Unable to dump JSON report")
 			return err
 		}
 		fmt.Fprintf(p.outputTarget, "%v\n", res)
@@ -153,9 +170,20 @@ func (p *Popeye) ensureOutput() error {
 		return nil
 	}
 
-	*p.flags.Output = "yaml"
-	const outFmt = "sanitizer_%s_%d.yml"
-	f := filepath.Join(DumpDir, fmt.Sprintf(outFmt, p.client.ActiveCluster(), time.Now().UnixNano()))
+	if p.flags.Output == nil {
+		*p.flags.Output = "yaml"
+	}
+
+	ext := "yaml"
+	switch *p.flags.Output {
+	case "json":
+		ext = "json"
+	case "xml":
+		ext = "xml"
+	}
+
+	const outFmt = "sanitizer_%s_%d.%s"
+	f := filepath.Join(DumpDir, fmt.Sprintf(outFmt, p.client.ActiveCluster(), time.Now().UnixNano(), ext))
 	var err error
 	if p.outputTarget, err = os.Create(f); err != nil {
 		return err
