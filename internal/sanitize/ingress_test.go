@@ -21,7 +21,7 @@ func TestIngressSanitize(t *testing.T) {
 		"guizard": {
 			rev: "extensions/v1beta1",
 			e: issues.Issues{
-				{Group: issues.Root, Message: "[POP-403] Deprecated Ingress API group `extensions/v1beta1. Use `networking.k8s.io/v1beta1 instead", Level: issues.WarnLevel},
+				{Group: issues.Root, Message: `[POP-403] Deprecated Ingress API group "extensions/v1beta1". Use "networking.k8s.io/v1beta1" instead`, Level: issues.WarnLevel},
 			},
 		},
 	}

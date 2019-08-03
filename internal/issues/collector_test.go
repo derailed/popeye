@@ -223,7 +223,8 @@ func TestAddSubCode(t *testing.T) {
 }
 
 func loadCodes(t *testing.T) *Codes {
-	codes, err := LoadCodes("../../assets/codes.yml")
+	codes, err := LoadCodes()
 	assert.Nil(t, err)
+
 	return codes
 }

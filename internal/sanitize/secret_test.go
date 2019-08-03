@@ -23,7 +23,7 @@ func TestSecretSanitize(t *testing.T) {
 
 	ii = s.Outcome()["default/sec4"]
 	assert.Equal(t, 1, len(ii))
-	assert.Equal(t, "[POP-401] Key `k2` used? Unable to locate key reference", ii[0].Message)
+	assert.Equal(t, `[POP-401] Key "k2" used? Unable to locate key reference`, ii[0].Message)
 	assert.Equal(t, issues.InfoLevel, ii[0].Level)
 }
 

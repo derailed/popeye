@@ -31,7 +31,7 @@ func TestNPSanitize(t *testing.T) {
 				issues.Issue{
 					Group:   "__root__",
 					Level:   2,
-					Message: "[POP-403] Deprecated NetworkPolicy API group `policy/v1beta1. Use `networking.k8s.io/v1 instead"},
+					Message: `[POP-403] Deprecated NetworkPolicy API group "policy/v1beta1". Use "networking.k8s.io/v1" instead`},
 			},
 		},
 		"noPodRef": {

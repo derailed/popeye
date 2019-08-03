@@ -85,7 +85,7 @@ func TestDPSanitize(t *testing.T) {
 				issues.New(
 					issues.Root,
 					issues.WarnLevel,
-					"[POP-403] Deprecated Deployment API group `extensions/v1. Use `apps/v1 instead",
+					`[POP-403] Deprecated Deployment API group "extensions/v1". Use "apps/v1" instead`,
 				),
 			},
 		},

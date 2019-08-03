@@ -9,6 +9,7 @@ import (
 	"github.com/derailed/popeye/internal/issues"
 )
 
+// TestSuites a collection of junit test suites.
 type TestSuites struct {
 	XMLName  xml.Name `xml:"testsuites"`
 	Name     string   `xml:"name,attr"`
@@ -18,6 +19,7 @@ type TestSuites struct {
 	Suites   []TestSuite
 }
 
+// TestSuite represents a collection of tests
 type TestSuite struct {
 	XMLName    xml.Name   `xml:"testsuite"`
 	Name       string     `xml:"name,attr"`
@@ -28,6 +30,7 @@ type TestSuite struct {
 	TestCases  []TestCase
 }
 
+// TestCase represents a sing junit test.
 type TestCase struct {
 	XMLName   xml.Name `xml:"testcase"`
 	Classname string   `xml:"classname,attr"`
@@ -35,11 +38,13 @@ type TestCase struct {
 	Failure   *Failure `xml:"failure,omitempty"`
 }
 
+// Property represents key/value pair.
 type Property struct {
 	Name  string `xml:"name,attr"`
 	Value string `xml:"value,attr"`
 }
 
+// Failure represents a test failure.
 type Failure struct {
 	Message  string `xml:"message,attr"`
 	Type     string `xml:"type,attr"`

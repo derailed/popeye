@@ -48,7 +48,7 @@ func TestDSSanitize(t *testing.T) {
 				rev:  "extensions/v1",
 			}),
 			issues: issues.Issues{
-				issues.Issue{Group: "__root__", Level: issues.WarnLevel, Message: "[POP-403] Deprecated DaemonSet API group `extensions/v1. Use `apps/v1 instead"},
+				issues.Issue{Group: "__root__", Level: issues.WarnLevel, Message: `[POP-403] Deprecated DaemonSet API group "extensions/v1". Use "apps/v1" instead`},
 			},
 		},
 	}

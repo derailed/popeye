@@ -38,7 +38,7 @@ func TestSTSSanitizer(t *testing.T) {
 				ccpu:        "100m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.Issue{Group: "__root__", Level: 2, Message: "[POP-403] Deprecated StatefulSet API group `extensions/v1. Use `apps/v1 instead"},
+				issues.Issue{Group: "__root__", Level: 2, Message: `[POP-403] Deprecated StatefulSet API group "extensions/v1". Use "apps/v1" instead`},
 			},
 		},
 		"used?": {

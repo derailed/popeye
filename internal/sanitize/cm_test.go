@@ -11,7 +11,7 @@ import (
 )
 
 func loadCodes(t *testing.T) *issues.Codes {
-	codes, err := issues.LoadCodes("../../assets/codes.yml")
+	codes, err := issues.LoadCodes()
 	assert.Nil(t, err)
 	return codes
 }
@@ -29,7 +29,7 @@ func TestConfigMapSanitize(t *testing.T) {
 
 	ii = cm.Outcome()["default/cm4"]
 	assert.Equal(t, 1, len(ii))
-	assert.Equal(t, "[POP-401] Key `k2` used? Unable to locate key reference", ii[0].Message)
+	assert.Equal(t, `[POP-401] Key "k2" used? Unable to locate key reference`, ii[0].Message)
 	assert.Equal(t, issues.InfoLevel, ii[0].Level)
 }
 

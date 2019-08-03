@@ -205,7 +205,7 @@ func (p *Popeye) sanitize() error {
 	)
 
 	cache := scrub.NewCache(p.client, p.config)
-	codes, err := issues.LoadCodes("assets/codes.yml")
+	codes, err := issues.LoadCodes()
 	if err != nil {
 		return err
 	}

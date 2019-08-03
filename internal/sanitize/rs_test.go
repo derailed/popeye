@@ -30,7 +30,7 @@ func TestRSSanitize(t *testing.T) {
 				issues.Issue{
 					Group:   "__root__",
 					Level:   2,
-					Message: "[POP-403] Deprecated ReplicaSet API group `extensions/v1beta1. Use `apps/v1 instead"},
+					Message: `[POP-403] Deprecated ReplicaSet API group "extensions/v1beta1". Use "apps/v1" instead`},
 			},
 		},
 	}

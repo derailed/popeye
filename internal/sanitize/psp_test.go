@@ -30,7 +30,7 @@ func TestPSPSanitize(t *testing.T) {
 				issues.Issue{
 					Group:   "__root__",
 					Level:   2,
-					Message: "[POP-403] Deprecated PodSecurityPolicy API group `extensions/v1beta1. Use `policy/v1beta1 instead"},
+					Message: `[POP-403] Deprecated PodSecurityPolicy API group "extensions/v1beta1". Use "policy/v1beta1" instead`},
 			},
 		},
 	}
