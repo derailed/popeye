@@ -35,7 +35,8 @@ type TestCase struct {
 	XMLName   xml.Name `xml:"testcase"`
 	Classname string   `xml:"classname,attr"`
 	Name      string   `xml:"name,attr"`
-	Failure   *Failure `xml:"failure,omitempty"`
+	Failures  []Failure
+	Errors    []Error
 }
 
 // Property represents key/value pair.
@@ -46,9 +47,16 @@ type Property struct {
 
 // Failure represents a test failure.
 type Failure struct {
-	Message  string `xml:"message,attr"`
-	Type     string `xml:"type,attr"`
-	Contents string `xml:",chardata"`
+	XMLName xml.Name `xml:"failure"`
+	Message string   `xml:"message,attr"`
+	Type    string   `xml:"type,attr"`
+}
+
+// Error represents a test error..
+type Error struct {
+	XMLName xml.Name `xml:"error"`
+	Message string   `xml:"message,attr"`
+	Type    string   `xml:"type,attr"`
 }
 
 func junitMarshal(b *Builder) ([]byte, error) {
@@ -76,12 +84,28 @@ func newSuite(s Section) TestSuite {
 	ts.Properties = tallyToProps(s.Tally)
 
 	for k, v := range s.Outcome {
-		for _, issue := range v {
-			ts.TestCases = append(ts.TestCases, newTestCase(k, issue))
-		}
-
+		ts.TestCases = append(ts.TestCases, newTestCase(k, v))
 	}
 	return ts
+}
+
+func newTestCase(res string, ii issues.Issues) TestCase {
+	ns, n := namespaced(res)
+	tc := TestCase{
+		Classname: ns,
+		Name:      n,
+	}
+
+	for _, i := range ii {
+		switch i.Level {
+		case issues.WarnLevel:
+			tc.Failures = append(tc.Failures, newFailure(i))
+		case issues.ErrorLevel:
+			tc.Errors = append(tc.Errors, newError(i))
+		}
+	}
+
+	return tc
 }
 
 func numTests(o issues.Outcome) (total, fails, errors int) {
@@ -111,15 +135,6 @@ func tallyToProps(t *Tally) []Property {
 	return p
 }
 
-func newTestCase(res string, i issues.Issue) TestCase {
-	ns, n := namespaced(res)
-	return TestCase{
-		Classname: ns,
-		Name:      n,
-		Failure:   newFailure(i),
-	}
-}
-
 func namespaced(res string) (string, string) {
 	tokens := strings.Split(res, "/")
 	if len(tokens) < 2 {
@@ -128,8 +143,15 @@ func namespaced(res string) (string, string) {
 	return tokens[0], tokens[1]
 }
 
-func newFailure(i issues.Issue) *Failure {
-	return &Failure{
+func newFailure(i issues.Issue) Failure {
+	return Failure{
+		Message: i.Message,
+		Type:    issues.LevelToStr(i.Level),
+	}
+}
+
+func newError(i issues.Issue) Error {
+	return Error{
 		Message: i.Message,
 		Type:    issues.LevelToStr(i.Level),
 	}
