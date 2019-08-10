@@ -23,7 +23,7 @@ func human() map[string]string {
 		"pdb": "poddisruptionbudget",
 		"np":  "networkpolicy",
 		"psp": "podsecuritypolicy",
-		"rs":  "replicatset",
+		"rs":  "replicaset",
 		"cl":  "cluster",
 	}
 }
