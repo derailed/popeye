@@ -84,8 +84,12 @@ func (s *ServiceAccount) Sanitize(ctx context.Context) error {
 }
 
 func (s *ServiceAccount) checkSecretRefs(fqn string, refs []v1.ObjectReference) {
+	ns, _ := namespaced(fqn)
 	for _, ref := range refs {
-		sfqn := cache.FQN(ref.Namespace, ref.Name)
+		if ref.Namespace != "" {
+			ns = ref.Namespace
+		}
+		sfqn := cache.FQN(ns, ref.Name)
 		if _, ok := s.ListSecrets()[sfqn]; !ok {
 			s.AddCode(304, fqn, sfqn)
 		}
