@@ -2,7 +2,7 @@
 # Build...
 FROM golang:1.12.3-alpine AS build
 
-ENV VERSION=v0.3.0 GO111MODULE=on PACKAGE=github.com/derailed/popeye
+ENV VERSION=v0.4.2 GO111MODULE=on PACKAGE=github.com/derailed/popeye
 
 WORKDIR /go/src/$PACKAGE
 

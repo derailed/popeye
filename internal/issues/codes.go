@@ -66,6 +66,7 @@ func validSeverity(l Level) bool {
 
 const codes = `
 codes:
+  # -------------------------------------------------------------------------
   # Container
   100:
     message:  Untagged docker image in use
@@ -106,6 +107,8 @@ codes:
   112:
     message:  Memory Current/Limit (%s/%s) reached user %d%% threshold (%d%%)
     severity: 3
+
+  # -------------------------------------------------------------------------
   # Pod
   200:
     message:  Pod is terminating [%d/%d]
@@ -131,6 +134,8 @@ codes:
   207:
     message:  Pod is in an unhappy phase (%s)
     severity: 3
+
+  # -------------------------------------------------------------------------
   # Security
   300:
     message:  Using "default" ServiceAccount
@@ -150,6 +155,8 @@ codes:
   305:
     message: References a docker-image "%s" pull secret which does not exists
     severity: 3
+
+    # -------------------------------------------------------------------------
   # General
   400:
     message:  Used? Unable to locate resource reference
@@ -172,6 +179,8 @@ codes:
   406:
     message:  K8s version OK
     severity: 0
+
+  # -------------------------------------------------------------------------
   # Deployment + StatefulSet
   500:
     message:  Zero scale detected
@@ -213,6 +222,8 @@ codes:
   605:
     message:  If ALL HPAs triggered, %s will match/exceed cluster memory(%s) capacity by %s
     severity: 2
+
+  # -------------------------------------------------------------------------
   # Node
   700:
     message:  Found taint "%s" but no pod can tolerate
@@ -247,6 +258,8 @@ codes:
   710:
     message:  Memory threshold (%d%%) reached %d%%
     severity: 2
+
+  # -------------------------------------------------------------------------
   # Namespace
   800:
     message:  Namespace is inactive
@@ -273,6 +286,8 @@ codes:
   1004:
     message:  Lost claim detected
     severity: 3
+
+  # -------------------------------------------------------------------------
   # Service
   1100:
     message:  No pods match service selector
@@ -292,6 +307,8 @@ codes:
   1105:
     message:  No associated endpoints
     severity: 3
+
+  # -------------------------------------------------------------------------
   # NetworkPolicies
   1200:
     message:  No pods matches %s pod selector
