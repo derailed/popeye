@@ -144,7 +144,7 @@ codes:
     message:  Connects to API Server? ServiceAccount token is mounted
     severity: 2
   302:
-    message:  Containers are running as root
+    message:  Containers are possibly running as root
     severity: 2
   303:
     message: Do you mean it? ServiceAccount is automounting APIServer credentials
