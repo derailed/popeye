@@ -28,4 +28,4 @@ popeye:
         message: '[POP-301] Connects to API Server? ServiceAccount token is mounted'
       - group: __root__
         level: 2
-        message: '[POP-302] Containers are running as root'
+        message: '[POP-302] Containers are possibly running as root'
