@@ -5,11 +5,11 @@ import "fmt"
 const (
 	// OkLevel denotes no sanitizing issues.
 	OkLevel Level = iota
-	// InfoLevel denotes and FYI issues.
+	// InfoLevel denotes a FYI issues.
 	InfoLevel
-	// WarnLevel denotes a warning issui.
+	// WarnLevel denotes a warning issue.
 	WarnLevel
-	// ErrorLevel denotes a serious issui.
+	// ErrorLevel denotes a serious issue.
 	ErrorLevel
 )
 
