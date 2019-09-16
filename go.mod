@@ -1,6 +1,6 @@
 module github.com/derailed/popeye
 
-go 1.12
+go 1.13
 
 replace (
 	k8s.io/api => k8s.io/api v0.0.0-20190620084959-7cf5895f2711
