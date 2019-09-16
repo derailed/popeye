@@ -26,30 +26,18 @@ replace (
 )
 
 require (
-	contrib.go.opencensus.io/exporter/ocagent v0.4.3 // indirect
+	contrib.go.opencensus.io/exporter/ocagent v0.6.0 // indirect
 	github.com/Azure/go-autorest v11.5.0+incompatible // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.2.1 // indirect
-	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
-	github.com/golang/protobuf v1.3.1 // indirect
-	github.com/google/btree v0.0.0-20180813153112-4030bb1f1f0c // indirect
 	github.com/googleapis/gnostic v0.2.0 // indirect
 	github.com/gophercloud/gophercloud v0.2.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
-	github.com/kr/pretty v0.0.0-20140812000539-f31442d60e51 // indirect
-	github.com/kr/text v0.0.0-20130911015532-6807e777504f // indirect
 	github.com/onsi/ginkgo v1.8.0
 	github.com/rs/zerolog v1.12.0
 	github.com/spf13/cobra v0.0.4
 	github.com/stretchr/testify v1.3.0
-	go.opencensus.io v0.19.1 // indirect
-	golang.org/x/net v0.0.0-20190620200207-3b0461eec859 // indirect
-	golang.org/x/sys v0.0.0-20190502145724-3ef323f4f1fd // indirect
-	golang.org/x/text v0.3.2 // indirect
-	golang.org/x/time v0.0.0-20181108054448-85acf8d2951c // indirect
-	google.golang.org/genproto v0.0.0-20190425155659-357c62f0e4bb // indirect
-	google.golang.org/grpc v1.20.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 	k8s.io/api v0.0.0
