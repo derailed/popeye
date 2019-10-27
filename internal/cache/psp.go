@@ -1,7 +1,7 @@
 package cache
 
 import (
-	pv1beta1 "k8s.io/api/extensions/v1beta1"
+	pv1beta1 "k8s.io/api/policy/v1beta1"
 )
 
 // PodSecurityPolicyKey tracks PodSecurityPolicy ressource references

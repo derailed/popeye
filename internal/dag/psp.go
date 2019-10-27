@@ -4,7 +4,7 @@ import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/rs/zerolog/log"
-	pv1beta1 "k8s.io/api/extensions/v1beta1"
+	pv1beta1 "k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -43,5 +43,5 @@ func listAllPodSecurityPolicys(c *k8s.Client) (map[string]*pv1beta1.PodSecurityP
 
 // FetchPodSecurityPolicys retrieves all PodSecurityPolicys on the cluster.
 func fetchPodSecurityPolicys(c *k8s.Client) (*pv1beta1.PodSecurityPolicyList, error) {
-	return c.DialOrDie().ExtensionsV1beta1().PodSecurityPolicies().List(metav1.ListOptions{})
+	return c.DialOrDie().PolicyV1beta1().PodSecurityPolicies().List(metav1.ListOptions{})
 }
