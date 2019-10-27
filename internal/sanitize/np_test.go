@@ -43,12 +43,12 @@ func TestNPSanitize(t *testing.T) {
 				issues.Issue{
 					Group:   "__root__",
 					Level:   2,
-					Message: "[POP-1200] No pods matches Ingress pod selector",
+					Message: "[POP-1200] No pods match Ingress pod selector",
 				},
 				issues.Issue{
 					Group:   "__root__",
 					Level:   2,
-					Message: "[POP-1200] No pods matches Egress pod selector",
+					Message: "[POP-1200] No pods match Egress pod selector",
 				},
 			},
 		},
@@ -61,12 +61,12 @@ func TestNPSanitize(t *testing.T) {
 				issues.Issue{
 					Group:   "__root__",
 					Level:   2,
-					Message: "[POP-1201] No namespaces matches Ingress namespace selector",
+					Message: "[POP-1201] No namespaces match Ingress namespace selector",
 				},
 				issues.Issue{
 					Group:   "__root__",
 					Level:   2,
-					Message: "[POP-1201] No namespaces matches Egress namespace selector",
+					Message: "[POP-1201] No namespaces match Egress namespace selector",
 				},
 			},
 		},
