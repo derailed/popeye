@@ -150,10 +150,10 @@ codes:
     message: Do you mean it? ServiceAccount is automounting APIServer credentials
     severity: 2
   304:
-    message: References a secret "%s" which does not exists
+    message: References a secret "%s" which does not exist
     severity: 3
   305:
-    message: References a docker-image "%s" pull secret which does not exists
+    message: References a docker-image "%s" pull secret which does not exist
     severity: 3
 
     # -------------------------------------------------------------------------
@@ -311,9 +311,9 @@ codes:
   # -------------------------------------------------------------------------
   # NetworkPolicies
   1200:
-    message:  No pods matches %s pod selector
+    message:  No pods match %s pod selector
     severity: 2
   1201:
-    message:  No namespaces matches %s namespace selector
+    message:  No namespaces match %s namespace selector
     severity: 2
 `
