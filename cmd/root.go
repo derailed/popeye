@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -54,6 +55,10 @@ func doIt(cmd *cobra.Command, args []string) {
 	}()
 
 	clearScreen()
+	err := checkFlags()
+	if err != nil {
+		bomb(fmt.Sprintf("%v", err))
+	}
 	popeye, err := pkg.NewPopeye(flags, &log.Logger)
 	if err != nil {
 		bomb(fmt.Sprintf("Popeye configuration load failed %v", err))
@@ -76,7 +81,7 @@ func initFlags() {
 		"out",
 		"o",
 		"standard",
-		"Specify the output type (standard, jurassic, yaml, json, junit)",
+		"Specify the output type (standard, jurassic, yaml, json, junit, prometheus)",
 	)
 
 	rootCmd.Flags().BoolVarP(
@@ -225,6 +230,20 @@ func initFlags() {
 		"",
 		"If present, the namespace scope for this CLI request",
 	)
+
+	rootCmd.Flags().StringVar(
+		flags.PushGatewayAddress,
+		"pushgateway-address",
+		"",
+		"Address of pushgateway e.g. http://localhost:9091",
+	)
+}
+
+func checkFlags() error {
+	if flags.OutputFormat() == report.PrometheusFormat && *flags.PushGatewayAddress == "" {
+		return errors.New("Please set pushgateway-address.")
+	}
+	return nil
 }
 
 // ----------------------------------------------------------------------------

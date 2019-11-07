@@ -35,6 +35,7 @@ require (
 	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/onsi/ginkgo v1.8.0
+	github.com/prometheus/client_golang v1.2.1
 	github.com/rs/zerolog v1.12.0
 	github.com/spf13/cobra v0.0.4
 	github.com/stretchr/testify v1.3.0

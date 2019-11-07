@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/prometheus/client_golang/prometheus/push"
 	"gopkg.in/yaml.v2"
 )
 
@@ -25,6 +26,9 @@ const (
 
 	// JunitFormat dumps sanitizer as JUnit report.
 	JunitFormat = "junit"
+
+	// Prometheus pushes sanitizer as Prometheus metrics.
+	PrometheusFormat = "prometheus"
 )
 
 type (
@@ -121,6 +125,13 @@ func (b *Builder) ToJSON() (string, error) {
 	}
 
 	return string(raw), nil
+}
+
+// ToPrometheus returns prometheus pusher.
+func (b *Builder) ToPrometheus(address *string) *push.Pusher {
+	b.augment()
+	pusher := prometheusMarshal(b, address)
+	return pusher
 }
 
 // PrintSummary print outs summary report to screen.

@@ -8,28 +8,30 @@ import (
 type Flags struct {
 	*genericclioptions.ConfigFlags
 
-	LintLevel       *string
-	Output          *string
-	ClearScreen     *bool
-	Save            *bool
-	CheckOverAllocs *bool
-	AllNamespaces   *bool
-	Spinach         *string
-	Sections        *[]string
+	LintLevel          *string
+	Output             *string
+	ClearScreen        *bool
+	Save               *bool
+	CheckOverAllocs    *bool
+	AllNamespaces      *bool
+	Spinach            *string
+	Sections           *[]string
+	PushGatewayAddress *string
 }
 
 // NewFlags returns new configuration flags.
 func NewFlags() *Flags {
 	return &Flags{
-		LintLevel:       strPtr(defaultLintLevel),
-		Output:          strPtr("standard"),
-		AllNamespaces:   boolPtr(false),
-		Save:            boolPtr(false),
-		ClearScreen:     boolPtr(false),
-		CheckOverAllocs: boolPtr(false),
-		Spinach:         strPtr(""),
-		Sections:        &[]string{},
-		ConfigFlags:     genericclioptions.NewConfigFlags(false)}
+		LintLevel:          strPtr(defaultLintLevel),
+		Output:             strPtr("standard"),
+		AllNamespaces:      boolPtr(false),
+		Save:               boolPtr(false),
+		ClearScreen:        boolPtr(false),
+		CheckOverAllocs:    boolPtr(false),
+		Spinach:            strPtr(""),
+		Sections:           &[]string{},
+		ConfigFlags:        genericclioptions.NewConfigFlags(false),
+		PushGatewayAddress: strPtr("")}
 }
 
 // OutputFormat returns the report output format.
