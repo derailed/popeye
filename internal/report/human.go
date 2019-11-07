@@ -7,6 +7,7 @@ import (
 
 func human() map[string]string {
 	return map[string]string{
+		"ing": "ingress",
 		"po":  "pod",
 		"svc": "service",
 		"no":  "node",
