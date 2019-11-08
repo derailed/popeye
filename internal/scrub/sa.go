@@ -17,6 +17,7 @@ type ServiceAccount struct {
 	*cache.ClusterRoleBinding
 	*cache.RoleBinding
 	*cache.Secret
+	*cache.Ingress
 }
 
 // NewServiceAccount return a new ServiceAccount sanitizer.
@@ -52,6 +53,12 @@ func NewServiceAccount(c *Cache, codes *issues.Codes) Sanitizer {
 		s.AddErr("secrets", err)
 	}
 	s.Secret = cache.NewSecret(secrets)
+
+	ing, err := c.ingresses()
+	if err != nil {
+		s.AddErr("ingresses", err)
+	}
+	s.Ingress = ing
 
 	return &s
 }
