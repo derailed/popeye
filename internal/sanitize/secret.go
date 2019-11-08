@@ -20,10 +20,16 @@ type (
 		ServiceAccountRefs(cache.ObjReferences)
 	}
 
+	// IngressRefs tracks Ingress object references.
+	IngressRefs interface {
+		IngressRefs(cache.ObjReferences)
+	}
+
 	// SecretLister list available Secrets on a cluster.
 	SecretLister interface {
 		PodRefs
 		SARefs
+		IngressRefs
 		ListSecrets() map[string]*v1.Secret
 	}
 )
@@ -42,6 +48,7 @@ func (s *Secret) Sanitize(context.Context) error {
 
 	s.PodRefs(refs)
 	s.ServiceAccountRefs(refs)
+	s.IngressRefs(refs)
 	s.checkInUse(refs)
 
 	return nil

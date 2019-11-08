@@ -49,6 +49,8 @@ func (m secretMock) PodRefs(refs cache.ObjReferences) {
 	}
 }
 
+func (m secretMock) IngressRefs(cache.ObjReferences) {}
+
 func (m secretMock) ServiceAccountRefs(refs cache.ObjReferences) {
 	refs["sec:default/sec5"] = cache.StringSet{
 		"all": cache.Blank,
