@@ -9,22 +9,33 @@ const namespace = "popeye"
 
 // Metrics
 var (
-	score = prometheus.NewGauge(prometheus.GaugeOpts{
+	score = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "score",
 		Help:      "Score of kubernetes cluster.",
-	})
-	grade = prometheus.NewGauge(prometheus.GaugeOpts{
+	},
+		[]string{
+			"cluster",
+			"namespace",
+		})
+	grade = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "grade",
 		Help:      "Grade of kubernetes cluster. (1: A, 2: B, 3: C, 4: D, 5: E, 6: F)",
-	})
+	},
+		[]string{
+			"cluster",
+			"namespace",
+			"grade",
+		})
 	sanitizersOk = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "sanitizers_ok",
 		Help:      "Sanitizer ok level results for resource groups.",
 	},
 		[]string{
+			"cluster",
+			"namespace",
 			"title",
 		})
 	sanitizersInfo = prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -33,6 +44,8 @@ var (
 		Help:      "Sanitizer info level results for resource groups.",
 	},
 		[]string{
+			"cluster",
+			"namespace",
 			"title",
 		})
 	sanitizersWarning = prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -41,6 +54,8 @@ var (
 		Help:      "Sanitizer warning level results for resource groups.",
 	},
 		[]string{
+			"cluster",
+			"namespace",
 			"title",
 		})
 	sanitizersError = prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -49,6 +64,8 @@ var (
 		Help:      "Sanitizer error level results for resource groups.",
 	},
 		[]string{
+			"cluster",
+			"namespace",
 			"title",
 		})
 	sanitizersScore = prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -57,36 +74,42 @@ var (
 		Help:      "Sanitizer score results for resource groups.",
 	},
 		[]string{
+			"cluster",
+			"namespace",
 			"title",
 		})
-	errs = prometheus.NewGauge(prometheus.GaugeOpts{
+	errs = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "errors",
 		Help:      "Errors while sanitizing the cluster.",
-	})
+	},
+		[]string{
+			"cluster",
+			"namespace",
+		})
 )
 
-func prometheusMarshal(b *Builder, address *string) *push.Pusher {
+func prometheusMarshal(b *Builder, address *string, cluster, namespace string) *push.Pusher {
 	pusher := newPusher(address)
 
-	score.Set(float64(b.Report.Score))
-	grade.Set(float64(gradeToNumber(b.Report.Grade)))
-	errs.Set(float64(len(b.Report.Errors)))
+	score.WithLabelValues(cluster, namespace).Set(float64(b.Report.Score))
+	grade.WithLabelValues(cluster, namespace, b.Report.Grade).Set(float64(gradeToNumber(b.Report.Grade)))
+	errs.WithLabelValues(cluster, namespace).Set(float64(len(b.Report.Errors)))
 
 	for _, section := range b.Report.Sections {
 		for i, v := range section.Tally.counts {
 			switch i {
 			case 0:
-				sanitizersOk.WithLabelValues(section.Title).Set(float64(v))
+				sanitizersOk.WithLabelValues(cluster, namespace, section.Title).Set(float64(v))
 			case 1:
-				sanitizersInfo.WithLabelValues(section.Title).Set(float64(v))
+				sanitizersInfo.WithLabelValues(cluster, namespace, section.Title).Set(float64(v))
 			case 2:
-				sanitizersWarning.WithLabelValues(section.Title).Set(float64(v))
+				sanitizersWarning.WithLabelValues(cluster, namespace, section.Title).Set(float64(v))
 			case 3:
-				sanitizersError.WithLabelValues(section.Title).Set(float64(v))
+				sanitizersError.WithLabelValues(cluster, namespace, section.Title).Set(float64(v))
 			}
 		}
-		sanitizersScore.WithLabelValues(section.Title).Set(float64(section.Tally.score))
+		sanitizersScore.WithLabelValues(cluster, namespace, section.Title).Set(float64(section.Tally.score))
 	}
 
 	return pusher

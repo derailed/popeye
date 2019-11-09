@@ -128,9 +128,9 @@ func (b *Builder) ToJSON() (string, error) {
 }
 
 // ToPrometheus returns prometheus pusher.
-func (b *Builder) ToPrometheus(address *string) *push.Pusher {
+func (b *Builder) ToPrometheus(address *string, cluster string, namespace string) *push.Pusher {
 	b.augment()
-	pusher := prometheusMarshal(b, address)
+	pusher := prometheusMarshal(b, address, cluster, namespace)
 	return pusher
 }
 
