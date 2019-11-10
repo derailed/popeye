@@ -120,11 +120,7 @@ func (p *Popeye) dump(printHeader bool) error {
 	case report.PrometheusFormat:
 		pusher := p.builder.ToPrometheus(p.flags.PushGatewayAddress,
 			p.client.ActiveCluster(), p.client.ActiveNamespace())
-		err := pusher.Add()
-		if err != nil {
-			// log.Fatal().Err(err).Msg("Unable to push Prometheus metrics")
-			return err
-		}
+		return pusher.Add()
 	case report.JurassicFormat:
 		jurassicMode = true
 		fallthrough
