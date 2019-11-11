@@ -1,6 +1,8 @@
 package report
 
 import (
+	"strings"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 )
@@ -21,8 +23,8 @@ var (
 		})
 	sanitizers = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
-		Name:      "sanitizers_findings_total",
-		Help:      "Popeye's sanitizers findings for resource groups.",
+		Name:      "sanitizer_reports_count",
+		Help:      "Popeye's sanitizer reports for resource group.",
 	},
 		[]string{
 			"cluster",
@@ -32,8 +34,8 @@ var (
 		})
 	sanitizersScore = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
-		Name:      "sanitizers_score_total",
-		Help:      "Popeye's sanitizers score for resource groups.",
+		Name:      "sanitizer_score_total",
+		Help:      "Popeye's sanitizer score for resource group.",
 	},
 		[]string{
 			"cluster",
@@ -59,7 +61,8 @@ func prometheusMarshal(b *Builder, address *string, cluster, namespace string) *
 
 	for _, section := range b.Report.Sections {
 		for i, v := range section.Tally.counts {
-			sanitizers.WithLabelValues(cluster, namespace, section.Title, indexToTally(i)).Set(float64(v))
+			sanitizers.WithLabelValues(cluster, namespace, section.Title,
+				strings.ToLower(indexToTally(i))).Set(float64(v))
 		}
 		sanitizersScore.WithLabelValues(cluster, namespace, section.Title).Set(float64(section.Tally.score))
 	}
