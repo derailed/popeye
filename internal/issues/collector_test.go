@@ -139,14 +139,14 @@ func TestAddCode(t *testing.T) {
 			section: Root,
 			level:   InfoLevel,
 			args:    []interface{}{80},
-			e:       "[POP-108] Unamed port 80",
+			e:       "[POP-108] Unnamed port 80",
 		},
 		"Dud!": {
 			code:    0,
 			section: Root,
 			level:   InfoLevel,
 			args:    []interface{}{80},
-			e:       "[POP-108] Unamed port 80",
+			e:       "[POP-108] Unnamed port 80",
 		},
 	}
 
@@ -190,7 +190,7 @@ func TestAddSubCode(t *testing.T) {
 			group:   "blee",
 			level:   InfoLevel,
 			args:    []interface{}{80},
-			e:       "[POP-108] Unamed port 80",
+			e:       "[POP-108] Unnamed port 80",
 		},
 		"Dud!": {
 			code:    0,
@@ -198,7 +198,7 @@ func TestAddSubCode(t *testing.T) {
 			group:   "blee",
 			level:   InfoLevel,
 			args:    []interface{}{80},
-			e:       "[POP-108] Unamed port 80",
+			e:       "[POP-108] Unnamed port 80",
 		},
 	}
 

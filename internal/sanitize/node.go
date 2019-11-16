@@ -100,14 +100,19 @@ func (n *Node) checkConditions(no *v1.Node) bool {
 			n.AddCode(702, no.Name)
 			return ready
 		}
-		ready = n.statusReport(no.Name, c.Type)
+		ready = n.statusReport(no.Name, c.Type, c.Status)
 	}
 
 	return ready
 }
 
-func (n *Node) statusReport(node string, cond v1.NodeConditionType) bool {
+func (n *Node) statusReport(node string, cond v1.NodeConditionType, status v1.ConditionStatus) bool {
 	var ready bool
+
+	// Status is good ie no condition detected -> bail!
+	if status == v1.ConditionFalse {
+		return true
+	}
 
 	switch cond {
 	case v1.NodeOutOfDisk:

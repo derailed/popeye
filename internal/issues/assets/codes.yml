@@ -1,40 +1,40 @@
 codes:
   100:
-    message:  Untagged docker image in use
+    message: Untagged docker image in use
     severity: 3
   101:
-    message:  Image tagged `latest in use
+    message: Image tagged `latest in use
     severity: 2
   102:
-    message:  No probes defined
+    message: No probes defined
     severity: 2
   103:
-    message:  No liveness probe
+    message: No liveness probe
     severity: 2
   104:
-    message:  No readiness probe
+    message: No readiness probe
     severity: 2
   105:
-    message:  "%s probe uses a port#, prefer a named port"
+    message: "%s probe uses a port#, prefer a named port"
     severity: 1
   106:
-    message:  No resources defined
+    message: No resources defined
     severity: 1
   107:
-    message:  No resource limits defined
+    message: No resource limits defined
     severity: 2
   108:
-    message:  "Unamed port `%d"
+    message: "Unnamed port `%d"
     severity: 2
   109:
-    message:  "CPU Current/Request (%s/%s) reached user %d%% threshold (%d%%)"
+    message: "CPU Current/Request (%s/%s) reached user %d%% threshold (%d%%)"
     severity: 2
   110:
-    message:  "Memory Current/Request (%s/%s) reached user %d%% threshold (%d%%)"
+    message: "Memory Current/Request (%s/%s) reached user %d%% threshold (%d%%)"
     severity: 2
   111:
-    message:  "CPU Current/Limit (%s/%s) reached user %d%% threshold (%d%%)"
+    message: "CPU Current/Limit (%s/%s) reached user %d%% threshold (%d%%)"
     severity: 3
   112:
-    message:  "Memory Current/Limit (%s/%s) reached user %d%% threshold (%d%%)"
+    message: "Memory Current/Limit (%s/%s) reached user %d%% threshold (%d%%)"
     severity: 3

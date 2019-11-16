@@ -93,7 +93,7 @@ codes:
     message:  No resource limits defined
     severity: 2
   108:
-    message:  "Unamed port %d"
+    message:  "Unnamed port %d"
     severity: 1
   109:
     message:  CPU Current/Request (%s/%s) reached user %d%% threshold (%d%%)

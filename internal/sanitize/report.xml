@@ -29,7 +29,7 @@
 		<testcase classname="sanitize" name="TestContainerCheckResources/noReq" time="0.000"></testcase>
 		<testcase classname="sanitize" name="TestContainerCheckResources/none" time="0.000"></testcase>
 		<testcase classname="sanitize" name="TestContainerCheckProbes" time="0.000"></testcase>
-		<testcase classname="sanitize" name="TestContainerCheckProbes/Unamed" time="0.000"></testcase>
+		<testcase classname="sanitize" name="TestContainerCheckProbes/Unnamed" time="0.000"></testcase>
 		<testcase classname="sanitize" name="TestContainerCheckProbes/cool" time="0.000"></testcase>
 		<testcase classname="sanitize" name="TestContainerCheckProbes/noReady" time="0.000"></testcase>
 		<testcase classname="sanitize" name="TestContainerCheckProbes/noLive" time="0.000"></testcase>

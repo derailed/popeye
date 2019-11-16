@@ -127,7 +127,7 @@ func TestContainerCheckProbes(t *testing.T) {
 		"noReady":    {liveness: true, issues: 1, severity: issues.WarnLevel},
 		"noLive":     {readiness: true, issues: 1, severity: issues.WarnLevel},
 		"noneProbes": {issues: 1, severity: issues.WarnLevel},
-		"Unamed":     {liveness: true, readiness: true, namedPort: true, issues: 2, severity: issues.InfoLevel},
+		"Unnamed":    {liveness: true, readiness: true, namedPort: true, issues: 2, severity: issues.InfoLevel},
 	}
 
 	for k, u := range uu {

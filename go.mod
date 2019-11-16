@@ -34,6 +34,7 @@ require (
 	github.com/gophercloud/gophercloud v0.2.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
+	github.com/magiconair/properties v1.8.0
 	github.com/onsi/ginkgo v1.8.0
 	github.com/rs/zerolog v1.12.0
 	github.com/spf13/cobra v0.0.4
