@@ -7,24 +7,40 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 )
 
-// Cache caches commonly used resources.
-type Cache struct {
-	client    *k8s.Client
-	config    *config.Config
+// Core represents core resources.
+type Core struct {
 	namespace *cache.Namespace
 	pod       *cache.Pod
-	podMx     *cache.PodsMetrics
-	nodeMx    *cache.NodesMetrics
-	dp        *cache.Deployment
-	ds        *cache.DaemonSet
-	sts       *cache.StatefulSet
 	sa        *cache.ServiceAccount
-	rs        *cache.ReplicaSet
-	pdb       *cache.PodDisruptionBudget
-	ing       *cache.Ingress
-	np        *cache.NetworkPolicy
-	psp       *cache.PodSecurityPolicy
 	cl        *cache.Cluster
+}
+
+// Metrics represents metrics resources.
+type Metrics struct {
+	nodeMx *cache.NodesMetrics
+	podMx  *cache.PodsMetrics
+}
+
+// Apps represents app resources.
+type Apps struct {
+	dp  *cache.Deployment
+	ds  *cache.DaemonSet
+	sts *cache.StatefulSet
+	rs  *cache.ReplicaSet
+}
+
+// Cache caches commonly used resources.
+type Cache struct {
+	Core
+	Apps
+	Metrics
+
+	client *k8s.Client
+	config *config.Config
+	pdb    *cache.PodDisruptionBudget
+	ing    *cache.Ingress
+	np     *cache.NetworkPolicy
+	psp    *cache.PodSecurityPolicy
 }
 
 // NewCache returns a new resource cache

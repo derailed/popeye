@@ -92,7 +92,7 @@ func (n *Node) checkConditions(no *v1.Node) bool {
 		// Unknow type
 		if c.Status == v1.ConditionUnknown {
 			n.AddCode(701, no.Name)
-			continue
+			return false
 		}
 
 		// Node is not ready bail other checks
