@@ -15,6 +15,7 @@ type Secret struct {
 	*cache.Secret
 	*cache.Pod
 	*cache.ServiceAccount
+	*cache.Ingress
 }
 
 // NewSecret return a new Secret sanitizer.
@@ -38,6 +39,12 @@ func NewSecret(c *Cache, codes *issues.Codes) Sanitizer {
 		s.AddErr("serviceaccounts", err)
 	}
 	s.ServiceAccount = sas
+
+	ing, err := c.ingresses()
+	if err != nil {
+		s.AddErr("ingresses", err)
+	}
+	s.Ingress = ing
 
 	return &s
 }

@@ -92,6 +92,8 @@ func (s sa) ListPods() map[string]*v1.Pod {
 	}
 }
 
+func (s sa) IngressRefs(cache.ObjReferences) {}
+
 func (s sa) ServiceAccountRefs(cache.ObjReferences) {}
 
 func (s sa) PodRefs(cache.ObjReferences) {}
