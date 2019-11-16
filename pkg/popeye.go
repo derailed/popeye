@@ -142,6 +142,15 @@ func (p *Popeye) dumpStd(mode, header bool) error {
 	return w.Flush()
 }
 
+func (p *Popeye) dumpPrometheus() error {
+	pusher := p.builder.ToPrometheus(
+		p.flags.PushGatewayAddress,
+		p.client.ActiveCluster(),
+		p.client.ActiveNamespace(),
+	)
+	return pusher.Add()
+}
+
 // Dump prints out sanitizer report.
 func (p *Popeye) dump(printHeader bool) error {
 	if !p.builder.HasContent() {
@@ -156,6 +165,8 @@ func (p *Popeye) dump(printHeader bool) error {
 		err = p.dumpYAML()
 	case report.JSONFormat:
 		err = p.dumpJSON()
+	case report.PrometheusFormat:
+		err = p.dumpPrometheus()
 	default:
 		err = p.dumpStd(p.flags.OutputFormat() == report.JurassicFormat, printHeader)
 	}
