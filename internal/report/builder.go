@@ -27,7 +27,7 @@ const (
 	// JunitFormat dumps sanitizer as JUnit report.
 	JunitFormat = "junit"
 
-	// Prometheus pushes sanitizer as Prometheus metrics.
+	// PrometheusFormat pushes sanitizer as Prometheus metrics.
 	PrometheusFormat = "prometheus"
 )
 

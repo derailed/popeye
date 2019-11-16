@@ -17,7 +17,6 @@ Popeye is a readonly tool, it does not alter any of your Kubernetes resources in
 [![release](https://img.shields.io/github/release-pre/derailed/popeye.svg)](https://github.com/derailed/popeye/releases)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/mum4k/termdash/blob/master/LICENSE)
 [![Docker Repository on Quay](https://quay.io/repository/derailed/popeye/status "Docker Repository on Quay")](https://quay.io/repository/derailed/popeye)
-[![popeye](https://snapcraft.io/popeye/badge.svg)](https://snapcraft.io/popeye)
 [![Releases](https://img.shields.io/github/downloads/derailed/popeye/total.svg)]()
 
 ---

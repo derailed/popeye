@@ -10,7 +10,7 @@ import (
 
 func TestIngressRefs(t *testing.T) {
 	ing := NewIngress(map[string]*nv1beta1.Ingress{
-		"default/ing1": &nv1beta1.Ingress{
+		"default/ing1": {
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 			},

@@ -10,6 +10,15 @@ import (
 )
 
 type (
+	// CollectorLimiter represents a collector with resource allocation limits.
+	CollectorLimiter interface {
+		// Collector an issue collector.
+		Collector
+
+		// ConfigLister track config options.
+		ConfigLister
+	}
+
 	// StatefulSetLister handles statefulsets.
 	StatefulSetLister interface {
 		PodLimiter
@@ -94,11 +103,6 @@ func (s *StatefulSet) checkContainers(fqn string, st *appsv1.StatefulSet) {
 	for _, co := range spec.Containers {
 		l.sanitize(co, false)
 	}
-}
-
-type CollectorLimiter interface {
-	Collector
-	ConfigLister
 }
 
 func checkCPU(c CollectorLimiter, over bool, fqn string, mx ConsumptionMetrics) {
