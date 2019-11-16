@@ -11,7 +11,7 @@ COPY internal internal
 COPY pkg pkg
 COPY cmd cmd
 
-RUN apk --no-cache add git ;\
+RUN apk --no-cache add git ca-certificates ;\
   CGO_ENABLED=0 GOOS=linux go build -o /go/bin/popeye \
   -ldflags="-w -s -X $PACKAGE/cmd.version=$VERSION" *.go
 
@@ -19,5 +19,6 @@ RUN apk --no-cache add git ;\
 # -----------------------------------------------------------------------------
 # Image...
 FROM alpine:3.9.3
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=build /go/bin/popeye /bin/popeye
 ENTRYPOINT [ "/bin/popeye" ]
