@@ -88,8 +88,8 @@ func (p *Pod) containerRefs(pfqn string, co v1.Container, refs ObjReferences) {
 		if e.ValueFrom == nil {
 			continue
 		}
-		p.secretRefs(ns, pfqn, e.ValueFrom.SecretKeyRef, refs)
-		p.configMapRefs(ns, pfqn, e.ValueFrom.ConfigMapKeyRef, refs)
+		p.secretRefs(ns, e.ValueFrom.SecretKeyRef, refs)
+		p.configMapRefs(ns, e.ValueFrom.ConfigMapKeyRef, refs)
 	}
 
 	for _, e := range co.EnvFrom {
@@ -114,7 +114,7 @@ func (p *Pod) containerRefs(pfqn string, co v1.Container, refs ObjReferences) {
 	}
 }
 
-func (p *Pod) secretRefs(ns, pfqn string, ref *v1.SecretKeySelector, refs ObjReferences) {
+func (p *Pod) secretRefs(ns string, ref *v1.SecretKeySelector, refs ObjReferences) {
 	if ref == nil {
 		return
 	}
@@ -127,7 +127,7 @@ func (p *Pod) secretRefs(ns, pfqn string, ref *v1.SecretKeySelector, refs ObjRef
 	refs[key] = StringSet{ref.Key: Blank}
 }
 
-func (p *Pod) configMapRefs(ns, pfqn string, ref *v1.ConfigMapKeySelector, refs ObjReferences) {
+func (p *Pod) configMapRefs(ns string, ref *v1.ConfigMapKeySelector, refs ObjReferences) {
 	if ref == nil {
 		return
 	}

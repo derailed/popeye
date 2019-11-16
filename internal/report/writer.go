@@ -3,13 +3,11 @@ package report
 import (
 	"fmt"
 	"io"
-	"os"
 	"sort"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/onsi/ginkgo/reporters/stenographer/support/go-isatty"
 )
 
 // Issue represents a sanitizer issues.
@@ -59,7 +57,7 @@ func (s *Sanitizer) Open(msg string, t *Tally) {
 		}
 		indent := Width - len(msg) - utf8.RuneCountInString(out) + spacer
 		fmt.Fprintf(s, "%s", strings.Repeat(" ", indent))
-		fmt.Fprintf(s, out)
+		fmt.Fprintf(s, "%s", out)
 	}
 	fmt.Fprintf(s, "\n%s", s.Color(strings.Repeat("┅", Width), ColorLighSlate))
 	fmt.Fprintln(s)
@@ -203,14 +201,4 @@ func formatLine(str string, indent, width int) string {
 		length = 0
 	}
 	return strings.Join(lines, "\n")
-}
-
-// Check terminal specs, returns true if lame term is effect. False otherwise.
-func jurassicTerm(fd uintptr) bool {
-	term := os.Getenv("TERM")
-	if !strings.Contains(term, "color") {
-		return false
-	}
-
-	return !isatty.IsTerminal(fd)
 }

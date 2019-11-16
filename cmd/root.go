@@ -70,7 +70,7 @@ func bomb(msg string) {
 	panic(fmt.Sprintf("💥 %s\n", report.Colorize(msg, report.ColorRed)))
 }
 
-func initFlags() {
+func initPopeyeFlags() {
 	rootCmd.Flags().StringVarP(
 		flags.Output,
 		"out",
@@ -133,19 +133,14 @@ func initFlags() {
 		[]string{},
 		"Specifies which resources to include in the scan ie -s po,svc",
 	)
+}
 
+func initKubeConfigFlags() {
 	rootCmd.Flags().StringVar(
 		flags.KubeConfig,
 		"kubeconfig",
 		"",
 		"Path to the kubeconfig file to use for CLI requests",
-	)
-
-	rootCmd.Flags().StringVar(
-		flags.Timeout,
-		"request-timeout",
-		"",
-		"The length of time to wait before giving up on a single server request",
 	)
 
 	rootCmd.Flags().StringVar(
@@ -181,6 +176,18 @@ func initFlags() {
 		"as-group",
 		[]string{},
 		"Group to impersonate for the operation",
+	)
+}
+
+func initFlags() {
+	initPopeyeFlags()
+	initKubeConfigFlags()
+
+	rootCmd.Flags().StringVar(
+		flags.Timeout,
+		"request-timeout",
+		"",
+		"The length of time to wait before giving up on a single server request",
 	)
 
 	rootCmd.Flags().BoolVar(
@@ -237,10 +244,6 @@ func clearScreen() {
 	fmt.Print("\033[H\033[2J")
 }
 
-func printSosLogo(title, logo report.Color) {
-	printMsgLogo("SOS", "O", title, logo)
-}
-
 func printMsgLogo(msg, eye string, title, logo report.Color) {
 	for i, s := range report.GraderLogo {
 		switch i {
@@ -251,14 +254,14 @@ func printMsgLogo(msg, eye string, title, logo report.Color) {
 		}
 
 		if i < len(report.Popeye) {
-			fmt.Printf(report.Colorize(report.Popeye[i], title))
-			fmt.Printf(strings.Repeat(" ", 22))
+			fmt.Printf("%s", report.Colorize(report.Popeye[i], title))
+			fmt.Printf("%s", strings.Repeat(" ", 22))
 		} else {
 			if i == 4 {
-				fmt.Printf(report.Colorize("  Biffs`em and Buffs`em!", logo))
-				fmt.Printf(strings.Repeat(" ", 26))
+				fmt.Printf("%s", report.Colorize("  Biffs`em and Buffs`em!", logo))
+				fmt.Printf("%s", strings.Repeat(" ", 26))
 			} else {
-				fmt.Printf(strings.Repeat(" ", 50))
+				fmt.Printf("%s", strings.Repeat(" ", 50))
 			}
 		}
 		fmt.Println(report.Colorize(s, logo))

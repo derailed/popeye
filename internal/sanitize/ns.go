@@ -7,10 +7,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-// SkipNamespaces excludes system namespaces with no pods from being included in scan.
-// BOZO!! spinachyaml default??
-var skipNamespaces = []string{"default", "kube-public", "kube-node-lease"}
-
 type (
 	// NamespaceLister lists all namespaces.
 	NamespaceLister interface {

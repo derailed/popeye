@@ -102,12 +102,9 @@ func asMB(q resource.Quantity) string {
 }
 
 // PodResources computes pod resouces as sum of containers allocations.
-func podResources(spec v1.PodSpec) (cpu, mem resource.Quantity, qos v1.PodQOSClass) {
-	totalCo, totalQOS := len(spec.InitContainers)+len(spec.Containers), 0
-
+func podResources(spec v1.PodSpec) (cpu, mem resource.Quantity) {
 	for _, co := range spec.InitContainers {
-		c, m, q := containerResources(co)
-		totalQOS += q
+		c, m, _ := containerResources(co)
 		if c != nil {
 			cpu.Add(*c)
 		}
@@ -117,24 +114,13 @@ func podResources(spec v1.PodSpec) (cpu, mem resource.Quantity, qos v1.PodQOSCla
 	}
 
 	for _, co := range spec.Containers {
-		c, m, q := containerResources(co)
-		totalQOS += q
+		c, m, _ := containerResources(co)
 		if c != nil {
 			cpu.Add(*c)
 		}
 		if m != nil {
 			mem.Add(*m)
 		}
-	}
-
-	qos = v1.PodQOSBestEffort
-	switch totalQOS / totalCo {
-	case qosGuaranteed:
-		qos = v1.PodQOSGuaranteed
-	case qosBurstable:
-		qos = v1.PodQOSBurstable
-	default:
-		qos = v1.PodQOSBurstable
 	}
 
 	return

@@ -38,8 +38,8 @@ func TestPSPSanitize(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			psp := NewPodSecurityPolicy(issues.NewCollector(loadCodes(t)), u.lister)
-			psp.Sanitize(context.Background())
 
+			assert.Nil(t, psp.Sanitize(context.TODO()))
 			assert.Equal(t, u.issues, psp.Outcome()["default/psp"])
 		})
 	}

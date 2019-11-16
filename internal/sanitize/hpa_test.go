@@ -20,7 +20,7 @@ func TestHPASanitizeDP(t *testing.T) {
 		hissues int
 	}{
 		"cool": {
-			newDpHpa("h1",
+			newDpHpa(
 				hpaOpts{
 					name: "d1",
 					ccpu: "20m",
@@ -35,7 +35,7 @@ func TestHPASanitizeDP(t *testing.T) {
 			0,
 		},
 		"noDeployments": {
-			newDpHpa("h1",
+			newDpHpa(
 				hpaOpts{
 					name: "bozo",
 					ccpu: "20m",
@@ -50,7 +50,7 @@ func TestHPASanitizeDP(t *testing.T) {
 			0,
 		},
 		"overCpu": {
-			newDpHpa("h1",
+			newDpHpa(
 				hpaOpts{
 					name: "d1",
 					ccpu: "10m",
@@ -65,7 +65,7 @@ func TestHPASanitizeDP(t *testing.T) {
 			1,
 		},
 		"overMem": {
-			newDpHpa("h1",
+			newDpHpa(
 				hpaOpts{
 					name: "d1",
 					ccpu: "10m",
@@ -84,8 +84,8 @@ func TestHPASanitizeDP(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			h := NewHorizontalPodAutoscaler(issues.NewCollector(loadCodes(t)), u.l)
-			h.Sanitize(context.Background())
 
+			assert.Nil(t, h.Sanitize(context.TODO()))
 			assert.Equal(t, u.issues, len(h.Outcome()["default/h1"]))
 			assert.Equal(t, u.hissues, len(h.Outcome()["HPA"]))
 		})
@@ -100,7 +100,6 @@ func TestHPASanitizeSTS(t *testing.T) {
 	}{
 		"cool": {
 			newStsHpa(
-				"h1",
 				hpaOpts{
 					name: "sts1",
 					ccpu: "10m",
@@ -115,7 +114,7 @@ func TestHPASanitizeSTS(t *testing.T) {
 			0,
 		},
 		"noSTS": {
-			newStsHpa("h1",
+			newStsHpa(
 				hpaOpts{
 					name: "bozo",
 					ccpu: "20m",
@@ -131,7 +130,6 @@ func TestHPASanitizeSTS(t *testing.T) {
 		},
 		"overCpu": {
 			newStsHpa(
-				"h1",
 				hpaOpts{
 					name: "sts1",
 					ccpu: "10m",
@@ -149,7 +147,6 @@ func TestHPASanitizeSTS(t *testing.T) {
 		},
 		"overMem": {
 			newStsHpa(
-				"h1",
 				hpaOpts{
 					name: "sts1",
 					ccpu: "10m",
@@ -170,8 +167,8 @@ func TestHPASanitizeSTS(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			h := NewHorizontalPodAutoscaler(issues.NewCollector(loadCodes(t)), u.l)
-			h.Sanitize(context.Background())
 
+			assert.Nil(t, h.Sanitize(context.TODO()))
 			assert.Equal(t, u.issues, len(h.Outcome()["default/h1"]))
 			assert.Equal(t, u.hissues, len(h.Outcome()["HPA"]))
 		})
@@ -195,14 +192,14 @@ type hpa struct {
 	opts hpaOpts
 }
 
-func newDpHpa(n string, opts hpaOpts) *hpa {
+func newDpHpa(opts hpaOpts) *hpa {
 	h := hpa{
-		DeployLister: makeDPLister("d1", dpOpts{
+		DeployLister: makeDPLister(dpOpts{
 			coOpts:    opts.coOpts,
 			reps:      1,
 			availReps: 1,
 		}),
-		name: n,
+		name: "h1",
 		opts: opts,
 	}
 	h.opts.refType, h.opts.ref = "Deployment", opts.name
@@ -210,14 +207,14 @@ func newDpHpa(n string, opts hpaOpts) *hpa {
 	return &h
 }
 
-func newStsHpa(n string, opts hpaOpts) *hpa {
+func newStsHpa(opts hpaOpts) *hpa {
 	h := hpa{
-		StatefulSetLister: makeSTSLister("sts1", stsOpts{
+		StatefulSetLister: makeSTSLister(stsOpts{
 			coOpts:      opts.coOpts,
 			replicas:    1,
 			currentReps: 1,
 		}),
-		name: n,
+		name: "h1",
 		opts: opts,
 	}
 	h.opts.refType, h.opts.ref = "StatefulSet", opts.name
@@ -237,7 +234,7 @@ func (h *hpa) ListNodesMetrics() map[string]*mv1beta1.NodeMetrics {
 
 func (h *hpa) ListPodsMetrics() map[string]*mv1beta1.PodMetrics {
 	return map[string]*mv1beta1.PodMetrics{
-		"default/p1": makeMxPod("p1", h.opts.rcpu, h.opts.rmem),
+		"default/p1": makeMxPod(h.opts.rcpu, h.opts.rmem),
 	}
 }
 

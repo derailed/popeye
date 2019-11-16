@@ -19,9 +19,9 @@ func TestNodeSanitizer(t *testing.T) {
 		issues int
 	}{
 		"good": {
-			makeNodeLister("n1", nodeOpts{
+			makeNodeLister(nodeOpts{
 				nodes: map[string]*v1.Node{
-					"n1": makeNode("n1", "1000m", "200Mi"),
+					"n1": makeNode("1000m", "200Mi"),
 				},
 				metrics: map[string]*mv1beta1.NodeMetrics{
 					"n1": makeNodeMX("500m", "100Mi"),
@@ -30,18 +30,18 @@ func TestNodeSanitizer(t *testing.T) {
 			0,
 		},
 		"noMetrics": {
-			makeNodeLister("n1", nodeOpts{
+			makeNodeLister(nodeOpts{
 				noMetrics: true,
 				nodes: map[string]*v1.Node{
-					"n1": makeNode("n1", "", ""),
+					"n1": makeNode("", ""),
 				},
 			}),
 			1,
 		},
 		"overCPU": {
-			makeNodeLister("n1", nodeOpts{
+			makeNodeLister(nodeOpts{
 				nodes: map[string]*v1.Node{
-					"n1": makeNode("n1", "1000m", "200Mi"),
+					"n1": makeNode("1000m", "200Mi"),
 				},
 				metrics: map[string]*mv1beta1.NodeMetrics{
 					"n1": makeNodeMX("2000m", "100Mi"),
@@ -50,9 +50,9 @@ func TestNodeSanitizer(t *testing.T) {
 			1,
 		},
 		"overMem": {
-			makeNodeLister("n1", nodeOpts{
+			makeNodeLister(nodeOpts{
 				nodes: map[string]*v1.Node{
-					"n1": makeNode("n1", "1", "100Mi"),
+					"n1": makeNode("1", "100Mi"),
 				},
 				metrics: map[string]*mv1beta1.NodeMetrics{
 					"n1": makeNodeMX("500m", "250Mi"),
@@ -61,9 +61,9 @@ func TestNodeSanitizer(t *testing.T) {
 			1,
 		},
 		"missingToleration": {
-			makeNodeLister("n1", nodeOpts{
+			makeNodeLister(nodeOpts{
 				nodes: map[string]*v1.Node{
-					"n1": makeTaintedNode("n1", "fred", "blee"),
+					"n1": makeTaintedNode("fred", "blee"),
 				},
 				pods: map[string]*v1.Pod{
 					cache.FQN("default", "p1"): makePod("p1"),
@@ -76,9 +76,9 @@ func TestNodeSanitizer(t *testing.T) {
 			1,
 		},
 		"notReady": {
-			makeNodeLister("n1", nodeOpts{
+			makeNodeLister(nodeOpts{
 				nodes: map[string]*v1.Node{
-					"n1": makeCondNode("n1", v1.NodeReady, v1.ConditionFalse),
+					"n1": makeCondNode(v1.NodeReady, v1.ConditionFalse),
 				},
 				metrics: map[string]*mv1beta1.NodeMetrics{
 					"n1": makeNodeMX("500m", "100Mi"),
@@ -87,9 +87,9 @@ func TestNodeSanitizer(t *testing.T) {
 			1,
 		},
 		"unknownState": {
-			makeNodeLister("n1", nodeOpts{
+			makeNodeLister(nodeOpts{
 				nodes: map[string]*v1.Node{
-					"n1": makeCondNode("n1", v1.NodeReady, v1.ConditionUnknown),
+					"n1": makeCondNode(v1.NodeReady, v1.ConditionUnknown),
 				},
 				metrics: map[string]*mv1beta1.NodeMetrics{
 					"n1": makeNodeMX("500m", "100Mi"),
@@ -98,9 +98,9 @@ func TestNodeSanitizer(t *testing.T) {
 			1,
 		},
 		"outOfDisk": {
-			makeNodeLister("n1", nodeOpts{
+			makeNodeLister(nodeOpts{
 				nodes: map[string]*v1.Node{
-					"n1": makeCondNode("n1", v1.NodeOutOfDisk, v1.ConditionTrue),
+					"n1": makeCondNode(v1.NodeOutOfDisk, v1.ConditionTrue),
 				},
 				metrics: map[string]*mv1beta1.NodeMetrics{
 					"n1": makeNodeMX("500m", "100Mi"),
@@ -109,9 +109,9 @@ func TestNodeSanitizer(t *testing.T) {
 			1,
 		},
 		"outOfMemory": {
-			makeNodeLister("n1", nodeOpts{
+			makeNodeLister(nodeOpts{
 				nodes: map[string]*v1.Node{
-					"n1": makeCondNode("n1", v1.NodeMemoryPressure, v1.ConditionTrue),
+					"n1": makeCondNode(v1.NodeMemoryPressure, v1.ConditionTrue),
 				},
 				metrics: map[string]*mv1beta1.NodeMetrics{
 					"n1": makeNodeMX("500m", "100Mi"),
@@ -120,9 +120,9 @@ func TestNodeSanitizer(t *testing.T) {
 			1,
 		},
 		"diskPressure": {
-			makeNodeLister("n1", nodeOpts{
+			makeNodeLister(nodeOpts{
 				nodes: map[string]*v1.Node{
-					"n1": makeCondNode("n1", v1.NodeDiskPressure, v1.ConditionTrue),
+					"n1": makeCondNode(v1.NodeDiskPressure, v1.ConditionTrue),
 				},
 				metrics: map[string]*mv1beta1.NodeMetrics{
 					"n1": makeNodeMX("500m", "100Mi"),
@@ -131,9 +131,9 @@ func TestNodeSanitizer(t *testing.T) {
 			1,
 		},
 		"outOfPID": {
-			makeNodeLister("n1", nodeOpts{
+			makeNodeLister(nodeOpts{
 				nodes: map[string]*v1.Node{
-					"n1": makeCondNode("n1", v1.NodePIDPressure, v1.ConditionTrue),
+					"n1": makeCondNode(v1.NodePIDPressure, v1.ConditionTrue),
 				},
 				metrics: map[string]*mv1beta1.NodeMetrics{
 					"n1": makeNodeMX("500m", "100Mi"),
@@ -142,9 +142,9 @@ func TestNodeSanitizer(t *testing.T) {
 			1,
 		},
 		"noNetwork": {
-			makeNodeLister("n1", nodeOpts{
+			makeNodeLister(nodeOpts{
 				nodes: map[string]*v1.Node{
-					"n1": makeCondNode("n1", v1.NodeNetworkUnavailable, v1.ConditionTrue),
+					"n1": makeCondNode(v1.NodeNetworkUnavailable, v1.ConditionTrue),
 				},
 				metrics: map[string]*mv1beta1.NodeMetrics{
 					"n1": makeNodeMX("500m", "100Mi"),
@@ -157,8 +157,8 @@ func TestNodeSanitizer(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			n := NewNode(issues.NewCollector(loadCodes(t)), u.lister)
-			n.Sanitize(context.Background())
 
+			assert.Nil(t, n.Sanitize(context.TODO()))
 			assert.Equal(t, u.issues, len(n.Outcome()["n1"]))
 		})
 	}
@@ -181,9 +181,9 @@ type (
 	}
 )
 
-func makeNodeLister(n string, opts nodeOpts) *node {
+func makeNodeLister(opts nodeOpts) *node {
 	return &node{
-		name: n,
+		name: "n1",
 		opts: opts,
 	}
 }
@@ -240,8 +240,8 @@ func (n *node) ListNodes() map[string]*v1.Node {
 	return n.opts.nodes
 }
 
-func makeCondNode(n string, c v1.NodeConditionType, s v1.ConditionStatus) *v1.Node {
-	no := makeNode(n, "100m", "100Mi")
+func makeCondNode(c v1.NodeConditionType, s v1.ConditionStatus) *v1.Node {
+	no := makeNode("100m", "100Mi")
 	no.Status = v1.NodeStatus{
 		Conditions: []v1.NodeCondition{
 			{Type: c, Status: s},
@@ -250,10 +250,10 @@ func makeCondNode(n string, c v1.NodeConditionType, s v1.ConditionStatus) *v1.No
 	return no
 }
 
-func makeNode(n, cpu, mem string) *v1.Node {
+func makeNode(cpu, mem string) *v1.Node {
 	no := v1.Node{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: n,
+			Name: "n1",
 		},
 		Spec: v1.NodeSpec{},
 		Status: v1.NodeStatus{
@@ -273,21 +273,12 @@ func makeNode(n, cpu, mem string) *v1.Node {
 	return &no
 }
 
-func makeTaintedNode(n, k, v string) *v1.Node {
-	no := makeNode(n, "100m", "100Mi")
+func makeTaintedNode(k, v string) *v1.Node {
+	no := makeNode("100m", "100Mi")
 	no.Spec.Taints = []v1.Taint{
 		{Key: k, Value: v},
 	}
 	return no
-}
-
-func makeMxNode(name, cpu, mem string) *v1beta1.NodeMetrics {
-	return &v1beta1.NodeMetrics{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-		Usage: makeRes(cpu, mem),
-	}
 }
 
 func makeNodeMX(cpu, mem string) *v1beta1.NodeMetrics {

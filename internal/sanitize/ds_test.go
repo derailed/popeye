@@ -20,7 +20,7 @@ func TestDSSanitize(t *testing.T) {
 		issues issues.Issues
 	}{
 		"good": {
-			lister: makeDSLister("d1", dsOpts{
+			lister: makeDSLister(dsOpts{
 				coOpts: coOpts{
 					image: "fred:0.0.1",
 					rcpu:  "10m",
@@ -35,7 +35,7 @@ func TestDSSanitize(t *testing.T) {
 			issues: issues.Issues{},
 		},
 		"deprecated": {
-			lister: makeDSLister("d1", dsOpts{
+			lister: makeDSLister(dsOpts{
 				coOpts: coOpts{
 					image: "fred:0.0.1",
 					rcpu:  "10m",
@@ -56,8 +56,8 @@ func TestDSSanitize(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			ds := NewDaemonSet(issues.NewCollector(loadCodes(t)), u.lister)
-			ds.Sanitize(context.Background())
 
+			assert.Nil(t, ds.Sanitize(context.TODO()))
 			assert.Equal(t, u.issues, ds.Outcome()["default/d1"])
 		})
 	}
@@ -69,7 +69,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 		issues issues.Issues
 	}{
 		"bestEffort": {
-			lister: makeDSLister("d1", dsOpts{
+			lister: makeDSLister(dsOpts{
 				coOpts: coOpts{
 					image: "fred:0.0.1",
 				},
@@ -83,7 +83,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 			},
 		},
 		"cpuUnderBurstable": {
-			lister: makeDSLister("d1", dsOpts{
+			lister: makeDSLister(dsOpts{
 				coOpts: coOpts{
 					image: "fred:0.0.1",
 					rcpu:  "5m",
@@ -100,7 +100,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 			},
 		},
 		"cpuUnderGuaranteed": {
-			lister: makeDSLister("d1", dsOpts{
+			lister: makeDSLister(dsOpts{
 				coOpts: coOpts{
 					image: "fred:0.0.1",
 					rcpu:  "5m",
@@ -119,7 +119,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 		// c=20 r=60 20/60=1/3 over is 50% req=3*c 33 > 100
 		// c=60 r=20 60/20 3 under
 		"cpuOverBustable": {
-			lister: makeDSLister("d1", dsOpts{
+			lister: makeDSLister(dsOpts{
 				coOpts: coOpts{
 					image: "fred:0.0.1",
 					rcpu:  "30m",
@@ -136,7 +136,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 			},
 		},
 		"cpuOverGuaranteed": {
-			lister: makeDSLister("d1", dsOpts{
+			lister: makeDSLister(dsOpts{
 				coOpts: coOpts{
 					image: "fred:0.0.1",
 					rcpu:  "30m",
@@ -153,7 +153,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 			},
 		},
 		"memUnderBurstable": {
-			lister: makeDSLister("d1", dsOpts{
+			lister: makeDSLister(dsOpts{
 				coOpts: coOpts{
 					image: "fred:0.0.1",
 					rcpu:  "10m",
@@ -170,7 +170,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 			},
 		},
 		"memUnderGuaranteed": {
-			lister: makeDSLister("d1", dsOpts{
+			lister: makeDSLister(dsOpts{
 				coOpts: coOpts{
 					image: "fred:0.0.1",
 					rcpu:  "10m",
@@ -187,7 +187,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 			},
 		},
 		"memOverBurstable": {
-			lister: makeDSLister("d1", dsOpts{
+			lister: makeDSLister(dsOpts{
 				coOpts: coOpts{
 					image: "fred:0.0.1",
 					rcpu:  "10m",
@@ -204,7 +204,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 			},
 		},
 		"memOverGuaranteed": {
-			lister: makeDSLister("d1", dsOpts{
+			lister: makeDSLister(dsOpts{
 				coOpts: coOpts{
 					image: "fred:0.0.1",
 					rcpu:  "10m",
@@ -226,8 +226,8 @@ func TestDSSanitizeUtilization(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			ds := NewDaemonSet(issues.NewCollector(loadCodes(t)), u.lister)
-			ds.Sanitize(ctx)
 
+			assert.Nil(t, ds.Sanitize(ctx))
 			assert.Equal(t, u.issues, ds.Outcome()["default/d1"])
 		})
 	}
@@ -249,9 +249,9 @@ type (
 	}
 )
 
-func makeDSLister(n string, opts dsOpts) *ds {
+func makeDSLister(opts dsOpts) *ds {
 	return &ds{
-		name: n,
+		name: "d1",
 		opts: opts,
 	}
 }
@@ -272,7 +272,7 @@ func (d *ds) MEMResourceLimits() config.Allocations {
 
 func (d *ds) ListPodsBySelector(sel *metav1.LabelSelector) map[string]*v1.Pod {
 	return map[string]*v1.Pod{
-		"default/p1": makeFullPod("p1", podOpts{
+		"default/p1": makeFullPod(podOpts{
 			coOpts: d.opts.coOpts,
 		}),
 	}
@@ -292,7 +292,7 @@ func (d *ds) PodMEMLimit() float64 {
 
 func (d *ds) ListPodsMetrics() map[string]*mv1beta1.PodMetrics {
 	return map[string]*mv1beta1.PodMetrics{
-		cache.FQN("default", "p1"): makeMxPod("p1", d.opts.ccpu, d.opts.cmem),
+		cache.FQN("default", "p1"): makeMxPod(d.opts.ccpu, d.opts.cmem),
 	}
 }
 

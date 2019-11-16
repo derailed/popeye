@@ -122,10 +122,7 @@ func (s *Service) checkEndpoints(fqn string, sel map[string]string, kind v1.Serv
 // Helpers...
 
 func checkNamedTargetPort(port v1.ServicePort) bool {
-	if port.TargetPort.Type == intstr.String {
-		return true
-	}
-	return false
+	return port.TargetPort.Type == intstr.String
 }
 
 // CheckServicePort

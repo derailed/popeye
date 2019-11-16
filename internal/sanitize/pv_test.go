@@ -15,17 +15,17 @@ func TestPVSanitize(t *testing.T) {
 		lister PersistentVolumeLister
 		issues int
 	}{
-		"bound":     {makePVLister("pv1", pvOpts{phase: v1.VolumeBound}), 0},
-		"available": {makePVLister("pv1", pvOpts{phase: v1.VolumeAvailable}), 1},
-		"pending":   {makePVLister("pv1", pvOpts{phase: v1.VolumePending}), 1},
-		"failed":    {makePVLister("pv1", pvOpts{phase: v1.VolumeFailed}), 1},
+		"bound":     {makePVLister(pvOpts{phase: v1.VolumeBound}), 0},
+		"available": {makePVLister(pvOpts{phase: v1.VolumeAvailable}), 1},
+		"pending":   {makePVLister(pvOpts{phase: v1.VolumePending}), 1},
+		"failed":    {makePVLister(pvOpts{phase: v1.VolumeFailed}), 1},
 	}
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			p := NewPersistentVolume(issues.NewCollector(loadCodes(t)), u.lister)
-			p.Sanitize(context.Background())
 
+			assert.Nil(t, p.Sanitize(context.Background()))
 			assert.Equal(t, u.issues, len(p.Outcome()["default/pv1"]))
 		})
 	}
@@ -43,8 +43,8 @@ type pv struct {
 	opts pvOpts
 }
 
-func makePVLister(n string, opts pvOpts) pv {
-	return pv{name: n, opts: opts}
+func makePVLister(opts pvOpts) pv {
+	return pv{name: "pv1", opts: opts}
 }
 
 func (p pv) ListPersistentVolumes() map[string]*v1.PersistentVolume {

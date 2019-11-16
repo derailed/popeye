@@ -20,7 +20,7 @@ func TestSTSSanitizer(t *testing.T) {
 		issues issues.Issues
 	}{
 		"good": {
-			lister: makeSTSLister("sts1", stsOpts{
+			lister: makeSTSLister(stsOpts{
 				coOpts:      coOpts{rcpu: "100m", rmem: "10Mi"},
 				replicas:    1,
 				currentReps: 1,
@@ -30,7 +30,7 @@ func TestSTSSanitizer(t *testing.T) {
 			issues: issues.Issues{},
 		},
 		"deprecated": {
-			lister: makeSTSLister("sts1", stsOpts{
+			lister: makeSTSLister(stsOpts{
 				coOpts:      coOpts{rcpu: "100m", rmem: "10Mi"},
 				replicas:    1,
 				currentReps: 1,
@@ -42,7 +42,7 @@ func TestSTSSanitizer(t *testing.T) {
 			},
 		},
 		"used?": {
-			lister: makeSTSLister("sts1", stsOpts{
+			lister: makeSTSLister(stsOpts{
 				coOpts:      coOpts{rcpu: "100m", rmem: "10Mi"},
 				replicas:    1,
 				currentReps: 0,
@@ -54,7 +54,7 @@ func TestSTSSanitizer(t *testing.T) {
 			},
 		},
 		"zeroReplicas": {
-			lister: makeSTSLister("sts1", stsOpts{
+			lister: makeSTSLister(stsOpts{
 				coOpts:      coOpts{rcpu: "100m", rmem: "10Mi"},
 				replicas:    0,
 				currentReps: 1,
@@ -66,7 +66,7 @@ func TestSTSSanitizer(t *testing.T) {
 			},
 		},
 		"collisions": {
-			lister: makeSTSLister("sts1", stsOpts{
+			lister: makeSTSLister(stsOpts{
 				coOpts:      coOpts{rcpu: "100m", rmem: "10Mi"},
 				replicas:    1,
 				currentReps: 1,
@@ -83,8 +83,8 @@ func TestSTSSanitizer(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			sts := NewStatefulSet(issues.NewCollector(loadCodes(t)), u.lister)
-			sts.Sanitize(context.Background())
 
+			assert.Nil(t, sts.Sanitize(context.TODO()))
 			assert.Equal(t, u.issues, sts.Outcome()["default/sts1"])
 		})
 	}
@@ -96,7 +96,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 		issues issues.Issues
 	}{
 		"bestEffort": {
-			lister: makeSTSLister("sts1", stsOpts{
+			lister: makeSTSLister(stsOpts{
 				replicas:    1,
 				currentReps: 1,
 				rev:         "apps/v1",
@@ -105,7 +105,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 			issues: issues.Issues{},
 		},
 		"underCPUBurstable": {
-			lister: makeSTSLister("sts1", stsOpts{
+			lister: makeSTSLister(stsOpts{
 				coOpts: coOpts{
 					rcpu: "100m", rmem: "10Mi",
 				},
@@ -119,7 +119,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 			},
 		},
 		"underCPUGuaranteed": {
-			lister: makeSTSLister("sts1", stsOpts{
+			lister: makeSTSLister(stsOpts{
 				coOpts: coOpts{
 					rcpu: "100m", rmem: "10Mi",
 					lcpu: "100m", lmem: "10Mi",
@@ -134,7 +134,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 			},
 		},
 		"overCPUBurstable": {
-			lister: makeSTSLister("sts1", stsOpts{
+			lister: makeSTSLister(stsOpts{
 				coOpts: coOpts{
 					rcpu: "400m", rmem: "10Mi",
 				},
@@ -144,11 +144,11 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				ccpu:        "100m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "[POP-504] At current load, CPU over allocated. Current:200m vs Requested:800m (25.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-504] At current load, CPU over allocated. Current:200m vs Requested:800m (400.00%)"),
 			},
 		},
 		"overCPUGuarenteed": {
-			lister: makeSTSLister("sts1", stsOpts{
+			lister: makeSTSLister(stsOpts{
 				coOpts: coOpts{
 					rcpu: "400m", rmem: "10Mi",
 					lcpu: "400m", lmem: "10Mi",
@@ -159,11 +159,11 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				ccpu:        "100m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "[POP-504] At current load, CPU over allocated. Current:200m vs Requested:800m (25.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-504] At current load, CPU over allocated. Current:200m vs Requested:800m (400.00%)"),
 			},
 		},
 		"underMEMBurstable": {
-			lister: makeSTSLister("sts1", stsOpts{
+			lister: makeSTSLister(stsOpts{
 				coOpts: coOpts{
 					rcpu: "100m", rmem: "10Mi",
 				},
@@ -177,7 +177,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 			},
 		},
 		"underMEMGuaranteed": {
-			lister: makeSTSLister("sts1", stsOpts{
+			lister: makeSTSLister(stsOpts{
 				coOpts: coOpts{
 					rcpu: "100m", rmem: "10Mi",
 					lcpu: "100m", lmem: "10Mi",
@@ -192,7 +192,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 			},
 		},
 		"overMEMBurstable": {
-			lister: makeSTSLister("sts1", stsOpts{
+			lister: makeSTSLister(stsOpts{
 				coOpts: coOpts{
 					rcpu: "100m", rmem: "100Mi",
 				},
@@ -202,11 +202,11 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				ccpu:        "100m", cmem: "20Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "[POP-506] At current load, Memory over allocated. Current:40Mi vs Requested:200Mi (20.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-506] At current load, Memory over allocated. Current:40Mi vs Requested:200Mi (500.00%)"),
 			},
 		},
 		"overMEMGuaranteed": {
-			lister: makeSTSLister("sts1", stsOpts{
+			lister: makeSTSLister(stsOpts{
 				coOpts: coOpts{
 					rcpu: "100m", rmem: "100Mi",
 					lcpu: "100m", lmem: "100Mi",
@@ -217,7 +217,7 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 				ccpu:        "100m", cmem: "20Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "[POP-506] At current load, Memory over allocated. Current:40Mi vs Requested:200Mi (20.00%)"),
+				issues.New(issues.Root, issues.WarnLevel, "[POP-506] At current load, Memory over allocated. Current:40Mi vs Requested:200Mi (500.00%)"),
 			},
 		},
 	}
@@ -226,8 +226,8 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			sts := NewStatefulSet(issues.NewCollector(loadCodes(t)), u.lister)
-			sts.Sanitize(ctx)
 
+			assert.Nil(t, sts.Sanitize(ctx))
 			assert.Equal(t, u.issues, sts.Outcome()["default/sts1"])
 		})
 	}
@@ -252,9 +252,9 @@ type (
 	}
 )
 
-func makeSTSLister(n string, opts stsOpts) *sts {
+func makeSTSLister(opts stsOpts) *sts {
 	return &sts{
-		name: n,
+		name: "sts1",
 		opts: opts,
 	}
 }
@@ -293,7 +293,7 @@ func (s *sts) ListStatefulSets() map[string]*appsv1.StatefulSet {
 
 func (s *sts) ListPodsBySelector(sel *metav1.LabelSelector) map[string]*v1.Pod {
 	return map[string]*v1.Pod{
-		"default/p1": makeFullPod("p1", podOpts{
+		"default/p1": makeFullPod(podOpts{
 			coOpts: coOpts{
 				rcpu: s.opts.rcpu,
 				rmem: s.opts.rmem,
@@ -305,7 +305,7 @@ func (s *sts) ListPodsBySelector(sel *metav1.LabelSelector) map[string]*v1.Pod {
 
 func (s *sts) ListPodsMetrics() map[string]*mv1beta1.PodMetrics {
 	return map[string]*mv1beta1.PodMetrics{
-		"default/p1": makeMxPod("p1", s.opts.ccpu, s.opts.cmem),
+		"default/p1": makeMxPod(s.opts.ccpu, s.opts.cmem),
 	}
 }
 

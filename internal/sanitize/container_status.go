@@ -1,6 +1,7 @@
 package sanitize
 
 import (
+	"github.com/derailed/popeye/internal/issues"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -43,6 +44,14 @@ func (c *containerStatus) rollup(s v1.ContainerStatus) {
 	c.restarts += int(s.RestartCount)
 }
 
+func (c *containerStatus) checkReason(code issues.ID, reason, n string) {
+	if reason == "" {
+		c.collector.AddSubCode(code, c.fqn, n, c.ready, c.count)
+		return
+	}
+	c.collector.AddSubCode(issues.ID(code+1), c.fqn, n, c.ready, c.count, c.reason)
+}
+
 func (c *containerStatus) sanitize(s v1.ContainerStatus) {
 	c.rollup(s)
 
@@ -51,20 +60,12 @@ func (c *containerStatus) sanitize(s v1.ContainerStatus) {
 	}
 
 	if c.terminated > 0 && c.ready != 0 && !c.isInit {
-		if c.reason == "" {
-			c.collector.AddSubCode(200, c.fqn, s.Name, c.ready, c.count)
-		} else {
-			c.collector.AddSubCode(201, c.fqn, s.Name, c.ready, c.count, c.reason)
-		}
+		c.checkReason(200, c.reason, s.Name)
 		return
 	}
 
 	if c.waiting > 0 {
-		if c.reason == "" {
-			c.collector.AddSubCode(202, c.fqn, s.Name, c.ready, c.count)
-		} else {
-			c.collector.AddSubCode(203, c.fqn, s.Name, c.ready, c.count, c.reason)
-		}
+		c.checkReason(202, c.reason, s.Name)
 		return
 	}
 
@@ -76,6 +77,4 @@ func (c *containerStatus) sanitize(s v1.ContainerStatus) {
 	if c.restarts > c.restartsLimit {
 		c.collector.AddSubCode(205, c.fqn, s.Name, c.restarts, pluralOf("time", c.restarts))
 	}
-
-	return
 }

@@ -96,27 +96,43 @@ func (s *StatefulSet) checkContainers(fqn string, st *appsv1.StatefulSet) {
 	}
 }
 
-func (s *StatefulSet) checkUtilization(over bool, fqn string, st *appsv1.StatefulSet, pmx k8s.PodsMetrics) error {
+type CollectorLimiter interface {
+	Collector
+	ConfigLister
+}
+
+func checkCPU(c CollectorLimiter, over bool, fqn string, mx ConsumptionMetrics) {
+	cpuPerc := mx.ReqCPURatio()
+	if cpuPerc > 1 && cpuPerc > float64(c.CPUResourceLimits().UnderPerc) {
+		c.AddCode(503, fqn, asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
+		return
+	}
+
+	if over && cpuPerc > 0 && cpuPerc < float64(c.CPUResourceLimits().OverPerc) {
+		c.AddCode(504, fqn, asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(mx.ReqAbsCPURatio()))
+	}
+}
+
+func checkMEM(c CollectorLimiter, over bool, fqn string, mx ConsumptionMetrics) {
+	memPerc := mx.ReqMEMRatio()
+	if memPerc > 1 && memPerc > float64(c.MEMResourceLimits().UnderPerc) {
+		c.AddCode(505, fqn, asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
+		return
+	}
+
+	if over && memPerc < float64(c.MEMResourceLimits().OverPerc) {
+		c.AddCode(506, fqn, asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(mx.ReqAbsMEMRatio()))
+	}
+}
+
+func (s *StatefulSet) checkUtilization(over bool, fqn string, st *appsv1.StatefulSet, pmx k8s.PodsMetrics) {
 	mx := s.statefulsetUsage(st, pmx)
 	if mx.RequestCPU.IsZero() && mx.RequestMEM.IsZero() {
-		return nil
+		return
 	}
 
-	cpuPerc := mx.ReqCPURatio()
-	if cpuPerc > float64(s.CPUResourceLimits().UnderPerc) {
-		s.AddCode(503, fqn, asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
-	} else if over && cpuPerc > 0 && cpuPerc < float64(s.CPUResourceLimits().OverPerc) {
-		s.AddCode(504, fqn, asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
-	}
-
-	memPerc := mx.ReqMEMRatio()
-	if memPerc > float64(s.MEMResourceLimits().UnderPerc) {
-		s.AddCode(505, fqn, asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
-	} else if over && memPerc > 0 && memPerc < float64(s.MEMResourceLimits().OverPerc) {
-		s.AddCode(506, fqn, asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
-	}
-
-	return nil
+	checkCPU(s, over, fqn, mx)
+	checkMEM(s, over, fqn, mx)
 }
 
 func (s *StatefulSet) statefulsetUsage(st *appsv1.StatefulSet, pmx k8s.PodsMetrics) ConsumptionMetrics {

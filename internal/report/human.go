@@ -46,7 +46,7 @@ func Titleize(r string, count int) string {
 	}
 
 	if count <= 0 || title == "general" {
-		return strings.ToUpper(fmt.Sprintf("%s", title))
+		return strings.ToUpper(title)
 	}
 	return strings.ToUpper(fmt.Sprintf("%s (%d scanned)", title+"s", count))
 }

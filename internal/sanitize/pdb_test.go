@@ -19,11 +19,11 @@ func TestPDBSanitize(t *testing.T) {
 		issues issues.Issues
 	}{
 		"good": {
-			lister: makePDBLister("pdb", pdbOpts{}),
+			lister: makePDBLister(pdbOpts{}),
 			issues: issues.Issues{},
 		},
 		"noPods": {
-			lister: makePDBLister("pdb", pdbOpts{pod: true}),
+			lister: makePDBLister(pdbOpts{pod: true}),
 			issues: issues.Issues{
 				issues.Issue{
 					Group:   "__root__",
@@ -36,8 +36,8 @@ func TestPDBSanitize(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			pdb := NewPodDisruptionBudget(issues.NewCollector(loadCodes(t)), u.lister)
-			pdb.Sanitize(context.Background())
 
+			assert.Nil(t, pdb.Sanitize(context.TODO()))
 			assert.Equal(t, u.issues, pdb.Outcome()["default/pdb"])
 		})
 	}
@@ -54,16 +54,16 @@ type (
 	}
 )
 
-func makePDBLister(n string, opts pdbOpts) *pdb {
+func makePDBLister(opts pdbOpts) *pdb {
 	return &pdb{
-		name: n,
+		name: "pdb",
 		opts: opts,
 	}
 }
 
 func (r *pdb) ListPodDisruptionBudgets() map[string]*pv1beta1.PodDisruptionBudget {
 	return map[string]*pv1beta1.PodDisruptionBudget{
-		cache.FQN("default", r.name): makePDB(r.name, r.opts),
+		cache.FQN("default", r.name): makePDB(r.name),
 	}
 }
 
@@ -80,7 +80,7 @@ func (r *pdb) GetPod(map[string]string) *v1.Pod {
 	return makePod("p1")
 }
 
-func makePDB(n string, o pdbOpts) *pv1beta1.PodDisruptionBudget {
+func makePDB(n string) *pv1beta1.PodDisruptionBudget {
 	min, max := intstr.FromInt(1), intstr.FromInt(1)
 	return &pv1beta1.PodDisruptionBudget{
 		ObjectMeta: metav1.ObjectMeta{

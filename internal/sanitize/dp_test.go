@@ -6,7 +6,6 @@ import (
 
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
@@ -50,7 +49,7 @@ func TestDPSanitize(t *testing.T) {
 		issues issues.Issues
 	}{
 		"good": {
-			lister: makeDPLister("d1", dpOpts{
+			lister: makeDPLister(dpOpts{
 				rev:       "apps/v1",
 				reps:      1,
 				availReps: 1,
@@ -67,7 +66,7 @@ func TestDPSanitize(t *testing.T) {
 			issues: issues.Issues{},
 		},
 		"deprecated": {
-			lister: makeDPLister("d1", dpOpts{
+			lister: makeDPLister(dpOpts{
 				rev:       "extensions/v1",
 				reps:      1,
 				availReps: 1,
@@ -90,7 +89,7 @@ func TestDPSanitize(t *testing.T) {
 			},
 		},
 		"zeroReps": {
-			lister: makeDPLister("d1", dpOpts{
+			lister: makeDPLister(dpOpts{
 				rev:       "apps/v1",
 				reps:      0,
 				availReps: 1,
@@ -109,7 +108,7 @@ func TestDPSanitize(t *testing.T) {
 			},
 		},
 		"noAvailReps": {
-			lister: makeDPLister("d1", dpOpts{
+			lister: makeDPLister(dpOpts{
 				rev:        "apps/v1",
 				reps:       1,
 				availReps:  0,
@@ -129,7 +128,7 @@ func TestDPSanitize(t *testing.T) {
 			},
 		},
 		"collisions": {
-			lister: makeDPLister("d1", dpOpts{
+			lister: makeDPLister(dpOpts{
 				rev:        "apps/v1",
 				reps:       1,
 				availReps:  1,
@@ -153,8 +152,8 @@ func TestDPSanitize(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			dp := NewDeployment(issues.NewCollector(loadCodes(t)), u.lister)
-			dp.Sanitize(context.Background())
 
+			assert.Nil(t, dp.Sanitize(context.TODO()))
 			assert.Equal(t, u.issues, dp.Outcome()["default/d1"])
 		})
 	}
@@ -166,7 +165,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 		issues issues.Issues
 	}{
 		"bestEffort": {
-			lister: makeDPLister("d1", dpOpts{
+			lister: makeDPLister(dpOpts{
 				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
@@ -183,7 +182,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 			},
 		},
 		"cpuUnderBurstable": {
-			lister: makeDPLister("d1", dpOpts{
+			lister: makeDPLister(dpOpts{
 				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
@@ -203,7 +202,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 			},
 		},
 		"cpuUnderGuaranteed": {
-			lister: makeDPLister("d1", dpOpts{
+			lister: makeDPLister(dpOpts{
 				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
@@ -223,7 +222,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 			},
 		},
 		"cpuOverBustable": {
-			lister: makeDPLister("d1", dpOpts{
+			lister: makeDPLister(dpOpts{
 				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
@@ -243,7 +242,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 			},
 		},
 		"cpuOverGuaranteed": {
-			lister: makeDPLister("d1", dpOpts{
+			lister: makeDPLister(dpOpts{
 				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
@@ -263,7 +262,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 			},
 		},
 		"memUnderBurstable": {
-			lister: makeDPLister("d1", dpOpts{
+			lister: makeDPLister(dpOpts{
 				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
@@ -283,7 +282,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 			},
 		},
 		"memUnderGuaranteed": {
-			lister: makeDPLister("d1", dpOpts{
+			lister: makeDPLister(dpOpts{
 				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
@@ -303,7 +302,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 			},
 		},
 		"memOverBurstable": {
-			lister: makeDPLister("d1", dpOpts{
+			lister: makeDPLister(dpOpts{
 				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
@@ -323,7 +322,7 @@ func TestDPSanitizeUtilization(t *testing.T) {
 			},
 		},
 		"memOverGuaranteed": {
-			lister: makeDPLister("d1", dpOpts{
+			lister: makeDPLister(dpOpts{
 				rev:        "apps/v1",
 				reps:       2,
 				availReps:  2,
@@ -348,8 +347,8 @@ func TestDPSanitizeUtilization(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			dp := NewDeployment(issues.NewCollector(loadCodes(t)), u.lister)
-			dp.Sanitize(ctx)
 
+			assert.Nil(t, dp.Sanitize(ctx))
 			assert.Equal(t, u.issues, dp.Outcome()["default/d1"])
 		})
 	}
@@ -374,9 +373,9 @@ type (
 	}
 )
 
-func makeDPLister(n string, opts dpOpts) *dp {
+func makeDPLister(opts dpOpts) *dp {
 	return &dp{
-		name: n,
+		name: "d1",
 		opts: opts,
 	}
 }
@@ -397,7 +396,7 @@ func (d *dp) MEMResourceLimits() config.Allocations {
 
 func (d *dp) ListPodsBySelector(sel *metav1.LabelSelector) map[string]*v1.Pod {
 	return map[string]*v1.Pod{
-		"default/p1": makeFullPod("p1", podOpts{
+		"default/p1": makeFullPod(podOpts{
 			coOpts: d.opts.coOpts,
 		}),
 	}
@@ -417,7 +416,7 @@ func (d *dp) PodMEMLimit() float64 {
 
 func (d *dp) ListPodsMetrics() map[string]*mv1beta1.PodMetrics {
 	return map[string]*mv1beta1.PodMetrics{
-		cache.FQN("default", "p1"): makeMxPod("p1", d.opts.ccpu, d.opts.cmem),
+		cache.FQN("default", "p1"): makeMxPod(d.opts.ccpu, d.opts.cmem),
 	}
 }
 
@@ -429,15 +428,6 @@ func (d *dp) ListDeployments() map[string]*appsv1.Deployment {
 
 func (d *dp) DeploymentPreferredRev() string {
 	return "apps/v1"
-}
-
-func makeContainerMx(n, cpu, mem string) k8s.ContainerMetrics {
-	return k8s.ContainerMetrics{
-		n: k8s.Metrics{
-			CurrentCPU: toQty(cpu),
-			CurrentMEM: toQty(mem),
-		},
-	}
 }
 
 func makeDP(n string, o dpOpts) *appsv1.Deployment {

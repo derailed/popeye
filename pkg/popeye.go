@@ -17,6 +17,7 @@ import (
 	"github.com/derailed/popeye/internal/scrub"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -31,10 +32,10 @@ type (
 
 	// Popeye a kubernetes sanitizer.
 	Popeye struct {
-		client       *k8s.Client
-		config       *config.Config
-		totalScore   int
-		sectionCount int
+		client *k8s.Client
+		config *config.Config
+		// totalScore   int
+		// sectionCount int
 		outputTarget *os.File
 		log          *zerolog.Logger
 		flags        *config.Flags
@@ -76,7 +77,9 @@ func (p *Popeye) Init() error {
 func (p *Popeye) Sanitize() error {
 	defer func() {
 		if p.outputTarget != os.Stdout {
-			p.outputTarget.Close()
+			if err := p.outputTarget.Close(); err != nil {
+				log.Fatal().Err(err).Msg("Closing report")
+			}
 		}
 	}()
 
@@ -86,58 +89,78 @@ func (p *Popeye) Sanitize() error {
 	return p.dump(true)
 }
 
+func (p *Popeye) dumpJunit() error {
+	res, err := p.builder.ToJunit()
+	if err != nil {
+		return err
+	}
+	if _, err := p.outputTarget.WriteString(xml.Header); err != nil {
+		return err
+	}
+	fmt.Fprintf(p.outputTarget, "%v\n", res)
+
+	return nil
+}
+
+func (p *Popeye) dumpYAML() error {
+	res, err := p.builder.ToYAML()
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(p.outputTarget, "%v\n", res)
+
+	return nil
+}
+
+func (p *Popeye) dumpJSON() error {
+	res, err := p.builder.ToJSON()
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(p.outputTarget, "%v\n", res)
+
+	return nil
+}
+
+func (p *Popeye) dumpStd(mode, header bool) error {
+	var (
+		w = bufio.NewWriter(p.outputTarget)
+		s = report.NewSanitizer(w, mode)
+	)
+
+	if header {
+		p.builder.PrintHeader(s)
+	}
+	mx, err := p.client.ClusterHasMetrics()
+	if err != nil {
+		mx = false
+	}
+	p.builder.PrintClusterInfo(s, p.client.ActiveCluster(), mx)
+	p.builder.PrintReport(issues.Level(p.config.LinterLevel()), s)
+	p.builder.PrintSummary(s)
+
+	return w.Flush()
+}
+
 // Dump prints out sanitizer report.
 func (p *Popeye) dump(printHeader bool) error {
-	var jurassicMode bool
-
 	if !p.builder.HasContent() {
 		return errors.New("Nothing to report, check section name or permissions")
 	}
 
+	var err error
 	switch p.flags.OutputFormat() {
 	case report.JunitFormat:
-		res, err := p.builder.ToJunit()
-		if err != nil {
-			// log.().Err(err).Msg("Unable to dump Junit report")
-			return err
-		}
-		p.outputTarget.WriteString(xml.Header)
-		fmt.Fprintf(p.outputTarget, "%v\n", res)
+		err = p.dumpJunit()
 	case report.YAMLFormat:
-		res, err := p.builder.ToYAML()
-		if err != nil {
-			// log.Fatal().Err(err).Msg("Unable to dump YAML report")
-			return err
-		}
-		fmt.Fprintf(p.outputTarget, "%v\n", res)
+		err = p.dumpYAML()
 	case report.JSONFormat:
-		res, err := p.builder.ToJSON()
-		if err != nil {
-			// log.Fatal().Err(err).Msg("Unable to dump JSON report")
-			return err
-		}
-		fmt.Fprintf(p.outputTarget, "%v\n", res)
-	case report.JurassicFormat:
-		jurassicMode = true
-		fallthrough
+		err = p.dumpJSON()
 	default:
-		w := bufio.NewWriter(p.outputTarget)
-		defer w.Flush()
-
-		s := report.NewSanitizer(w, jurassicMode)
-		if printHeader {
-			p.builder.PrintHeader(s)
-		}
-		mx, err := p.client.ClusterHasMetrics()
-		if err != nil {
-			mx = false
-		}
-		p.builder.PrintClusterInfo(s, p.client.ActiveCluster(), mx)
-		p.builder.PrintReport(issues.Level(p.config.LinterLevel()), s)
-		p.builder.PrintSummary(s)
+		err = p.dumpStd(p.flags.OutputFormat() == report.JurassicFormat, printHeader)
 	}
 
-	return nil
+	return err
 }
 
 func (p *Popeye) sanitizers() map[string]scrubFn {

@@ -18,8 +18,6 @@ import (
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
-const utilFmt = "At current load, %s. Current:%s vs Requested:%s (%s)"
-
 type (
 	// PopeyeKey tracks context keys.
 	PopeyeKey string
@@ -37,8 +35,14 @@ type (
 
 	// Collector collects sub issues.
 	Collector interface {
+		// Outcome collects issues.
 		Outcome() issues.Outcome
-		AddSubCode(id issues.ID, p, s string, args ...interface{})
+
+		// AddSubCode records a sub issue.
+		AddSubCode(id issues.ID, section, group string, args ...interface{})
+
+		// AddCode records a new issue.
+		AddCode(id issues.ID, section string, args ...interface{})
 	}
 
 	// PodLimiter tracks metrics limit range.
@@ -55,7 +59,10 @@ type (
 
 	// ConfigLister tracks configuration parameters.
 	ConfigLister interface {
+		// CPUResourceLimits returns the CPU utilization threshold.
 		CPUResourceLimits() config.Allocations
+
+		// MEMResourceLimits returns the MEM utilization threshold.
 		MEMResourceLimits() config.Allocations
 	}
 
@@ -92,7 +99,6 @@ func (d *Deployment) Sanitize(ctx context.Context) error {
 		d.checkContainers(fqn, dp.Spec.Template.Spec)
 		pmx := k8s.PodsMetrics{}
 		podsMetrics(d, pmx)
-
 		d.checkUtilization(over, fqn, dp, pmx)
 	}
 
@@ -142,27 +148,13 @@ func (d *Deployment) checkContainers(fqn string, spec v1.PodSpec) {
 }
 
 // CheckUtilization checks deployments requested resources vs current utilization.
-func (d *Deployment) checkUtilization(over bool, fqn string, dp *appsv1.Deployment, pmx k8s.PodsMetrics) error {
+func (d *Deployment) checkUtilization(over bool, fqn string, dp *appsv1.Deployment, pmx k8s.PodsMetrics) {
 	mx := d.deploymentUsage(dp, pmx)
 	if mx.RequestCPU.IsZero() && mx.RequestMEM.IsZero() {
-		return nil
+		return
 	}
-
-	cpuPerc := mx.ReqCPURatio()
-	if cpuPerc > 1 && cpuPerc > float64(d.CPUResourceLimits().UnderPerc) {
-		d.AddCode(503, fqn, asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
-	} else if over && cpuPerc < float64(d.CPUResourceLimits().OverPerc) {
-		d.AddCode(504, fqn, asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(mx.ReqAbsCPURatio()))
-	}
-
-	memPerc := mx.ReqMEMRatio()
-	if memPerc > 1 && memPerc > float64(d.MEMResourceLimits().UnderPerc) {
-		d.AddCode(505, fqn, asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
-	} else if over && memPerc < float64(d.MEMResourceLimits().OverPerc) {
-		d.AddCode(506, fqn, asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(mx.ReqAbsMEMRatio()))
-	}
-
-	return nil
+	checkCPU(d, over, fqn, mx)
+	checkMEM(d, over, fqn, mx)
 }
 
 // DeploymentUsage finds deployment running pods and compute current vs requested resource usage.

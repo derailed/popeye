@@ -116,11 +116,7 @@ func (c *Client) RawConfig() (clientcmdapi.Config, error) {
 		return *c.rawConfig, nil
 	}
 
-	err := c.ensureClientConfig()
-	if err != nil {
-		return clientcmdapi.Config{}, err
-	}
-
+	c.ensureClientConfig()
 	raw, err := c.clientConfig.RawConfig()
 	if err != nil {
 		return clientcmdapi.Config{}, err
@@ -136,11 +132,8 @@ func (c *Client) RESTConfig() (*rest.Config, error) {
 		return c.restConfig, nil
 	}
 
-	err := c.ensureClientConfig()
-	if err != nil {
-		return nil, err
-	}
-
+	var err error
+	c.ensureClientConfig()
 	if c.restConfig, err = c.flags.ToRESTConfig(); err != nil {
 		return nil, err
 	}
@@ -148,11 +141,10 @@ func (c *Client) RESTConfig() (*rest.Config, error) {
 	return c.restConfig, nil
 }
 
-func (c *Client) ensureClientConfig() error {
+func (c *Client) ensureClientConfig() {
 	if c.clientConfig == nil {
 		c.clientConfig = c.flags.ToRawKubeConfigLoader()
 	}
-	return nil
 }
 
 var supportedMetricsAPIVersions = []string{"v1beta1"}

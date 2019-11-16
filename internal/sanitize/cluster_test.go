@@ -1,6 +1,7 @@
 package sanitize
 
 import (
+	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/issues"
@@ -29,8 +30,8 @@ func TestClusterSanitize(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			cl := NewCluster(issues.NewCollector(loadCodes(t)), newCluster(u.major, u.minor))
-			cl.Sanitize(nil)
 
+			assert.Nil(t, cl.Sanitize(context.TODO()))
 			assert.Equal(t, u.e, cl.Outcome()["Version"])
 		})
 	}

@@ -47,9 +47,9 @@ func (d *DaemonSet) Sanitize(ctx context.Context) error {
 		d.InitOutcome(fqn)
 		d.checkDeprecation(fqn, ds)
 		d.checkContainers(fqn, ds.Spec.Template.Spec)
+
 		pmx := k8s.PodsMetrics{}
 		podsMetrics(d, pmx)
-
 		d.checkUtilization(over, fqn, ds, pmx)
 	}
 
@@ -84,27 +84,14 @@ func (d *DaemonSet) checkContainers(fqn string, spec v1.PodSpec) {
 }
 
 // CheckUtilization checks deployments requested resources vs current utilization.
-func (d *DaemonSet) checkUtilization(over bool, fqn string, ds *appsv1.DaemonSet, pmx k8s.PodsMetrics) error {
+func (d *DaemonSet) checkUtilization(over bool, fqn string, ds *appsv1.DaemonSet, pmx k8s.PodsMetrics) {
 	mx := d.daemonsetUsage(ds, pmx)
 	if mx.RequestCPU.IsZero() && mx.RequestMEM.IsZero() {
-		return nil
+		return
 	}
 
-	cpuPerc := mx.ReqCPURatio()
-	if cpuPerc > 1 && cpuPerc > float64(d.CPUResourceLimits().UnderPerc) {
-		d.AddCode(503, fqn, asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(cpuPerc))
-	} else if over && cpuPerc < float64(d.CPUResourceLimits().OverPerc) {
-		d.AddCode(504, fqn, asMC(mx.CurrentCPU), asMC(mx.RequestCPU), asPerc(mx.ReqAbsCPURatio()))
-	}
-
-	memPerc := mx.ReqMEMRatio()
-	if memPerc > 1 && memPerc > float64(d.MEMResourceLimits().UnderPerc) {
-		d.AddCode(505, fqn, asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(memPerc))
-	} else if over && memPerc < float64(d.MEMResourceLimits().OverPerc) {
-		d.AddCode(506, fqn, asMB(mx.CurrentMEM), asMB(mx.RequestMEM), asPerc(mx.ReqAbsMEMRatio()))
-	}
-
-	return nil
+	checkCPU(d, over, fqn, mx)
+	checkMEM(d, over, fqn, mx)
 }
 
 // DaemonSetUsage finds deployment running pods and compute current vs requested resource usage.

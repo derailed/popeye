@@ -38,8 +38,8 @@ func TestRSSanitize(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			rs := NewReplicaSet(issues.NewCollector(loadCodes(t)), u.lister)
-			rs.Sanitize(context.Background())
 
+			assert.Nil(t, rs.Sanitize(context.TODO()))
 			assert.Equal(t, u.issues, rs.Outcome()["default/rs"])
 		})
 	}

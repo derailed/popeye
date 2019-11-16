@@ -9,12 +9,6 @@ import (
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
-const (
-	// BOZO!! Set in a config file?
-	cpuLimit = 80
-	memLimit = 80
-)
-
 type (
 	tolerations map[string]struct{}
 
@@ -102,28 +96,32 @@ func (n *Node) checkConditions(no *v1.Node) bool {
 		}
 
 		// Node is not ready bail other checks
-		if c.Status == v1.ConditionFalse {
-			if c.Type == v1.NodeReady {
-				n.AddCode(702, no.Name)
-				return ready
-			}
-			continue
+		if c.Type == v1.NodeReady && c.Status == v1.ConditionFalse {
+			n.AddCode(702, no.Name)
+			return ready
 		}
+		ready = n.statusReport(no.Name, c.Type)
+	}
 
-		switch c.Type {
-		case v1.NodeOutOfDisk:
-			n.AddCode(703, no.Name)
-		case v1.NodeMemoryPressure:
-			n.AddCode(704, no.Name)
-		case v1.NodeDiskPressure:
-			n.AddCode(705, no.Name)
-		case v1.NodePIDPressure:
-			n.AddCode(706, no.Name)
-		case v1.NodeNetworkUnavailable:
-			n.AddCode(707, no.Name)
-		case v1.NodeReady:
-			ready = true
-		}
+	return ready
+}
+
+func (n *Node) statusReport(node string, cond v1.NodeConditionType) bool {
+	var ready bool
+
+	switch cond {
+	case v1.NodeOutOfDisk:
+		n.AddCode(703, node)
+	case v1.NodeMemoryPressure:
+		n.AddCode(704, node)
+	case v1.NodeDiskPressure:
+		n.AddCode(705, node)
+	case v1.NodePIDPressure:
+		n.AddCode(706, node)
+	case v1.NodeNetworkUnavailable:
+		n.AddCode(707, node)
+	case v1.NodeReady:
+		ready = true
 	}
 
 	return ready

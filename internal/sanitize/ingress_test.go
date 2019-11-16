@@ -1,6 +1,7 @@
 package sanitize
 
 import (
+	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/issues"
@@ -29,8 +30,8 @@ func TestIngressSanitize(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			cl := NewIngress(issues.NewCollector(loadCodes(t)), newIngress(u.rev))
-			cl.Sanitize(nil)
 
+			assert.Nil(t, cl.Sanitize(context.TODO()))
 			assert.Equal(t, u.e, cl.Outcome()["default/ing1"])
 		})
 	}

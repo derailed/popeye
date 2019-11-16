@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	pv1beta1 "k8s.io/api/policy/v1beta1"
@@ -18,9 +19,9 @@ func TestPodSanitize(t *testing.T) {
 		issues int
 	}{
 		"cool": {
-			makePodLister("p1", podOpts{
+			makePodLister(podOpts{
 				pods: map[string]*v1.Pod{
-					"default/p1": makeFullPod("p1", podOpts{
+					"default/p1": makeFullPod(podOpts{
 						serviceAcct: "fred",
 						certs:       false,
 						coOpts: coOpts{
@@ -41,9 +42,9 @@ func TestPodSanitize(t *testing.T) {
 			0,
 		},
 		"unhappy": {
-			makePodLister("p1", podOpts{
+			makePodLister(podOpts{
 				pods: map[string]*v1.Pod{
-					"default/p1": makeFullPod("p1", podOpts{
+					"default/p1": makeFullPod(podOpts{
 						coOpts: coOpts{
 							rcpu: "100m",
 							rmem: "20Mi",
@@ -63,9 +64,9 @@ func TestPodSanitize(t *testing.T) {
 			1,
 		},
 		"defaultSA": {
-			makePodLister("p1", podOpts{
+			makePodLister(podOpts{
 				pods: map[string]*v1.Pod{
-					"default/p1": makeFullPod("p1", podOpts{
+					"default/p1": makeFullPod(podOpts{
 						coOpts: coOpts{
 							rcpu: "100m",
 							rmem: "20Mi",
@@ -90,8 +91,8 @@ func TestPodSanitize(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			p := NewPod(issues.NewCollector(loadCodes(t)), u.lister)
-			p.Sanitize(context.Background())
 
+			assert.Nil(t, p.Sanitize(context.TODO()))
 			assert.Equal(t, u.issues, len(p.Outcome()["default/p1"]))
 		})
 	}
@@ -115,7 +116,7 @@ type (
 	}
 )
 
-func makePodLister(n string, opts podOpts) *pod {
+func makePodLister(opts podOpts) *pod {
 	return &pod{
 		opts: opts,
 	}
@@ -141,9 +142,23 @@ func (*pod) PodMEMLimit() float64 {
 	return 90
 }
 
+func (*pod) CPUResourceLimits() config.Allocations {
+	return config.Allocations{
+		UnderPerc: 100,
+		OverPerc:  50,
+	}
+}
+
+func (*pod) MEMResourceLimits() config.Allocations {
+	return config.Allocations{
+		UnderPerc: 100,
+		OverPerc:  50,
+	}
+}
+
 func (p *pod) ListPodsMetrics() map[string]*v1beta1.PodMetrics {
 	return map[string]*v1beta1.PodMetrics{
-		"default/p1": makeMxPod("p1", "10m", "10Mi"),
+		"default/p1": makeMxPod("10m", "10Mi"),
 	}
 }
 
@@ -168,17 +183,10 @@ func makePod(n string) *v1.Pod {
 	return po
 }
 
-func makePhasePod(n string, p v1.PodPhase) *v1.Pod {
-	po := makePod(n)
-	po.Status.Phase = p
-
-	return po
-}
-
-func makeMxPod(name, cpu, mem string) *v1beta1.PodMetrics {
+func makeMxPod(cpu, mem string) *v1beta1.PodMetrics {
 	return &v1beta1.PodMetrics{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      "p1",
 			Namespace: "default",
 		},
 		Containers: []v1beta1.ContainerMetrics{
@@ -188,8 +196,8 @@ func makeMxPod(name, cpu, mem string) *v1beta1.PodMetrics {
 	}
 }
 
-func makeFullPod(n string, opts podOpts) *v1.Pod {
-	po := makePod(n)
+func makeFullPod(opts podOpts) *v1.Pod {
+	po := makePod("p1")
 	po.Spec = v1.PodSpec{
 		InitContainers: []v1.Container{
 			makeContainer("i1", coOpts{

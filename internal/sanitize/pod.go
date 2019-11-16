@@ -11,11 +11,6 @@ import (
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
-const (
-	cpuPodLimit = 80
-	memPodLimit = 80
-)
-
 type (
 	// Pod represents a Pod linter.
 	Pod struct {
@@ -29,12 +24,19 @@ type (
 		ForLabels(labels map[string]string) *pv1beta1.PodDisruptionBudget
 	}
 
+	// PodLister lists available pods.
+	PodLister interface {
+		ListPods() map[string]*v1.Pod
+		GetPod(sel map[string]string) *v1.Pod
+	}
+
 	// PodMXLister list available pods.
 	PodMXLister interface {
 		PodLimiter
 		PodMetricsLister
 		PodLister
 		PdbLister
+		ConfigLister
 	}
 
 	// PodMetric tracks node metrics available and current range.
@@ -64,7 +66,7 @@ func (p *Pod) Sanitize(ctx context.Context) error {
 		p.checkPdb(fqn, po.ObjectMeta.Labels)
 		p.checkSecure(fqn, po.Spec)
 		pmx, cmx := mx[fqn], k8s.ContainerMetrics{}
-		containerMetrics(fqn, pmx, cmx)
+		containerMetrics(pmx, cmx)
 		p.checkUtilization(fqn, po, cmx)
 	}
 	return nil
@@ -143,7 +145,7 @@ func (p *Pod) checkStatus(po *v1.Pod) {
 // ----------------------------------------------------------------------------
 // Helpers...
 
-func containerMetrics(fqn string, pmx *mv1beta1.PodMetrics, mx k8s.ContainerMetrics) {
+func containerMetrics(pmx *mv1beta1.PodMetrics, mx k8s.ContainerMetrics) {
 	// No metrics -> Bail!
 	if pmx == nil {
 		return

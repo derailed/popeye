@@ -18,13 +18,13 @@ func TestNPSanitize(t *testing.T) {
 		issues issues.Issues
 	}{
 		"good": {
-			lister: makeNPLister("np", npOpts{
+			lister: makeNPLister(npOpts{
 				rev: "networking.k8s.io/v1",
 			}),
 			issues: issues.Issues{},
 		},
 		"deprecated": {
-			lister: makeNPLister("np", npOpts{
+			lister: makeNPLister(npOpts{
 				rev: "policy/v1beta1",
 			}),
 			issues: issues.Issues{
@@ -35,7 +35,7 @@ func TestNPSanitize(t *testing.T) {
 			},
 		},
 		"noPodRef": {
-			lister: makeNPLister("np", npOpts{
+			lister: makeNPLister(npOpts{
 				rev: "networking.k8s.io/v1",
 				pod: true,
 			}),
@@ -53,7 +53,7 @@ func TestNPSanitize(t *testing.T) {
 			},
 		},
 		"noNSRef": {
-			lister: makeNPLister("np", npOpts{
+			lister: makeNPLister(npOpts{
 				rev: "networking.k8s.io/v1",
 				ns:  true,
 			}),
@@ -75,8 +75,8 @@ func TestNPSanitize(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			np := NewNetworkPolicy(issues.NewCollector(loadCodes(t)), u.lister)
-			np.Sanitize(context.Background())
 
+			assert.Nil(t, np.Sanitize(context.Background()))
 			assert.Equal(t, u.issues, np.Outcome()["default/np"])
 		})
 	}
@@ -94,9 +94,9 @@ type (
 	}
 )
 
-func makeNPLister(n string, opts npOpts) *np {
+func makeNPLister(opts npOpts) *np {
 	return &np{
-		name: n,
+		name: "np",
 		opts: opts,
 	}
 }

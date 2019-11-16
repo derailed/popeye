@@ -13,12 +13,6 @@ import (
 // BOZO!! Check policy for potential dups or override priviledges
 
 type (
-	// PodLister lists available pods.
-	PodLister interface {
-		ListPods() map[string]*v1.Pod
-		GetPod(sel map[string]string) *v1.Pod
-	}
-
 	// ServiceAccountLister list available ServiceAccounts on a cluster.
 	ServiceAccountLister interface {
 		PodLister
@@ -114,7 +108,7 @@ func (s *ServiceAccount) checkMounts(fqn string, b *bool) {
 
 func (s *ServiceAccount) crbRefs(refs map[string]struct{}) error {
 	for _, crb := range s.ListClusterRoleBindings() {
-		pullSas(crb.Name, crb.Subjects, refs)
+		pullSas(crb.Subjects, refs)
 	}
 
 	return nil
@@ -122,7 +116,7 @@ func (s *ServiceAccount) crbRefs(refs map[string]struct{}) error {
 
 func (s *ServiceAccount) rbRefs(refs map[string]struct{}) error {
 	for _, rb := range s.ListRoleBindings() {
-		pullSas(cache.FQN(rb.Namespace, rb.Name), rb.Subjects, refs)
+		pullSas(rb.Subjects, refs)
 	}
 
 	return nil
@@ -141,7 +135,7 @@ func (s *ServiceAccount) podRefs(refs map[string]struct{}) error {
 // ----------------------------------------------------------------------------
 // Helpers...
 
-func pullSas(n string, ss []rbacv1.Subject, res map[string]struct{}) {
+func pullSas(ss []rbacv1.Subject, res map[string]struct{}) {
 	for _, s := range ss {
 		if s.Kind == "ServiceAccount" {
 			fqn := fqnSubject(s)

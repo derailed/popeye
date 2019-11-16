@@ -15,17 +15,17 @@ func TestPVCSanitize(t *testing.T) {
 		lister PersistentVolumeClaimLister
 		issues int
 	}{
-		"bound":   {makePVCLister("pvc1", pvcOpts{used: "pvc1", phase: v1.ClaimBound}), 0},
-		"lost":    {makePVCLister("pvc1", pvcOpts{used: "pvc1", phase: v1.ClaimLost}), 1},
-		"pending": {makePVCLister("pvc1", pvcOpts{used: "pvc1", phase: v1.ClaimPending}), 1},
-		"used":    {makePVCLister("pvc1", pvcOpts{used: "pvc2", phase: v1.ClaimBound}), 1},
+		"bound":   {makePVCLister(pvcOpts{used: "pvc1", phase: v1.ClaimBound}), 0},
+		"lost":    {makePVCLister(pvcOpts{used: "pvc1", phase: v1.ClaimLost}), 1},
+		"pending": {makePVCLister(pvcOpts{used: "pvc1", phase: v1.ClaimPending}), 1},
+		"used":    {makePVCLister(pvcOpts{used: "pvc2", phase: v1.ClaimBound}), 1},
 	}
 
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			p := NewPersistentVolumeClaim(issues.NewCollector(loadCodes(t)), u.lister)
-			p.Sanitize(context.Background())
 
+			assert.Nil(t, p.Sanitize(context.TODO()))
 			assert.Equal(t, u.issues, len(p.Outcome()["default/pvc1"]))
 		})
 	}
@@ -44,8 +44,8 @@ type pvc struct {
 	opts pvcOpts
 }
 
-func makePVCLister(n string, opts pvcOpts) pvc {
-	return pvc{name: n, opts: opts}
+func makePVCLister(opts pvcOpts) pvc {
+	return pvc{name: "pvc1", opts: opts}
 }
 
 func (p pvc) ListPersistentVolumeClaims() map[string]*v1.PersistentVolumeClaim {

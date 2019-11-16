@@ -163,13 +163,13 @@ func (b *Builder) PrintHeader(s *Sanitizer) {
 	for i, l := range Logo {
 		switch {
 		case i < len(Popeye):
-			fmt.Fprintf(s, s.Color(Popeye[i], ColorAqua))
-			fmt.Fprintf(s, strings.Repeat(" ", 53))
+			fmt.Fprintf(s, "%s", s.Color(Popeye[i], ColorAqua))
+			fmt.Fprintf(s, "%s", strings.Repeat(" ", 53))
 		case i == 4:
-			fmt.Fprintf(s, s.Color("  Biffs`em and Buffs`em!", ColorLighSlate))
-			fmt.Fprintf(s, strings.Repeat(" ", 56))
+			fmt.Fprintf(s, "%s", s.Color("  Biffs`em and Buffs`em!", ColorLighSlate))
+			fmt.Fprintf(s, "%s", strings.Repeat(" ", 56))
 		default:
-			fmt.Fprintf(s, strings.Repeat(" ", 80))
+			fmt.Fprintf(s, "%s", strings.Repeat(" ", 80))
 		}
 		fmt.Fprintln(s, s.Color(l, ColorLighSlate))
 	}

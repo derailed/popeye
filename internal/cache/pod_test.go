@@ -6,9 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
 func TestGetPod(t *testing.T) {
@@ -332,28 +330,4 @@ func makePodLabels(n string, labels map[string]string) *v1.Pod {
 	po.ObjectMeta.Labels = labels
 
 	return po
-}
-
-func makeMxPod(name, cpu, mem string) v1beta1.PodMetrics {
-	return v1beta1.PodMetrics{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: "default",
-		},
-		Containers: []v1beta1.ContainerMetrics{
-			{Name: "c1", Usage: makeRes(cpu, mem)},
-			{Name: "c2", Usage: makeRes(cpu, mem)},
-			{Name: "c3", Usage: makeRes(cpu, mem)},
-		},
-	}
-}
-
-func makeRes(c, m string) v1.ResourceList {
-	cpu, _ := resource.ParseQuantity(c)
-	mem, _ := resource.ParseQuantity(m)
-
-	return v1.ResourceList{
-		v1.ResourceCPU:    cpu,
-		v1.ResourceMemory: mem,
-	}
 }

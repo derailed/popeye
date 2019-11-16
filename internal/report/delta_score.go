@@ -1,8 +1,6 @@
 package report
 
 import (
-	"strconv"
-
 	"github.com/derailed/popeye/internal/issues"
 )
 
@@ -41,25 +39,13 @@ func (s DeltaScore) worst() bool {
 	return !s.better()
 }
 
-func (s DeltaScore) delta() string {
-	score := s.s2 - s.s1
-	if score > 0 {
-		return "+" + strconv.Itoa(score)
-	}
-
-	return strconv.Itoa(score)
-}
-
 func (s DeltaScore) better() bool {
 	if s.s1 == s.s2 {
 		return false
 	}
 
 	if s.s2 > s.s1 {
-		if s.inverse {
-			return false
-		}
-		return true
+		return !s.inverse
 	}
 
 	return s.inverse

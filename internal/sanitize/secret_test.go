@@ -1,6 +1,7 @@
 package sanitize
 
 import (
+	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/cache"
@@ -12,8 +13,8 @@ import (
 
 func TestSecretSanitize(t *testing.T) {
 	s := NewSecret(issues.NewCollector(loadCodes(t)), newSecret())
-	s.Sanitize(nil)
 
+	assert.Nil(t, s.Sanitize(context.TODO()))
 	assert.Equal(t, 5, len(s.Outcome()))
 
 	ii := s.Outcome()["default/sec3"]

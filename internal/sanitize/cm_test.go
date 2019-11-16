@@ -1,6 +1,7 @@
 package sanitize
 
 import (
+	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/cache"
@@ -18,8 +19,8 @@ func loadCodes(t *testing.T) *issues.Codes {
 
 func TestConfigMapSanitize(t *testing.T) {
 	cm := NewConfigMap(issues.NewCollector(loadCodes(t)), newConfigMap())
-	cm.Sanitize(nil)
 
+	assert.Nil(t, cm.Sanitize(context.TODO()))
 	assert.Equal(t, 4, len(cm.Outcome()))
 
 	ii := cm.Outcome()["default/cm3"]

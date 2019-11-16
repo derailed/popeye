@@ -42,8 +42,8 @@ func TestSASanitize(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			s := NewServiceAccount(issues.NewCollector(loadCodes(t)), u.lister)
-			s.Sanitize(context.Background())
 
+			assert.Nil(t, s.Sanitize(context.Background()))
 			assert.Equal(t, u.issues, len(s.Outcome()["default/sa1"]))
 		})
 	}

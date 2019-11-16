@@ -24,7 +24,7 @@ func TestContainerCheckUtilization(t *testing.T) {
 				lcpu: "10m",
 				lmem: "10Mi",
 			}),
-			mx: k8s.Metrics{toQty("1m"), toQty("1Mi")},
+			mx: k8s.Metrics{CurrentCPU: toQty("1m"), CurrentMEM: toQty("1Mi")},
 		},
 		"cpuOver": {
 			co: makeContainer("c1", coOpts{
@@ -33,7 +33,7 @@ func TestContainerCheckUtilization(t *testing.T) {
 				lcpu: "100m",
 				lmem: "10Mi",
 			}),
-			mx:     k8s.Metrics{toQty("200m"), toQty("2Mi")},
+			mx:     k8s.Metrics{CurrentCPU: toQty("200m"), CurrentMEM: toQty("2Mi")},
 			issues: 1,
 		},
 		"memOver": {
@@ -43,7 +43,7 @@ func TestContainerCheckUtilization(t *testing.T) {
 				lcpu: "100m",
 				lmem: "10Mi",
 			}),
-			mx:     k8s.Metrics{toQty("10m"), toQty("20Mi")},
+			mx:     k8s.Metrics{CurrentCPU: toQty("10m"), CurrentMEM: toQty("20Mi")},
 			issues: 1,
 		},
 		"bothOver": {
@@ -53,7 +53,7 @@ func TestContainerCheckUtilization(t *testing.T) {
 				lcpu: "100m",
 				lmem: "10Mi",
 			}),
-			mx:     k8s.Metrics{toQty("5"), toQty("20Mi")},
+			mx:     k8s.Metrics{CurrentCPU: toQty("5"), CurrentMEM: toQty("20Mi")},
 			issues: 2,
 		},
 		"LimOver": {
@@ -63,7 +63,7 @@ func TestContainerCheckUtilization(t *testing.T) {
 				lcpu: "100m",
 				lmem: "10Mi",
 			}),
-			mx:     k8s.Metrics{toQty("5"), toQty("20Mi")},
+			mx:     k8s.Metrics{CurrentCPU: toQty("5"), CurrentMEM: toQty("20Mi")},
 			issues: 2,
 		},
 	}

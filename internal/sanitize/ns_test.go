@@ -52,8 +52,8 @@ func TestNamespaceSanitizer(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			n := NewNamespace(issues.NewCollector(loadCodes(t)), u.l)
-			n.Sanitize(context.Background())
 
+			assert.Nil(t, n.Sanitize(context.TODO()))
 			for ns, v := range u.issues {
 				assert.Equal(t, v, len(n.Outcome()[ns]))
 			}

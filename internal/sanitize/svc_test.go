@@ -18,7 +18,7 @@ func TestSvcSanitize(t *testing.T) {
 		issues int
 	}{
 		"cool": {
-			makeSvcLister("s1",
+			makeSvcLister(
 				svcOpts{
 					kind:         v1.ServiceTypeClusterIP,
 					hasEndPoints: true,
@@ -29,7 +29,7 @@ func TestSvcSanitize(t *testing.T) {
 			0,
 		},
 		"noEp": {
-			makeSvcLister("s1",
+			makeSvcLister(
 				svcOpts{
 					kind:        v1.ServiceTypeClusterIP,
 					hasSelector: true,
@@ -39,7 +39,7 @@ func TestSvcSanitize(t *testing.T) {
 			1,
 		},
 		"noMatchingPods": {
-			makeSvcLister("s1",
+			makeSvcLister(
 				svcOpts{
 					kind:         v1.ServiceTypeClusterIP,
 					hasSelector:  true,
@@ -49,7 +49,7 @@ func TestSvcSanitize(t *testing.T) {
 			1,
 		},
 		"lbType": {
-			makeSvcLister("s1",
+			makeSvcLister(
 				svcOpts{
 					kind:         v1.ServiceTypeLoadBalancer,
 					hasEndPoints: true,
@@ -60,7 +60,7 @@ func TestSvcSanitize(t *testing.T) {
 			1,
 		},
 		"nodePortType": {
-			makeSvcLister("s1",
+			makeSvcLister(
 				svcOpts{
 					kind:         v1.ServiceTypeNodePort,
 					hasEndPoints: true,
@@ -71,7 +71,7 @@ func TestSvcSanitize(t *testing.T) {
 			1,
 		},
 		"noSelector": {
-			makeSvcLister("s1",
+			makeSvcLister(
 				svcOpts{
 					kind:         v1.ServiceTypeClusterIP,
 					hasEndPoints: true,
@@ -81,7 +81,7 @@ func TestSvcSanitize(t *testing.T) {
 			0,
 		},
 		"externalSvc": {
-			makeSvcLister("s1",
+			makeSvcLister(
 				svcOpts{
 					kind:        v1.ServiceTypeExternalName,
 					hasSelector: true,
@@ -91,7 +91,7 @@ func TestSvcSanitize(t *testing.T) {
 			0,
 		},
 		"portProtoFail": {
-			makeSvcLister("s1",
+			makeSvcLister(
 				svcOpts{
 					kind:        v1.ServiceTypeExternalName,
 					hasSelector: true,
@@ -109,7 +109,7 @@ func TestSvcSanitize(t *testing.T) {
 			1,
 		},
 		"badTargetPortNumb": {
-			makeSvcLister("s1",
+			makeSvcLister(
 				svcOpts{
 					kind:         v1.ServiceTypeClusterIP,
 					hasSelector:  true,
@@ -128,7 +128,7 @@ func TestSvcSanitize(t *testing.T) {
 			1,
 		},
 		"badNamedTargetPort": {
-			makeSvcLister("s1",
+			makeSvcLister(
 				svcOpts{
 					kind:         v1.ServiceTypeClusterIP,
 					hasSelector:  true,
@@ -147,7 +147,7 @@ func TestSvcSanitize(t *testing.T) {
 			1,
 		},
 		"unnamedTargetPort": {
-			makeSvcLister("s1",
+			makeSvcLister(
 				svcOpts{
 					kind:         v1.ServiceTypeClusterIP,
 					hasSelector:  true,
@@ -166,7 +166,7 @@ func TestSvcSanitize(t *testing.T) {
 			1,
 		},
 		"unamedSvcPort": {
-			makeSvcLister("s1",
+			makeSvcLister(
 				svcOpts{
 					kind:         v1.ServiceTypeClusterIP,
 					hasSelector:  true,
@@ -188,8 +188,8 @@ func TestSvcSanitize(t *testing.T) {
 	for k, u := range uu {
 		t.Run(k, func(t *testing.T) {
 			s := NewService(issues.NewCollector(loadCodes(t)), u.lister)
-			s.Sanitize(context.Background())
 
+			assert.Nil(t, s.Sanitize(context.Background()))
 			assert.Equal(t, u.issues, len(s.Outcome()["default/s1"]))
 		})
 	}
@@ -213,9 +213,9 @@ type (
 	}
 )
 
-func makeSvcLister(n string, opts svcOpts) *svc {
+func makeSvcLister(opts svcOpts) *svc {
 	return &svc{
-		name: n,
+		name: "s1",
 		opts: opts,
 	}
 }
