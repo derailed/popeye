@@ -89,6 +89,12 @@ func (p *Popeye) Sanitize() error {
 	return p.dump(true)
 }
 
+
+// GetScore returns cluster total score
+func (p *Popeye) GetScore() int {
+	return p.builder.Report.Score
+}
+
 func (p *Popeye) dumpJunit() error {
 	res, err := p.builder.ToJunit()
 	if err != nil {

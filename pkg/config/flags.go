@@ -17,6 +17,7 @@ type Flags struct {
 	Spinach            *string
 	Sections           *[]string
 	PushGatewayAddress *string
+	ScoreExitCode      *bool
 }
 
 // NewFlags returns new configuration flags.
@@ -31,7 +32,8 @@ func NewFlags() *Flags {
 		Spinach:            strPtr(""),
 		Sections:           &[]string{},
 		ConfigFlags:        genericclioptions.NewConfigFlags(false),
-		PushGatewayAddress: strPtr("")}
+		PushGatewayAddress: strPtr(""),
+		ScoreExitCode:      boolPtr(false)}
 }
 
 // OutputFormat returns the report output format.

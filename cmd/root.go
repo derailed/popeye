@@ -69,6 +69,10 @@ func doIt(cmd *cobra.Command, args []string) {
 	if err := popeye.Sanitize(); err != nil {
 		bomb(err.Error())
 	}
+
+	if *flags.ScoreExitCode == true {
+		os.Exit(popeye.GetScore())
+	}
 }
 
 func bomb(msg string) {
@@ -243,6 +247,13 @@ func initFlags() {
 		"pushgateway-address",
 		"",
 		"Address of pushgateway e.g. http://localhost:9091",
+	)
+	rootCmd.Flags().BoolVarP(
+		flags.ScoreExitCode,
+		"score-exit-code",
+		"x",
+		false,
+		"Use Score as Exit Code",
 	)
 }
 
