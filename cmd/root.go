@@ -70,7 +70,7 @@ func doIt(cmd *cobra.Command, args []string) {
 		bomb(err.Error())
 	}
 
-	if *flags.ScoreExitCode == true {
+	if *flags.ScoreExitCode {
 		os.Exit(popeye.GetScore())
 	}
 }
