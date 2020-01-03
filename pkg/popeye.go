@@ -28,8 +28,8 @@ var (
 )
 
 func dumpDir() string {
-	if dd := os.Getenv("POPEYE_DUMP_DIR"); dd != "" {
-		return dd
+	if d := os.Getenv("POPEYE_REPORT_DIR"); d != "" {
+		return d
 	}
 	return filepath.Join(os.TempDir(), "popeye")
 }
