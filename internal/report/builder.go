@@ -29,6 +29,9 @@ const (
 
 	// PrometheusFormat pushes sanitizer as Prometheus metrics.
 	PrometheusFormat = "prometheus"
+
+	// ScoreFormat pushes sanitizer as the value of the Score.
+	ScoreFormat = "score"
 )
 
 type (
@@ -135,6 +138,12 @@ func (b *Builder) ToPrometheus(address *string, cluster, namespace string) *push
 	}
 	pusher := prometheusMarshal(b, address, cluster, namespace)
 	return pusher
+}
+
+// ToScore dumps sanitizer to only the score value.
+func (b *Builder) ToScore() int {
+	b.augment()
+	return b.Report.Score
 }
 
 // PrintSummary print outs summary report to screen.
