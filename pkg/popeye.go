@@ -24,8 +24,15 @@ var (
 	// LogFile the path to our logs.
 	LogFile = filepath.Join(os.TempDir(), fmt.Sprintf("popeye.log"))
 	// DumpDir indicates a directory location for sanitixer reports.
-	DumpDir = filepath.Join(os.TempDir(), "popeye")
+	DumpDir = dumpDir()
 )
+
+func dumpDir() string {
+	if dd := os.Getenv("POPEYE_DUMP_DIR"); dd != "" {
+		return dd
+	}
+	return filepath.Join(os.TempDir(), "popeye")
+}
 
 type (
 	scrubFn func(*scrub.Cache, *issues.Codes) scrub.Sanitizer
