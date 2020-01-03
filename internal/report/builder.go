@@ -141,9 +141,9 @@ func (b *Builder) ToPrometheus(address *string, cluster, namespace string) *push
 }
 
 // ToScore dumps sanitizer to only the score value.
-func (b *Builder) ToScore() int {
+func (b *Builder) ToScore() (int, error) {
 	b.augment()
-	return b.Report.Score
+	return b.Report.Score, nil
 }
 
 // PrintSummary print outs summary report to screen.

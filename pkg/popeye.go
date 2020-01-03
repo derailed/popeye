@@ -123,7 +123,11 @@ func (p *Popeye) dumpJSON() error {
 }
 
 func (p *Popeye) dumpScore() error {
-	fmt.Fprintf(p.outputTarget, "%v\n", p.builder.ToScore())
+	res, err := p.builder.ToScore()
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(p.outputTarget, "%v\n", res)
 
 	return nil
 }
