@@ -68,7 +68,8 @@ func TestContainerCheckUtilization(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			c := NewContainer("default/p1", newRangeCollector(t))
 			c.checkUtilization(u.co, u.mx)
@@ -91,7 +92,8 @@ func TestContainerCheckResources(t *testing.T) {
 		"none":  {issues: 1, severity: issues.WarnLevel},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		opts := coOpts{}
 		if u.request {
 			opts.rcpu = "100m"
@@ -130,7 +132,8 @@ func TestContainerCheckProbes(t *testing.T) {
 		"Unnamed":    {liveness: true, readiness: true, namedPort: true, issues: 2, severity: issues.InfoLevel},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		co := makeContainer("c1", coOpts{})
 		probe := &v1.Probe{}
 		if u.namedPort {
@@ -167,7 +170,8 @@ func TestContainerCheckImageTags(t *testing.T) {
 		"latest": {pissues: 1, image: "fred:latest", issues: 1, severity: issues.WarnLevel},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		co := makeContainer("c1", coOpts{})
 		co.Image = u.image
 
@@ -194,7 +198,8 @@ func TestContainerCheckNamedPorts(t *testing.T) {
 		"unamed": {port: "", issues: 1, severity: issues.WarnLevel},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		co := makeContainer("c1", coOpts{})
 		co.Ports = []v1.ContainerPort{{Name: u.port}}
 
@@ -218,7 +223,8 @@ func TestContainerSanitize(t *testing.T) {
 		"NoImgNoProbs": {makeContainer("c1", coOpts{}), 3},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		c := NewContainer("default/p1", newRangeCollector(t))
 		t.Run(k, func(t *testing.T) {
 			c.sanitize(u.co, true)

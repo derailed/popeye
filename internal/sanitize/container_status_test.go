@@ -105,7 +105,8 @@ func TestCSSanitize(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			co := issues.NewCollector(loadCodes(t))
 			c := newContainerStatus(co, "default/p1", 1, false, 10)

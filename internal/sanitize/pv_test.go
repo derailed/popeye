@@ -21,7 +21,8 @@ func TestPVSanitize(t *testing.T) {
 		"failed":    {makePVLister(pvOpts{phase: v1.VolumeFailed}), 1},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			p := NewPersistentVolume(issues.NewCollector(loadCodes(t)), u.lister)
 

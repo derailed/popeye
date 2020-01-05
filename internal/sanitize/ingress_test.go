@@ -6,7 +6,7 @@ import (
 
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/stretchr/testify/assert"
-	nv1beta1 "k8s.io/api/networking/v1beta1"
+	nv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -27,7 +27,8 @@ func TestIngressSanitize(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			cl := NewIngress(issues.NewCollector(loadCodes(t)), newIngress(u.rev))
 

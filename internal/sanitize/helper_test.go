@@ -147,7 +147,8 @@ func TestContainerResources(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			cpu, mem, qos := containerResources(u.co)
 

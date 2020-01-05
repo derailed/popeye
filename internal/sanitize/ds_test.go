@@ -53,7 +53,8 @@ func TestDSSanitize(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			ds := NewDaemonSet(issues.NewCollector(loadCodes(t)), u.lister)
 
@@ -223,7 +224,8 @@ func TestDSSanitizeUtilization(t *testing.T) {
 	}
 
 	ctx := context.WithValue(context.Background(), PopeyeKey("OverAllocs"), true)
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			ds := NewDaemonSet(issues.NewCollector(loadCodes(t)), u.lister)
 

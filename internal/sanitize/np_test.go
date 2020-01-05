@@ -72,7 +72,8 @@ func TestNPSanitize(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			np := NewNetworkPolicy(issues.NewCollector(loadCodes(t)), u.lister)
 

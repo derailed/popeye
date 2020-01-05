@@ -80,7 +80,8 @@ func TestSTSSanitizer(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			sts := NewStatefulSet(issues.NewCollector(loadCodes(t)), u.lister)
 
@@ -223,7 +224,8 @@ func TestSTSSanitizerUtilization(t *testing.T) {
 	}
 
 	ctx := context.WithValue(context.Background(), PopeyeKey("OverAllocs"), true)
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			sts := NewStatefulSet(issues.NewCollector(loadCodes(t)), u.lister)
 

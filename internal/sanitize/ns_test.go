@@ -49,7 +49,8 @@ func TestNamespaceSanitizer(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			n := NewNamespace(issues.NewCollector(loadCodes(t)), u.l)
 

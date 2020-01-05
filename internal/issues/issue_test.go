@@ -17,7 +17,8 @@ func TestIsSubIssues(t *testing.T) {
 		"subf":  {Newf("sub1", WarnLevel, "blah %s", "blee"), true},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			assert.Equal(t, u.e, u.i.IsSubIssue())
 		})
@@ -33,7 +34,8 @@ func TestBlank(t *testing.T) {
 		"notBlank": {New(Root, WarnLevel, "blah"), false},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			assert.Equal(t, u.e, u.i.Blank())
 		})

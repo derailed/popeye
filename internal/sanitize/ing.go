@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/derailed/popeye/internal/issues"
-	nv1beta1 "k8s.io/api/networking/v1beta1"
+	nv1beta1 "k8s.io/api/extensions/v1beta1"
 )
 
 type (

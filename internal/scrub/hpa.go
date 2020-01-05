@@ -15,10 +15,11 @@ type HorizontalPodAutoscaler struct {
 	*issues.Collector
 	*cache.HorizontalPodAutoscaler
 	*cache.Pod
+	*cache.Node
 	*cache.PodsMetrics
+	*cache.NodesMetrics
 	*cache.Deployment
 	*cache.StatefulSet
-	*cache.NodesMetrics
 	*config.Config
 }
 
@@ -46,6 +47,12 @@ func NewHorizontalPodAutoscaler(c *Cache, codes *issues.Codes) Sanitizer {
 		h.AddErr("statefulsets", err)
 	}
 	h.StatefulSet = sts
+
+	no, err := c.nodes()
+	if err != nil {
+		h.AddCode(402, "nodes", err)
+	}
+	h.Node = no
 
 	nmx, err := c.nodesMx()
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 type Core struct {
 	namespace *cache.Namespace
 	pod       *cache.Pod
+	node      *cache.Node
 	sa        *cache.ServiceAccount
 	cl        *cache.Cluster
 }
@@ -90,6 +91,17 @@ func (c *Cache) namespaces() (*cache.Namespace, error) {
 	c.namespace = cache.NewNamespace(nss)
 
 	return c.namespace, err
+}
+
+// Nodes retrieves nodes from cache if present or populate if not.
+func (c *Cache) nodes() (*cache.Node, error) {
+	if c.node != nil {
+		return c.node, nil
+	}
+	nodes, err := dag.ListNodes(c.client, c.config)
+	c.node = cache.NewNode(nodes)
+
+	return c.node, err
 }
 
 // Pods retrieves pods from cache if present or populate if not.
