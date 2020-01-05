@@ -17,7 +17,8 @@ func TestOutputFormat(t *testing.T) {
 		"blee":     {Flags{Output: strPtr("blee")}, "blee"},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			assert.Equal(t, u.e, u.f.OutputFormat())
 		})

@@ -35,7 +35,8 @@ func TestExcludes(t *testing.T) {
 		"cmNS2":            {Exclude{`rx:fred*\.v\d+`}, "default/cm.v2", false},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			assert.Equal(t, u.e, u.s.ShouldExclude(u.n))
 		})

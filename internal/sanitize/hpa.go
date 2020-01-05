@@ -19,7 +19,7 @@ type (
 
 	// ClusterMetricsLister handles cluster metrics.
 	ClusterMetricsLister interface {
-		ListClusterMetrics() v1.ResourceList
+		ListAllocatableMetrics(map[string]*v1.Node) v1.ResourceList
 	}
 
 	// HorizontalPodAutoscaler represents a HorizontalPodAutoscaler linter.
@@ -30,10 +30,10 @@ type (
 
 	// HpaLister list available hpas on a cluster.
 	HpaLister interface {
+		NodeLister
 		DeployLister
 		StatefulSetLister
 		ClusterMetricsLister
-		NodeMetricsLister
 		ListHorizontalPodAutoscalers() map[string]*autoscalingv1.HorizontalPodAutoscaler
 	}
 )
@@ -52,7 +52,7 @@ func (h *HorizontalPodAutoscaler) Sanitize(ctx context.Context) error {
 		tcpu, tmem resource.Quantity
 		current    int32
 	)
-	res := h.ListClusterMetrics()
+	res := h.ListAllocatableMetrics(h.ListNodes())
 	for fqn, hpa := range h.ListHorizontalPodAutoscalers() {
 		h.InitOutcome(fqn)
 		var rcpu, rmem resource.Quantity

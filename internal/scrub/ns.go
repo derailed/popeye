@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal/cache"
-	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/sanitize"
 )
@@ -20,11 +19,11 @@ type Namespace struct {
 func NewNamespace(c *Cache, codes *issues.Codes) Sanitizer {
 	n := Namespace{Collector: issues.NewCollector(codes)}
 
-	ss, err := dag.ListNamespaces(c.client, c.config)
+	ss, err := c.namespaces()
 	if err != nil {
 		n.AddErr("namespaces", err)
 	}
-	n.Namespace = cache.NewNamespace(ss)
+	n.Namespace = ss
 
 	pod, err := c.pods()
 	if err != nil {

@@ -21,7 +21,8 @@ func TestPVCSanitize(t *testing.T) {
 		"used":    {makePVCLister(pvcOpts{used: "pvc2", phase: v1.ClaimBound}), 1},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			p := NewPersistentVolumeClaim(issues.NewCollector(loadCodes(t)), u.lister)
 

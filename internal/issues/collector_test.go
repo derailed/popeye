@@ -23,7 +23,8 @@ func TestNoConcerns(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			c := NewCollector(nil)
 			c.addIssue("fred", u.issues...)
@@ -75,7 +76,8 @@ func TestMaxSeverity(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			c := NewCollector(nil)
 			c.addIssue(u.section, u.issues...)
@@ -109,7 +111,8 @@ func TestAddErr(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			c := NewCollector(nil)
 			c.AddErr(u.section, u.errors...)
@@ -150,11 +153,12 @@ func TestAddCode(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u, key := uu[k], k
 		t.Run(k, func(t *testing.T) {
 			c := NewCollector(loadCodes(t))
 
-			if k == "Dud!" {
+			if key == "Dud!" {
 				subCode := func() {
 					c.AddCode(u.code, u.section, u.args...)
 				}
@@ -202,12 +206,13 @@ func TestAddSubCode(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	for k := range uu {
+		u, key := uu[k], k
 		t.Run(k, func(t *testing.T) {
 			c := NewCollector(loadCodes(t))
 			c.InitOutcome(u.section)
 
-			if k == "Dud!" {
+			if key == "Dud!" {
 				subCode := func() {
 					c.AddSubCode(u.code, u.section, u.group, u.args)
 				}
