@@ -9,7 +9,7 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 )
 
-// StatefulSet represents a StatefulSet sanitizer.
+// StatefulSet represents a StatefulSet scruber.
 type StatefulSet struct {
 	*issues.Collector
 	*cache.Pod
@@ -18,30 +18,25 @@ type StatefulSet struct {
 	*config.Config
 }
 
-// NewStatefulSet return a new StatefulSet sanitizer.
-func NewStatefulSet(c *Cache, codes *issues.Codes) Sanitizer {
+// NewStatefulSet return a new StatefulSet scruber.
+func NewStatefulSet(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	s := StatefulSet{
-		Collector: issues.NewCollector(codes),
+		Collector: issues.NewCollector(codes, c.config),
 		Config:    c.config,
 	}
 
-	sts, err := c.statefulsets()
+	var err error
+	s.StatefulSet, err = c.statefulsets()
 	if err != nil {
-		s.AddErr("statefulsets", err)
+		s.AddErr(ctx, err)
 	}
-	s.StatefulSet = sts
 
-	pod, err := c.pods()
+	s.Pod, err = c.pods()
 	if err != nil {
-		s.AddErr("pods", err)
+		s.AddErr(ctx, err)
 	}
-	s.Pod = pod
 
-	pmx, err := c.podsMx()
-	if err != nil {
-		s.AddCode(402, "podmetrics", err)
-	}
-	s.PodsMetrics = pmx
+	s.PodsMetrics, _ = c.podsMx()
 
 	return &s
 }

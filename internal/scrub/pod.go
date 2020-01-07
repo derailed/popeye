@@ -9,7 +9,7 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 )
 
-// Pod represents a Pod sanitizer.
+// Pod represents a Pod scruber.
 type Pod struct {
 	*issues.Collector
 	*cache.Pod
@@ -18,30 +18,25 @@ type Pod struct {
 	*cache.PodDisruptionBudget
 }
 
-// NewPod return a new Pod sanitizer.
-func NewPod(c *Cache, codes *issues.Codes) Sanitizer {
+// NewPod return a new Pod scruber.
+func NewPod(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	p := Pod{
-		Collector: issues.NewCollector(codes),
+		Collector: issues.NewCollector(codes, c.config),
 		Config:    c.config,
 	}
 
-	pod, err := c.pods()
+	var err error
+	p.Pod, err = c.pods()
 	if err != nil {
-		p.AddErr("pods", err)
+		p.AddErr(ctx, err)
 	}
-	p.Pod = pod
 
-	pmx, err := c.podsMx()
-	if err != nil {
-		p.AddCode(402, "podmetrics", err)
-	}
-	p.PodsMetrics = pmx
+	p.PodsMetrics, _ = c.podsMx()
 
-	pdb, err := c.podDisruptionBudgets()
+	p.PodDisruptionBudget, err = c.podDisruptionBudgets()
 	if err != nil {
-		p.AddErr("podDisruptionBudget", err)
+		p.AddErr(ctx, err)
 	}
-	p.PodDisruptionBudget = pdb
 
 	return &p
 }

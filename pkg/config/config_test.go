@@ -14,9 +14,9 @@ func TestNewConfig(t *testing.T) {
 	assert.Equal(t, 80.0, cfg.NodeMEMLimit())
 	assert.Equal(t, 80.0, cfg.PodCPULimit())
 	assert.Equal(t, 80.0, cfg.PodMEMLimit())
-	assert.False(t, cfg.ShouldExclude("node", "n1"))
-	assert.False(t, cfg.ShouldExclude("namespace", "kube-public"))
-	assert.False(t, cfg.ShouldExclude("service", "default/kubernetes"))
+	assert.False(t, cfg.ShouldExclude("node", "n1", 100))
+	assert.False(t, cfg.ShouldExclude("namespace", "kube-public", 100))
+	assert.False(t, cfg.ShouldExclude("service", "default/kubernetes", 100))
 	assert.Equal(t, 5, cfg.RestartsLimit())
 	assert.Equal(t, Allocations{UnderPerc: 200, OverPerc: 50}, cfg.CPUResourceLimits())
 	assert.Equal(t, Allocations{UnderPerc: 200, OverPerc: 50}, cfg.MEMResourceLimits())
@@ -37,10 +37,10 @@ func TestNewConfigWithFile(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, 3, cfg.RestartsLimit())
-	assert.True(t, cfg.ShouldExclude("node", "n1"))
-	assert.False(t, cfg.ShouldExclude("pod", "default/fred"))
-	assert.True(t, cfg.ShouldExclude("service", "default/dictionary"))
-	assert.True(t, cfg.ShouldExclude("namespace", "kube-public"))
+	assert.True(t, cfg.ShouldExclude("node", "n1", 100))
+	assert.False(t, cfg.ShouldExclude("pod", "default/fred", 100))
+	assert.True(t, cfg.ShouldExclude("service", "default/dictionary", 100))
+	assert.True(t, cfg.ShouldExclude("namespace", "kube-public", 100))
 	assert.Equal(t, 90.0, cfg.NodeCPULimit())
 	assert.Equal(t, 80.0, cfg.NodeMEMLimit())
 	assert.Equal(t, 80.0, cfg.PodCPULimit())
@@ -51,7 +51,7 @@ func TestNewConfigWithFile(t *testing.T) {
 	assert.Equal(t, []string{}, cfg.Sections())
 }
 
-func TestNewConfigNoResourceSpecs(t *testing.T) {
+func TestNewConfigNoResourceSpec(t *testing.T) {
 	var (
 		dir = "assets/sp2.yml"
 		f   = NewFlags()
@@ -67,7 +67,18 @@ func TestNewConfigNoResourceSpecs(t *testing.T) {
 	assert.Equal(t, 80.0, cfg.PodMEMLimit())
 }
 
-func TestNewConfigWithFileToast(t *testing.T) {
+func TestNewConfigFileToast(t *testing.T) {
+	var (
+		dir = "assets/sp_old.yml"
+		f   = NewFlags()
+	)
+	f.Spinach = &dir
+
+	_, err := NewConfig(f)
+	assert.NotNil(t, err)
+}
+
+func TestNewConfigFileNoExists(t *testing.T) {
 	var (
 		dir = "assets/spinach.yml"
 		f   = NewFlags()

@@ -1,11 +1,11 @@
 package report
 
 import (
-	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/pkg/config"
 )
 
 const (
-	containerLevel issues.Level = 100
+	containerLevel config.Level = 100
 )
 
 var emojis = map[string]string{
@@ -25,16 +25,16 @@ var emojisUgry = map[string]string{
 }
 
 // EmojiForLevel maps lint levels to emojis.
-func EmojiForLevel(l issues.Level, jurassic bool) string {
+func EmojiForLevel(l config.Level, jurassic bool) string {
 	var key string
 	switch l {
 	case containerLevel:
 		key = "container"
-	case issues.ErrorLevel:
+	case config.ErrorLevel:
 		key = "farfromfok"
-	case issues.WarnLevel:
+	case config.WarnLevel:
 		key = "warn"
-	case issues.InfoLevel:
+	case config.InfoLevel:
 		key = "fyi"
 	default:
 		key = "peachy"

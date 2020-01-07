@@ -10,7 +10,7 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 )
 
-// PodSecurityPolicy represents a PodSecurityPolicy sanitizer.
+// PodSecurityPolicy represents a PodSecurityPolicy scruber.
 type PodSecurityPolicy struct {
 	*issues.Collector
 	*cache.PodSecurityPolicy
@@ -19,19 +19,19 @@ type PodSecurityPolicy struct {
 	client *k8s.Client
 }
 
-// NewPodSecurityPolicy return a new PodSecurityPolicy sanitizer.
-func NewPodSecurityPolicy(c *Cache, codes *issues.Codes) Sanitizer {
+// NewPodSecurityPolicy return a new PodSecurityPolicy scruber.
+func NewPodSecurityPolicy(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	p := PodSecurityPolicy{
 		client:    c.client,
 		Config:    c.config,
-		Collector: issues.NewCollector(codes),
+		Collector: issues.NewCollector(codes, c.config),
 	}
 
-	psps, err := c.podsecuritypolicies()
+	var err error
+	p.PodSecurityPolicy, err = c.podsecuritypolicies()
 	if err != nil {
-		p.AddErr("podsecuritypolicies", err)
+		p.AddErr(ctx, err)
 	}
-	p.PodSecurityPolicy = psps
 
 	return &p
 }

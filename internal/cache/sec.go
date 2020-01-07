@@ -4,7 +4,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-// SecretKey tracks Secret ressource references
+// SecretKey tracks Secret resource references
 const SecretKey = "sec"
 
 // Secret represents a collection of Secrets available on a cluster.

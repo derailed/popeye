@@ -1,7 +1,6 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/cache"
@@ -39,12 +38,13 @@ func TestSASanitize(t *testing.T) {
 		},
 	}
 
+	ctx := makeContext("sa")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			s := NewServiceAccount(issues.NewCollector(loadCodes(t)), u.lister)
+			s := NewServiceAccount(issues.NewCollector(loadCodes(t), makeConfig(t)), u.lister)
 
-			assert.Nil(t, s.Sanitize(context.Background()))
+			assert.Nil(t, s.Sanitize(ctx))
 			assert.Equal(t, u.issues, len(s.Outcome()["default/sa1"]))
 		})
 	}
@@ -77,13 +77,13 @@ func (s sa) ExcludedNS(ns string) bool {
 
 func (s sa) ListClusterRoleBindings() map[string]*rbacv1.ClusterRoleBinding {
 	return map[string]*rbacv1.ClusterRoleBinding{
-		"crb1": makeCRB("crb1", s.opts.used),
+		"crb1": makeSACRB("crb1", s.opts.used),
 	}
 }
 
 func (s sa) ListRoleBindings() map[string]*rbacv1.RoleBinding {
 	return map[string]*rbacv1.RoleBinding{
-		"default/rb1": makeRB("rb1", s.opts.used),
+		"default/rb1": makeSARB("rb1", s.opts.used),
 	}
 }
 
@@ -93,7 +93,9 @@ func (s sa) ListPods() map[string]*v1.Pod {
 	}
 }
 
-func (s sa) IngressRefs(cache.ObjReferences) {}
+func (s sa) RoleRefs(cache.ObjReferences)        {}
+func (s sa) ClusterRoleRefs(cache.ObjReferences) {}
+func (s sa) IngressRefs(cache.ObjReferences)     {}
 
 func (s sa) ServiceAccountRefs(cache.ObjReferences) {}
 
@@ -146,7 +148,7 @@ func makePodSa(s, sa string) *v1.Pod {
 	return po
 }
 
-func makeCRB(s, sa string) *rbacv1.ClusterRoleBinding {
+func makeSACRB(s, sa string) *rbacv1.ClusterRoleBinding {
 	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: s,
@@ -161,7 +163,7 @@ func makeCRB(s, sa string) *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func makeRB(s, sa string) *rbacv1.RoleBinding {
+func makeSARB(s, sa string) *rbacv1.RoleBinding {
 	return &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      s,

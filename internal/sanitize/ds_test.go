@@ -48,17 +48,18 @@ func TestDSSanitize(t *testing.T) {
 				rev:  "extensions/v1",
 			}),
 			issues: issues.Issues{
-				issues.Issue{Group: "__root__", Level: issues.WarnLevel, Message: `[POP-403] Deprecated DaemonSet API group "extensions/v1". Use "apps/v1" instead`},
+				issues.Issue{Group: "__root__", Level: config.WarnLevel, Message: `[POP-403] Deprecated DaemonSet API group "extensions/v1". Use "apps/v1" instead`},
 			},
 		},
 	}
 
+	ctx := makeContext("ds")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			ds := NewDaemonSet(issues.NewCollector(loadCodes(t)), u.lister)
+			ds := NewDaemonSet(issues.NewCollector(loadCodes(t), makeConfig(t)), u.lister)
 
-			assert.Nil(t, ds.Sanitize(context.TODO()))
+			assert.Nil(t, ds.Sanitize(ctx))
 			assert.Equal(t, u.issues, ds.Outcome()["default/d1"])
 		})
 	}
@@ -79,8 +80,8 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
-				issues.New("i1", issues.WarnLevel, "[POP-106] No resources defined"),
-				issues.New("c1", issues.WarnLevel, "[POP-106] No resources defined"),
+				issues.New("i1", config.WarnLevel, "[POP-106] No resources requests/limits defined"),
+				issues.New("c1", config.WarnLevel, "[POP-106] No resources requests/limits defined"),
 			},
 		},
 		"cpuUnderBurstable": {
@@ -97,7 +98,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "[POP-503] At current load, CPU under allocated. Current:20m vs Requested:10m (200.00%)"),
+				issues.New(issues.Root, config.WarnLevel, "[POP-503] At current load, CPU under allocated. Current:20m vs Requested:10m (200.00%)"),
 			},
 		},
 		"cpuUnderGuaranteed": {
@@ -114,7 +115,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "[POP-503] At current load, CPU under allocated. Current:20m vs Requested:10m (200.00%)"),
+				issues.New(issues.Root, config.WarnLevel, "[POP-503] At current load, CPU under allocated. Current:20m vs Requested:10m (200.00%)"),
 			},
 		},
 		// c=20 r=60 20/60=1/3 over is 50% req=3*c 33 > 100
@@ -133,7 +134,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "[POP-504] At current load, CPU over allocated. Current:20m vs Requested:60m (300.00%)"),
+				issues.New(issues.Root, config.WarnLevel, "[POP-504] At current load, CPU over allocated. Current:20m vs Requested:60m (300.00%)"),
 			},
 		},
 		"cpuOverGuaranteed": {
@@ -150,7 +151,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "[POP-504] At current load, CPU over allocated. Current:20m vs Requested:60m (300.00%)"),
+				issues.New(issues.Root, config.WarnLevel, "[POP-504] At current load, CPU over allocated. Current:20m vs Requested:60m (300.00%)"),
 			},
 		},
 		"memUnderBurstable": {
@@ -167,7 +168,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "[POP-505] At current load, Memory under allocated. Current:20Mi vs Requested:10Mi (200.00%)"),
+				issues.New(issues.Root, config.WarnLevel, "[POP-505] At current load, Memory under allocated. Current:20Mi vs Requested:10Mi (200.00%)"),
 			},
 		},
 		"memUnderGuaranteed": {
@@ -184,7 +185,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "[POP-505] At current load, Memory under allocated. Current:20Mi vs Requested:10Mi (200.00%)"),
+				issues.New(issues.Root, config.WarnLevel, "[POP-505] At current load, Memory under allocated. Current:20Mi vs Requested:10Mi (200.00%)"),
 			},
 		},
 		"memOverBurstable": {
@@ -201,7 +202,7 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "[POP-506] At current load, Memory over allocated. Current:20Mi vs Requested:60Mi (300.00%)"),
+				issues.New(issues.Root, config.WarnLevel, "[POP-506] At current load, Memory over allocated. Current:20Mi vs Requested:60Mi (300.00%)"),
 			},
 		},
 		"memOverGuaranteed": {
@@ -218,16 +219,17 @@ func TestDSSanitizeUtilization(t *testing.T) {
 				rev:  "apps/v1",
 			}),
 			issues: issues.Issues{
-				issues.New(issues.Root, issues.WarnLevel, "[POP-506] At current load, Memory over allocated. Current:20Mi vs Requested:60Mi (300.00%)"),
+				issues.New(issues.Root, config.WarnLevel, "[POP-506] At current load, Memory over allocated. Current:20Mi vs Requested:60Mi (300.00%)"),
 			},
 		},
 	}
 
-	ctx := context.WithValue(context.Background(), PopeyeKey("OverAllocs"), true)
+	ctx := makeContext("ds")
+	ctx = context.WithValue(ctx, PopeyeKey("OverAllocs"), true)
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			ds := NewDaemonSet(issues.NewCollector(loadCodes(t)), u.lister)
+			ds := NewDaemonSet(issues.NewCollector(loadCodes(t), makeConfig(t)), u.lister)
 
 			assert.Nil(t, ds.Sanitize(ctx))
 			assert.Equal(t, u.issues, ds.Outcome()["default/d1"])

@@ -1,7 +1,6 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/issues"
@@ -21,12 +20,13 @@ func TestPVSanitize(t *testing.T) {
 		"failed":    {makePVLister(pvOpts{phase: v1.VolumeFailed}), 1},
 	}
 
+	ctx := makeContext("pv")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			p := NewPersistentVolume(issues.NewCollector(loadCodes(t)), u.lister)
+			p := NewPersistentVolume(issues.NewCollector(loadCodes(t), makeConfig(t)), u.lister)
 
-			assert.Nil(t, p.Sanitize(context.Background()))
+			assert.Nil(t, p.Sanitize(ctx))
 			assert.Equal(t, u.issues, len(p.Outcome()["default/pv1"]))
 		})
 	}

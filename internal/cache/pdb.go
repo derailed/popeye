@@ -4,7 +4,7 @@ import (
 	v1beta1 "k8s.io/api/policy/v1beta1"
 )
 
-// PodDisruptionBudgetKey tracks PodDisruptionBudget ressource references
+// PodDisruptionBudgetKey tracks PodDisruptionBudget resource references
 const PodDisruptionBudgetKey = "pdb"
 
 // PodDisruptionBudget represents PodDisruptionBudget cache.

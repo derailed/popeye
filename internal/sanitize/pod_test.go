@@ -1,7 +1,6 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/issues"
@@ -88,12 +87,13 @@ func TestPodSanitize(t *testing.T) {
 		},
 	}
 
+	ctx := makeContext("po")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			p := NewPod(issues.NewCollector(loadCodes(t)), u.lister)
+			p := NewPod(issues.NewCollector(loadCodes(t), makeConfig(t)), u.lister)
 
-			assert.Nil(t, p.Sanitize(context.TODO()))
+			assert.Nil(t, p.Sanitize(ctx))
 			assert.Equal(t, u.issues, len(p.Outcome()["default/p1"]))
 		})
 	}

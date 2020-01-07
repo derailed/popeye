@@ -4,13 +4,12 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal/cache"
-	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/sanitize"
 	"github.com/derailed/popeye/pkg/config"
 )
 
-// Node represents a Node sanitizer.
+// Node represents a Node scruber.
 type Node struct {
 	*issues.Collector
 	*cache.Node
@@ -19,30 +18,25 @@ type Node struct {
 	*config.Config
 }
 
-// NewNode return a new Node sanitizer.
-func NewNode(c *Cache, codes *issues.Codes) Sanitizer {
+// NewNode return a new Node scruber.
+func NewNode(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	n := Node{
-		Collector: issues.NewCollector(codes),
+		Collector: issues.NewCollector(codes, c.config),
 		Config:    c.config,
 	}
 
-	nn, err := dag.ListNodes(c.client, c.config)
+	var err error
+	n.Node, err = c.nodes()
 	if err != nil {
-		n.AddErr("nodes", err)
+		n.AddErr(ctx, err)
 	}
-	n.Node = cache.NewNode(nn)
 
-	pod, err := c.pods()
+	n.Pod, err = c.pods()
 	if err != nil {
-		n.AddErr("pods", err)
+		n.AddErr(ctx, err)
 	}
-	n.Pod = pod
 
-	nmx, err := c.nodesMx()
-	if err != nil {
-		n.AddCode(402, "nodemetrics", err)
-	}
-	n.NodesMetrics = nmx
+	n.NodesMetrics, _ = c.nodesMx()
 
 	return &n
 }

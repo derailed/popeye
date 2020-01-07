@@ -1,7 +1,6 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/issues"
@@ -21,12 +20,13 @@ func TestPVCSanitize(t *testing.T) {
 		"used":    {makePVCLister(pvcOpts{used: "pvc2", phase: v1.ClaimBound}), 1},
 	}
 
+	ctx := makeContext("pvc")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			p := NewPersistentVolumeClaim(issues.NewCollector(loadCodes(t)), u.lister)
+			p := NewPersistentVolumeClaim(issues.NewCollector(loadCodes(t), makeConfig(t)), u.lister)
 
-			assert.Nil(t, p.Sanitize(context.TODO()))
+			assert.Nil(t, p.Sanitize(ctx))
 			assert.Equal(t, u.issues, len(p.Outcome()["default/pvc1"]))
 		})
 	}

@@ -1,7 +1,6 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/cache"
@@ -81,12 +80,13 @@ func TestHPASanitizeDP(t *testing.T) {
 		},
 	}
 
+	ctx := makeContext("hpa")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			h := NewHorizontalPodAutoscaler(issues.NewCollector(loadCodes(t)), u.l)
+			h := NewHorizontalPodAutoscaler(issues.NewCollector(loadCodes(t), makeConfig(t)), u.l)
 
-			assert.Nil(t, h.Sanitize(context.TODO()))
+			assert.Nil(t, h.Sanitize(ctx))
 			assert.Equal(t, u.issues, len(h.Outcome()["default/h1"]))
 			assert.Equal(t, u.hissues, len(h.Outcome()["HPA"]))
 		})
@@ -165,12 +165,13 @@ func TestHPASanitizeSTS(t *testing.T) {
 		},
 	}
 
+	ctx := makeContext("hpa")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			h := NewHorizontalPodAutoscaler(issues.NewCollector(loadCodes(t)), u.l)
+			h := NewHorizontalPodAutoscaler(issues.NewCollector(loadCodes(t), makeConfig(t)), u.l)
 
-			assert.Nil(t, h.Sanitize(context.TODO()))
+			assert.Nil(t, h.Sanitize(ctx))
 			assert.Equal(t, u.issues, len(h.Outcome()["default/h1"]))
 			assert.Equal(t, u.hissues, len(h.Outcome()["HPA"]))
 		})
@@ -189,14 +190,14 @@ type hpaOpts struct {
 
 type hpa struct {
 	StatefulSetLister
-	DeployLister
+	DeploymentLister
 	name string
 	opts hpaOpts
 }
 
 func newDpHpa(opts hpaOpts) *hpa {
 	h := hpa{
-		DeployLister: makeDPLister(dpOpts{
+		DeploymentLister: makeDPLister(dpOpts{
 			coOpts:    opts.coOpts,
 			reps:      1,
 			availReps: 1,
@@ -251,7 +252,7 @@ func (h *hpa) ListPodsMetrics() map[string]*mv1beta1.PodMetrics {
 	}
 }
 
-func (h *hpa) ListAllocatableMetrics(map[string]*v1.Node) v1.ResourceList {
+func (h *hpa) ListAvailableMetrics(map[string]*v1.Node) v1.ResourceList {
 	return v1.ResourceList{
 		v1.ResourceCPU:    toQty(h.opts.ccpu),
 		v1.ResourceMemory: toQty(h.opts.cmem),

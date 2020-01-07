@@ -1,7 +1,6 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/cache"
@@ -72,16 +71,19 @@ func TestNPSanitize(t *testing.T) {
 		},
 	}
 
+	ctx := makeContext("np")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			np := NewNetworkPolicy(issues.NewCollector(loadCodes(t)), u.lister)
+			np := NewNetworkPolicy(issues.NewCollector(loadCodes(t), makeConfig(t)), u.lister)
 
-			assert.Nil(t, np.Sanitize(context.Background()))
+			assert.Nil(t, np.Sanitize(ctx))
 			assert.Equal(t, u.issues, np.Outcome()["default/np"])
 		})
 	}
 }
+
+// Helpers...
 
 type (
 	npOpts struct {

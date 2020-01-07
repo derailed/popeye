@@ -7,41 +7,36 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 )
 
-// Core represents core resources.
-type Core struct {
-	namespace *cache.Namespace
-	pod       *cache.Pod
-	node      *cache.Node
-	sa        *cache.ServiceAccount
-	cl        *cache.Cluster
-}
-
-// Metrics represents metrics resources.
-type Metrics struct {
-	nodeMx *cache.NodesMetrics
-	podMx  *cache.PodsMetrics
-}
-
-// Apps represents app resources.
-type Apps struct {
-	dp  *cache.Deployment
-	ds  *cache.DaemonSet
-	sts *cache.StatefulSet
-	rs  *cache.ReplicaSet
-}
-
-// Cache caches commonly used resources.
+// Cache tracks commonly used resources.
 type Cache struct {
-	Core
-	Apps
-	Metrics
-
 	client *k8s.Client
 	config *config.Config
-	pdb    *cache.PodDisruptionBudget
-	ing    *cache.Ingress
-	np     *cache.NetworkPolicy
-	psp    *cache.PodSecurityPolicy
+
+	namespace *cache.Namespace
+	cm        *cache.ConfigMap
+	pod       *cache.Pod
+	node      *cache.Node
+	nodeMx    *cache.NodesMetrics
+	podMx     *cache.PodsMetrics
+	sa        *cache.ServiceAccount
+	cl        *cache.Cluster
+	dp        *cache.Deployment
+	ds        *cache.DaemonSet
+	sts       *cache.StatefulSet
+	rs        *cache.ReplicaSet
+	pdb       *cache.PodDisruptionBudget
+	ing       *cache.Ingress
+	np        *cache.NetworkPolicy
+	psp       *cache.PodSecurityPolicy
+	pv        *cache.PersistentVolume
+	pvc       *cache.PersistentVolumeClaim
+	crb       *cache.ClusterRoleBinding
+	cr        *cache.ClusterRole
+	rb        *cache.RoleBinding
+	ro        *cache.Role
+	sec       *cache.Secret
+	svc       *cache.Service
+	ep        *cache.Endpoints
 }
 
 // NewCache returns a new resource cache
@@ -49,7 +44,6 @@ func NewCache(c *k8s.Client, cfg *config.Config) *Cache {
 	return &Cache{client: c, config: cfg}
 }
 
-// PodSecurityPolicies retrieves np from cache if present or populate if not.
 func (c *Cache) cluster() (*cache.Cluster, error) {
 	if c.cl != nil {
 		return c.cl, nil
@@ -60,7 +54,106 @@ func (c *Cache) cluster() (*cache.Cluster, error) {
 	return c.cl, err
 }
 
-// PodSecurityPolicies retrieves np from cache if present or populate if not.
+func (c *Cache) services() (*cache.Service, error) {
+	if c.svc != nil {
+		return c.svc, nil
+	}
+	ss, err := dag.ListServices(c.client, c.config)
+	c.svc = cache.NewService(ss)
+
+	return c.svc, err
+}
+
+func (c *Cache) endpoints() (*cache.Endpoints, error) {
+	if c.ep != nil {
+		return c.ep, nil
+	}
+	eps, err := dag.ListEndpoints(c.client, c.config)
+	c.ep = cache.NewEndpoints(eps)
+
+	return c.ep, err
+}
+
+func (c *Cache) secrets() (*cache.Secret, error) {
+	if c.sec != nil {
+		return c.sec, nil
+	}
+	secs, err := dag.ListSecrets(c.client, c.config)
+	c.sec = cache.NewSecret(secs)
+
+	return c.sec, err
+}
+
+func (c *Cache) roles() (*cache.Role, error) {
+	if c.ro != nil {
+		return c.ro, nil
+	}
+	ros, err := dag.ListRoles(c.client, c.config)
+	c.ro = cache.NewRole(ros)
+
+	return c.ro, err
+}
+
+func (c *Cache) rolebindings() (*cache.RoleBinding, error) {
+	if c.rb != nil {
+		return c.rb, nil
+	}
+	rbs, err := dag.ListRoleBindings(c.client, c.config)
+	c.rb = cache.NewRoleBinding(rbs)
+
+	return c.rb, err
+}
+
+func (c *Cache) clusterroles() (*cache.ClusterRole, error) {
+	if c.cr != nil {
+		return c.cr, nil
+	}
+	crs, err := dag.ListClusterRoles(c.client, c.config)
+	c.cr = cache.NewClusterRole(crs)
+
+	return c.cr, err
+}
+
+func (c *Cache) clusterrolebindings() (*cache.ClusterRoleBinding, error) {
+	if c.crb != nil {
+		return c.crb, nil
+	}
+	crbs, err := dag.ListClusterRoleBindings(c.client, c.config)
+	c.crb = cache.NewClusterRoleBinding(crbs)
+
+	return c.crb, err
+}
+
+func (c *Cache) persistentvolumes() (*cache.PersistentVolume, error) {
+	if c.pv != nil {
+		return c.pv, nil
+	}
+	pvs, err := dag.ListPersistentVolumes(c.client, c.config)
+	c.pv = cache.NewPersistentVolume(pvs)
+
+	return c.pv, err
+}
+
+func (c *Cache) persistentvolumeclaims() (*cache.PersistentVolumeClaim, error) {
+	if c.pvc != nil {
+		return c.pvc, nil
+	}
+	pvcs, err := dag.ListPersistentVolumeClaims(c.client, c.config)
+	c.pvc = cache.NewPersistentVolumeClaim(pvcs)
+
+	return c.pvc, err
+}
+
+func (c *Cache) configmaps() (*cache.ConfigMap, error) {
+	if c.cm != nil {
+		return c.cm, nil
+	}
+	cms, err := dag.ListConfigMaps(c.client, c.config)
+	c.cm = cache.NewConfigMap(cms)
+
+	return c.cm, err
+}
+
 func (c *Cache) podsecuritypolicies() (*cache.PodSecurityPolicy, error) {
 	if c.psp != nil {
 		return c.psp, nil
@@ -71,7 +164,6 @@ func (c *Cache) podsecuritypolicies() (*cache.PodSecurityPolicy, error) {
 	return c.psp, err
 }
 
-// NetworkPolicies retrieves np from cache if present or populate if not.
 func (c *Cache) networkpolicies() (*cache.NetworkPolicy, error) {
 	if c.np != nil {
 		return c.np, nil
@@ -82,7 +174,6 @@ func (c *Cache) networkpolicies() (*cache.NetworkPolicy, error) {
 	return c.np, err
 }
 
-// Namespaces retrieves ns from cache if present or populate if not.
 func (c *Cache) namespaces() (*cache.Namespace, error) {
 	if c.namespace != nil {
 		return c.namespace, nil
@@ -93,7 +184,6 @@ func (c *Cache) namespaces() (*cache.Namespace, error) {
 	return c.namespace, err
 }
 
-// Nodes retrieves nodes from cache if present or populate if not.
 func (c *Cache) nodes() (*cache.Node, error) {
 	if c.node != nil {
 		return c.node, nil
@@ -104,7 +194,6 @@ func (c *Cache) nodes() (*cache.Node, error) {
 	return c.node, err
 }
 
-// Pods retrieves pods from cache if present or populate if not.
 func (c *Cache) pods() (*cache.Pod, error) {
 	if c.pod != nil {
 		return c.pod, nil
@@ -115,7 +204,6 @@ func (c *Cache) pods() (*cache.Pod, error) {
 	return c.pod, err
 }
 
-// PodsMx retrieves pods metrics from cache if present or populate if not.
 func (c *Cache) podsMx() (*cache.PodsMetrics, error) {
 	if c.podMx != nil {
 		return c.podMx, nil
@@ -126,7 +214,6 @@ func (c *Cache) podsMx() (*cache.PodsMetrics, error) {
 	return c.podMx, err
 }
 
-// NodesMx retrieves nodes metrics from cache if present or populate if not.
 func (c *Cache) nodesMx() (*cache.NodesMetrics, error) {
 	if c.nodeMx != nil {
 		return c.nodeMx, nil
@@ -137,7 +224,6 @@ func (c *Cache) nodesMx() (*cache.NodesMetrics, error) {
 	return c.nodeMx, err
 }
 
-// Ingresses retrieves ingress from cache if present or populate if not.
 func (c *Cache) ingresses() (*cache.Ingress, error) {
 	if c.ing != nil {
 		return c.ing, nil
@@ -148,7 +234,6 @@ func (c *Cache) ingresses() (*cache.Ingress, error) {
 	return c.ing, err
 }
 
-// Deployments retrieves deployments from cache if present or populate if not.
 func (c *Cache) deployments() (*cache.Deployment, error) {
 	if c.dp != nil {
 		return c.dp, nil
@@ -159,7 +244,6 @@ func (c *Cache) deployments() (*cache.Deployment, error) {
 	return c.dp, err
 }
 
-// ReplicaSets retrieves rs from cache if present or populate if not.
 func (c *Cache) replicasets() (*cache.ReplicaSet, error) {
 	if c.rs != nil {
 		return c.rs, nil
@@ -170,7 +254,6 @@ func (c *Cache) replicasets() (*cache.ReplicaSet, error) {
 	return c.rs, err
 }
 
-// DaemonSet retrieves ds from cache if present or populate if not.
 func (c *Cache) daemonSets() (*cache.DaemonSet, error) {
 	if c.ds != nil {
 		return c.ds, nil
@@ -181,7 +264,6 @@ func (c *Cache) daemonSets() (*cache.DaemonSet, error) {
 	return c.ds, err
 }
 
-// StatefulSets retrieves sts from cache if present or populate if not.
 func (c *Cache) statefulsets() (*cache.StatefulSet, error) {
 	if c.sts != nil {
 		return c.sts, nil
@@ -193,7 +275,6 @@ func (c *Cache) statefulsets() (*cache.StatefulSet, error) {
 	return c.sts, err
 }
 
-// ServiceAccount retrieves serviceaccounts from cache if present or populate if not.
 func (c *Cache) serviceaccounts() (*cache.ServiceAccount, error) {
 	if c.sa != nil {
 		return c.sa, nil
@@ -204,7 +285,6 @@ func (c *Cache) serviceaccounts() (*cache.ServiceAccount, error) {
 	return c.sa, err
 }
 
-// PodDisruptionBudgets retrieves podDisruptionBudgets from cache if present or populate if not.
 func (c *Cache) podDisruptionBudgets() (*cache.PodDisruptionBudget, error) {
 	if c.pdb != nil {
 		return c.pdb, nil

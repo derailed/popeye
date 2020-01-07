@@ -4,12 +4,11 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal/cache"
-	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/sanitize"
 )
 
-// Service represents a Service sanitizer.
+// Service represents a Service scruber.
 type Service struct {
 	*issues.Collector
 	*cache.Service
@@ -17,27 +16,25 @@ type Service struct {
 	*cache.Endpoints
 }
 
-// NewService return a new Service sanitizer.
-func NewService(c *Cache, codes *issues.Codes) Sanitizer {
-	s := Service{Collector: issues.NewCollector(codes)}
+// NewService return a new Service scruber.
+func NewService(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
+	s := Service{Collector: issues.NewCollector(codes, c.config)}
 
-	ss, err := dag.ListServices(c.client, c.config)
+	var err error
+	s.Service, err = c.services()
 	if err != nil {
-		s.AddErr("services", err)
+		s.AddErr(ctx, err)
 	}
-	s.Service = cache.NewService(ss)
 
-	pod, err := c.pods()
+	s.Pod, err = c.pods()
 	if err != nil {
-		s.AddErr("pods", err)
+		s.AddErr(ctx, err)
 	}
-	s.Pod = pod
 
-	ee, err := dag.ListEndpoints(c.client, c.config)
+	s.Endpoints, err = c.endpoints()
 	if err != nil {
-		s.AddErr("endpoints", err)
+		s.AddErr(ctx, err)
 	}
-	s.Endpoints = cache.NewEndpoints(ee)
 
 	return &s
 }

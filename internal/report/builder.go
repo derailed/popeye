@@ -6,7 +6,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/prometheus/client_golang/prometheus/push"
 	"gopkg.in/yaml.v2"
 )
@@ -37,7 +39,8 @@ const (
 type (
 	// Builder represents sanitizer
 	Builder struct {
-		Report Report `json:"popeye" yaml:"popeye"`
+		Report  Report `json:"popeye" yaml:"popeye"`
+		aliases *internal.Aliases
 	}
 
 	// Report represents the output of a sanitization pass.
@@ -59,8 +62,8 @@ type (
 )
 
 // NewBuilder returns a new sanitizer report.
-func NewBuilder() *Builder {
-	return &Builder{}
+func NewBuilder(a *internal.Aliases) *Builder {
+	return &Builder{aliases: a}
 }
 
 // HasContent checks if we actually have anything to report.
@@ -104,7 +107,7 @@ func (b *Builder) augment() {
 	b.Report.Grade = Grade(score)
 
 	for i, s := range b.Report.Sections {
-		b.Report.Sections[i].Title = ResToTitle(s.Title)
+		b.Report.Sections[i].Title = b.aliases.FromAlias(s.Title)
 	}
 }
 
@@ -168,13 +171,13 @@ func (b *Builder) PrintClusterInfo(s *Sanitizer, name string, metrics bool) {
 	if name == "" {
 		name = "n/a"
 	}
-	s.Open(Titleize(fmt.Sprintf("General [%s]", name), -1), nil)
+	s.Open(Titleize(b.aliases, fmt.Sprintf("General [%s]", name), -1), nil)
 	{
-		s.Print(issues.OkLevel, 1, "Connectivity")
+		s.Print(config.OkLevel, 1, "Connectivity")
 		if metrics {
-			s.Print(issues.OkLevel, 1, "MetricServer")
+			s.Print(config.OkLevel, 1, "MetricServer")
 		} else {
-			s.Print(issues.ErrorLevel, 1, "MetricServer")
+			s.Print(config.ErrorLevel, 1, "MetricServer")
 		}
 	}
 	s.Close()
@@ -200,10 +203,10 @@ func (b *Builder) PrintHeader(s *Sanitizer) {
 }
 
 // PrintReport prints out sanitizer report to screen
-func (b *Builder) PrintReport(level issues.Level, s *Sanitizer) {
+func (b *Builder) PrintReport(level config.Level, s *Sanitizer) {
 	for _, section := range b.Report.Sections {
 		var any bool
-		s.Open(Titleize(section.Title, len(section.Outcome)), section.Tally)
+		s.Open(Titleize(b.aliases, section.Title, len(section.Outcome)), section.Tally)
 		{
 			keys := make([]string, 0, len(section.Outcome))
 			for k := range section.Outcome {
@@ -214,9 +217,9 @@ func (b *Builder) PrintReport(level issues.Level, s *Sanitizer) {
 			for _, res := range keys {
 				ii := section.Outcome[res]
 				if len(ii) == 0 {
-					if level <= issues.OkLevel {
+					if level <= config.OkLevel {
 						any = true
-						s.Print(issues.OkLevel, 1, res)
+						s.Print(config.OkLevel, 1, res)
 					}
 					continue
 				}
@@ -233,4 +236,16 @@ func (b *Builder) PrintReport(level issues.Level, s *Sanitizer) {
 		}
 		s.Close()
 	}
+}
+
+// Helpers...
+
+// Title titelize a resource name.
+func Titleize(a *internal.Aliases, res string, count int) string {
+	res = a.FromAlias(res)
+	if count <= 0 || res == "general" {
+		return strings.ToUpper(res)
+	}
+
+	return strings.ToUpper(fmt.Sprintf("%s (%d scanned)", a.Pluralize(res), count))
 }

@@ -1,7 +1,6 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/issues"
@@ -10,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestNamespaceSanitizer(t *testing.T) {
+func TestNSSanitizer(t *testing.T) {
 	uu := map[string]struct {
 		l      NamespaceLister
 		issues map[string]int
@@ -49,12 +48,13 @@ func TestNamespaceSanitizer(t *testing.T) {
 		},
 	}
 
+	ctx := makeContext("ns")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			n := NewNamespace(issues.NewCollector(loadCodes(t)), u.l)
+			n := NewNamespace(issues.NewCollector(loadCodes(t), makeConfig(t)), u.l)
 
-			assert.Nil(t, n.Sanitize(context.TODO()))
+			assert.Nil(t, n.Sanitize(ctx))
 			for ns, v := range u.issues {
 				assert.Equal(t, v, len(n.Outcome()[ns]))
 			}

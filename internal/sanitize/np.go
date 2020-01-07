@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	v1 "k8s.io/api/core/v1"
 	nv1 "k8s.io/api/networking/v1"
@@ -30,7 +31,7 @@ type (
 	}
 )
 
-// NewNetworkPolicy returns a new NetworkPolicy sanitizer.
+// NewNetworkPolicy returns a new sanitizer.
 func NewNetworkPolicy(co *issues.Collector, lister NetworkPolicyLister) *NetworkPolicy {
 	return &NetworkPolicy{
 		Collector:           co,
@@ -38,65 +39,71 @@ func NewNetworkPolicy(co *issues.Collector, lister NetworkPolicyLister) *Network
 	}
 }
 
-// Sanitize configmaps.
+// Sanitize cleanse the resource.
 func (n *NetworkPolicy) Sanitize(ctx context.Context) error {
 	for fqn, np := range n.ListNetworkPolicies() {
 		n.InitOutcome(fqn)
-		n.checkDeprecation(fqn, np)
-		n.checkRefs(fqn, np)
+		ctx = internal.WithFQN(ctx, fqn)
+
+		n.checkDeprecation(ctx, np)
+		n.checkRefs(ctx, np)
+
+		if n.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+			n.ClearOutcome(fqn)
+		}
 	}
 
 	return nil
 }
 
-func (n *NetworkPolicy) checkPodSelector(sel *metav1.LabelSelector, fqn, kind string) {
+func (n *NetworkPolicy) checkPodSelector(ctx context.Context, sel *metav1.LabelSelector, kind string) {
 	if sel == nil {
 		return
 	}
 
 	if pods := n.ListPodsBySelector(sel); len(pods) == 0 {
-		n.AddCode(1200, fqn, kind)
+		n.AddCode(ctx, 1200, kind)
 	}
 }
 
-func (n *NetworkPolicy) checkNSSelector(sel *metav1.LabelSelector, fqn, kind string) {
+func (n *NetworkPolicy) checkNSSelector(ctx context.Context, sel *metav1.LabelSelector, kind string) {
 	if sel == nil {
 		return
 	}
 
 	if nss := n.ListNamespacesBySelector(sel); len(nss) == 0 {
-		n.AddCode(1201, fqn, kind)
+		n.AddCode(ctx, 1201, kind)
 	}
 }
 
-func (n *NetworkPolicy) checkRefs(fqn string, np *nv1.NetworkPolicy) {
+func (n *NetworkPolicy) checkRefs(ctx context.Context, np *nv1.NetworkPolicy) {
 	for _, ing := range np.Spec.Ingress {
 		for _, f := range ing.From {
-			n.checkPodSelector(f.PodSelector, fqn, "Ingress")
-			n.checkNSSelector(f.NamespaceSelector, fqn, "Ingress")
+			n.checkPodSelector(ctx, f.PodSelector, "Ingress")
+			n.checkNSSelector(ctx, f.NamespaceSelector, "Ingress")
 		}
 	}
 
 	for _, eg := range np.Spec.Egress {
 		for _, f := range eg.To {
-			n.checkPodSelector(f.PodSelector, fqn, "Egress")
-			n.checkNSSelector(f.NamespaceSelector, fqn, "Egress")
+			n.checkPodSelector(ctx, f.PodSelector, "Egress")
+			n.checkNSSelector(ctx, f.NamespaceSelector, "Egress")
 		}
 	}
 }
 
-func (n *NetworkPolicy) checkDeprecation(fqn string, np *nv1.NetworkPolicy) {
+func (n *NetworkPolicy) checkDeprecation(ctx context.Context, np *nv1.NetworkPolicy) {
 	const current = "networking.k8s.io/v1"
 
-	rev, err := resourceRev(fqn, np.Annotations)
+	rev, err := resourceRev(internal.MustExtractFQN(ctx), np.Annotations)
 	if err != nil {
 		rev = revFromLink(np.SelfLink)
 		if rev == "" {
-			n.AddCode(404, fqn, errors.New("Unable to assert resource version"))
+			n.AddCode(ctx, 404, errors.New("Unable to assert resource version"))
 			return
 		}
 	}
 	if rev != current {
-		n.AddCode(403, fqn, "NetworkPolicy", rev, current)
+		n.AddCode(ctx, 403, "NetworkPolicy", rev, current)
 	}
 }

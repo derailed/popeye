@@ -4,7 +4,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 )
 
-// ReplicaSetKey tracks ReplicaSet ressource references
+// ReplicaSetKey tracks ReplicaSet resource references
 const ReplicaSetKey = "ds"
 
 // ReplicaSet represents ReplicaSet cache.

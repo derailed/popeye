@@ -4,7 +4,7 @@ import (
 	nv1 "k8s.io/api/networking/v1"
 )
 
-// NetworkPolicyKey tracks NetworkPolicy ressource references
+// NetworkPolicyKey tracks NetworkPolicy resource references
 const NetworkPolicyKey = "np"
 
 // NetworkPolicy represents NetworkPolicy cache.

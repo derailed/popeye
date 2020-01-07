@@ -10,7 +10,7 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 )
 
-// Ingress represents a Ingress sanitizer.
+// Ingress represents a Ingress scruber.
 type Ingress struct {
 	*issues.Collector
 	*cache.Ingress
@@ -19,19 +19,19 @@ type Ingress struct {
 	client *k8s.Client
 }
 
-// NewIngress return a new Ingress sanitizer.
-func NewIngress(c *Cache, codes *issues.Codes) Sanitizer {
+// NewIngress return a new Ingress scruber.
+func NewIngress(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	d := Ingress{
 		client:    c.client,
 		Config:    c.config,
-		Collector: issues.NewCollector(codes),
+		Collector: issues.NewCollector(codes, c.config),
 	}
 
-	ings, err := c.ingresses()
+	var err error
+	d.Ingress, err = c.ingresses()
 	if err != nil {
-		d.AddErr("ingresses", err)
+		d.AddErr(ctx, err)
 	}
-	d.Ingress = ings
 
 	return &d
 }

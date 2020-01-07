@@ -3,7 +3,6 @@ package dag
 import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
-	"github.com/rs/zerolog/log"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -17,7 +16,7 @@ func ListPersistentVolumeClaims(c *k8s.Client, cfg *config.Config) (map[string]*
 
 	res := make(map[string]*v1.PersistentVolumeClaim, len(pvcs))
 	for fqn, pvc := range pvcs {
-		if includeNS(c, cfg, pvc.Namespace) && !cfg.ShouldExclude("persistentvolumeclaim", fqn) {
+		if includeNS(c, pvc.Namespace) {
 			res[fqn] = pvc
 		}
 	}
@@ -29,7 +28,6 @@ func ListPersistentVolumeClaims(c *k8s.Client, cfg *config.Config) (map[string]*
 func listAllPersistentVolumeClaims(c *k8s.Client) (map[string]*v1.PersistentVolumeClaim, error) {
 	ll, err := fetchPersistentVolumeClaims(c)
 	if err != nil {
-		log.Debug().Err(err).Msg("ListAll")
 		return nil, err
 	}
 

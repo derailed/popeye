@@ -79,50 +79,66 @@ probes, container images, RBAC rules, naked resources, etc...
 Popeye is not another static analysis tool. It runs and inspect Kubernetes resources on
 live clusters and sanitize resources as they are in the wild!
 
-Here is a list of sanitizers in place for the current release.
+Here is a list of some of the available sanitizers
 
 
-|    | Resource                | Sanitizers                                                              | Section |
-|----|-------------------------|-------------------------------------------------------------------------|---------|
-| 🛀 | Node                    |                                                                         | no      |
-|    |                         | Conditions ie not ready, out of mem/disk, network, pids, etc            |         |
-|    |                         | Pod tolerations referencing node taints                                 |         |
-|    |                         | CPU/MEM utilization metrics, trips if over limits (default 80% CPU/MEM) |         |
-| 🛀 | Namespace               |                                                                         | ns      |
-|    |                         | Inactive                                                                |         |
-|    |                         | Dead namespaces                                                         |         |
-| 🛀 | Pod                     |                                                                         | po      |
-|    |                         | Pod status                                                              |         |
-|    |                         | Containers statuses                                                     |         |
-|    |                         | ServiceAccount presence                                                 |         |
-|    |                         | CPU/MEM on containers over a set CPU/MEM limit (default 80% CPU/MEM)    |         |
-|    |                         | Container image with no tags                                            |         |
-|    |                         | Container image using `latest` tag                                      |         |
-|    |                         | Resources request/limits presence                                       |         |
-|    |                         | Probes liveness/readiness presence                                      |         |
-|    |                         | Named ports and their references                                        |         |
-| 🛀 | Service                 |                                                                         | svc     |
-|    |                         | Endpoints presence                                                      |         |
-|    |                         | Matching pods labels                                                    |         |
-|    |                         | Named ports and their references                                        |         |
-| 🛀 | ServiceAccount          |                                                                         | sa      |
-|    |                         | Unused, detects potentially unused SAs                                  |         |
-| 🛀 | Secrets                 |                                                                         | sec     |
-|    |                         | Unused, detects potentially unused secrets or associated keys           |         |
-| 🛀 | ConfigMap               |                                                                         | cm      |
-|    |                         | Unused, detects potentially unused cm or associated keys                |         |
-| 🛀 | Deployment              |                                                                         | dp      |
-|    |                         | Unused, pod template validation, resource utilization                   |         |
-| 🛀 | StatefulSet             |                                                                         | sts     |
-|    |                         | Unsed, pod template validation, resource utilization                    |         |
-| 🛀 | PersistentVolume        |                                                                         | pv      |
-|    |                         | Unused, check volume bound or volume error                              |         |
-| 🛀 | PersistentVolumeClaim   |                                                                         | pvc     |
-|    |                         | Unused, check bounded or volume mount error                             |         |
-| 🛀 | HorizontalPodAutoscaler |                                                                         | hpa     |
-|    |                         | Unused, Utilization, Max burst checks                                   |         |
-| 🛀 | PodDisruptionBudget     |                                                                         | hpa     |
-|    |                         | Unused, Check minAvailable configuration                                | pdb     |
+|    | Resource                | Sanitizers                                                              | Aliases    |
+|----|-------------------------|-------------------------------------------------------------------------|------------|
+| 🛀 | Node                    |                                                                         | no         |
+|    |                         | Conditions ie not ready, out of mem/disk, network, pids, etc            |            |
+|    |                         | Pod tolerations referencing node taints                                 |            |
+|    |                         | CPU/MEM utilization metrics, trips if over limits (default 80% CPU/MEM) |            |
+| 🛀 | Namespace               |                                                                         | ns         |
+|    |                         | Inactive                                                                |            |
+|    |                         | Dead namespaces                                                         |            |
+| 🛀 | Pod                     |                                                                         | po         |
+|    |                         | Pod status                                                              |            |
+|    |                         | Containers statuses                                                     |            |
+|    |                         | ServiceAccount presence                                                 |            |
+|    |                         | CPU/MEM on containers over a set CPU/MEM limit (default 80% CPU/MEM)    |            |
+|    |                         | Container image with no tags                                            |            |
+|    |                         | Container image using `latest` tag                                      |            |
+|    |                         | Resources request/limits presence                                       |            |
+|    |                         | Probes liveness/readiness presence                                      |            |
+|    |                         | Named ports and their references                                        |            |
+| 🛀 | Service                 |                                                                         | svc        |
+|    |                         | Endpoints presence                                                      |            |
+|    |                         | Matching pods labels                                                    |            |
+|    |                         | Named ports and their references                                        |            |
+| 🛀 | ServiceAccount          |                                                                         | sa         |
+|    |                         | Unused, detects potentially unused SAs                                  |            |
+| 🛀 | Secrets                 |                                                                         | sec        |
+|    |                         | Unused, detects potentially unused secrets or associated keys           |            |
+| 🛀 | ConfigMap               |                                                                         | cm         |
+|    |                         | Unused, detects potentially unused cm or associated keys                |            |
+| 🛀 | Deployment              |                                                                         | dp, deploy |
+|    |                         | Unused, pod template validation, resource utilization                   |            |
+| 🛀 | StatefulSet             |                                                                         | sts        |
+|    |                         | Unsed, pod template validation, resource utilization                    |            |
+| 🛀 | DaemonSet               |                                                                         | ds         |
+|    |                         | Unsed, pod template validation, resource utilization                    |            |
+| 🛀 | PersistentVolume        |                                                                         | pv         |
+|    |                         | Unused, check volume bound or volume error                              |            |
+| 🛀 | PersistentVolumeClaim   |                                                                         | pvc        |
+|    |                         | Unused, check bounded or volume mount error                             |            |
+| 🛀 | HorizontalPodAutoscaler |                                                                         | hpa        |
+|    |                         | Unused, Utilization, Max burst checks                                   |            |
+| 🛀 | PodDisruptionBudget     |                                                                         |            |
+|    |                         | Unused, Check minAvailable configuration                                | pdb        |
+| 🛀 | ClusterRole             |                                                                         |            |
+|    |                         | Unused                                                                  | cr         |
+| 🛀 | ClusterRoleBinding      |                                                                         |            |
+|    |                         | Unused                                                                  | crb        |
+| 🛀 | Role                    |                                                                         |            |
+|    |                         | Unused                                                                  | ro         |
+| 🛀 | RoleBinding             |                                                                         |            |
+|    |                         | Unused                                                                  | rb         |
+| 🛀 | Ingress                 |                                                                         |            |
+|    |                         | Valid                                                                   | ing        |
+| 🛀 | NetworkPolicy           |                                                                         |            |
+|    |                         | Valid                                                                   | np         |
+| 🛀 | PodSecurityPolicy       |                                                                         |            |
+|    |                         | Valid                                                                   | psp        |
 
 ### Save the report
 
@@ -156,9 +172,87 @@ popeye --context olive
 popeye help
 ```
 
-## Popeye In Cluster...
+## Output Formats
 
-Alternatively, Popeye can be run directly on your Kubernetes clusters as a single shot or cronjob.
+Popeye can generate sanitizer reports in a variety of formats. You can use the -o cli option and pick your poison from there.
+
+
+| Format     | Description                                  | Default | Credits                                      |
+|------------|----------------------------------------------|---------|----------------------------------------------|
+| standard   | The full monty output iconized and colorized | yes     |                                              |
+| jurassic   | No icons or color like it's 1989             |         |                                              |
+| yaml       | As YAML                                      |         |                                              |
+| json       | As JSON                                      |         |                                              |
+| junit      | For the Java melancholic                     |         |                                              |
+| prometheus | Dumps report a prometheus scrappable metrics |         | [dardanel](https://github.com/eminugurkenar) |
+
+## The SpinachYAML Configuration
+
+A spinach.yml configuration file can be specified via the `-f` option to further configure the sanitizers. This file may
+container utilization threshold and specific sanitizer configurations as well as which resources to exclude in your cluster.
+
+NOTE: This file will change as Popeye matures!
+
+ A resource is identified by a resource kind and a fully qualified resource name ie `namespace/resource_name`. For example a pod named fred-1234 in namespace blee FQN will be `blee/fred-1234`. This provides for differentiating `fred/p1` and `blee/p1`. For cluster wide resources, `FQN=name`. Exclude rules can have either a straight string match or a regular expression. In the later case the regular expression must be indicated using the `rx:` prefix.
+
+NOTE! Please thread carefully here with your regex as more resources than expected may get excluded from the report via a *loose* regex rule. When your cluster resources change, this could lead to rendering sanitization sub-optimal. Once in a while it might be a good idea to run Popeye `Config less` to make sure you are trapping any new issues that may have arised in your clusters...
+
+Here is an example spinach file as it stands in this release. There is a fuller eks based spinach file in this repo under `spinach`. (BTW: for new comers into the project, might be a great way to contribute by adding cluster specific spinach file PRs...)
+
+```yaml
+# A Popeye sample configuration file
+popeye:
+  # Checks resources against reported metrics usage.
+  # If over/under these thresholds a sanitization warning will be issued.
+  # Your cluster must run a metrics-server for these to take place!
+  allocations:
+    cpu:
+      underPercUtilization: 200 # Checks if cpu is under allocated by more than 200% at current load.
+      overPercUtilization: 50   # Checks if cpu is over allocated by more than 50% at current load.
+    memory:
+      underPercUtilization: 200 # Checks if mem is under allocated by more than 200% at current load.
+      overPercUtilization: 50   # Checks if mem is over allocated by more than 50% usage at current load.
+
+  # Excludes excludes certain resources from Popeye scans
+  excludes:
+    # ConfigMap sanitizer exclusions...
+    configmap:
+      # Excludes key must match the singular form of the resource.
+      # For instance this rule will exclude all configmaps named fred.v2.3 and fred.v2.4
+      - name: rx:fred.+\.v\d+
+    # Namespace sanitizer exclusions...
+    namespace:
+      # Exclude all fred* namespaces if the namespaces are not found (404), other error codes will be reported!
+      - name: rx:kube
+        codes:
+          - 404
+      # Exclude all istio* namespaces from being scanned.
+      - name: rx:istio
+
+  # Configure node resources.
+  node:
+    # Limits set a cpu/mem threshold in % ie if cpu|mem > limit a lint warning is triggered.
+    limits:
+      # CPU checks if current CPU utilization on a node is greater than 90%.
+      cpu:    90
+      # Memory checks if current Memory utilization on a node is greater than 80%.
+      memory: 80
+
+  # Configure pod resources
+  pod:
+    # Restarts check the restarts count and triggers a lint warning if above threshold.
+    restarts:
+      3
+    # Check container resource utilization in percent.
+    # Issues a lint warning if about these threshold.
+    limits:
+      cpu:    80
+      memory: 75
+```
+
+## Popeye In Your Clusters!
+
+Alternatively, Popeye is containerized and can be run directly in your Kubernetes clusters as a single shot or cronjob.
 
 Here is a sample setup, please modify per your needs/wants. The manifests for this are in the k8s
 directory in this repo.
@@ -196,7 +290,7 @@ spec:
                   memory: 100Mi
 ```
 
-## Popeye got your RBAC!
+## Popeye has got your RBAC!
 
 In order for Popeye to do his work, the signed-in user must have enough RBAC oomph to
 get/list the resources mentioned above.
@@ -273,72 +367,6 @@ roleRef:
 
 <img src="assets/a_score.png"/>
 
-## The SpinachYAML Configuration
-
-NOTE: This file will change as Popeye matures!
-
-As of this release the spinach.yml format has changed slightly. There is now a new `excludes` section that allows one to exclude any Kubernetes resources from the sanitizer run. A resource is identified by a resource kind and a fully qualified resource name ie `namespace/resource_name`. For example a pod named fred-1234 in namespace blee FQN will be `blee/fred-1234`. This provides for differentiating `fred/p1` and `blee/p1`. For cluster wide resources, `FQN=name`. Exclude rules can have either a straight string match or a regular expression. In the later case the regular expression must be indicated using the `rx:` prefix.
-
-NOTE! Please thread carefully here with your regex as more resources than expected may get excluded from the report via a *loose* regex rule. When your cluster resources change, this could lead to rendering sanitization sub-optimal. Once in a while it might be a good idea to run Popeye `Config less` to make sure you are trapping any new issues with your clusters...
-
-Here is an example spinach file as it stands in this release:
-
-```yaml
-# A Popeye sample configuration file
-popeye:
-  # Checks resources against reported metrics usage.
-  # If over/under these thresholds a sanitization warning will be issued.
-  # Your cluster must run a metrics-server for these to take place!
-  allocations:
-    cpu:
-      underPercUtilization: 200 # Checks if cpu is under allocated by more than 200% at current load.
-      overPercUtilization: 50   # Checks if cpu is over allocated by more than 50% at current load.
-    memory:
-      underPercUtilization: 200 # Checks if mem is under allocated by more than 200% at current load.
-      overPercUtilization: 50   # Checks if mem is over allocated by more than 50% usage at current load.
-
-  # Excludes section provides for excluding certain resources scanned by Poppeye.
-  excludes:
-    # Exclude any configmaps within namespace fred that ends with a version#
-    configmap:
-      - rx:fred*\.v\d+
-    # Exclude kube-system + any namespace the start with either kube or istio
-    namespace:
-      - kube-public
-      - rx:kube
-      - rx:istio
-    # Exclude node named n1 from the scan.
-    node:
-      - n1
-    # Exclude any pods that start with nginx or contains -telemetry
-    pod:
-      - rx:nginx
-      - rx:.*-telemetry
-    # Exclude any service containing -dash in their name.
-    service:
-      - rx:*-dash
-
-  # Configure node resources.
-  node:
-    # Limits set a cpu/mem threshold in % ie if cpu|mem > limit a lint warning is triggered.
-    limits:
-      # CPU checks if current CPU utilization on a node is greater than 90%.
-      cpu:    90
-      # Memory checks if current Memory utilization on a node is greater than 80%.
-      memory: 80
-
-  # Configure pod resources
-  pod:
-    # Restarts check the restarts count and triggers a lint warning if above threshold.
-    restarts:
-      3
-    # Check container resource utilization in percent.
-    # Issues a lint warning if about these threshold.
-    limits:
-      cpu:    80
-      memory: 75
-```
-
 ## Report Morphology
 
 The sanitizer report outputs each resource group scanned and their potential issues.
@@ -371,7 +399,7 @@ dig this effort, please let us know that too!
 
 ## ATTA Girls/Boys!
 
-Popeye sits on top of many of opensource projects and libraries. Our *sincere*
+Popeye sits on top of many of open source projects and libraries. Our *sincere*
 appreciations to all the OSS contributors that work nights and weekends
 to make this project a reality!
 

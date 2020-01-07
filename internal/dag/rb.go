@@ -3,7 +3,6 @@ package dag
 import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
-	"github.com/rs/zerolog/log"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -17,7 +16,7 @@ func ListRoleBindings(c *k8s.Client, cfg *config.Config) (map[string]*rbacv1.Rol
 
 	res := make(map[string]*rbacv1.RoleBinding, len(rbs))
 	for fqn, rb := range rbs {
-		if includeNS(c, cfg, rb.Namespace) && !cfg.ShouldExclude("rolebinding", fqn) {
+		if includeNS(c, rb.Namespace) {
 			res[fqn] = rb
 		}
 	}
@@ -29,7 +28,6 @@ func ListRoleBindings(c *k8s.Client, cfg *config.Config) (map[string]*rbacv1.Rol
 func listAllRoleBindings(c *k8s.Client) (map[string]*rbacv1.RoleBinding, error) {
 	ll, err := fetchRoleBindings(c)
 	if err != nil {
-		log.Debug().Err(err).Msg("ListAll")
 		return nil, err
 	}
 
