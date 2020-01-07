@@ -3,6 +3,7 @@ package sanitize
 import (
 	"context"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/k8s"
 	v1 "k8s.io/api/core/v1"
@@ -31,14 +32,14 @@ type (
 		ListNodesMetrics() map[string]*mv1beta1.NodeMetrics
 	}
 
-	// Node represents a Node linter.
+	// Node represents a Node sanitizer.
 	Node struct {
 		*issues.Collector
 		NodeLister
 	}
 )
 
-// NewNode returns a new Node linter.
+// NewNode returns a new sanitizer.
 func NewNode(co *issues.Collector, lister NodeLister) *Node {
 	return &Node{
 		Collector:  co,
@@ -46,27 +47,33 @@ func NewNode(co *issues.Collector, lister NodeLister) *Node {
 	}
 }
 
-// Sanitize a Node.
+// Sanitize cleanse the resource.
 func (n *Node) Sanitize(ctx context.Context) error {
 	nmx := k8s.NodesMetrics{}
 	nodesMetrics(n.ListNodes(), n.ListNodesMetrics(), nmx)
 	for fqn, no := range n.ListNodes() {
 		n.InitOutcome(fqn)
-		ready := n.checkConditions(no)
+		ctx = internal.WithFQN(ctx, fqn)
+
+		ready := n.checkConditions(ctx, no)
 		if ready {
-			n.checkTaints(fqn, no.Spec.Taints)
-			n.checkUtilization(fqn, nmx[fqn])
+			n.checkTaints(ctx, no.Spec.Taints)
+			n.checkUtilization(ctx, nmx[fqn])
+		}
+
+		if n.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+			n.ClearOutcome(fqn)
 		}
 	}
 
 	return nil
 }
 
-func (n *Node) checkTaints(fqn string, taints []v1.Taint) {
+func (n *Node) checkTaints(ctx context.Context, taints []v1.Taint) {
 	tols := n.fetchPodTolerations()
 	for _, ta := range taints {
 		if _, ok := tols[mkKey(ta.Key, ta.Value)]; !ok {
-			n.AddCode(700, fqn, ta.Key)
+			n.AddCode(ctx, 700, ta.Key)
 		}
 	}
 }
@@ -86,27 +93,27 @@ func mkKey(k, v string) string {
 	return k + ":" + v
 }
 
-func (n *Node) checkConditions(no *v1.Node) bool {
+func (n *Node) checkConditions(ctx context.Context, no *v1.Node) bool {
 	var ready bool
 	for _, c := range no.Status.Conditions {
 		// Unknow type
 		if c.Status == v1.ConditionUnknown {
-			n.AddCode(701, no.Name)
+			n.AddCode(ctx, 701)
 			return false
 		}
 
 		// Node is not ready bail other checks
 		if c.Type == v1.NodeReady && c.Status == v1.ConditionFalse {
-			n.AddCode(702, no.Name)
+			n.AddCode(ctx, 702)
 			return ready
 		}
-		ready = n.statusReport(no.Name, c.Type, c.Status)
+		ready = n.statusReport(ctx, c.Type, c.Status)
 	}
 
 	return ready
 }
 
-func (n *Node) statusReport(node string, cond v1.NodeConditionType, status v1.ConditionStatus) bool {
+func (n *Node) statusReport(ctx context.Context, cond v1.NodeConditionType, status v1.ConditionStatus) bool {
 	var ready bool
 
 	// Status is good ie no condition detected -> bail!
@@ -116,15 +123,15 @@ func (n *Node) statusReport(node string, cond v1.NodeConditionType, status v1.Co
 
 	switch cond {
 	case v1.NodeOutOfDisk:
-		n.AddCode(703, node)
+		n.AddCode(ctx, 703)
 	case v1.NodeMemoryPressure:
-		n.AddCode(704, node)
+		n.AddCode(ctx, 704)
 	case v1.NodeDiskPressure:
-		n.AddCode(705, node)
+		n.AddCode(ctx, 705)
 	case v1.NodePIDPressure:
-		n.AddCode(706, node)
+		n.AddCode(ctx, 706)
 	case v1.NodeNetworkUnavailable:
-		n.AddCode(707, node)
+		n.AddCode(ctx, 707)
 	case v1.NodeReady:
 		ready = true
 	}
@@ -132,22 +139,22 @@ func (n *Node) statusReport(node string, cond v1.NodeConditionType, status v1.Co
 	return ready
 }
 
-func (n *Node) checkUtilization(no string, mx k8s.NodeMetrics) {
+func (n *Node) checkUtilization(ctx context.Context, mx k8s.NodeMetrics) {
 	if mx.Empty() {
-		n.AddCode(708, no)
+		n.AddCode(ctx, 708)
 		return
 	}
 
 	percCPU := ToPerc(toMC(mx.CurrentCPU), toMC(mx.AvailableCPU))
 	cpuLimit := int64(n.NodeCPULimit())
 	if percCPU > cpuLimit {
-		n.AddCode(709, no, cpuLimit, percCPU)
+		n.AddCode(ctx, 709, cpuLimit, percCPU)
 	}
 
 	percMEM := ToPerc(toMB(mx.CurrentMEM), toMB(mx.AvailableMEM))
 	memLimit := int64(n.NodeMEMLimit())
 	if percMEM > memLimit {
-		n.AddCode(710, no, memLimit, percMEM)
+		n.AddCode(ctx, 710, memLimit, percMEM)
 	}
 }
 

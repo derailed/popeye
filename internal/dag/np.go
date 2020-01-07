@@ -3,7 +3,6 @@ package dag
 import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
-	"github.com/rs/zerolog/log"
 	nv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -17,7 +16,7 @@ func ListNetworkPolicies(c *k8s.Client, cfg *config.Config) (map[string]*nv1.Net
 
 	res := make(map[string]*nv1.NetworkPolicy, len(dps))
 	for fqn, dp := range dps {
-		if includeNS(c, cfg, dp.Namespace) && !cfg.ShouldExclude("deployment", fqn) {
+		if includeNS(c, dp.Namespace) {
 			res[fqn] = dp
 		}
 	}
@@ -29,7 +28,6 @@ func ListNetworkPolicies(c *k8s.Client, cfg *config.Config) (map[string]*nv1.Net
 func listAllNetworkPolicies(c *k8s.Client) (map[string]*nv1.NetworkPolicy, error) {
 	ll, err := fetchNetworkPolicies(c)
 	if err != nil {
-		log.Debug().Err(err).Msg("ListAll")
 		return nil, err
 	}
 

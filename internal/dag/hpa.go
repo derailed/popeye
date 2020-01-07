@@ -3,7 +3,6 @@ package dag
 import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
-	"github.com/rs/zerolog/log"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -17,7 +16,7 @@ func ListHorizontalPodAutoscalers(c *k8s.Client, cfg *config.Config) (map[string
 
 	res := make(map[string]*autoscalingv1.HorizontalPodAutoscaler, len(hpas))
 	for fqn, hpa := range hpas {
-		if includeNS(c, cfg, hpa.Namespace) && !cfg.ShouldExclude("horizontalpodautoscaler", fqn) {
+		if includeNS(c, hpa.Namespace) {
 			res[fqn] = hpa
 		}
 	}
@@ -29,7 +28,6 @@ func ListHorizontalPodAutoscalers(c *k8s.Client, cfg *config.Config) (map[string
 func listAllHorizontalPodAutoscalers(c *k8s.Client) (map[string]*autoscalingv1.HorizontalPodAutoscaler, error) {
 	ll, err := fetchHorizontalPodAutoscalers(c)
 	if err != nil {
-		log.Debug().Err(err).Msg("ListAll")
 		return nil, err
 	}
 

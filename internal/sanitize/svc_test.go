@@ -1,7 +1,6 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/cache"
@@ -12,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func TestSvcSanitize(t *testing.T) {
+func TestSVCSanitize(t *testing.T) {
 	uu := map[string]struct {
 		lister ServiceLister
 		issues int
@@ -185,12 +184,13 @@ func TestSvcSanitize(t *testing.T) {
 		},
 	}
 
+	ctx := makeContext("svc")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			s := NewService(issues.NewCollector(loadCodes(t)), u.lister)
+			s := NewService(issues.NewCollector(loadCodes(t), makeConfig(t)), u.lister)
 
-			assert.Nil(t, s.Sanitize(context.Background()))
+			assert.Nil(t, s.Sanitize(ctx))
 			assert.Equal(t, u.issues, len(s.Outcome()["default/s1"]))
 		})
 	}

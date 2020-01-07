@@ -1,9 +1,12 @@
 package issues
 
 import (
+	"context"
 	"errors"
 	"testing"
 
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,8 +20,8 @@ func TestNoConcerns(t *testing.T) {
 		},
 		"issues": {
 			issues: []Issue{
-				New(Root, InfoLevel, "blee"),
-				New(Root, WarnLevel, "blee"),
+				New(Root, config.InfoLevel, "blee"),
+				New(Root, config.WarnLevel, "blee"),
 			},
 		},
 	}
@@ -26,7 +29,7 @@ func TestNoConcerns(t *testing.T) {
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			c := NewCollector(nil)
+			c := NewCollector(nil, makeConfig(t))
 			c.addIssue("fred", u.issues...)
 
 			assert.Equal(t, u.e, c.NoConcerns("fred"))
@@ -38,40 +41,40 @@ func TestMaxSeverity(t *testing.T) {
 	uu := map[string]struct {
 		issues   []Issue
 		section  string
-		severity Level
+		severity config.Level
 		count    int
 	}{
 		"noIssue": {
 			section:  Root,
-			severity: OkLevel,
+			severity: config.OkLevel,
 			count:    0,
 		},
 		"mix": {
 			issues: []Issue{
-				New(Root, InfoLevel, "blee"),
-				New(Root, WarnLevel, "blee"),
+				New(Root, config.InfoLevel, "blee"),
+				New(Root, config.WarnLevel, "blee"),
 			},
 			section:  Root,
-			severity: WarnLevel,
+			severity: config.WarnLevel,
 			count:    2,
 		},
 		"same": {
 			issues: []Issue{
-				New(Root, InfoLevel, "blee"),
-				New(Root, InfoLevel, "blee"),
+				New(Root, config.InfoLevel, "blee"),
+				New(Root, config.InfoLevel, "blee"),
 			},
 			section:  Root,
-			severity: InfoLevel,
+			severity: config.InfoLevel,
 			count:    2,
 		},
 		"error": {
 			issues: []Issue{
-				New(Root, ErrorLevel, "blee"),
-				New(Root, InfoLevel, "blee"),
-				New(Root, InfoLevel, "blee"),
+				New(Root, config.ErrorLevel, "blee"),
+				New(Root, config.InfoLevel, "blee"),
+				New(Root, config.InfoLevel, "blee"),
 			},
 			section:  Root,
-			severity: ErrorLevel,
+			severity: config.ErrorLevel,
 			count:    3,
 		},
 	}
@@ -79,7 +82,7 @@ func TestMaxSeverity(t *testing.T) {
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			c := NewCollector(nil)
+			c := NewCollector(nil, makeConfig(t))
 			c.addIssue(u.section, u.issues...)
 
 			assert.Equal(t, u.count, len(c.outcomes[u.section]))
@@ -90,84 +93,85 @@ func TestMaxSeverity(t *testing.T) {
 
 func TestAddErr(t *testing.T) {
 	uu := map[string]struct {
-		errors  []error
-		section string
-		count   int
+		errors []error
+		fqn    string
+		count  int
 	}{
 		"one": {
 			errors: []error{
 				errors.New("blee"),
 			},
-			section: Root,
-			count:   1,
+			fqn:   Root,
+			count: 1,
 		},
 		"many": {
 			errors: []error{
 				errors.New("blee"),
 				errors.New("duh"),
 			},
-			section: Root,
-			count:   2,
+			fqn:   Root,
+			count: 2,
 		},
 	}
 
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			c := NewCollector(nil)
-			c.AddErr(u.section, u.errors...)
+			c := NewCollector(nil, makeConfig(t))
+			ctx := makeContext("errors", u.fqn, "")
+			c.AddErr(ctx, u.errors...)
 
-			assert.Equal(t, u.count, len(c.outcomes[u.section]))
-			assert.Equal(t, ErrorLevel, c.MaxSeverity(u.section))
+			assert.Equal(t, u.count, len(c.outcomes[u.fqn]))
+			assert.Equal(t, config.ErrorLevel, c.MaxSeverity(u.fqn))
 		})
 	}
 }
 
 func TestAddCode(t *testing.T) {
 	uu := map[string]struct {
-		code    ID
-		section string
-		args    []interface{}
-		level   Level
-		e       string
+		code  config.ID
+		fqn   string
+		args  []interface{}
+		level config.Level
+		e     string
 	}{
 		"No params": {
-			code:    100,
-			section: Root,
-			level:   ErrorLevel,
-			e:       "[POP-100] Untagged docker image in use",
+			code:  100,
+			fqn:   Root,
+			level: config.ErrorLevel,
+			e:     "[POP-100] Untagged docker image in use",
 		},
 		"Params": {
-			code:    108,
-			section: Root,
-			level:   InfoLevel,
-			args:    []interface{}{80},
-			e:       "[POP-108] Unnamed port 80",
+			code:  108,
+			fqn:   Root,
+			level: config.InfoLevel,
+			args:  []interface{}{80},
+			e:     "[POP-108] Unnamed port 80",
 		},
 		"Dud!": {
-			code:    0,
-			section: Root,
-			level:   InfoLevel,
-			args:    []interface{}{80},
-			e:       "[POP-108] Unnamed port 80",
+			code:  0,
+			fqn:   Root,
+			level: config.InfoLevel,
+			args:  []interface{}{80},
+			e:     "[POP-108] Unnamed port 80",
 		},
 	}
 
 	for k := range uu {
 		u, key := uu[k], k
 		t.Run(k, func(t *testing.T) {
-			c := NewCollector(loadCodes(t))
-
+			c := NewCollector(loadCodes(t), makeConfig(t))
+			ctx := makeContext("test", u.fqn, "")
 			if key == "Dud!" {
 				subCode := func() {
-					c.AddCode(u.code, u.section, u.args...)
+					c.AddCode(ctx, u.code, u.args...)
 				}
 				assert.Panics(t, subCode, "blee")
 			} else {
-				c.AddCode(u.code, u.section, u.args...)
+				c.AddCode(ctx, u.code, u.args...)
 
-				assert.Equal(t, u.e, c.outcomes[u.section][0].Message)
-				assert.Equal(t, u.level, c.outcomes[u.section][0].Level)
+				assert.Equal(t, u.e, c.outcomes[u.fqn][0].Message)
+				assert.Equal(t, u.level, c.outcomes[u.fqn][0].Level)
 			}
 		})
 	}
@@ -175,24 +179,24 @@ func TestAddCode(t *testing.T) {
 
 func TestAddSubCode(t *testing.T) {
 	uu := map[string]struct {
-		code           ID
+		code           config.ID
 		section, group string
 		args           []interface{}
-		level          Level
+		level          config.Level
 		e              string
 	}{
 		"No params": {
 			code:    100,
 			section: Root,
 			group:   "blee",
-			level:   ErrorLevel,
+			level:   config.ErrorLevel,
 			e:       "[POP-100] Untagged docker image in use",
 		},
 		"Params": {
 			code:    108,
 			section: Root,
 			group:   "blee",
-			level:   InfoLevel,
+			level:   config.InfoLevel,
 			args:    []interface{}{80},
 			e:       "[POP-108] Unnamed port 80",
 		},
@@ -200,7 +204,7 @@ func TestAddSubCode(t *testing.T) {
 			code:    0,
 			section: Root,
 			group:   "blee",
-			level:   InfoLevel,
+			level:   config.InfoLevel,
 			args:    []interface{}{80},
 			e:       "[POP-108] Unnamed port 80",
 		},
@@ -209,16 +213,17 @@ func TestAddSubCode(t *testing.T) {
 	for k := range uu {
 		u, key := uu[k], k
 		t.Run(k, func(t *testing.T) {
-			c := NewCollector(loadCodes(t))
+			c := NewCollector(loadCodes(t), makeConfig(t))
 			c.InitOutcome(u.section)
+			ctx := makeContext("test", u.section, u.group)
 
 			if key == "Dud!" {
 				subCode := func() {
-					c.AddSubCode(u.code, u.section, u.group, u.args)
+					c.AddSubCode(ctx, u.code, u.args)
 				}
 				assert.Panics(t, subCode, "blee")
 			} else {
-				c.AddSubCode(u.code, u.section, u.group, u.args...)
+				c.AddSubCode(ctx, u.code, u.args...)
 
 				assert.Equal(t, u.e, c.Outcome()[u.section][0].Message)
 				assert.Equal(t, u.level, c.Outcome()[u.section][0].Level)
@@ -227,9 +232,25 @@ func TestAddSubCode(t *testing.T) {
 	}
 }
 
+// Helpers...
+
 func loadCodes(t *testing.T) *Codes {
 	codes, err := LoadCodes()
 	assert.Nil(t, err)
 
 	return codes
+}
+
+func makeConfig(t *testing.T) *config.Config {
+	c, err := config.NewConfig(config.NewFlags())
+	assert.Nil(t, err)
+	return c
+}
+
+func makeContext(section, fqn, group string) context.Context {
+	return context.WithValue(context.Background(), internal.KeyRun, internal.RunInfo{
+		Section: section,
+		Group:   group,
+		FQN:     fqn,
+	})
 }

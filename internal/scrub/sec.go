@@ -4,12 +4,11 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal/cache"
-	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/sanitize"
 )
 
-// Secret represents a Secret sanitizer.
+// Secret represents a Secret scruber.
 type Secret struct {
 	*issues.Collector
 	*cache.Secret
@@ -18,33 +17,30 @@ type Secret struct {
 	*cache.Ingress
 }
 
-// NewSecret return a new Secret sanitizer.
-func NewSecret(c *Cache, codes *issues.Codes) Sanitizer {
-	s := Secret{Collector: issues.NewCollector(codes)}
+// NewSecret return a new Secret scruber.
+func NewSecret(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
+	s := Secret{Collector: issues.NewCollector(codes, c.config)}
 
-	secs, err := dag.ListSecrets(c.client, c.config)
+	var err error
+	s.Secret, err = c.secrets()
 	if err != nil {
-		s.AddErr("secrets", err)
+		s.AddErr(ctx, err)
 	}
-	s.Secret = cache.NewSecret(secs)
 
-	pod, err := c.pods()
+	s.Pod, err = c.pods()
 	if err != nil {
-		s.AddErr("pods", err)
+		s.AddErr(ctx, err)
 	}
-	s.Pod = pod
 
-	sas, err := c.serviceaccounts()
+	s.ServiceAccount, err = c.serviceaccounts()
 	if err != nil {
-		s.AddErr("serviceaccounts", err)
+		s.AddErr(ctx, err)
 	}
-	s.ServiceAccount = sas
 
-	ing, err := c.ingresses()
+	s.Ingress, err = c.ingresses()
 	if err != nil {
-		s.AddErr("ingresses", err)
+		s.AddErr(ctx, err)
 	}
-	s.Ingress = ing
 
 	return &s
 }

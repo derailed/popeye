@@ -1,7 +1,6 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/cache"
@@ -33,16 +32,19 @@ func TestPDBSanitize(t *testing.T) {
 		},
 	}
 
+	ctx := makeContext("pdb")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			pdb := NewPodDisruptionBudget(issues.NewCollector(loadCodes(t)), u.lister)
+			pdb := NewPodDisruptionBudget(issues.NewCollector(loadCodes(t), makeConfig(t)), u.lister)
 
-			assert.Nil(t, pdb.Sanitize(context.TODO()))
+			assert.Nil(t, pdb.Sanitize(ctx))
 			assert.Equal(t, u.issues, pdb.Outcome()["default/pdb"])
 		})
 	}
 }
+
+// Helpers...
 
 type (
 	pdbOpts struct {

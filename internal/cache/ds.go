@@ -4,7 +4,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 )
 
-// DaemonSetKey tracks DaemonSet ressource references
+// DaemonSetKey tracks DaemonSet resource references
 const DaemonSetKey = "ds"
 
 // DaemonSet represents DaemonSet cache.

@@ -9,6 +9,7 @@ import (
 
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/sanitize"
+	"github.com/derailed/popeye/pkg/config"
 )
 
 const targetScore = 80
@@ -38,6 +39,7 @@ func (t *Tally) IsValid() bool {
 // Rollup tallies up the report scores.
 func (t *Tally) Rollup(o issues.Outcome) *Tally {
 	if o == nil || len(o) == 0 {
+		t.valid, t.score = true, 100
 		return t
 	}
 
@@ -67,7 +69,7 @@ func (t *Tally) computeScore() int {
 // Write out a tally.
 func (t *Tally) write(w io.Writer, s *Sanitizer) {
 	for i := len(t.counts) - 1; i >= 0; i-- {
-		emoji := EmojiForLevel(issues.Level(i), s.jurassicMode)
+		emoji := EmojiForLevel(config.Level(i), s.jurassicMode)
 		fmat := "%s %d "
 		if s.jurassicMode {
 			fmat = "%s:%d "

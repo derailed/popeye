@@ -3,6 +3,7 @@ package sanitize
 import (
 	"context"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
@@ -19,7 +20,7 @@ type (
 
 	// ClusterMetricsLister handles cluster metrics.
 	ClusterMetricsLister interface {
-		ListAllocatableMetrics(map[string]*v1.Node) v1.ResourceList
+		ListAvailableMetrics(map[string]*v1.Node) v1.ResourceList
 	}
 
 	// HorizontalPodAutoscaler represents a HorizontalPodAutoscaler linter.
@@ -31,7 +32,7 @@ type (
 	// HpaLister list available hpas on a cluster.
 	HpaLister interface {
 		NodeLister
-		DeployLister
+		DeploymentLister
 		StatefulSetLister
 		ClusterMetricsLister
 		ListHorizontalPodAutoscalers() map[string]*autoscalingv1.HorizontalPodAutoscaler
@@ -52,42 +53,47 @@ func (h *HorizontalPodAutoscaler) Sanitize(ctx context.Context) error {
 		tcpu, tmem resource.Quantity
 		current    int32
 	)
-	res := h.ListAllocatableMetrics(h.ListNodes())
+	res := h.ListAvailableMetrics(h.ListNodes())
 	for fqn, hpa := range h.ListHorizontalPodAutoscalers() {
 		h.InitOutcome(fqn)
+		ctx = internal.WithFQN(ctx, fqn)
 		var rcpu, rmem resource.Quantity
 		ns, _ := namespaced(fqn)
 		switch hpa.Spec.ScaleTargetRef.Kind {
 		case "Deployment":
-			dfqn, dps := cache.FQN(ns, hpa.Spec.ScaleTargetRef.Name), h.ListDeployments()
-			if dp, ok := dps[dfqn]; ok {
+			dpFqn, dps := cache.FQN(ns, hpa.Spec.ScaleTargetRef.Name), h.ListDeployments()
+			if dp, ok := dps[dpFqn]; ok {
 				rcpu, rmem = podResources(dp.Spec.Template.Spec)
 				current = dp.Status.AvailableReplicas
 			} else {
-				h.AddCode(600, fqn, fqn, dfqn)
+				h.AddCode(ctx, 600, fqn, dpFqn)
 				continue
 			}
 		case "StatefulSet":
-			sfqn, sts := cache.FQN(ns, hpa.Spec.ScaleTargetRef.Name), h.ListStatefulSets()
-			if st, ok := sts[sfqn]; ok {
+			stsFqn, sts := cache.FQN(ns, hpa.Spec.ScaleTargetRef.Name), h.ListStatefulSets()
+			if st, ok := sts[stsFqn]; ok {
 				rcpu, rmem = podResources(st.Spec.Template.Spec)
 				current = st.Status.CurrentReplicas
 			} else {
-				h.AddCode(601, fqn, fqn, sfqn)
+				h.AddCode(ctx, 601, fqn, stsFqn)
 				continue
 			}
 		}
-		cpu, mem := h.checkResources(fqn, hpa.Spec.MaxReplicas, current, rcpu, rmem, res)
+
+		cpu, mem := h.checkResources(ctx, hpa.Spec.MaxReplicas, current, rcpu, rmem, res)
 		tcpu.Add(*cpu)
 		tmem.Add(*mem)
 
+		if h.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+			h.ClearOutcome(fqn)
+		}
 	}
-	h.checkUtilization(tcpu, tmem, res)
+	h.checkUtilization(ctx, tcpu, tmem, res)
 
 	return nil
 }
 
-func (h *HorizontalPodAutoscaler) checkResources(fqn string, max, current int32, rcpu, rmem resource.Quantity, res v1.ResourceList) (tcpu, tmem *resource.Quantity) {
+func (h *HorizontalPodAutoscaler) checkResources(ctx context.Context, max, current int32, rcpu, rmem resource.Quantity, res v1.ResourceList) (tcpu, tmem *resource.Quantity) {
 	acpu, amem := *res.Cpu(), *res.Memory()
 	trcpu, trmem := rcpu.Copy(), rmem.Copy()
 	for i := 1; i <= int(max-current); i++ {
@@ -97,30 +103,28 @@ func (h *HorizontalPodAutoscaler) checkResources(fqn string, max, current int32,
 	if toMC(*trcpu) > toMC(acpu) {
 		cpu := trcpu.Copy()
 		cpu.Sub(acpu)
-		h.AddCode(602, fqn, current, max, asMC(acpu), asMC(*cpu))
+		h.AddCode(ctx, 602, current, max, asMC(acpu), asMC(*cpu))
 	}
 	if toMB(*trmem) > toMB(amem) {
 		mem := trmem.Copy()
 		mem.Sub(amem)
-		h.AddCode(603, fqn, current, max, asMB(amem), asMB(*mem))
+		h.AddCode(ctx, 603, current, max, asMB(amem), asMB(*mem))
 	}
 
 	return trcpu, trmem
 }
 
-func (h *HorizontalPodAutoscaler) checkUtilization(tcpu, tmem resource.Quantity, res v1.ResourceList) {
-	const hpa = "HPA"
-
+func (h *HorizontalPodAutoscaler) checkUtilization(ctx context.Context, tcpu, tmem resource.Quantity, res v1.ResourceList) {
 	acpu, amem := *res.Cpu(), *res.Memory()
-
+	ctx = internal.WithFQN(ctx, "HPA")
 	if toMC(tcpu) > toMC(acpu) {
 		cpu := tcpu.Copy()
 		cpu.Sub(acpu)
-		h.AddCode(604, hpa, asMC(tcpu), asMC(acpu), asMC(*cpu))
+		h.AddCode(ctx, 604, asMC(tcpu), asMC(acpu), asMC(*cpu))
 	}
 	if toMB(tmem) > toMB(amem) {
 		mem := tmem.Copy()
 		mem.Sub(amem)
-		h.AddCode(605, hpa, asMB(tmem), asMB(amem), asMB(*mem))
+		h.AddCode(ctx, 605, asMB(tmem), asMB(amem), asMB(*mem))
 	}
 }

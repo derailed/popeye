@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/k8s"
 	appsv1 "k8s.io/api/apps/v1"
@@ -32,7 +33,7 @@ type (
 	}
 )
 
-// NewDaemonSet returns a new DaemonSet sanitizer.
+// NewDaemonSet returns a new sanitizer.
 func NewDaemonSet(co *issues.Collector, lister DaemonSetLister) *DaemonSet {
 	return &DaemonSet{
 		Collector:       co,
@@ -40,58 +41,63 @@ func NewDaemonSet(co *issues.Collector, lister DaemonSetLister) *DaemonSet {
 	}
 }
 
-// Sanitize configmaps.
+// Sanitize cleanse the resource.
 func (d *DaemonSet) Sanitize(ctx context.Context) error {
 	over := pullOverAllocs(ctx)
 	for fqn, ds := range d.ListDaemonSets() {
 		d.InitOutcome(fqn)
-		d.checkDeprecation(fqn, ds)
-		d.checkContainers(fqn, ds.Spec.Template.Spec)
+		ctx = internal.WithFQN(ctx, fqn)
 
+		d.checkDeprecation(ctx, ds)
+		d.checkContainers(ctx, ds.Spec.Template.Spec)
 		pmx := k8s.PodsMetrics{}
 		podsMetrics(d, pmx)
-		d.checkUtilization(over, fqn, ds, pmx)
+		d.checkUtilization(ctx, over, ds, pmx)
+
+		if d.NoConcerns(fqn) && d.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+			d.ClearOutcome(fqn)
+		}
 	}
 
 	return nil
 }
 
-func (d *DaemonSet) checkDeprecation(fqn string, ds *appsv1.DaemonSet) {
+func (d *DaemonSet) checkDeprecation(ctx context.Context, ds *appsv1.DaemonSet) {
 	const current = "apps/v1"
 
-	rev, err := resourceRev(fqn, ds.Annotations)
+	rev, err := resourceRev(internal.MustExtractFQN(ctx), ds.Annotations)
 	if err != nil {
 		rev = revFromLink(ds.SelfLink)
 		if rev == "" {
-			d.AddCode(404, fqn, errors.New("Unable to assert resource version"))
+			d.AddCode(ctx, 404, errors.New("Unable to assert resource version"))
 			return
 		}
 	}
 	if rev != current {
-		d.AddCode(403, fqn, "DaemonSet", rev, current)
+		d.AddCode(ctx, 403, "DaemonSet", rev, current)
 	}
 }
 
 // CheckContainers runs thru deployment template and checks pod configuration.
-func (d *DaemonSet) checkContainers(fqn string, spec v1.PodSpec) {
-	c := NewContainer(fqn, d)
+func (d *DaemonSet) checkContainers(ctx context.Context, spec v1.PodSpec) {
+	c := NewContainer(internal.MustExtractFQN(ctx), d)
 	for _, co := range spec.InitContainers {
-		c.sanitize(co, false)
+		c.sanitize(ctx, co, false)
 	}
 	for _, co := range spec.Containers {
-		c.sanitize(co, false)
+		c.sanitize(ctx, co, false)
 	}
 }
 
 // CheckUtilization checks deployments requested resources vs current utilization.
-func (d *DaemonSet) checkUtilization(over bool, fqn string, ds *appsv1.DaemonSet, pmx k8s.PodsMetrics) {
+func (d *DaemonSet) checkUtilization(ctx context.Context, over bool, ds *appsv1.DaemonSet, pmx k8s.PodsMetrics) {
 	mx := d.daemonsetUsage(ds, pmx)
 	if mx.RequestCPU.IsZero() && mx.RequestMEM.IsZero() {
 		return
 	}
 
-	checkCPU(d, over, fqn, mx)
-	checkMEM(d, over, fqn, mx)
+	checkCPU(ctx, d, over, mx)
+	checkMEM(ctx, d, over, mx)
 }
 
 // DaemonSetUsage finds deployment running pods and compute current vs requested resource usage.

@@ -4,7 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,26 +18,49 @@ func TestClusterSanitize(t *testing.T) {
 		"good": {
 			major: "1", minor: "15",
 			e: issues.Issues{
-				{Group: issues.Root, Message: "[POP-406] K8s version OK", Level: issues.OkLevel},
+				{
+					Group:   issues.Root,
+					Message: "[POP-406] K8s version OK",
+					Level:   config.OkLevel,
+				},
 			},
 		},
 		"guizard": {
 			major: "1", minor: "11",
 			e: issues.Issues{
-				{Group: issues.Root, Message: "[POP-405] Is this a jurassic cluster? Might want to upgrade K8s a bit", Level: issues.WarnLevel},
+				{
+					Group:   issues.Root,
+					Message: "[POP-405] Is this a jurassic cluster? Might want to upgrade K8s a bit",
+					Level:   config.WarnLevel,
+				},
 			},
 		},
 	}
 
+	ctx := makeContext("cluster")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			cl := NewCluster(issues.NewCollector(loadCodes(t)), newCluster(u.major, u.minor))
+			cl := NewCluster(issues.NewCollector(loadCodes(t), makeConfig(t)), newCluster(u.major, u.minor))
 
-			assert.Nil(t, cl.Sanitize(context.TODO()))
+			assert.Nil(t, cl.Sanitize(ctx))
 			assert.Equal(t, u.e, cl.Outcome()["Version"])
 		})
 	}
+}
+
+// Helpers...
+
+func makeConfig(t *testing.T) *config.Config {
+	c, err := config.NewConfig(config.NewFlags())
+	assert.Nil(t, err)
+	return c
+}
+
+func makeContext(section string) context.Context {
+	return context.WithValue(context.Background(), internal.KeyRun, internal.RunInfo{
+		Section: section,
+	})
 }
 
 type cluster struct {

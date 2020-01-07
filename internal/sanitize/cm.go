@@ -3,18 +3,13 @@ package sanitize
 import (
 	"context"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
 	v1 "k8s.io/api/core/v1"
 )
 
 type (
-	// ConfigMap tracks ConfigMap sanitization.
-	ConfigMap struct {
-		*issues.Collector
-		ConfigMapLister
-	}
-
 	// PodRefs tracks pods object references.
 	PodRefs interface {
 		PodRefs(cache.ObjReferences)
@@ -25,9 +20,15 @@ type (
 		PodRefs
 		ListConfigMaps() map[string]*v1.ConfigMap
 	}
+
+	// ConfigMap tracks ConfigMap sanitization.
+	ConfigMap struct {
+		*issues.Collector
+		ConfigMapLister
+	}
 )
 
-// NewConfigMap returns a new ConfigMap sanitizer.
+// NewConfigMap returns a new sanitizer.
 func NewConfigMap(c *issues.Collector, lister ConfigMapLister) *ConfigMap {
 	return &ConfigMap{
 		Collector:       c,
@@ -35,38 +36,40 @@ func NewConfigMap(c *issues.Collector, lister ConfigMapLister) *ConfigMap {
 	}
 }
 
-// Sanitize a configmap.
-func (c *ConfigMap) Sanitize(context.Context) error {
+// Sanitize cleanse the resource.
+func (c *ConfigMap) Sanitize(ctx context.Context) error {
 	cmRefs := cache.ObjReferences{}
 	c.PodRefs(cmRefs)
-	c.checkInUse(cmRefs)
+	c.checkInUse(ctx, cmRefs)
 
 	return nil
 }
 
-func (c *ConfigMap) checkInUse(refs cache.ObjReferences) {
+func (c *ConfigMap) checkInUse(ctx context.Context, refs cache.ObjReferences) {
 	for fqn, cm := range c.ListConfigMaps() {
 		c.InitOutcome(fqn)
-
+		ctx = internal.WithFQN(ctx, fqn)
 		keys, ok := refs[cache.ResFqn(cache.ConfigMapKey, fqn)]
+		defer func(ctx context.Context, fqn string) {
+			if c.NoConcerns(fqn) && c.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+				c.ClearOutcome(fqn)
+			}
+		}(ctx, fqn)
 		if !ok {
-			c.AddCode(400, fqn)
+			c.AddCode(ctx, 400)
 			continue
 		}
 		if keys.Has(cache.AllKeys) {
 			continue
 		}
 
-		kk := make(cache.StringSet, len(cm.Data))
+		kk := make(internal.StringSet, len(cm.Data))
 		for k := range cm.Data {
 			kk.Add(k)
 		}
 		deltas := keys.Diff(kk)
-		if len(deltas) == 0 {
-			continue
-		}
 		for k := range deltas {
-			c.AddCode(401, fqn, k)
+			c.AddCode(ctx, 401, k)
 		}
 	}
 }

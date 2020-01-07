@@ -4,35 +4,33 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal/cache"
-	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/sanitize"
 )
 
-// PersistentVolumeClaim represents a PersistentVolumeClaim sanitizer.
+// PersistentVolumeClaim represents a PersistentVolumeClaim scruber.
 type PersistentVolumeClaim struct {
 	*issues.Collector
 	*cache.PersistentVolumeClaim
 	*cache.Pod
 }
 
-// NewPersistentVolumeClaim return a new PersistentVolumeClaim sanitizer.
-func NewPersistentVolumeClaim(c *Cache, codes *issues.Codes) Sanitizer {
+// NewPersistentVolumeClaim return a new PersistentVolumeClaim scruber.
+func NewPersistentVolumeClaim(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	p := PersistentVolumeClaim{
-		Collector: issues.NewCollector(codes),
+		Collector: issues.NewCollector(codes, c.config),
 	}
 
-	ss, err := dag.ListPersistentVolumeClaims(c.client, c.config)
+	var err error
+	p.PersistentVolumeClaim, err = c.persistentvolumeclaims()
 	if err != nil {
-		p.AddErr("services", err)
+		p.AddErr(ctx, err)
 	}
-	p.PersistentVolumeClaim = cache.NewPersistentVolumeClaim(ss)
 
-	pod, err := c.pods()
+	p.Pod, err = c.pods()
 	if err != nil {
-		p.AddErr("pods", err)
+		p.AddErr(ctx, err)
 	}
-	p.Pod = pod
 
 	return &p
 }

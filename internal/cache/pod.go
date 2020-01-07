@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"github.com/derailed/popeye/internal"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -66,13 +67,13 @@ func (p *Pod) imagePullSecRefs(ns string, sRefs []v1.LocalObjectReference, refs 
 		if c, ok := refs[key]; ok {
 			c.Add(AllKeys)
 		} else {
-			refs[key] = StringSet{AllKeys: Blank}
+			refs[key] = internal.StringSet{AllKeys: internal.Blank}
 		}
 	}
 }
 
 func (p *Pod) namespaceRefs(ns string, refs ObjReferences) {
-	set := StringSet{}
+	set := internal.StringSet{}
 	if s, ok := refs["ns"]; ok {
 		set = s
 	} else {
@@ -101,7 +102,7 @@ func (p *Pod) containerRefs(pfqn string, co v1.Container, refs ObjReferences) {
 				s.Add(AllKeys)
 				continue
 			}
-			refs[efqn] = StringSet{AllKeys: Blank}
+			refs[efqn] = internal.StringSet{AllKeys: internal.Blank}
 		case e.SecretRef != nil:
 			secRef := e.SecretRef
 			efqn := ResFqn(SecretKey, FQN(ns, secRef.Name))
@@ -109,7 +110,7 @@ func (p *Pod) containerRefs(pfqn string, co v1.Container, refs ObjReferences) {
 				s.Add(AllKeys)
 				continue
 			}
-			refs[efqn] = StringSet{AllKeys: Blank}
+			refs[efqn] = internal.StringSet{AllKeys: internal.Blank}
 		}
 	}
 }
@@ -124,7 +125,7 @@ func (p *Pod) secretRefs(ns string, ref *v1.SecretKeySelector, refs ObjReference
 		s.Add(ref.Key)
 		return
 	}
-	refs[key] = StringSet{ref.Key: Blank}
+	refs[key] = internal.StringSet{ref.Key: internal.Blank}
 }
 
 func (p *Pod) configMapRefs(ns string, ref *v1.ConfigMapKeySelector, refs ObjReferences) {
@@ -137,7 +138,7 @@ func (p *Pod) configMapRefs(ns string, ref *v1.ConfigMapKeySelector, refs ObjRef
 		s.Add(ref.Key)
 		return
 	}
-	refs[key] = StringSet{ref.Key: Blank}
+	refs[key] = internal.StringSet{ref.Key: internal.Blank}
 }
 
 func (*Pod) volumeRefs(ns string, vv []v1.Volume, refs ObjReferences) {
@@ -161,7 +162,7 @@ func (*Pod) volumeRefs(ns string, vv []v1.Volume, refs ObjReferences) {
 // Helpers...
 
 func addKeys(kind, rfqn string, items []v1.KeyToPath, refs ObjReferences) {
-	set := StringSet{}
+	set := internal.StringSet{}
 	key := ResFqn(kind, rfqn)
 	if s, ok := refs[key]; ok {
 		set = s

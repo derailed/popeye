@@ -12,25 +12,26 @@ popeye:
   # Excludes
   excludes:
     node:
-      - n1
+      - name: n1
+        codes:
+          - 100
     namespace:
-      - kube-system
-      - kube-node-lease
-      - kube-public
-      - istio-system
+      - name: kube-system
+      - name: kube-node-lease
+      - name: kube-public
+      - name: istio-system
     service:
-      - default/dictionary
+      - name: default/dictionary
 
   # Node...
   node:
     limits:
-      cpu:    90
+      cpu: 90
       memory: 80
 
   # Pod...
   pod:
     limits:
-      cpu:    80
+      cpu: 80
       memory: 75
-    restarts:
-      3
+    restarts: 3

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	pv1beta1 "k8s.io/api/policy/v1beta1"
 )
@@ -21,7 +22,7 @@ type (
 	}
 )
 
-// NewPodSecurityPolicy returns a new PodSecurityPolicy sanitizer.
+// NewPodSecurityPolicy returns a new sanitizer.
 func NewPodSecurityPolicy(co *issues.Collector, lister PodSecurityPolicyLister) *PodSecurityPolicy {
 	return &PodSecurityPolicy{
 		Collector:               co,
@@ -29,30 +30,34 @@ func NewPodSecurityPolicy(co *issues.Collector, lister PodSecurityPolicyLister) 
 	}
 }
 
-// Sanitize configmaps.
+// Sanitize cleanse the resource.
 func (p *PodSecurityPolicy) Sanitize(ctx context.Context) error {
 	for fqn, psp := range p.ListPodSecurityPolicies() {
 		p.InitOutcome(fqn)
-		p.checkDeprecation(fqn, psp)
+		ctx = internal.WithFQN(ctx, fqn)
+
+		p.checkDeprecation(ctx, psp)
+
+		if p.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+			p.ClearOutcome(fqn)
+		}
 	}
 
 	return nil
 }
 
-func (p *PodSecurityPolicy) checkDeprecation(fqn string, psp *pv1beta1.PodSecurityPolicy) {
+func (p *PodSecurityPolicy) checkDeprecation(ctx context.Context, psp *pv1beta1.PodSecurityPolicy) {
 	const current = "policy/v1beta1"
 
-	rev, err := resourceRev(fqn, psp.Annotations)
+	rev, err := resourceRev(internal.MustExtractFQN(ctx), psp.Annotations)
 	if err != nil {
 		rev = revFromLink(psp.SelfLink)
 		if rev == "" {
-			p.AddCode(404, fqn, errors.New("Unable to assert resource version"))
+			p.AddCode(ctx, 404, errors.New("Unable to assert resource version"))
 			return
 		}
 	}
 	if rev != current {
-		p.AddCode(403, fqn, "PodSecurityPolicy", rev, current)
+		p.AddCode(ctx, 403, "PodSecurityPolicy", rev, current)
 	}
 }
-
-// Helpers...

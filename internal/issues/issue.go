@@ -1,40 +1,30 @@
 package issues
 
-import "fmt"
+import (
+	"fmt"
 
-const (
-	// OkLevel denotes no sanitizing issues.
-	OkLevel Level = iota
-	// InfoLevel denotes a FYI issues.
-	InfoLevel
-	// WarnLevel denotes a warning issue.
-	WarnLevel
-	// ErrorLevel denotes a serious issue.
-	ErrorLevel
+	"github.com/derailed/popeye/pkg/config"
 )
 
 // Blank issue
 var Blank = Issue{}
 
 type (
-	// Level tracks sanitizer message level.
-	Level int
-
 	// Issue tracks a sanitizer issui.
 	Issue struct {
-		Group   string `yaml:"group" json:"group"`
-		Level   Level  `yaml:"level" json:"level"`
-		Message string `yaml:"message" json:"message"`
+		Group   string       `yaml:"group" json:"group"`
+		Level   config.Level `yaml:"level" json:"level"`
+		Message string       `yaml:"message" json:"message"`
 	}
 )
 
 // New returns a new lint issue.
-func New(group string, level Level, description string) Issue {
+func New(group string, level config.Level, description string) Issue {
 	return Issue{Group: group, Level: level, Message: description}
 }
 
 // Newf returns a new lint issue using a formatter.
-func Newf(group string, level Level, format string, args ...interface{}) Issue {
+func Newf(group string, level config.Level, format string, args ...interface{}) Issue {
 	return New(group, level, fmt.Sprintf(format, args...))
 }
 
@@ -49,13 +39,13 @@ func (i Issue) IsSubIssue() bool {
 }
 
 // LevelToStr returns a severity level as a string.
-func LevelToStr(l Level) string {
+func LevelToStr(l config.Level) string {
 	switch l {
-	case ErrorLevel:
+	case config.ErrorLevel:
 		return "error"
-	case WarnLevel:
+	case config.WarnLevel:
 		return "warn"
-	case InfoLevel:
+	case config.InfoLevel:
 		return "info"
 	default:
 		return "ok"

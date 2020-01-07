@@ -3,6 +3,7 @@ package sanitize
 import (
 	"context"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
 	v1 "k8s.io/api/core/v1"
@@ -22,7 +23,7 @@ type (
 	}
 )
 
-// NewPersistentVolumeClaim returns a new PersistentVolumeClaim sanitizer.
+// NewPersistentVolumeClaim returns a new sanitizer.
 func NewPersistentVolumeClaim(co *issues.Collector, lister PersistentVolumeClaimLister) *PersistentVolumeClaim {
 	return &PersistentVolumeClaim{
 		Collector:                   co,
@@ -30,7 +31,7 @@ func NewPersistentVolumeClaim(co *issues.Collector, lister PersistentVolumeClaim
 	}
 }
 
-// Sanitize a PersistentVolumeClaim.
+// Sanitize cleanse the resource.
 func (p *PersistentVolumeClaim) Sanitize(ctx context.Context) error {
 	refs := map[string]struct{}{}
 	for fqn, pod := range p.ListPods() {
@@ -45,23 +46,30 @@ func (p *PersistentVolumeClaim) Sanitize(ctx context.Context) error {
 
 	for fqn, pvc := range p.ListPersistentVolumeClaims() {
 		p.InitOutcome(fqn)
-		if !p.checkBound(fqn, pvc.Status.Phase) {
+		ctx = internal.WithFQN(ctx, fqn)
+		defer func(fqn string, ctx context.Context) {
+			if p.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+				p.ClearOutcome(fqn)
+			}
+		}(fqn, ctx)
+
+		if !p.checkBound(ctx, pvc.Status.Phase) {
 			continue
 		}
 		if _, ok := refs[fqn]; !ok {
-			p.AddCode(400, fqn)
+			p.AddCode(ctx, 400)
 		}
 	}
 
 	return nil
 }
 
-func (p *PersistentVolumeClaim) checkBound(fqn string, phase v1.PersistentVolumeClaimPhase) bool {
+func (p *PersistentVolumeClaim) checkBound(ctx context.Context, phase v1.PersistentVolumeClaimPhase) bool {
 	switch phase {
 	case v1.ClaimPending:
-		p.AddCode(1003, fqn)
+		p.AddCode(ctx, 1003)
 	case v1.ClaimLost:
-		p.AddCode(1004, fqn)
+		p.AddCode(ctx, 1004)
 	case v1.ClaimBound:
 		return true
 	}

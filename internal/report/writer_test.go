@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -70,7 +71,7 @@ func TestPrint(t *testing.T) {
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
 		s := NewSanitizer(w, false)
-		s.Print(issues.OkLevel, u.indent, u.m)
+		s.Print(config.OkLevel, u.indent, u.m)
 
 		assert.Equal(t, u.e, w.String())
 	}
@@ -83,15 +84,15 @@ func TestDump(t *testing.T) {
 	}{
 		{
 			issues.Outcome{
-				"fred": issues.Issues{issues.New(issues.Root, issues.WarnLevel, "Yo Mama!")},
+				"fred": issues.Issues{issues.New(issues.Root, config.WarnLevel, "Yo Mama!")},
 			},
 			"    😱 \x1b[38;5;220;mYo Mama!.\x1b[0m\n",
 		},
 		{
 			issues.Outcome{
 				"fred": issues.Issues{
-					issues.New("c1", issues.ErrorLevel, "Yo Mama!"),
-					issues.New("c1", issues.ErrorLevel, "Yo!"),
+					issues.New("c1", config.ErrorLevel, "Yo Mama!"),
+					issues.New("c1", config.ErrorLevel, "Yo!"),
 				},
 			},
 			"    🐳 \x1b[38;5;75;mc1\x1b[0m\n      💥 \x1b[38;5;196;mYo Mama!.\x1b[0m\n      💥 \x1b[38;5;196;mYo!.\x1b[0m\n",
@@ -101,7 +102,7 @@ func TestDump(t *testing.T) {
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
 		s := NewSanitizer(w, false)
-		s.Dump(issues.OkLevel, u.o["fred"])
+		s.Dump(config.OkLevel, u.o["fred"])
 
 		assert.Equal(t, u.e, w.String())
 	}
@@ -124,7 +125,7 @@ func TestOpen(t *testing.T) {
 	}{
 		{
 			issues.Outcome{
-				"fred": issues.Issues{issues.New(issues.Root, issues.WarnLevel, "Yo Mama!")},
+				"fred": issues.Issues{issues.New(issues.Root, config.WarnLevel, "Yo Mama!")},
 			},
 			"\n\x1b[38;5;75;mblee\x1b[0m" + strings.Repeat(" ", 75) + "💥 0 😱 1 🔊 0 ✅ 0 \x1b[38;5;196;m0\x1b[0m٪\n\x1b[38;5;75;m" + strings.Repeat("┅", Width) + "\x1b[0m\n",
 		},
@@ -167,7 +168,7 @@ func TestFormatLine(t *testing.T) {
 			msg:    "fred bleeduhblablabla blee",
 			indent: 1,
 			width:  10,
-			e:      " fred\n    bleeduhblablabla\n    blee",
+			e:      "fred \n    bleeduhblablabla\n    blee",
 		},
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 )
 
@@ -25,7 +26,7 @@ type (
 	}
 )
 
-// NewCluster returns a new Cluster sanitizer.
+// NewCluster returns a new sanitizer.
 func NewCluster(co *issues.Collector, lister ClusterLister) *Cluster {
 	return &Cluster{
 		Collector:     co,
@@ -33,7 +34,7 @@ func NewCluster(co *issues.Collector, lister ClusterLister) *Cluster {
 	}
 }
 
-// Sanitize configmaps.
+// Sanitize cleanse the resource.
 func (c *Cluster) Sanitize(ctx context.Context) error {
 	major, minor := c.ListVersion()
 
@@ -46,10 +47,11 @@ func (c *Cluster) Sanitize(ctx context.Context) error {
 		return err
 	}
 
+	ctx = internal.WithFQN(ctx, "Version")
 	if m != tolerableMajor || p < tolerableMinor {
-		c.AddCode(405, "Version")
+		c.AddCode(ctx, 405)
 	} else {
-		c.AddCode(406, "Version")
+		c.AddCode(ctx, 406)
 	}
 
 	return nil

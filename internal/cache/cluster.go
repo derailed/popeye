@@ -1,6 +1,6 @@
 package cache
 
-// ClusterKey tracks Cluster ressource references
+// ClusterKey tracks Cluster resource references
 const ClusterKey = "cl"
 
 // Cluster represents Cluster cache.

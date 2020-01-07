@@ -1,21 +1,13 @@
-package cache
+package internal
 
-// AllKeys indicates all data keys are being used when referencing a cm or secret.
-const AllKeys = "all"
+// Empty denotes an empty value.
+type Empty struct{}
 
 // Blank represents an empty value.
 var Blank = Empty{}
 
-type (
-	// ObjReferences tracks kubernetes object references.
-	ObjReferences map[string]StringSet
-
-	// Empty denotes an empty value.
-	Empty struct{}
-
-	// StringSet represents a set of strings.
-	StringSet map[string]Empty
-)
+// StringSet represents a set of strings.
+type StringSet map[string]Empty
 
 // Add a collection of elements to the set.
 func (ss StringSet) Add(strs ...string) {

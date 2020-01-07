@@ -3,6 +3,7 @@ package issues
 import (
 	"testing"
 
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -11,10 +12,10 @@ func TestIsSubIssues(t *testing.T) {
 		i Issue
 		e bool
 	}{
-		"root":  {New(Root, WarnLevel, "blah"), false},
-		"rootf": {Newf(Root, WarnLevel, "blah %s", "blee"), false},
-		"sub":   {New("sub1", WarnLevel, "blah"), true},
-		"subf":  {Newf("sub1", WarnLevel, "blah %s", "blee"), true},
+		"root":  {New(Root, config.WarnLevel, "blah"), false},
+		"rootf": {Newf(Root, config.WarnLevel, "blah %s", "blee"), false},
+		"sub":   {New("sub1", config.WarnLevel, "blah"), true},
+		"subf":  {Newf("sub1", config.WarnLevel, "blah %s", "blee"), true},
 	}
 
 	for k := range uu {
@@ -31,7 +32,7 @@ func TestBlank(t *testing.T) {
 		e bool
 	}{
 		"blank":    {Issue{}, true},
-		"notBlank": {New(Root, WarnLevel, "blah"), false},
+		"notBlank": {New(Root, config.WarnLevel, "blah"), false},
 	}
 
 	for k := range uu {

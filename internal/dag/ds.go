@@ -3,7 +3,6 @@ package dag
 import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
-	"github.com/rs/zerolog/log"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -17,7 +16,7 @@ func ListDaemonSets(c *k8s.Client, cfg *config.Config) (map[string]*appsv1.Daemo
 
 	res := make(map[string]*appsv1.DaemonSet, len(dps))
 	for fqn, dp := range dps {
-		if includeNS(c, cfg, dp.Namespace) && !cfg.ShouldExclude("daemonset", fqn) {
+		if includeNS(c, dp.Namespace) {
 			res[fqn] = dp
 		}
 	}
@@ -29,7 +28,6 @@ func ListDaemonSets(c *k8s.Client, cfg *config.Config) (map[string]*appsv1.Daemo
 func listAllDaemonSets(c *k8s.Client) (map[string]*appsv1.DaemonSet, error) {
 	ll, err := fetchDaemonSets(c)
 	if err != nil {
-		log.Debug().Err(err).Msg("ListAll")
 		return nil, err
 	}
 

@@ -3,7 +3,6 @@ package dag
 import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
-	"github.com/rs/zerolog/log"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -17,7 +16,7 @@ func ListStatefulSets(c *k8s.Client, cfg *config.Config) (map[string]*appsv1.Sta
 
 	res := make(map[string]*appsv1.StatefulSet, len(sts))
 	for fqn, st := range sts {
-		if includeNS(c, cfg, st.Namespace) && !cfg.ShouldExclude("statefulset", fqn) {
+		if includeNS(c, st.Namespace) {
 			res[fqn] = st
 		}
 	}
@@ -29,7 +28,6 @@ func ListStatefulSets(c *k8s.Client, cfg *config.Config) (map[string]*appsv1.Sta
 func listAllStatefulSets(c *k8s.Client) (map[string]*appsv1.StatefulSet, error) {
 	ll, err := fetchStatefulSets(c)
 	if err != nil {
-		log.Debug().Err(err).Msg("ListAll")
 		return nil, err
 	}
 

@@ -3,7 +3,7 @@ package report
 import (
 	"testing"
 
-	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/pkg/config"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -32,7 +32,7 @@ func TestChanged(t *testing.T) {
 		},
 	}
 
-	l := issues.OkLevel
+	l := config.OkLevel
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
@@ -74,7 +74,7 @@ func TestBetter(t *testing.T) {
 		},
 	}
 
-	l := issues.OkLevel
+	l := config.OkLevel
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
@@ -116,7 +116,7 @@ func TestWorst(t *testing.T) {
 		},
 	}
 
-	l := issues.OkLevel
+	l := config.OkLevel
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
@@ -161,7 +161,7 @@ func TestSummarize(t *testing.T) {
 		},
 	}
 
-	l := issues.OkLevel
+	l := config.OkLevel
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {

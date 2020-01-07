@@ -10,7 +10,7 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 )
 
-// ReplicaSet represents a ReplicaSet sanitizer.
+// ReplicaSet represents a ReplicaSet scruber.
 type ReplicaSet struct {
 	*issues.Collector
 	*cache.ReplicaSet
@@ -20,25 +20,24 @@ type ReplicaSet struct {
 	client *k8s.Client
 }
 
-// NewReplicaSet return a new ReplicaSet sanitizer.
-func NewReplicaSet(c *Cache, codes *issues.Codes) Sanitizer {
+// NewReplicaSet return a new ReplicaSet scruber.
+func NewReplicaSet(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	d := ReplicaSet{
 		client:    c.client,
 		Config:    c.config,
-		Collector: issues.NewCollector(codes),
+		Collector: issues.NewCollector(codes, c.config),
 	}
 
-	dps, err := c.replicasets()
+	var err error
+	d.ReplicaSet, err = c.replicasets()
 	if err != nil {
-		d.AddErr("replicasets", err)
+		d.AddErr(ctx, err)
 	}
-	d.ReplicaSet = dps
 
-	pod, err := c.pods()
+	d.Pod, err = c.pods()
 	if err != nil {
-		d.AddErr("pods", err)
+		d.AddErr(ctx, err)
 	}
-	d.Pod = pod
 
 	return &d
 }

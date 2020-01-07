@@ -36,12 +36,15 @@ func (n *NodesMetrics) ListAllocatedMetrics() v1.ResourceList {
 }
 
 // ListAllocatableMetrics return the total cluster available cpu/mem.
-func (mx *NodesMetrics) ListAllocatableMetrics(nn map[string]*v1.Node) v1.ResourceList {
+func (mx *NodesMetrics) ListAvailableMetrics(nn map[string]*v1.Node) v1.ResourceList {
 	cpu, mem := new(resource.Quantity), new(resource.Quantity)
 	for _, n := range nn {
 		cpu.Add(*n.Status.Allocatable.Cpu())
 		mem.Add(*n.Status.Allocatable.Memory())
 	}
+	used := mx.ListAllocatedMetrics()
+	cpu.Sub(*used.Cpu())
+	mem.Sub(*used.Memory())
 
 	return v1.ResourceList{
 		v1.ResourceCPU:    *cpu,

@@ -31,7 +31,7 @@ func TestClusterAllocatableMetrics(t *testing.T) {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			n := NewNodesMetrics(map[string]*mv1beta1.NodeMetrics{})
-			res := n.ListAllocatableMetrics(u.nn)
+			res := n.ListAvailableMetrics(u.nn)
 			assert.Equal(t, u.e.Cpu().Value(), res.Cpu().Value())
 			assert.Equal(t, u.e.Memory().Value(), res.Memory().Value())
 		})

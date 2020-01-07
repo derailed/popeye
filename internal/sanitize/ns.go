@@ -3,6 +3,7 @@ package sanitize
 import (
 	"context"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	v1 "k8s.io/api/core/v1"
 )
@@ -26,7 +27,7 @@ type (
 	}
 )
 
-// NewNamespace returns a new namespace linter.
+// NewNamespace returns a new sanitizer.
 func NewNamespace(co *issues.Collector, lister NamespaceLister) *Namespace {
 	return &Namespace{
 		Collector:       co,
@@ -34,26 +35,32 @@ func NewNamespace(co *issues.Collector, lister NamespaceLister) *Namespace {
 	}
 }
 
-// Sanitize a namespace
+// Sanitize cleanse the resource.
 func (n *Namespace) Sanitize(ctx context.Context) error {
 	available := n.ListNamespaces()
 	used := make(map[string]struct{}, len(available))
 	n.ReferencedNamespaces(used)
 	for fqn, ns := range available {
 		n.InitOutcome(fqn)
-		if n.checkActive(fqn, ns.Status.Phase) {
+		ctx = internal.WithFQN(ctx, fqn)
+
+		if n.checkActive(ctx, ns.Status.Phase) {
 			if _, ok := used[fqn]; !ok {
-				n.AddCode(400, fqn)
+				n.AddCode(ctx, 400)
 			}
+		}
+
+		if n.NoConcerns(fqn) && n.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+			n.ClearOutcome(fqn)
 		}
 	}
 
 	return nil
 }
 
-func (n *Namespace) checkActive(fqn string, p v1.NamespacePhase) bool {
+func (n *Namespace) checkActive(ctx context.Context, p v1.NamespacePhase) bool {
 	if !isNSActive(p) {
-		n.AddCode(800, fqn)
+		n.AddCode(ctx, 800)
 		return false
 	}
 

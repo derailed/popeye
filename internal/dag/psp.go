@@ -3,7 +3,6 @@ package dag
 import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
-	"github.com/rs/zerolog/log"
 	pv1beta1 "k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -17,7 +16,7 @@ func ListPodSecurityPolicies(c *k8s.Client, cfg *config.Config) (map[string]*pv1
 
 	res := make(map[string]*pv1beta1.PodSecurityPolicy, len(dps))
 	for fqn, dp := range dps {
-		if includeNS(c, cfg, dp.Namespace) && !cfg.ShouldExclude("deployment", fqn) {
+		if includeNS(c, dp.Namespace) {
 			res[fqn] = dp
 		}
 	}
@@ -29,7 +28,6 @@ func ListPodSecurityPolicies(c *k8s.Client, cfg *config.Config) (map[string]*pv1
 func listAllPodSecurityPolicys(c *k8s.Client) (map[string]*pv1beta1.PodSecurityPolicy, error) {
 	ll, err := fetchPodSecurityPolicys(c)
 	if err != nil {
-		log.Debug().Err(err).Msg("ListAll")
 		return nil, err
 	}
 
