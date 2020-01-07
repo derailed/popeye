@@ -2,15 +2,20 @@ package pkg
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/k8s"
@@ -29,6 +34,25 @@ var (
 	DumpDir = dumpDir()
 )
 
+const outFmt = "sanitizer_%s_%d.%s"
+
+func (p *Popeye) fileName() string {
+	return fmt.Sprintf(outFmt, p.client.ActiveCluster(), time.Now().UnixNano(), p.fileExt())
+}
+
+func (p *Popeye) fileExt() string {
+	switch *p.flags.Output {
+	case "json":
+		return "json"
+	case "junit":
+		return "xml"
+	case "yaml":
+		return "yml"
+	default:
+		return "txt"
+	}
+}
+
 func dumpDir() string {
 	if d := os.Getenv("POPEYE_REPORT_DIR"); d != "" {
 		return d
@@ -43,7 +67,7 @@ type (
 	Popeye struct {
 		client       *k8s.Client
 		config       *config.Config
-		outputTarget *os.File
+		outputTarget io.ReadWriteCloser
 		log          *zerolog.Logger
 		flags        *config.Flags
 		builder      *report.Builder
@@ -86,10 +110,32 @@ func (p *Popeye) Init() error {
 // Sanitize scans a cluster for potential issues.
 func (p *Popeye) Sanitize() error {
 	defer func() {
-		if p.outputTarget != os.Stdout {
+		switch {
+		case isSet(p.flags.Save):
 			if err := p.outputTarget.Close(); err != nil {
 				log.Fatal().Err(err).Msg("Closing report")
 			}
+		case isSet(p.flags.SaveToS3):
+			// Create a single AWS session (we can re use this if we're uploading many files)
+			s, err := session.NewSession(&aws.Config{})
+			if err != nil {
+				log.Fatal().AnErr("Create S3 Session", err)
+			}
+			// Create an uploader with the session and default options
+			uploader := s3manager.NewUploader(s)
+			// Upload input parameters
+			upParams := &s3manager.UploadInput{
+				Bucket: p.flags.S3Bucket,
+				Key:    aws.String(p.fileName()),
+				Body:   p.outputTarget,
+			}
+
+			// Perform an upload.
+			if _, err = uploader.Upload(upParams); err != nil {
+				log.Fatal().AnErr("S3 Upload", err)
+			}
+
+		default:
 		}
 	}()
 
@@ -105,7 +151,7 @@ func (p *Popeye) dumpJunit() error {
 	if err != nil {
 		return err
 	}
-	if _, err := p.outputTarget.WriteString(xml.Header); err != nil {
+	if _, err := p.outputTarget.Write([]byte(xml.Header)); err != nil {
 		return err
 	}
 	fmt.Fprintf(p.outputTarget, "%v\n", res)
@@ -225,9 +271,22 @@ func (p *Popeye) sanitizers() map[string]scrubFn {
 	}
 }
 
+type readWriteCloser struct {
+	io.ReadWriter
+}
+
+func (wC readWriteCloser) Close() error {
+	return nil
+}
+
+func NopWriter(i io.ReadWriter) io.ReadWriteCloser {
+	return &readWriteCloser{i}
+}
+
 func (p *Popeye) ensureOutput() error {
 	p.outputTarget = os.Stdout
-	if !isSet(p.flags.Save) {
+	if !isSet(p.flags.Save) &&
+		!isSet(p.flags.SaveToS3) {
 		return nil
 	}
 
@@ -235,24 +294,24 @@ func (p *Popeye) ensureOutput() error {
 		*p.flags.Output = "standard"
 	}
 
-	ext := "txt"
-	switch *p.flags.Output {
-	case "json":
-		ext = "json"
-	case "junit":
-		ext = "xml"
-	case "yaml":
-		ext = "yml"
+	var (
+		f   io.ReadWriteCloser
+		err error
+	)
+	switch {
+	case isSet(p.flags.Save):
+		fPath := filepath.Join(DumpDir, p.fileName())
+		f, err = os.Create(fPath)
+		if err != nil {
+			return err
+		}
+	case isSet(p.flags.SaveToS3):
+		f = NopWriter(bytes.NewBufferString(""))
+	default:
 	}
+	p.outputTarget = f
 
-	const outFmt = "sanitizer_%s_%d.%s"
-	f := filepath.Join(DumpDir, fmt.Sprintf(outFmt, p.client.ActiveCluster(), time.Now().UnixNano(), ext))
-	var err error
-	if p.outputTarget, err = os.Create(f); err != nil {
-		return err
-	}
-
-	fmt.Printf("Sanitizer saved to: %s\n", f)
+	fmt.Printf("Sanitizer saved to: %s\n", p.fileName())
 	return nil
 }
 
