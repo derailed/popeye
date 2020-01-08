@@ -97,7 +97,7 @@ func (s *Sanitizer) Comment(msg string) {
 // Dump all errors to output.
 func (s *Sanitizer) Dump(l config.Level, ii issues.Issues) {
 	groups := ii.Group()
-	keys := make([]string, len(groups))
+	keys := make([]string, 0, len(groups))
 	for k := range groups {
 		keys = append(keys, k)
 	}
