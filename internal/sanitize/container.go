@@ -7,7 +7,6 @@ import (
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/k8s"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -108,28 +107,33 @@ func (c *Container) checkNamedPorts(ctx context.Context, co v1.Container) {
 func (c *Container) checkUtilization(ctx context.Context, co v1.Container, cmx k8s.Metrics) {
 	cpu, mem, qos := containerResources(co)
 	if cpu != nil && mem != nil {
-		c.checkMetrics(ctx, qos, *cpu, *mem, cmx.CurrentCPU, cmx.CurrentMEM)
+		ccpu, cmem := cmx.CurrentCPU, cmx.CurrentMEM
+		list := v1.ResourceList{v1.ResourceCPU: *cpu, v1.ResourceMemory: *mem}
+		cList := v1.ResourceList{v1.ResourceCPU: ccpu, v1.ResourceMemory: cmem}
+		c.checkMetrics(ctx, qos, list, cList)
 	}
 }
 
-func (c *Container) checkMetrics(ctx context.Context, qos qos, cpu, mem, ccpu, cmem resource.Quantity) {
-	percCPU, cpuLimit := ToPerc(toMC(ccpu), toMC(cpu)), int64(c.PodCPULimit())
-	percMEM, memLimit := ToPerc(toMB(cmem), toMB(mem)), int64(c.PodMEMLimit())
+func (c *Container) checkMetrics(ctx context.Context, qos qos, list, clist v1.ResourceList) {
+	cpu, mem := list.Cpu(), list.Memory()
+	ccpu, cmem := clist.Cpu(), clist.Memory()
+	percCPU, cpuLimit := ToPerc(toMC(*ccpu), toMC(*cpu)), int64(c.PodCPULimit())
+	percMEM, memLimit := ToPerc(toMB(*cmem), toMB(*mem)), int64(c.PodMEMLimit())
 
 	switch qos {
 	case qosBurstable:
 		if percCPU > cpuLimit {
-			c.AddSubCode(ctx, 109, asMC(ccpu), asMC(cpu), cpuLimit, percCPU)
+			c.AddSubCode(ctx, 109, asMC(*ccpu), asMC(*cpu), cpuLimit, percCPU)
 		}
 		if percMEM > memLimit {
-			c.AddSubCode(ctx, 110, asMB(cmem), asMB(mem), memLimit, percMEM)
+			c.AddSubCode(ctx, 110, asMB(*cmem), asMB(*mem), memLimit, percMEM)
 		}
 	case qosGuaranteed:
 		if percCPU > cpuLimit {
-			c.AddSubCode(ctx, 111, asMC(ccpu), asMC(cpu), cpuLimit, percCPU)
+			c.AddSubCode(ctx, 111, asMC(*ccpu), asMC(*cpu), cpuLimit, percCPU)
 		}
 		if percMEM > memLimit {
-			c.AddSubCode(ctx, 112, asMB(cmem), asMB(mem), memLimit, percMEM)
+			c.AddSubCode(ctx, 112, asMB(*cmem), asMB(*mem), memLimit, percMEM)
 		}
 	}
 }

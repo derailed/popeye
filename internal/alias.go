@@ -21,6 +21,7 @@ func NewAliases() *Aliases {
 	return &a
 }
 
+// ToResource converts aliases to resource names.
 func (a *Aliases) ToResources(ss []string) []string {
 	aa := make([]string, len(ss))
 	for i := 0; i < len(ss); i++ {
@@ -55,30 +56,29 @@ func (a Aliases) FromAlias(res string) string {
 }
 
 func (a *Aliases) init() {
-	// Glossary stores a collection of resource aliases.
 	a.aliases = map[string]Alias{
-		"cluster":                 Alias{ShortNames: StringSet{"cl": Blank}},
-		"configmap":               Alias{ShortNames: StringSet{"cm": Blank}},
-		"clusterrole":             Alias{ShortNames: StringSet{"cr": Blank}},
-		"clusterrolebinding":      Alias{ShortNames: StringSet{"crb": Blank}},
-		"deployment":              Alias{ShortNames: StringSet{"dp": Blank, "deploy": Blank}, Plural: "deployments"},
-		"daemonset":               Alias{ShortNames: StringSet{"ds": Blank}},
-		"horizontalpodautoscaler": Alias{ShortNames: StringSet{"hpa": Blank}},
-		"ingress":                 Alias{ShortNames: StringSet{"ing": Blank}, Plural: "ingresses"},
-		"node":                    Alias{ShortNames: StringSet{"no": Blank}},
-		"networkpolicy":           Alias{ShortNames: StringSet{"np": Blank}, Plural: "networkpolicies"},
-		"namespace":               Alias{ShortNames: StringSet{"ns": Blank}},
-		"poddisruptionbudget":     Alias{ShortNames: StringSet{"pdb": Blank}},
-		"pod":                     Alias{ShortNames: StringSet{"po": Blank}},
-		"podsecuritypolicy":       Alias{ShortNames: StringSet{"psp": Blank}, Plural: "podsecuritypolicies"},
-		"persistentvolume":        Alias{ShortNames: StringSet{"pv": Blank}},
-		"persistentvolumeclaim":   Alias{ShortNames: StringSet{"pvc": Blank}},
-		"rolebinding":             Alias{ShortNames: StringSet{"rb": Blank}},
-		"role":                    Alias{ShortNames: StringSet{"ro": Blank}},
-		"replicaset":              Alias{ShortNames: StringSet{"rs": Blank}},
-		"serviceaccount":          Alias{ShortNames: StringSet{"sa": Blank}},
-		"secret":                  Alias{ShortNames: StringSet{"sec": Blank}},
-		"statefulset":             Alias{ShortNames: StringSet{"sts": Blank}},
-		"service":                 Alias{ShortNames: StringSet{"svc": Blank}},
+		"cluster":                 {ShortNames: StringSet{"cl": Blank}},
+		"configmap":               {ShortNames: StringSet{"cm": Blank}},
+		"clusterrole":             {ShortNames: StringSet{"cr": Blank}},
+		"clusterrolebinding":      {ShortNames: StringSet{"crb": Blank}},
+		"deployment":              {ShortNames: StringSet{"dp": Blank, "deploy": Blank}, Plural: "deployments"},
+		"daemonset":               {ShortNames: StringSet{"ds": Blank}},
+		"horizontalpodautoscaler": {ShortNames: StringSet{"hpa": Blank}},
+		"ingress":                 {ShortNames: StringSet{"ing": Blank}, Plural: "ingresses"},
+		"node":                    {ShortNames: StringSet{"no": Blank}},
+		"networkpolicy":           {ShortNames: StringSet{"np": Blank}, Plural: "networkpolicies"},
+		"namespace":               {ShortNames: StringSet{"ns": Blank}},
+		"poddisruptionbudget":     {ShortNames: StringSet{"pdb": Blank}},
+		"pod":                     {ShortNames: StringSet{"po": Blank}},
+		"podsecuritypolicy":       {ShortNames: StringSet{"psp": Blank}, Plural: "podsecuritypolicies"},
+		"persistentvolume":        {ShortNames: StringSet{"pv": Blank}},
+		"persistentvolumeclaim":   {ShortNames: StringSet{"pvc": Blank}},
+		"rolebinding":             {ShortNames: StringSet{"rb": Blank}},
+		"role":                    {ShortNames: StringSet{"ro": Blank}},
+		"replicaset":              {ShortNames: StringSet{"rs": Blank}},
+		"serviceaccount":          {ShortNames: StringSet{"sa": Blank}},
+		"secret":                  {ShortNames: StringSet{"sec": Blank}},
+		"statefulset":             {ShortNames: StringSet{"sts": Blank}},
+		"service":                 {ShortNames: StringSet{"svc": Blank}},
 	}
 }

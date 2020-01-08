@@ -136,8 +136,7 @@ func (b *Builder) ToPrometheus(address *string, cluster, namespace string) *push
 	if namespace == "" {
 		namespace = "all"
 	}
-	pusher := prometheusMarshal(b, address, cluster, namespace)
-	return pusher
+	return prometheusMarshal(b, address, cluster, namespace)
 }
 
 // PrintSummary print outs summary report to screen.
@@ -229,9 +228,10 @@ func (b *Builder) PrintReport(level config.Level, s *Sanitizer) {
 	}
 }
 
+// ----------------------------------------------------------------------------
 // Helpers...
 
-// Title titelize a resource name.
+// Titleize computes a section title.
 func Titleize(a *internal.Aliases, res string, count int) string {
 	res = a.FromAlias(res)
 	if count <= 0 || res == "general" {

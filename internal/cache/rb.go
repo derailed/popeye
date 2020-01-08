@@ -7,6 +7,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 )
 
+// RoleKey represents a role identifier.
 const RoleKey = "role"
 
 // RoleBinding represents RoleBinding cache.
@@ -25,8 +26,8 @@ func (r *RoleBinding) ListRoleBindings() map[string]*rbacv1.RoleBinding {
 }
 
 // RoleRefs computes all role external references.
-func (c *RoleBinding) RoleRefs(refs ObjReferences) {
-	for fqn, rb := range c.rbs {
+func (r *RoleBinding) RoleRefs(refs ObjReferences) {
+	for fqn, rb := range r.rbs {
 		key := ResFqn(strings.ToLower(rb.RoleRef.Kind), FQN(rb.Namespace, rb.RoleRef.Name))
 		if c, ok := refs[key]; ok {
 			c.Add(fqn)

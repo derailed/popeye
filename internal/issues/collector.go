@@ -32,6 +32,7 @@ func (c *Collector) InitOutcome(fqn string) {
 	c.outcomes[fqn] = Issues{}
 }
 
+// ClearOutcome delete all fqn related issues.
 func (c *Collector) ClearOutcome(fqn string) {
 	if len(c.outcomes[fqn]) == 0 {
 		delete(c.outcomes, fqn)
