@@ -140,6 +140,20 @@ Here is a list of some of the available sanitizers
 | 🛀 | PodSecurityPolicy       |                                                                         |            |
 |    |                         | Valid                                                                   | psp        |
 
+### Save the report
+
+To save the Popeye report to a file pass the `--save` flag to the command.
+By default it will create a temp directory and will store the report there,
+the path of the temp directory will be printed out on STDOUT.
+If you have the need of specify the output directory for the report by your own
+you can use the environment variable `POPEYE_REPORT_DIR`.
+
+Example to save report in working directory:
+
+```shell
+  $ POPEYE_REPORT_DIR=$(pwd) popeye --save
+```
+
 ## The Command Line
 
 You can use Popeye standalone or using a spinach yaml config to
