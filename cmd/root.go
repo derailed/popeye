@@ -84,6 +84,14 @@ func initPopeyeFlags() {
 		"Specify the output type (standard, jurassic, yaml, json, junit, prometheus)",
 	)
 
+	rootCmd.Flags().StringVarP(
+		flags.OutputDetail,
+		"out-detail",
+		"",
+		"standard",
+		"Specify the output level detail (standard, verbose)",
+	)
+
 	rootCmd.Flags().BoolVarP(
 		flags.Save,
 		"save",

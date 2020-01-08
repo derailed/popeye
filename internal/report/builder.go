@@ -29,6 +29,9 @@ const (
 
 	// PrometheusFormat pushes sanitizer as Prometheus metrics.
 	PrometheusFormat = "prometheus"
+
+	// VerboseOutputDetail report detail level.
+	VerboseOutputDetail = "verbose"
 )
 
 type (
@@ -128,12 +131,12 @@ func (b *Builder) ToJSON() (string, error) {
 }
 
 // ToPrometheus returns prometheus pusher.
-func (b *Builder) ToPrometheus(address *string, cluster, namespace string) *push.Pusher {
+func (b *Builder) ToPrometheus(address *string, level *string, cluster, namespace string) *push.Pusher {
 	b.augment()
 	if namespace == "" {
 		namespace = "all"
 	}
-	pusher := prometheusMarshal(b, address, cluster, namespace)
+	pusher := prometheusMarshal(b, address, level, cluster, namespace)
 	return pusher
 }
 

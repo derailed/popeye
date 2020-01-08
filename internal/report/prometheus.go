@@ -55,7 +55,7 @@ var (
 		})
 )
 
-func prometheusMarshal(b *Builder, address *string, cluster, namespace string) *push.Pusher {
+func prometheusMarshal(b *Builder, address *string, level *string, cluster, namespace string) *push.Pusher {
 	pusher := newPusher(address)
 
 	score.WithLabelValues(cluster, namespace, b.Report.Grade).Set(float64(b.Report.Score))
@@ -63,18 +63,20 @@ func prometheusMarshal(b *Builder, address *string, cluster, namespace string) *
 
 	for _, section := range b.Report.Sections {
 		for i, v := range section.Tally.counts {
-			issuesReport := ""
+			detailedReport := ""
 			keys := make([]string, 0, len(section.Outcome))
-			for k, ci := range section.Outcome {
-				for _, gg := range ci {
-					if int(gg.Level) == i && i > int(issues.InfoLevel) && float64(v) > 0 {
-						keys = append(keys, k+" "+gg.Message)
+			if *level == VerboseOutputDetail {
+				for k, cissues := range section.Outcome {
+					for _, cissue := range cissues {
+						if int(cissue.Level) == i && i > int(issues.InfoLevel) && float64(v) > 0 {
+							keys = append(keys, k+" "+cissue.Message)
+						}
 					}
+					detailedReport = strings.Join(keys, ",")
 				}
-				issuesReport = strings.Join(keys, ",")
 			}
 			sanitizers.WithLabelValues(cluster, namespace, section.Title,
-				strings.ToLower(indexToTally(i)), issuesReport).Set(float64(v))
+				strings.ToLower(indexToTally(i)), detailedReport).Set(float64(v))
 		}
 		sanitizersScore.WithLabelValues(cluster, namespace, section.Title).Set(float64(section.Tally.score))
 	}

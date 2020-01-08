@@ -149,9 +149,12 @@ func (p *Popeye) dumpStd(mode, header bool) error {
 	return w.Flush()
 }
 
+//address *string, level string, format, cluster, namespace string
+// address *string, level *string, format, cluster, namespace string
 func (p *Popeye) dumpPrometheus() error {
 	pusher := p.builder.ToPrometheus(
 		p.flags.PushGatewayAddress,
+		p.flags.OutputDetail,
 		p.client.ActiveCluster(),
 		p.client.ActiveNamespace(),
 	)
