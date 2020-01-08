@@ -3,6 +3,7 @@ package report
 import (
 	"strings"
 
+	"github.com/derailed/popeye/internal/issues"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 )
@@ -31,6 +32,7 @@ var (
 			"namespace",
 			"resource",
 			"level",
+			"issues",
 		})
 	sanitizersScore = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
@@ -61,8 +63,18 @@ func prometheusMarshal(b *Builder, address *string, cluster, namespace string) *
 
 	for _, section := range b.Report.Sections {
 		for i, v := range section.Tally.counts {
+			issuesReport := ""
+			keys := make([]string, 0, len(section.Outcome))
+			for k, ci := range section.Outcome {
+				for _, gg := range ci {
+					if int(gg.Level) == i && i > int(issues.InfoLevel) && float64(v) > 0 {
+						keys = append(keys, k+" "+gg.Message)
+					}
+				}
+				issuesReport = strings.Join(keys, ",")
+			}
 			sanitizers.WithLabelValues(cluster, namespace, section.Title,
-				strings.ToLower(indexToTally(i))).Set(float64(v))
+				strings.ToLower(indexToTally(i)), issuesReport).Set(float64(v))
 		}
 		sanitizersScore.WithLabelValues(cluster, namespace, section.Title).Set(float64(section.Tally.score))
 	}
