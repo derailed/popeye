@@ -12,14 +12,15 @@ import (
 )
 
 const (
-	// SecUndefined denotes no root user set
+	// SecNonRootUndefined denotes no root user set
 	SecNonRootUndefined NonRootUser = iota - 1
-	// SecUnset denotes root user
+	// SecNonRootUnset denotes root user
 	SecNonRootUnset = 0
-	// SecSet denotes non root user
+	// SecNonRootSet denotes non root user
 	SecNonRootSet = 1
 )
 
+// NonRootUser identifies if a security context for nonRootUser is set/unset or undefined.
 type NonRootUser int
 
 type (

@@ -9,14 +9,17 @@ import (
 )
 
 type (
+	// ClusterRoleLister list out CRs.
 	ClusterRoleLister interface {
 		ListClusterRoles() map[string]*rbacv1.ClusterRole
 	}
 
+	// RoleLister list out roles.
 	RoleLister interface {
 		ListRoles() map[string]*rbacv1.Role
 	}
 
+	// CRBLister represents a cluster role lister.
 	CRBLister interface {
 		ClusterRoleBindingLister
 		ClusterRoleLister

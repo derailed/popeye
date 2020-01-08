@@ -22,6 +22,7 @@ type DeploymentLister interface {
 	ListDeployments() map[string]*appsv1.Deployment
 }
 
+// DPLister represents deployments and deps listers.
 type DPLister interface {
 	PodLimiter
 	PodsMetricsLister

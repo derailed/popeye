@@ -7,10 +7,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// RxMarker indicate exclude flag is a regular expression.
 const rxMarker = "rx:"
 
-// RegExp defined regex to check if exclude is a regex or plain string.
 var regExp = regexp.MustCompile(`\A` + rxMarker)
 
 type (
@@ -19,7 +17,7 @@ type (
 		Codes []ID
 	}
 
-	// Exclude represents a collection of excludes items.
+	// Exclusions represents a collection of excludes items.
 	// This can be a straight string match of regex using an rx: prefix.
 	Exclusions []Exclusion
 
@@ -63,7 +61,7 @@ func (e Excludes) ShouldExclude(section, fqn string, code ID) bool {
 	return excludes.Match(fqn, code)
 }
 
-// ShouldExclude checks if a given named should be excluded.
+// Match checks if a given named should be excluded.
 func (e Exclusions) Match(resource string, code ID) bool {
 	for _, exclude := range e {
 		if exclude.Match(resource) && hasCode(exclude.Codes, code) {
@@ -74,6 +72,7 @@ func (e Exclusions) Match(resource string, code ID) bool {
 	return false
 }
 
+// Match check if a resource matches the configuration.
 func (e Exclusion) Match(fqn string) bool {
 	if !isRegex(e.Name) {
 		return fqn == e.Name
@@ -82,6 +81,7 @@ func (e Exclusion) Match(fqn string) bool {
 	return rxMatch(e.Name, fqn)
 }
 
+// ----------------------------------------------------------------------------
 // Helpers...
 
 func rxMatch(exp, name string) bool {

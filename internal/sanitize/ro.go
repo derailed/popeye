@@ -9,6 +9,7 @@ import (
 )
 
 type (
+	// ROLister list out roles and deps.
 	ROLister interface {
 		RoleLister
 		ClusterRoleBindingLister
@@ -22,7 +23,7 @@ type (
 	}
 )
 
-// NewClusterRole returns a new ClusterRole sanitizer.
+// NewRole returns a new sanitizer.
 func NewRole(c *issues.Collector, lister ROLister) *Role {
 	return &Role{
 		Collector: c,
@@ -30,7 +31,7 @@ func NewRole(c *issues.Collector, lister ROLister) *Role {
 	}
 }
 
-// Sanitize a configmap.
+// Sanitize cleanse the resource.
 func (r *Role) Sanitize(ctx context.Context) error {
 	roRefs := cache.ObjReferences{}
 	r.ClusterRoleRefs(roRefs)

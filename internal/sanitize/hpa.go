@@ -80,9 +80,10 @@ func (h *HorizontalPodAutoscaler) Sanitize(ctx context.Context) error {
 			}
 		}
 
-		cpu, mem := h.checkResources(ctx, hpa.Spec.MaxReplicas, current, rcpu, rmem, res)
-		tcpu.Add(*cpu)
-		tmem.Add(*mem)
+		rList := v1.ResourceList{v1.ResourceCPU: rcpu, v1.ResourceMemory: rmem}
+		list := h.checkResources(ctx, hpa.Spec.MaxReplicas, current, rList, res)
+		tcpu.Add(*list.Cpu())
+		tmem.Add(*list.Memory())
 
 		if h.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
 			h.ClearOutcome(fqn)
@@ -93,12 +94,13 @@ func (h *HorizontalPodAutoscaler) Sanitize(ctx context.Context) error {
 	return nil
 }
 
-func (h *HorizontalPodAutoscaler) checkResources(ctx context.Context, max, current int32, rcpu, rmem resource.Quantity, res v1.ResourceList) (tcpu, tmem *resource.Quantity) {
+func (h *HorizontalPodAutoscaler) checkResources(ctx context.Context, max, current int32, rList, res v1.ResourceList) v1.ResourceList {
+	rcpu, rmem := rList.Cpu(), rList.Memory()
 	acpu, amem := *res.Cpu(), *res.Memory()
 	trcpu, trmem := rcpu.Copy(), rmem.Copy()
 	for i := 1; i <= int(max-current); i++ {
-		trcpu.Add(rcpu)
-		trmem.Add(rmem)
+		trcpu.Add(*rcpu)
+		trmem.Add(*rmem)
 	}
 	if toMC(*trcpu) > toMC(acpu) {
 		cpu := trcpu.Copy()
@@ -111,7 +113,7 @@ func (h *HorizontalPodAutoscaler) checkResources(ctx context.Context, max, curre
 		h.AddCode(ctx, 603, current, max, asMB(amem), asMB(*mem))
 	}
 
-	return trcpu, trmem
+	return v1.ResourceList{v1.ResourceCPU: *trcpu, v1.ResourceMemory: *trmem}
 }
 
 func (h *HorizontalPodAutoscaler) checkUtilization(ctx context.Context, tcpu, tmem resource.Quantity, res v1.ResourceList) {

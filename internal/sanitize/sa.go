@@ -24,10 +24,12 @@ type (
 		ListServiceAccounts() map[string]*v1.ServiceAccount
 	}
 
+	// ClusterRoleBindingRefs tracks crb references.
 	ClusterRoleBindingRefs interface {
 		ClusterRoleRefs(cache.ObjReferences)
 	}
 
+	// RoleBindingRefs tracks rb references.
 	RoleBindingRefs interface {
 		RoleRefs(cache.ObjReferences)
 	}
