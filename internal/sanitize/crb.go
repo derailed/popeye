@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
 	rbacv1 "k8s.io/api/rbac/v1"
 )
@@ -59,9 +60,9 @@ func (c *ClusterRoleBinding) checkInUse(ctx context.Context) {
 				c.AddCode(ctx, 1300, crb.RoleRef.Kind, crb.RoleRef.Name)
 			}
 		case "Role":
-			roleFullName := crb.ObjectMeta.Namespace + "/" + crb.RoleRef.Name
-			if _, ok := c.ListRoles()[roleFullName]; !ok {
-				c.AddCode(ctx, 1300, crb.RoleRef.Kind, roleFullName)
+			rFQN := cache.FQN(crb.Namespace, crb.RoleRef.Name)
+			if _, ok := c.ListRoles()[rFQN]; !ok {
+				c.AddCode(ctx, 1300, crb.RoleRef.Kind, rFQN)
 			}
 		}
 

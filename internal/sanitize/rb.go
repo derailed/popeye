@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
 )
 
@@ -42,9 +43,9 @@ func (r *RoleBinding) Sanitize(ctx context.Context) error {
 				r.AddCode(ctx, 1300, rb.RoleRef.Kind, rb.RoleRef.Name)
 			}
 		case "Role":
-			roleFullName := rb.ObjectMeta.Namespace + "/" + rb.RoleRef.Name
-			if _, ok := r.ListRoles()[roleFullName]; !ok {
-				r.AddCode(ctx, 1300, rb.RoleRef.Kind, roleFullName)
+			rFQN := cache.FQN(rb.Namespace, rb.RoleRef.Name)
+			if _, ok := r.ListRoles()[rFQN]; !ok {
+				r.AddCode(ctx, 1300, rb.RoleRef.Kind, rFQN)
 			}
 		}
 
