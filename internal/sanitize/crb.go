@@ -59,8 +59,9 @@ func (c *ClusterRoleBinding) checkInUse(ctx context.Context) {
 				c.AddCode(ctx, 1300, crb.RoleRef.Kind, crb.RoleRef.Name)
 			}
 		case "Role":
-			if _, ok := c.ListRoles()[crb.RoleRef.Name]; !ok {
-				c.AddCode(ctx, 1300, crb.RoleRef.Kind, crb.RoleRef.Name)
+			roleFullName := crb.ObjectMeta.Namespace + "/" + crb.RoleRef.Name
+			if _, ok := c.ListRoles()[roleFullName]; !ok {
+				c.AddCode(ctx, 1300, crb.RoleRef.Kind, roleFullName)
 			}
 		}
 

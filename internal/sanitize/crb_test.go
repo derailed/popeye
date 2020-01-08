@@ -18,11 +18,11 @@ func TestCRBSanitize(t *testing.T) {
 		issues []config.ID
 	}{
 		"exists": {
-			key:    "default/crb1",
+			key:    "crb1",
 			lister: makeCRBLister(crbOpts{name: "crb1", refKind: "ClusterRole", refName: "cr1"}),
 		},
 		"not_exists": {
-			key:    "default/crb1",
+			key:    "crb1",
 			lister: makeCRBLister(crbOpts{name: "crb1", refKind: "ClusterRole", refName: "blah"}),
 			issues: []config.ID{1300},
 		},
@@ -60,7 +60,7 @@ func makeCRBLister(opts crbOpts) *crb {
 
 func (c *crb) ListClusterRoleBindings() map[string]*rbacv1.ClusterRoleBinding {
 	return map[string]*rbacv1.ClusterRoleBinding{
-		"default/crb1": makeCRB(c.opts.name, c.opts.refKind, c.opts.refName),
+		c.opts.name: makeCRB(c.opts.name, c.opts.refKind, c.opts.refName),
 	}
 }
 

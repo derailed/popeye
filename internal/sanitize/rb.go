@@ -42,8 +42,9 @@ func (r *RoleBinding) Sanitize(ctx context.Context) error {
 				r.AddCode(ctx, 1300, rb.RoleRef.Kind, rb.RoleRef.Name)
 			}
 		case "Role":
-			if _, ok := r.ListRoles()[rb.RoleRef.Name]; !ok {
-				r.AddCode(ctx, 1300, rb.RoleRef.Kind, rb.RoleRef.Name)
+			roleFullName := rb.ObjectMeta.Namespace + "/" + rb.RoleRef.Name
+			if _, ok := r.ListRoles()[roleFullName]; !ok {
+				r.AddCode(ctx, 1300, rb.RoleRef.Kind, roleFullName)
 			}
 		}
 
