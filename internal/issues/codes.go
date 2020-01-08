@@ -121,7 +121,7 @@ codes:
     message:  Connects to API Server? ServiceAccount token is mounted
     severity: 2
   302:
-    message:  Containers are possibly running as root
+    message:  Pod could be running as root user. Check SecurityContext/image
     severity: 2
   303:
     message: Do you mean it? ServiceAccount is automounting APIServer credentials
@@ -132,6 +132,9 @@ codes:
   305:
     message: References a docker-image "%s" pull secret which does not exist
     severity: 3
+  306:
+    message: Container could be running as root user. Check SecurityContext/Image
+    severity: 2
 
     # -------------------------------------------------------------------------
   # General

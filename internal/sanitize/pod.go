@@ -11,6 +11,17 @@ import (
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
+const (
+	// SecUndefined denotes no root user set
+	SecNonRootUndefined NonRootUser = iota - 1
+	// SecUnset denotes root user
+	SecNonRootUnset = 0
+	// SecSet denotes non root user
+	SecNonRootSet = 1
+)
+
+type NonRootUser int
+
 type (
 	// Pod represents a Pod linter.
 	Pod struct {
@@ -111,9 +122,54 @@ func (p *Pod) checkSecure(ctx context.Context, spec v1.PodSpec) {
 		return
 	}
 
-	if spec.SecurityContext.RunAsNonRoot == nil || !*spec.SecurityContext.RunAsNonRoot {
+	// If pod security ctx is present and we have
+	podSec := hasPodNonRootUser(spec.SecurityContext)
+	var victims int
+	for _, co := range spec.InitContainers {
+		if !checkCOSecurityContext(co) && !podSec {
+			victims++
+			p.AddSubCode(internal.WithGroup(ctx, co.Name), 306)
+		}
+	}
+	for _, co := range spec.Containers {
+		if !checkCOSecurityContext(co) && !podSec {
+			victims++
+			p.AddSubCode(internal.WithGroup(ctx, co.Name), 306)
+		}
+	}
+	if victims > 0 && !podSec {
 		p.AddCode(ctx, 302)
 	}
+}
+
+func checkCOSecurityContext(co v1.Container) bool {
+	return hasCoNonRootUser(co.SecurityContext)
+}
+
+func hasPodNonRootUser(sec *v1.PodSecurityContext) bool {
+	if sec == nil {
+		return false
+	}
+	if sec.RunAsNonRoot != nil {
+		return *sec.RunAsNonRoot
+	}
+	if sec.RunAsUser != nil {
+		return *sec.RunAsUser != 0
+	}
+	return false
+}
+
+func hasCoNonRootUser(sec *v1.SecurityContext) bool {
+	if sec == nil {
+		return false
+	}
+	if sec.RunAsNonRoot != nil {
+		return *sec.RunAsNonRoot
+	}
+	if sec.RunAsUser != nil {
+		return *sec.RunAsUser != 0
+	}
+	return false
 }
 
 func (p *Pod) checkContainers(ctx context.Context, po *v1.Pod) {
