@@ -131,12 +131,12 @@ func (b *Builder) ToJSON() (string, error) {
 }
 
 // ToPrometheus returns prometheus pusher.
-func (b *Builder) ToPrometheus(address *string, level *string, cluster, namespace string) *push.Pusher {
+func (b *Builder) ToPrometheus(address *string, level *string, lintdetail *string, cluster, namespace string) *push.Pusher {
 	b.augment()
 	if namespace == "" {
 		namespace = "all"
 	}
-	pusher := prometheusMarshal(b, address, level, cluster, namespace)
+	pusher := prometheusMarshal(b, address, level, lintdetail, cluster, namespace)
 	return pusher
 }
 

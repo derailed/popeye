@@ -155,6 +155,7 @@ func (p *Popeye) dumpPrometheus() error {
 	pusher := p.builder.ToPrometheus(
 		p.flags.PushGatewayAddress,
 		p.flags.OutputDetail,
+		p.flags.LintLevel,
 		p.client.ActiveCluster(),
 		p.client.ActiveNamespace(),
 	)

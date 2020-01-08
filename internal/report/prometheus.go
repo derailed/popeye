@@ -3,7 +3,7 @@ package report
 import (
 	"strings"
 
-	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 )
@@ -55,7 +55,7 @@ var (
 		})
 )
 
-func prometheusMarshal(b *Builder, address *string, level *string, cluster, namespace string) *push.Pusher {
+func prometheusMarshal(b *Builder, address *string, level *string, lintdetail *string, cluster, namespace string) *push.Pusher {
 	pusher := newPusher(address)
 
 	score.WithLabelValues(cluster, namespace, b.Report.Grade).Set(float64(b.Report.Score))
@@ -68,7 +68,7 @@ func prometheusMarshal(b *Builder, address *string, level *string, cluster, name
 			if *level == VerboseOutputDetail {
 				for k, cissues := range section.Outcome {
 					for _, cissue := range cissues {
-						if int(cissue.Level) == i && i > int(issues.InfoLevel) && float64(v) > 0 {
+						if int(cissue.Level) == i && i >= int(config.ToIssueLevel(lintdetail)) && float64(v) > 0 {
 							keys = append(keys, k+" "+cissue.Message)
 						}
 					}
