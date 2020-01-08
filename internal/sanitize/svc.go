@@ -5,15 +5,12 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
-
-// SkipServices skips internal services for being included in scan.
-// BOZO!! spinachyaml default??
-var skipServices = []string{"default/kubernetes"}
 
 type (
 	// ServiceLister list available Services on a cluster.
@@ -33,14 +30,14 @@ type (
 		GetEndpoints(string) *v1.Endpoints
 	}
 
-	// Service represents a service linter.
+	// Service represents a service sanitizer.
 	Service struct {
 		*issues.Collector
 		ServiceLister
 	}
 )
 
-// NewService returns a new service linter.
+// NewService returns a new sanitizer.
 func NewService(co *issues.Collector, lister ServiceLister) *Service {
 	return &Service{
 		Collector:     co,
@@ -48,27 +45,29 @@ func NewService(co *issues.Collector, lister ServiceLister) *Service {
 	}
 }
 
-// Sanitize services.
+// Sanitize cleanse the resource.
 func (s *Service) Sanitize(ctx context.Context) error {
 	for fqn, svc := range s.ListServices() {
-		// Skip internal services...
-		if in(skipServices, fqn) {
-			continue
-		}
 		s.InitOutcome(fqn)
-		s.checkPorts(fqn, svc.Spec.Selector, svc.Spec.Ports)
-		s.checkEndpoints(fqn, svc.Spec.Selector, svc.Spec.Type)
-		s.checkType(fqn, svc.Spec.Type)
+		ctx = internal.WithFQN(ctx, fqn)
+
+		s.checkPorts(ctx, svc.Spec.Selector, svc.Spec.Ports)
+		s.checkEndpoints(ctx, svc.Spec.Selector, svc.Spec.Type)
+		s.checkType(ctx, svc.Spec.Type)
+
+		if s.NoConcerns(fqn) && s.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+			s.ClearOutcome(fqn)
+		}
 	}
 
 	return nil
 }
 
-func (s *Service) checkPorts(fqn string, sel map[string]string, ports []v1.ServicePort) {
+func (s *Service) checkPorts(ctx context.Context, sel map[string]string, ports []v1.ServicePort) {
 	po := s.GetPod(sel)
 	if po == nil {
 		if len(sel) > 0 {
-			s.AddCode(1100, fqn)
+			s.AddCode(ctx, 1100)
 		}
 		return
 	}
@@ -78,32 +77,32 @@ func (s *Service) checkPorts(fqn string, sel map[string]string, ports []v1.Servi
 	pfqn := cache.MetaFQN(po.ObjectMeta)
 	// No explicit pod ports definition -> bail!.
 	if len(pports) == 0 {
-		s.AddCode(1101, fqn, pfqn)
+		s.AddCode(ctx, 1101, pfqn)
 		return
 	}
 	for _, p := range ports {
 		err := checkServicePort(p, pports)
 		if err != nil {
-			s.AddErr(fqn, err)
+			s.AddErr(ctx, err)
 			continue
 		}
 		if !checkNamedTargetPort(p) {
-			s.AddCode(1102, fqn, p.TargetPort.String(), portAsStr(p))
+			s.AddCode(ctx, 1102, p.TargetPort.String(), portAsStr(p))
 		}
 	}
 }
 
-func (s *Service) checkType(fqn string, kind v1.ServiceType) {
+func (s *Service) checkType(ctx context.Context, kind v1.ServiceType) {
 	if kind == v1.ServiceTypeLoadBalancer {
-		s.AddCode(1103, fqn)
+		s.AddCode(ctx, 1103)
 	}
 	if kind == v1.ServiceTypeNodePort {
-		s.AddCode(1104, fqn)
+		s.AddCode(ctx, 1104)
 	}
 }
 
 // CheckEndpoints runs a sanity check on this service endpoints.
-func (s *Service) checkEndpoints(fqn string, sel map[string]string, kind v1.ServiceType) {
+func (s *Service) checkEndpoints(ctx context.Context, sel map[string]string, kind v1.ServiceType) {
 	// Service may not have selectors.
 	if len(sel) == 0 {
 		return
@@ -112,9 +111,9 @@ func (s *Service) checkEndpoints(fqn string, sel map[string]string, kind v1.Serv
 	if kind == v1.ServiceTypeExternalName {
 		return
 	}
-	ep := s.GetEndpoints(fqn)
+	ep := s.GetEndpoints(internal.MustExtractFQN(ctx))
 	if ep == nil || len(ep.Subsets) == 0 {
-		s.AddCode(1105, fqn)
+		s.AddCode(ctx, 1105)
 	}
 }
 

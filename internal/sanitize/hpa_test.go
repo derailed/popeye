@@ -1,7 +1,6 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/cache"
@@ -81,11 +80,13 @@ func TestHPASanitizeDP(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	ctx := makeContext("hpa")
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			h := NewHorizontalPodAutoscaler(issues.NewCollector(loadCodes(t)), u.l)
+			h := NewHorizontalPodAutoscaler(issues.NewCollector(loadCodes(t), makeConfig(t)), u.l)
 
-			assert.Nil(t, h.Sanitize(context.TODO()))
+			assert.Nil(t, h.Sanitize(ctx))
 			assert.Equal(t, u.issues, len(h.Outcome()["default/h1"]))
 			assert.Equal(t, u.hissues, len(h.Outcome()["HPA"]))
 		})
@@ -164,11 +165,13 @@ func TestHPASanitizeSTS(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	ctx := makeContext("hpa")
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			h := NewHorizontalPodAutoscaler(issues.NewCollector(loadCodes(t)), u.l)
+			h := NewHorizontalPodAutoscaler(issues.NewCollector(loadCodes(t), makeConfig(t)), u.l)
 
-			assert.Nil(t, h.Sanitize(context.TODO()))
+			assert.Nil(t, h.Sanitize(ctx))
 			assert.Equal(t, u.issues, len(h.Outcome()["default/h1"]))
 			assert.Equal(t, u.hissues, len(h.Outcome()["HPA"]))
 		})
@@ -187,14 +190,14 @@ type hpaOpts struct {
 
 type hpa struct {
 	StatefulSetLister
-	DeployLister
+	DeploymentLister
 	name string
 	opts hpaOpts
 }
 
 func newDpHpa(opts hpaOpts) *hpa {
 	h := hpa{
-		DeployLister: makeDPLister(dpOpts{
+		DeploymentLister: makeDPLister(dpOpts{
 			coOpts:    opts.coOpts,
 			reps:      1,
 			availReps: 1,
@@ -232,17 +235,32 @@ func (h *hpa) ListNodesMetrics() map[string]*mv1beta1.NodeMetrics {
 	return map[string]*mv1beta1.NodeMetrics{}
 }
 
+func (h *hpa) ListNodes() map[string]*v1.Node {
+	return map[string]*v1.Node{}
+}
+
+func (h *hpa) ListPods() map[string]*v1.Pod {
+	return map[string]*v1.Pod{}
+}
+
+func (h *hpa) NodeCPULimit() float64 { return 0 }
+func (h *hpa) NodeMEMLimit() float64 { return 0 }
+
 func (h *hpa) ListPodsMetrics() map[string]*mv1beta1.PodMetrics {
 	return map[string]*mv1beta1.PodMetrics{
 		"default/p1": makeMxPod(h.opts.rcpu, h.opts.rmem),
 	}
 }
 
-func (h *hpa) ListClusterMetrics() v1.ResourceList {
+func (h *hpa) ListAvailableMetrics(map[string]*v1.Node) v1.ResourceList {
 	return v1.ResourceList{
 		v1.ResourceCPU:    toQty(h.opts.ccpu),
 		v1.ResourceMemory: toQty(h.opts.cmem),
 	}
+}
+
+func (h *hpa) GetPod(map[string]string) *v1.Pod {
+	return &v1.Pod{}
 }
 
 func makeHPA(n, kind, dp string, max int32) *autoscalingv1.HorizontalPodAutoscaler {

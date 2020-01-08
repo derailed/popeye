@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	appsv1 "k8s.io/api/apps/v1"
 )
@@ -34,28 +35,34 @@ func NewReplicaSet(co *issues.Collector, lister ReplicaSetLister) *ReplicaSet {
 	}
 }
 
-// Sanitize configmaps.
-func (d *ReplicaSet) Sanitize(ctx context.Context) error {
-	for fqn, rs := range d.ListReplicaSets() {
-		d.InitOutcome(fqn)
-		d.checkDeprecation(fqn, rs)
+// Sanitize cleanse the resource.
+func (r *ReplicaSet) Sanitize(ctx context.Context) error {
+	for fqn, rs := range r.ListReplicaSets() {
+		r.InitOutcome(fqn)
+		ctx = internal.WithFQN(ctx, fqn)
+
+		r.checkDeprecation(ctx, rs)
+
+		if r.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+			r.ClearOutcome(fqn)
+		}
 	}
 
 	return nil
 }
 
-func (d *ReplicaSet) checkDeprecation(fqn string, rs *appsv1.ReplicaSet) {
+func (r *ReplicaSet) checkDeprecation(ctx context.Context, rs *appsv1.ReplicaSet) {
 	const current = "apps/v1"
 
-	rev, err := resourceRev(fqn, rs.Annotations)
+	rev, err := resourceRev(internal.MustExtractFQN(ctx), rs.Annotations)
 	if err != nil {
 		rev = revFromLink(rs.SelfLink)
 		if rev == "" {
-			d.AddCode(404, fqn, errors.New("Unable to assert resource version"))
+			r.AddCode(ctx, 404, errors.New("Unable to assert resource version"))
 			return
 		}
 	}
 	if rev != current {
-		d.AddCode(403, fqn, "ReplicaSet", rev, current)
+		r.AddCode(ctx, 403, "ReplicaSet", rev, current)
 	}
 }

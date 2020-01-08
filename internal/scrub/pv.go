@@ -4,33 +4,31 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal/cache"
-	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/sanitize"
 )
 
-// PersistentVolume represents a PersistentVolume sanitizer.
+// PersistentVolume represents a PersistentVolume scruber.
 type PersistentVolume struct {
 	*issues.Collector
 	*cache.PersistentVolume
 	*cache.Pod
 }
 
-// NewPersistentVolume return a new PersistentVolume sanitizer.
-func NewPersistentVolume(c *Cache, codes *issues.Codes) Sanitizer {
-	p := PersistentVolume{Collector: issues.NewCollector(codes)}
+// NewPersistentVolume return a new PersistentVolume scruber.
+func NewPersistentVolume(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
+	p := PersistentVolume{Collector: issues.NewCollector(codes, c.config)}
 
-	ss, err := dag.ListPersistentVolumes(c.client, c.config)
+	var err error
+	p.PersistentVolume, err = c.persistentvolumes()
 	if err != nil {
-		p.AddErr("services", err)
+		p.AddErr(ctx, err)
 	}
-	p.PersistentVolume = cache.NewPersistentVolume(ss)
 
-	pod, err := c.pods()
+	p.Pod, err = c.pods()
 	if err != nil {
-		p.AddErr("pods", err)
+		p.AddErr(ctx, err)
 	}
-	p.Pod = pod
 
 	return &p
 }

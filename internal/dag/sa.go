@@ -3,7 +3,6 @@ package dag
 import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
-	"github.com/rs/zerolog/log"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -17,7 +16,7 @@ func ListServiceAccounts(c *k8s.Client, cfg *config.Config) (map[string]*v1.Serv
 
 	res := make(map[string]*v1.ServiceAccount, len(sas))
 	for fqn, sa := range sas {
-		if includeNS(c, cfg, sa.Namespace) && !cfg.ShouldExclude("serviceaccount", fqn) {
+		if includeNS(c, sa.Namespace) {
 			res[fqn] = sa
 		}
 	}
@@ -29,7 +28,6 @@ func ListServiceAccounts(c *k8s.Client, cfg *config.Config) (map[string]*v1.Serv
 func listAllServiceAccounts(c *k8s.Client) (map[string]*v1.ServiceAccount, error) {
 	ll, err := fetchServiceAccounts(c)
 	if err != nil {
-		log.Debug().Err(err).Msg("ListAll")
 		return nil, err
 	}
 

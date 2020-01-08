@@ -1,12 +1,12 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
-	nv1beta1 "k8s.io/api/networking/v1beta1"
+	nv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -22,20 +22,28 @@ func TestIngressSanitize(t *testing.T) {
 		"guizard": {
 			rev: "extensions/v1beta1",
 			e: issues.Issues{
-				{Group: issues.Root, Message: `[POP-403] Deprecated Ingress API group "extensions/v1beta1". Use "networking.k8s.io/v1beta1" instead`, Level: issues.WarnLevel},
+				{
+					Group:   issues.Root,
+					Message: `[POP-403] Deprecated Ingress API group "extensions/v1beta1". Use "networking.k8s.io/v1beta1" instead`,
+					Level:   config.WarnLevel,
+				},
 			},
 		},
 	}
 
-	for k, u := range uu {
+	ctx := makeContext("ing")
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			cl := NewIngress(issues.NewCollector(loadCodes(t)), newIngress(u.rev))
+			cl := NewIngress(issues.NewCollector(loadCodes(t), makeConfig(t)), newIngress(u.rev))
 
-			assert.Nil(t, cl.Sanitize(context.TODO()))
+			assert.Nil(t, cl.Sanitize(ctx))
 			assert.Equal(t, u.e, cl.Outcome()["default/ing1"])
 		})
 	}
 }
+
+// Helpers...
 
 type ingress struct {
 	rev string

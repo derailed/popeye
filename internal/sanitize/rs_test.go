@@ -1,7 +1,6 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/cache"
@@ -35,11 +34,13 @@ func TestRSSanitize(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	ctx := makeContext("rs")
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			rs := NewReplicaSet(issues.NewCollector(loadCodes(t)), u.lister)
+			rs := NewReplicaSet(issues.NewCollector(loadCodes(t), makeConfig(t)), u.lister)
 
-			assert.Nil(t, rs.Sanitize(context.TODO()))
+			assert.Nil(t, rs.Sanitize(ctx))
 			assert.Equal(t, u.issues, rs.Outcome()["default/rs"])
 		})
 	}

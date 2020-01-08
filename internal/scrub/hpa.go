@@ -10,60 +10,56 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 )
 
-// HorizontalPodAutoscaler represents a HorizontalPodAutoscaler sanitizer.
+// HorizontalPodAutoscaler represents a HorizontalPodAutoscaler scruber.
 type HorizontalPodAutoscaler struct {
 	*issues.Collector
 	*cache.HorizontalPodAutoscaler
 	*cache.Pod
+	*cache.Node
 	*cache.PodsMetrics
+	*cache.NodesMetrics
 	*cache.Deployment
 	*cache.StatefulSet
-	*cache.NodesMetrics
 	*config.Config
 }
 
-// NewHorizontalPodAutoscaler return a new HorizontalPodAutoscaler sanitizer.
-func NewHorizontalPodAutoscaler(c *Cache, codes *issues.Codes) Sanitizer {
+// NewHorizontalPodAutoscaler return a new HorizontalPodAutoscaler scruber.
+func NewHorizontalPodAutoscaler(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	h := HorizontalPodAutoscaler{
-		Collector: issues.NewCollector(codes),
+		Collector: issues.NewCollector(codes, c.config),
 		Config:    c.config,
 	}
 
+	var err error
 	ss, err := dag.ListHorizontalPodAutoscalers(c.client, c.config)
 	if err != nil {
-		h.AddErr("services", err)
+		h.AddErr(ctx, err)
 	}
 	h.HorizontalPodAutoscaler = cache.NewHorizontalPodAutoscaler(ss)
 
-	dps, err := c.deployments()
+	h.Deployment, err = c.deployments()
 	if err != nil {
-		h.AddErr("deployments", err)
+		h.AddErr(ctx, err)
 	}
-	h.Deployment = dps
 
-	sts, err := c.statefulsets()
+	h.StatefulSet, err = c.statefulsets()
 	if err != nil {
-		h.AddErr("statefulsets", err)
+		h.AddErr(ctx, err)
 	}
-	h.StatefulSet = sts
 
-	nmx, err := c.nodesMx()
+	h.Node, err = c.nodes()
 	if err != nil {
-		h.AddCode(402, "nodemetrics", err)
+		h.AddCode(ctx, 402, err)
 	}
-	h.NodesMetrics = nmx
 
-	pod, err := c.pods()
-	if err != nil {
-		h.AddErr("pods", err)
-	}
-	h.Pod = pod
+	h.NodesMetrics, _ = c.nodesMx()
 
-	pmx, err := c.podsMx()
+	h.Pod, err = c.pods()
 	if err != nil {
-		h.AddCode(402, "podmetrics", err)
+		h.AddErr(ctx, err)
 	}
-	h.PodsMetrics = pmx
+
+	h.PodsMetrics, _ = c.podsMx()
 
 	return &h
 }

@@ -1,16 +1,25 @@
 package issues
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/pkg/config"
+	"github.com/rs/zerolog/log"
+)
 
 // Collector represents a sanitizer issue container.
 type Collector struct {
+	*config.Config
+
 	outcomes Outcome
 	codes    *Codes
 }
 
 // NewCollector returns a new issue collector.
-func NewCollector(codes *Codes) *Collector {
-	return &Collector{outcomes: Outcome{}, codes: codes}
+func NewCollector(codes *Codes, cfg *config.Config) *Collector {
+	return &Collector{Config: cfg, outcomes: Outcome{}, codes: codes}
 }
 
 // Outcome returns scan outcome.
@@ -19,49 +28,64 @@ func (c *Collector) Outcome() Outcome {
 }
 
 // InitOutcome creates a places holder for potential issues.
-func (c *Collector) InitOutcome(section string) {
-	c.outcomes[section] = Issues{}
+func (c *Collector) InitOutcome(fqn string) {
+	c.outcomes[fqn] = Issues{}
+}
+
+// ClearOutcome delete all fqn related issues.
+func (c *Collector) ClearOutcome(fqn string) {
+	if len(c.outcomes[fqn]) == 0 {
+		delete(c.outcomes, fqn)
+	}
 }
 
 // NoConcerns returns true is scan is successful.
-func (c *Collector) NoConcerns(section string) bool {
-	return len(c.outcomes[section]) == 0
+func (c *Collector) NoConcerns(fqn string) bool {
+	return len(c.outcomes[fqn]) == 0
 }
 
 // MaxSeverity return the highest severity level foe the given section.
-func (c *Collector) MaxSeverity(section string) Level {
-	return c.outcomes.MaxSeverity(section)
+func (c *Collector) MaxSeverity(fqn string) config.Level {
+	return c.outcomes.MaxSeverity(fqn)
 }
 
 // AddSubCode add a sub error code.
-func (c *Collector) AddSubCode(code ID, section, group string, args ...interface{}) {
+func (c *Collector) AddSubCode(ctx context.Context, code config.ID, args ...interface{}) {
+	run := internal.MustExtractRunInfo(ctx)
 	co, ok := c.codes.Glossary[code]
 	if !ok {
-		panic(fmt.Sprintf("No code with ID %d", code))
+		log.Error().Err(fmt.Errorf("No code with ID %d", code)).Msg("AddSubCode failed")
 	}
-	c.addIssue(section, New(group, co.Severity, co.Format(code, args...)))
+	if !c.ShouldExclude(run.Section, run.FQN, code) {
+		c.addIssue(run.FQN, New(run.Group, co.Severity, co.Format(code, args...)))
+	}
 }
 
 // AddCode add an error code.
-func (c *Collector) AddCode(code ID, section string, args ...interface{}) {
+func (c *Collector) AddCode(ctx context.Context, code config.ID, args ...interface{}) {
+	run := internal.MustExtractRunInfo(ctx)
 	co, ok := c.codes.Glossary[code]
 	if !ok {
-		panic(fmt.Sprintf("No code with ID %d", code))
+		// BOZO!! refact once codes are in!!
+		panic(fmt.Errorf("No code with ID %d", code))
 	}
-	c.addIssue(section, New(Root, co.Severity, co.Format(code, args...)))
+	if !c.ShouldExclude(run.Section, run.FQN, code) {
+		c.addIssue(run.FQN, New(Root, co.Severity, co.Format(code, args...)))
+	}
 }
 
 // AddErr adds a collection of errors.
-func (c *Collector) AddErr(res string, errs ...error) {
+func (c *Collector) AddErr(ctx context.Context, errs ...error) {
+	run := internal.MustExtractRunInfo(ctx)
 	for _, e := range errs {
-		c.addIssue(res, New(Root, ErrorLevel, e.Error()))
+		c.addIssue(run.FQN, New(Root, config.ErrorLevel, e.Error()))
 	}
 }
 
 // AddIssue adds 1 or more concerns to the collector.
-func (c *Collector) addIssue(res string, concerns ...Issue) {
+func (c *Collector) addIssue(fqn string, concerns ...Issue) {
 	if len(concerns) == 0 {
 		return
 	}
-	c.outcomes[res] = append(c.outcomes[res], concerns...)
+	c.outcomes[fqn] = append(c.outcomes[fqn], concerns...)
 }

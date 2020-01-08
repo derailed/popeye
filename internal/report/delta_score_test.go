@@ -3,7 +3,7 @@ package report
 import (
 	"testing"
 
-	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/pkg/config"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -32,8 +32,9 @@ func TestChanged(t *testing.T) {
 		},
 	}
 
-	l := issues.OkLevel
-	for k, u := range uu {
+	l := config.OkLevel
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			assert.Equal(t, u.e, NewDeltaScore(l, u.old, u.new, u.inverse).changed())
 		})
@@ -73,8 +74,9 @@ func TestBetter(t *testing.T) {
 		},
 	}
 
-	l := issues.OkLevel
-	for k, u := range uu {
+	l := config.OkLevel
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			assert.Equal(t, u.e, NewDeltaScore(l, u.old, u.new, u.inverse).better())
 		})
@@ -114,8 +116,9 @@ func TestWorst(t *testing.T) {
 		},
 	}
 
-	l := issues.OkLevel
-	for k, u := range uu {
+	l := config.OkLevel
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			assert.Equal(t, u.e, NewDeltaScore(l, u.old, u.new, u.inverse).worst())
 		})
@@ -158,8 +161,9 @@ func TestSummarize(t *testing.T) {
 		},
 	}
 
-	l := issues.OkLevel
-	for k, u := range uu {
+	l := config.OkLevel
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			assert.Equal(t, u.e, NewDeltaScore(l, u.old, u.new, u.inverse).summarize())
 		})

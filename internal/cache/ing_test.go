@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/magiconair/properties/assert"
-	nv1beta1 "k8s.io/api/networking/v1beta1"
+	nv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

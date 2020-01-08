@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -11,33 +12,33 @@ func TestCodesLoad(t *testing.T) {
 	cc, err := issues.LoadCodes()
 
 	assert.Nil(t, err)
-	assert.Equal(t, 74, len(cc.Glossary))
+	assert.Equal(t, 76, len(cc.Glossary))
 	assert.Equal(t, "No liveness probe", cc.Glossary[103].Message)
-	assert.Equal(t, issues.WarnLevel, cc.Glossary[103].Severity)
+	assert.Equal(t, config.WarnLevel, cc.Glossary[103].Severity)
 }
 
 func TestRefine(t *testing.T) {
 	cc, err := issues.LoadCodes()
 	assert.Nil(t, err)
 
-	id1, id2 := issues.ID(100), issues.ID(101)
-	gloss := issues.Glossary{
-		0: &issues.Code{
+	id1, id2 := config.ID(100), config.ID(101)
+	gloss := config.Glossary{
+		0: &config.Code{
 			Message:  "blah",
-			Severity: issues.InfoLevel,
+			Severity: config.InfoLevel,
 		},
 
-		id1: &issues.Code{
+		id1: &config.Code{
 			Message:  "blah",
-			Severity: issues.InfoLevel,
+			Severity: config.InfoLevel,
 		},
-		id2: &issues.Code{
+		id2: &config.Code{
 			Message:  "blah",
 			Severity: 1000,
 		},
 	}
 	cc.Refine(gloss)
 
-	assert.Equal(t, issues.InfoLevel, cc.Glossary[id1].Severity)
-	assert.Equal(t, issues.WarnLevel, cc.Glossary[id2].Severity)
+	assert.Equal(t, config.InfoLevel, cc.Glossary[id1].Severity)
+	assert.Equal(t, config.WarnLevel, cc.Glossary[id2].Severity)
 }

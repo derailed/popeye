@@ -1,9 +1,9 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
@@ -12,6 +12,66 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
+
+func TestPodCheckSecure(t *testing.T) {
+	uu := map[string]struct {
+		pod    v1.Pod
+		issues int
+	}{
+		"cool_1": {
+			pod:    makeSecPod(SecNonRootSet, SecNonRootSet, SecNonRootSet, SecNonRootSet),
+			issues: 0,
+		},
+		"cool_2": {
+			pod:    makeSecPod(SecNonRootSet, SecNonRootUnset, SecNonRootUnset, SecNonRootUnset),
+			issues: 0,
+		},
+		"cool_3": {
+			pod:    makeSecPod(SecNonRootUnset, SecNonRootSet, SecNonRootSet, SecNonRootSet),
+			issues: 0,
+		},
+		"cool_4": {
+			pod:    makeSecPod(SecNonRootUndefined, SecNonRootSet, SecNonRootSet, SecNonRootSet),
+			issues: 0,
+		},
+		"cool_5": {
+			pod:    makeSecPod(SecNonRootSet, SecNonRootUndefined, SecNonRootUndefined, SecNonRootUndefined),
+			issues: 0,
+		},
+		"hacked_1": {
+			pod:    makeSecPod(SecNonRootUndefined, SecNonRootUndefined, SecNonRootUndefined, SecNonRootUndefined),
+			issues: 4,
+		},
+		"hacked_2": {
+			pod:    makeSecPod(SecNonRootUndefined, SecNonRootUnset, SecNonRootUndefined, SecNonRootUndefined),
+			issues: 4,
+		},
+		"hacked_3": {
+			pod:    makeSecPod(SecNonRootUndefined, SecNonRootSet, SecNonRootUndefined, SecNonRootUndefined),
+			issues: 3,
+		},
+		"hacked_4": {
+			pod:    makeSecPod(SecNonRootUndefined, SecNonRootUnset, SecNonRootSet, SecNonRootUndefined),
+			issues: 3,
+		},
+		"toast": {
+			pod:    makeSecPod(SecNonRootUndefined, SecNonRootUndefined, SecNonRootUndefined, SecNonRootUndefined),
+			issues: 4,
+		},
+	}
+
+	ctx := makeContext("po")
+	ctx = internal.WithFQN(ctx, "default/p1")
+	for k := range uu {
+		u := uu[k]
+		t.Run(k, func(t *testing.T) {
+			p := NewPod(issues.NewCollector(loadCodes(t), makeConfig(t)), nil)
+
+			p.checkSecure(ctx, u.pod.Spec)
+			assert.Equal(t, u.issues, len(p.Outcome()["default/p1"]))
+		})
+	}
+}
 
 func TestPodSanitize(t *testing.T) {
 	uu := map[string]struct {
@@ -88,11 +148,13 @@ func TestPodSanitize(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	ctx := makeContext("po")
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			p := NewPod(issues.NewCollector(loadCodes(t)), u.lister)
+			p := NewPod(issues.NewCollector(loadCodes(t), makeConfig(t)), u.lister)
 
-			assert.Nil(t, p.Sanitize(context.TODO()))
+			assert.Nil(t, p.Sanitize(ctx))
 			assert.Equal(t, u.issues, len(p.Outcome()["default/p1"]))
 		})
 	}
@@ -273,4 +335,45 @@ func makeCS(n string, opts csOpts) v1.ContainerStatus {
 	}
 
 	return cs
+}
+
+func makeSecCO(name string, level NonRootUser) v1.Container {
+	t, f := true, false
+	secCtx := v1.SecurityContext{}
+	switch level {
+	case SecNonRootUnset:
+		secCtx.RunAsNonRoot = &f
+	case SecNonRootSet:
+		secCtx.RunAsNonRoot = &t
+	}
+
+	return v1.Container{Name: name, SecurityContext: &secCtx}
+}
+
+func makeSecPod(pod, init, co1, co2 NonRootUser) v1.Pod {
+	t, f := true, false
+
+	secCtx := v1.PodSecurityContext{}
+	switch pod {
+	case SecNonRootUnset:
+		secCtx.RunAsNonRoot = &f
+	case SecNonRootSet:
+		secCtx.RunAsNonRoot = &t
+	}
+
+	var auto bool
+	return v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "p1",
+		},
+		Spec: v1.PodSpec{
+			AutomountServiceAccountToken: &auto,
+			InitContainers:               []v1.Container{makeSecCO("i1", init)},
+			Containers: []v1.Container{
+				makeSecCO("co1", co1),
+				makeSecCO("co2", co2),
+			},
+			SecurityContext: &secCtx,
+		},
+	}
 }

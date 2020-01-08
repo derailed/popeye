@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/pkg/config"
 )
 
 // Color ANSI palette (256!)
@@ -39,15 +39,15 @@ func Colorize(s string, c Color) string {
 	return "\033[38;5;" + strconv.Itoa(int(c)) + ";m" + s + "\033[0m"
 }
 
-func colorForLevel(l issues.Level) Color {
+func colorForLevel(l config.Level) Color {
 	switch l {
-	case issues.ErrorLevel:
+	case config.ErrorLevel:
 		return ColorRed
-	case issues.WarnLevel:
+	case config.WarnLevel:
 		return ColorOrangish
-	case issues.InfoLevel:
+	case config.InfoLevel:
 		return ColorAqua
-	case issues.OkLevel:
+	case config.OkLevel:
 		return ColorDarkOlive
 	default:
 		return ColorLighSlate

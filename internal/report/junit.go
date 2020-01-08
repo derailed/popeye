@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/pkg/config"
 )
 
 // TestSuites a collection of junit test suites.
@@ -67,16 +68,16 @@ func junitMarshal(b *Builder) ([]byte, error) {
 	}
 
 	for _, section := range b.Report.Sections {
-		s.Suites = append(s.Suites, newSuite(section))
+		s.Suites = append(s.Suites, newSuite(section, b))
 	}
 
 	return xml.MarshalIndent(s, "", "\t")
 }
 
-func newSuite(s Section) TestSuite {
+func newSuite(s Section, b *Builder) TestSuite {
 	total, fails, errs := numTests(s.Outcome)
 	ts := TestSuite{
-		Name:     ResToTitle(s.Title),
+		Name:     b.aliases.FromAlias(s.Title),
 		Tests:    total,
 		Failures: fails,
 		Errors:   errs,
@@ -98,9 +99,9 @@ func newTestCase(res string, ii issues.Issues) TestCase {
 
 	for _, i := range ii {
 		switch i.Level {
-		case issues.WarnLevel:
+		case config.WarnLevel:
 			tc.Failures = append(tc.Failures, newFailure(i))
-		case issues.ErrorLevel:
+		case config.ErrorLevel:
 			tc.Errors = append(tc.Errors, newError(i))
 		}
 	}
@@ -112,10 +113,10 @@ func numTests(o issues.Outcome) (total, fails, errors int) {
 	for _, v := range o {
 		total += len(v)
 		for _, i := range v {
-			if i.Level >= issues.WarnLevel {
+			if i.Level >= config.WarnLevel {
 				fails++
 			}
-			if i.Level == issues.ErrorLevel {
+			if i.Level == config.ErrorLevel {
 				errors++
 			}
 		}

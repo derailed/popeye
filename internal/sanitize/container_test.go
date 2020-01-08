@@ -3,8 +3,10 @@ package sanitize
 import (
 	"testing"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/k8s"
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -68,10 +70,14 @@ func TestContainerCheckUtilization(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	ctx := makeContext("container")
+	ctx = internal.WithFQN(ctx, "default/p1")
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			c := NewContainer("default/p1", newRangeCollector(t))
-			c.checkUtilization(u.co, u.mx)
+			ctx = internal.WithGroup(ctx, u.co.Name)
+			c.checkUtilization(ctx, u.co, u.mx)
 
 			assert.Equal(t, u.issues, len(c.Outcome().For("default/p1", "c1")))
 		})
@@ -83,15 +89,17 @@ func TestContainerCheckResources(t *testing.T) {
 		request  bool
 		limit    bool
 		issues   int
-		severity issues.Level
+		severity config.Level
 	}{
 		"cool":  {request: true, limit: true, issues: 0},
-		"noLim": {request: true, issues: 1, severity: issues.WarnLevel},
+		"noLim": {request: true, issues: 1, severity: config.WarnLevel},
 		"noReq": {limit: true, issues: 0},
-		"none":  {issues: 1, severity: issues.WarnLevel},
+		"none":  {issues: 1, severity: config.WarnLevel},
 	}
 
-	for k, u := range uu {
+	ctx := makeContext("container")
+	for k := range uu {
+		u := uu[k]
 		opts := coOpts{}
 		if u.request {
 			opts.rcpu = "100m"
@@ -105,7 +113,9 @@ func TestContainerCheckResources(t *testing.T) {
 		l := NewContainer("default/p1", newRangeCollector(t))
 
 		t.Run(k, func(t *testing.T) {
-			l.checkResources(co)
+			ctx = internal.WithFQN(ctx, "default/p1")
+			ctx = internal.WithGroup(ctx, co.Name)
+			l.checkResources(ctx, co)
 
 			assert.Equal(t, u.issues, len(l.Outcome()["default/p1"]))
 			if len(l.Outcome()["default/p1"]) != 0 {
@@ -121,16 +131,18 @@ func TestContainerCheckProbes(t *testing.T) {
 		readiness bool
 		namedPort bool
 		issues    int
-		severity  issues.Level
+		severity  config.Level
 	}{
 		"cool":       {liveness: true, readiness: true},
-		"noReady":    {liveness: true, issues: 1, severity: issues.WarnLevel},
-		"noLive":     {readiness: true, issues: 1, severity: issues.WarnLevel},
-		"noneProbes": {issues: 1, severity: issues.WarnLevel},
-		"Unnamed":    {liveness: true, readiness: true, namedPort: true, issues: 2, severity: issues.InfoLevel},
+		"noReady":    {liveness: true, issues: 1, severity: config.WarnLevel},
+		"noLive":     {readiness: true, issues: 1, severity: config.WarnLevel},
+		"noneProbes": {issues: 1, severity: config.WarnLevel},
+		"Unnamed":    {liveness: true, readiness: true, namedPort: true, issues: 2, severity: config.InfoLevel},
 	}
 
-	for k, u := range uu {
+	ctx := makeContext("container")
+	for k := range uu {
+		u := uu[k]
 		co := makeContainer("c1", coOpts{})
 		probe := &v1.Probe{}
 		if u.namedPort {
@@ -145,7 +157,7 @@ func TestContainerCheckProbes(t *testing.T) {
 
 		c := NewContainer("default/p1", newRangeCollector(t))
 		t.Run(k, func(t *testing.T) {
-			c.checkProbes(co)
+			c.checkProbes(ctx, co)
 
 			if len(c.Outcome()["default/p1"]) != 0 {
 				assert.Equal(t, u.issues, len(c.Outcome().For("default/p1", "c1")))
@@ -160,20 +172,24 @@ func TestContainerCheckImageTags(t *testing.T) {
 		image    string
 		pissues  int
 		issues   int
-		severity issues.Level
+		severity config.Level
 	}{
 		"cool":   {image: "cool:1.2.3", issues: 0},
-		"noRev":  {pissues: 1, image: "fred", issues: 1, severity: issues.ErrorLevel},
-		"latest": {pissues: 1, image: "fred:latest", issues: 1, severity: issues.WarnLevel},
+		"noRev":  {pissues: 1, image: "fred", issues: 1, severity: config.ErrorLevel},
+		"latest": {pissues: 1, image: "fred:latest", issues: 1, severity: config.WarnLevel},
 	}
 
-	for k, u := range uu {
+	ctx := makeContext("container")
+	ctx = internal.WithFQN(ctx, "default/p1")
+	ctx = internal.WithGroup(ctx, "c1")
+	for k := range uu {
+		u := uu[k]
 		co := makeContainer("c1", coOpts{})
 		co.Image = u.image
 
 		l := NewContainer("default/p1", newRangeCollector(t))
 		t.Run(k, func(t *testing.T) {
-			l.checkImageTags(co.Name, co.Image)
+			l.checkImageTags(ctx, co.Image)
 
 			assert.Equal(t, u.pissues, len(l.Outcome()["default/p1"]))
 			if len(l.Outcome()["default/p1"]) != 0 {
@@ -188,19 +204,23 @@ func TestContainerCheckNamedPorts(t *testing.T) {
 	uu := map[string]struct {
 		port     string
 		issues   int
-		severity issues.Level
+		severity config.Level
 	}{
 		"named":  {port: "cool", issues: 0},
-		"unamed": {port: "", issues: 1, severity: issues.WarnLevel},
+		"unamed": {port: "", issues: 1, severity: config.WarnLevel},
 	}
 
-	for k, u := range uu {
+	ctx := makeContext("container")
+	ctx = internal.WithFQN(ctx, "p1")
+	ctx = internal.WithGroup(ctx, "p1")
+	for k := range uu {
+		u := uu[k]
 		co := makeContainer("c1", coOpts{})
 		co.Ports = []v1.ContainerPort{{Name: u.port}}
 
 		l := NewContainer("p1", newRangeCollector(t))
 		t.Run(k, func(t *testing.T) {
-			l.checkNamedPorts(co)
+			l.checkNamedPorts(ctx, co)
 
 			assert.Equal(t, u.issues, len(l.Outcome()["p1"]))
 			if len(l.Outcome()["c1"]) != 0 {
@@ -218,10 +238,12 @@ func TestContainerSanitize(t *testing.T) {
 		"NoImgNoProbs": {makeContainer("c1", coOpts{}), 3},
 	}
 
-	for k, u := range uu {
+	ctx := makeContext("container")
+	for k := range uu {
+		u := uu[k]
 		c := NewContainer("default/p1", newRangeCollector(t))
 		t.Run(k, func(t *testing.T) {
-			c.sanitize(u.co, true)
+			c.sanitize(ctx, u.co, true)
 
 			assert.Equal(t, 3, len(c.Outcome()["default/p1"]))
 			assert.Equal(t, u.issues, len(c.Outcome().For("default/p1", "c1")))
@@ -237,7 +259,7 @@ type rangeCollector struct {
 }
 
 func newRangeCollector(t *testing.T) *rangeCollector {
-	return &rangeCollector{issues.NewCollector(loadCodes(t))}
+	return &rangeCollector{issues.NewCollector(loadCodes(t), makeConfig(t))}
 }
 
 func (*rangeCollector) RestartsLimit() int {

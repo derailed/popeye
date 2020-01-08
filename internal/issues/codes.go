@@ -1,28 +1,14 @@
 package issues
 
 import (
-	"fmt"
-	"strconv"
-
+	"github.com/derailed/popeye/pkg/config"
 	"gopkg.in/yaml.v2"
 )
 
 type (
-	// ID represents a sanitizer code indentifier.
-	ID int
-
-	// Glossary represents a collection of codes.
-	Glossary map[ID]*Code
-
 	// Codes represents a collection of sanitizer codes.
 	Codes struct {
-		Glossary Glossary `yaml:"codes"`
-	}
-
-	// Code represents a sanitizer code.
-	Code struct {
-		Message  string `yaml:"message"`
-		Severity Level  `yaml:"severity"`
+		Glossary config.Glossary `yaml:"codes"`
 	}
 )
 
@@ -37,7 +23,7 @@ func LoadCodes() (*Codes, error) {
 }
 
 // Refine overrides code severity based on user input.
-func (c *Codes) Refine(gloss Glossary) {
+func (c *Codes) Refine(gloss config.Glossary) {
 	for k, v := range gloss {
 		c, ok := c.Glossary[k]
 		if !ok {
@@ -49,18 +35,9 @@ func (c *Codes) Refine(gloss Glossary) {
 	}
 }
 
-// Format hydrates a message with arguments.
-func (c *Code) Format(code ID, args ...interface{}) string {
-	msg := "[POP-" + strconv.Itoa(int(code)) + "] "
-	if len(args) == 0 {
-		return msg + c.Message
-	}
-	return msg + fmt.Sprintf(c.Message, args...)
-}
-
 // Helpers...
 
-func validSeverity(l Level) bool {
+func validSeverity(l config.Level) bool {
 	return l > 0 && l < 4
 }
 
@@ -87,7 +64,7 @@ codes:
     message:  "%s probe uses a port#, prefer a named port"
     severity: 1
   106:
-    message:  No resources defined
+    message:  No resources requests/limits defined
     severity: 2
   107:
     message:  No resource limits defined
@@ -144,7 +121,7 @@ codes:
     message:  Connects to API Server? ServiceAccount token is mounted
     severity: 2
   302:
-    message:  Containers are possibly running as root
+    message:  Pod could be running as root user. Check SecurityContext/image
     severity: 2
   303:
     message: Do you mean it? ServiceAccount is automounting APIServer credentials
@@ -155,6 +132,9 @@ codes:
   305:
     message: References a docker-image "%s" pull secret which does not exist
     severity: 3
+  306:
+    message: Container could be running as root user. Check SecurityContext/Image
+    severity: 2
 
     # -------------------------------------------------------------------------
   # General
@@ -315,5 +295,12 @@ codes:
     severity: 2
   1201:
     message:  No namespaces match %s namespace selector
+    severity: 2
+
+  # -------------------------------------------------------------------------
+  # RBAC
+
+  1300:
+    message:  References a %s (%s) which does not exist
     severity: 2
 `

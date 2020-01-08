@@ -4,7 +4,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-// ConfigMapKey tracks ConfigMap ressource references
+// ConfigMapKey tracks ConfigMap resource references
 const ConfigMapKey = "cm"
 
 // ConfigMap represents ConfigMap cache.

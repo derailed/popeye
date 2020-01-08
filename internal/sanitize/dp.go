@@ -8,153 +8,116 @@ import (
 	"path"
 	"strings"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/k8s"
-	"github.com/derailed/popeye/pkg/config"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
-type (
-	// PopeyeKey tracks context keys.
-	PopeyeKey string
+// DeploymentLister list available Deployments on a cluster.
+type DeploymentLister interface {
+	ListDeployments() map[string]*appsv1.Deployment
+}
 
-	// Deployment tracks Deployment sanitization.
-	Deployment struct {
-		*issues.Collector
-		DeploymentLister
-	}
+// DPLister represents deployments and deps listers.
+type DPLister interface {
+	PodLimiter
+	PodsMetricsLister
+	PodSelectorLister
+	ConfigLister
+	DeploymentLister
+}
 
-	// PodsMetricsLister handles pods metrics.
-	PodsMetricsLister interface {
-		ListPodsMetrics() map[string]*mv1beta1.PodMetrics
-	}
+// Deployment tracks Deployment sanitization.
+type Deployment struct {
+	*issues.Collector
+	DPLister
+}
 
-	// Collector collects sub issues.
-	Collector interface {
-		// Outcome collects issues.
-		Outcome() issues.Outcome
-
-		// AddSubCode records a sub issue.
-		AddSubCode(id issues.ID, section, group string, args ...interface{})
-
-		// AddCode records a new issue.
-		AddCode(id issues.ID, section string, args ...interface{})
-	}
-
-	// PodLimiter tracks metrics limit range.
-	PodLimiter interface {
-		PodCPULimit() float64
-		PodMEMLimit() float64
-		RestartsLimit() int
-	}
-
-	// PodSelectorLister list a collection of pod matching a selector.
-	PodSelectorLister interface {
-		ListPodsBySelector(sel *metav1.LabelSelector) map[string]*v1.Pod
-	}
-
-	// ConfigLister tracks configuration parameters.
-	ConfigLister interface {
-		// CPUResourceLimits returns the CPU utilization threshold.
-		CPUResourceLimits() config.Allocations
-
-		// MEMResourceLimits returns the MEM utilization threshold.
-		MEMResourceLimits() config.Allocations
-	}
-
-	// DeployLister list deployments.
-	DeployLister interface {
-		ListDeployments() map[string]*appsv1.Deployment
-	}
-
-	// DeploymentLister list available Deployments on a cluster.
-	DeploymentLister interface {
-		PodLimiter
-		PodsMetricsLister
-		PodSelectorLister
-		ConfigLister
-		DeployLister
-	}
-)
-
-// NewDeployment returns a new Deployment sanitizer.
-func NewDeployment(co *issues.Collector, lister DeploymentLister) *Deployment {
+// NewDeployment returns a new sanitizer.
+func NewDeployment(co *issues.Collector, lister DPLister) *Deployment {
 	return &Deployment{
-		Collector:        co,
-		DeploymentLister: lister,
+		Collector: co,
+		DPLister:  lister,
 	}
 }
 
-// Sanitize configmaps.
+// Sanitize cleanse the resource.
 func (d *Deployment) Sanitize(ctx context.Context) error {
 	over := pullOverAllocs(ctx)
 	for fqn, dp := range d.ListDeployments() {
 		d.InitOutcome(fqn)
-		d.checkDeprecation(fqn, dp)
-		d.checkDeployment(fqn, dp)
-		d.checkContainers(fqn, dp.Spec.Template.Spec)
+		ctx = internal.WithFQN(ctx, fqn)
+
+		d.checkDeprecation(ctx, dp)
+		d.checkDeployment(ctx, dp)
+		d.checkContainers(ctx, dp.Spec.Template.Spec)
 		pmx := k8s.PodsMetrics{}
 		podsMetrics(d, pmx)
-		d.checkUtilization(over, fqn, dp, pmx)
+		d.checkUtilization(ctx, over, dp, pmx)
+
+		if d.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+			d.ClearOutcome(fqn)
+		}
 	}
 
 	return nil
 }
 
-func (d *Deployment) checkDeprecation(fqn string, dp *appsv1.Deployment) {
+func (d *Deployment) checkDeprecation(ctx context.Context, dp *appsv1.Deployment) {
 	const current = "apps/v1"
 
+	fqn := internal.MustExtractFQN(ctx)
 	rev, err := resourceRev(fqn, dp.Annotations)
 	if err != nil {
 		rev = revFromLink(dp.SelfLink)
 		if rev == "" {
-			d.AddCode(404, fqn, errors.New("Unable to assert resource version"))
+			d.AddCode(ctx, 404, errors.New("Unable to assert resource version"))
 			return
 		}
 	}
 	if rev != current {
-		d.AddCode(403, fqn, "Deployment", rev, current)
+		d.AddCode(ctx, 403, "Deployment", rev, current)
 	}
 }
 
 // CheckDeployment checks if deployment contract is currently happy or not.
-func (d *Deployment) checkDeployment(fqn string, dp *appsv1.Deployment) {
+func (d *Deployment) checkDeployment(ctx context.Context, dp *appsv1.Deployment) {
 	if dp.Spec.Replicas == nil || (dp.Spec.Replicas != nil && *dp.Spec.Replicas == 0) {
-		d.AddCode(500, fqn)
+		d.AddCode(ctx, 500)
 	}
 
 	if dp.Status.AvailableReplicas == 0 {
-		d.AddCode(501, fqn)
+		d.AddCode(ctx, 501)
 	}
 
 	if dp.Status.CollisionCount != nil && *dp.Status.CollisionCount > 0 {
-		d.AddCode(502, fqn, *dp.Status.CollisionCount)
+		d.AddCode(ctx, 502, *dp.Status.CollisionCount)
 	}
 }
 
 // CheckContainers runs thru deployment template and checks pod configuration.
-func (d *Deployment) checkContainers(fqn string, spec v1.PodSpec) {
-	c := NewContainer(fqn, d)
+func (d *Deployment) checkContainers(ctx context.Context, spec v1.PodSpec) {
+	c := NewContainer(internal.MustExtractFQN(ctx), d)
 	for _, co := range spec.InitContainers {
-		c.sanitize(co, false)
+		c.sanitize(ctx, co, false)
 	}
 	for _, co := range spec.Containers {
-		c.sanitize(co, false)
+		c.sanitize(ctx, co, false)
 	}
 }
 
 // CheckUtilization checks deployments requested resources vs current utilization.
-func (d *Deployment) checkUtilization(over bool, fqn string, dp *appsv1.Deployment, pmx k8s.PodsMetrics) {
+func (d *Deployment) checkUtilization(ctx context.Context, over bool, dp *appsv1.Deployment, pmx k8s.PodsMetrics) {
 	mx := d.deploymentUsage(dp, pmx)
 	if mx.RequestCPU.IsZero() && mx.RequestMEM.IsZero() {
 		return
 	}
-	checkCPU(d, over, fqn, mx)
-	checkMEM(d, over, fqn, mx)
+	checkCPU(ctx, d, over, mx)
+	checkMEM(ctx, d, over, mx)
 }
 
 // DeploymentUsage finds deployment running pods and compute current vs requested resource usage.

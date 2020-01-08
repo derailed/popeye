@@ -39,7 +39,8 @@ func TestGetPod(t *testing.T) {
 	}
 
 	p := NewPod(pods)
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			po := p.GetPod(u.sel)
 			if po == nil {
@@ -81,7 +82,8 @@ func TestListPodsBySelector(t *testing.T) {
 	}
 
 	p := NewPod(pods)
-	for k, u := range uu {
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			res := p.ListPodsBySelector(u.sel)
 			keys := []string{}

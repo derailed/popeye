@@ -3,6 +3,7 @@ package cache
 import (
 	"testing"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +24,7 @@ func TestServiceAccountRefs(t *testing.T) {
 		sa.ServiceAccountRefs(refs)
 		assert.Equal(t, 2, len(refs))
 		for _, k := range u.keys {
-			assert.Equal(t, StringSet{AllKeys: Blank}, refs[k])
+			assert.Equal(t, internal.StringSet{AllKeys: internal.Blank}, refs[k])
 		}
 	}
 }

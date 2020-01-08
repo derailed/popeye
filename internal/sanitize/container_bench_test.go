@@ -1,6 +1,7 @@
 package sanitize
 
 import (
+	"context"
 	"testing"
 
 	v1 "k8s.io/api/core/v1"
@@ -15,7 +16,8 @@ func BenchmarkContainerCheckImageTag(b *testing.B) {
 
 	b.ResetTimer()
 	b.ReportAllocs()
+	ctx := context.Background()
 	for i := 0; i < b.N; i++ {
-		l.checkImageTags(co.Name, co.Image)
+		l.checkImageTags(ctx, co.Image)
 	}
 }

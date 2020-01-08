@@ -10,7 +10,7 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 )
 
-// DaemonSet represents a DaemonSet sanitizer.
+// DaemonSet represents a DaemonSet scruber.
 type DaemonSet struct {
 	*issues.Collector
 	*cache.DaemonSet
@@ -21,31 +21,26 @@ type DaemonSet struct {
 	client *k8s.Client
 }
 
-// NewDaemonSet return a new DaemonSet sanitizer.
-func NewDaemonSet(c *Cache, codes *issues.Codes) Sanitizer {
+// NewDaemonSet return a new DaemonSet scruber.
+func NewDaemonSet(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	d := DaemonSet{
 		client:    c.client,
 		Config:    c.config,
-		Collector: issues.NewCollector(codes),
+		Collector: issues.NewCollector(codes, c.config),
 	}
 
-	ds, err := c.daemonSets()
+	var err error
+	d.DaemonSet, err = c.daemonSets()
 	if err != nil {
-		d.AddErr("daemonSets", err)
+		d.AddErr(ctx, err)
 	}
-	d.DaemonSet = ds
 
-	pmx, err := c.podsMx()
-	if err != nil {
-		d.AddCode(402, "podmetrics", err)
-	}
-	d.PodsMetrics = pmx
+	d.PodsMetrics, _ = c.podsMx()
 
-	pod, err := c.pods()
+	d.Pod, err = c.pods()
 	if err != nil {
-		d.AddErr("pods", err)
+		d.AddErr(ctx, err)
 	}
-	d.Pod = pod
 
 	return &d
 }

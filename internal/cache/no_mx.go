@@ -21,13 +21,30 @@ func (n *NodesMetrics) ListNodesMetrics() map[string]*mv1beta1.NodeMetrics {
 	return n.nmx
 }
 
-// ListClusterMetrics collects total available cpu and mem on the cluster.
-func (n *NodesMetrics) ListClusterMetrics() v1.ResourceList {
+// ListAllocatedMetrics collects total used cpu and mem on the cluster.
+func (n *NodesMetrics) ListAllocatedMetrics() v1.ResourceList {
 	cpu, mem := new(resource.Quantity), new(resource.Quantity)
 	for _, mx := range n.nmx {
 		cpu.Add(*mx.Usage.Cpu())
 		mem.Add(*mx.Usage.Memory())
 	}
+
+	return v1.ResourceList{
+		v1.ResourceCPU:    *cpu,
+		v1.ResourceMemory: *mem,
+	}
+}
+
+// ListAvailableMetrics return the total cluster available cpu/mem.
+func (n *NodesMetrics) ListAvailableMetrics(nn map[string]*v1.Node) v1.ResourceList {
+	cpu, mem := new(resource.Quantity), new(resource.Quantity)
+	for _, n := range nn {
+		cpu.Add(*n.Status.Allocatable.Cpu())
+		mem.Add(*n.Status.Allocatable.Memory())
+	}
+	used := n.ListAllocatedMetrics()
+	cpu.Sub(*used.Cpu())
+	mem.Sub(*used.Memory())
 
 	return v1.ResourceList{
 		v1.ResourceCPU:    *cpu,

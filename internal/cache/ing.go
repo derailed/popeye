@@ -1,7 +1,8 @@
 package cache
 
 import (
-	nv1beta1 "k8s.io/api/networking/v1beta1"
+	"github.com/derailed/popeye/internal"
+	nv1beta1 "k8s.io/api/extensions/v1beta1"
 )
 
 // IngressKey tracks Ingress resource references
@@ -35,6 +36,6 @@ func (d *Ingress) trackReference(refs ObjReferences, key string) {
 	if set, ok := refs[key]; ok {
 		set.Add(AllKeys)
 	} else {
-		refs[key] = StringSet{AllKeys: Blank}
+		refs[key] = internal.StringSet{AllKeys: internal.Blank}
 	}
 }

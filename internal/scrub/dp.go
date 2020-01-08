@@ -10,7 +10,7 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 )
 
-// Deployment represents a Deployment sanitizer.
+// Deployment represents a Deployment scruber.
 type Deployment struct {
 	*issues.Collector
 	*cache.Deployment
@@ -21,31 +21,26 @@ type Deployment struct {
 	client *k8s.Client
 }
 
-// NewDeployment return a new Deployment sanitizer.
-func NewDeployment(c *Cache, codes *issues.Codes) Sanitizer {
+// NewDeployment return a new Deployment scruber.
+func NewDeployment(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	d := Deployment{
 		client:    c.client,
 		Config:    c.config,
-		Collector: issues.NewCollector(codes),
+		Collector: issues.NewCollector(codes, c.config),
 	}
 
-	dps, err := c.deployments()
+	var err error
+	d.Deployment, err = c.deployments()
 	if err != nil {
-		d.AddErr("deployments", err)
+		d.AddErr(ctx, err)
 	}
-	d.Deployment = dps
 
-	pmx, err := c.podsMx()
-	if err != nil {
-		d.AddCode(402, "podmetrics", err)
-	}
-	d.PodsMetrics = pmx
+	d.PodsMetrics, _ = c.podsMx()
 
-	pod, err := c.pods()
+	d.Pod, err = c.pods()
 	if err != nil {
-		d.AddErr("pods", err)
+		d.AddErr(ctx, err)
 	}
-	d.Pod = pod
 
 	return &d
 }

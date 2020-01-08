@@ -1,7 +1,6 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/cache"
@@ -154,11 +153,13 @@ func TestNodeSanitizer(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	ctx := makeContext("nodes")
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			n := NewNode(issues.NewCollector(loadCodes(t)), u.lister)
+			n := NewNode(issues.NewCollector(loadCodes(t), makeConfig(t)), u.lister)
 
-			assert.Nil(t, n.Sanitize(context.TODO()))
+			assert.Nil(t, n.Sanitize(ctx))
 			assert.Equal(t, u.issues, len(n.Outcome()["n1"]))
 		})
 	}

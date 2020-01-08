@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/report"
@@ -35,18 +37,17 @@ func dumpDir() string {
 }
 
 type (
-	scrubFn func(*scrub.Cache, *issues.Codes) scrub.Sanitizer
+	scrubFn func(context.Context, *scrub.Cache, *issues.Codes) scrub.Sanitizer
 
 	// Popeye a kubernetes sanitizer.
 	Popeye struct {
-		client *k8s.Client
-		config *config.Config
-		// totalScore   int
-		// sectionCount int
+		client       *k8s.Client
+		config       *config.Config
 		outputTarget *os.File
 		log          *zerolog.Logger
 		flags        *config.Flags
 		builder      *report.Builder
+		aliases      *internal.Aliases
 	}
 )
 
@@ -57,12 +58,14 @@ func NewPopeye(flags *config.Flags, log *zerolog.Logger) (*Popeye, error) {
 		return nil, err
 	}
 
+	a := internal.NewAliases()
 	p := Popeye{
 		client:  k8s.NewClient(flags),
 		config:  cfg,
 		log:     log,
 		flags:   flags,
-		builder: report.NewBuilder(),
+		aliases: a,
+		builder: report.NewBuilder(a),
 	}
 
 	return &p, nil
@@ -93,6 +96,7 @@ func (p *Popeye) Sanitize() error {
 	if err := p.sanitize(); err != nil {
 		return err
 	}
+
 	return p.dump(true)
 }
 
@@ -143,7 +147,7 @@ func (p *Popeye) dumpStd(mode, header bool) error {
 		mx = false
 	}
 	p.builder.PrintClusterInfo(s, p.client.ActiveCluster(), mx)
-	p.builder.PrintReport(issues.Level(p.config.LinterLevel()), s)
+	p.builder.PrintReport(config.Level(p.config.LinterLevel()), s)
 	p.builder.PrintSummary(s)
 
 	return w.Flush()
@@ -187,25 +191,29 @@ func (p *Popeye) dump(printHeader bool) error {
 
 func (p *Popeye) sanitizers() map[string]scrubFn {
 	return map[string]scrubFn{
-		"cl":  scrub.NewCluster,
-		"cm":  scrub.NewConfigMap,
-		"sec": scrub.NewSecret,
-		"dp":  scrub.NewDeployment,
-		"ds":  scrub.NewDaemonSet,
-		"hpa": scrub.NewHorizontalPodAutoscaler,
-		"ns":  scrub.NewNamespace,
-		"no":  scrub.NewNode,
-		"pv":  scrub.NewPersistentVolume,
-		"pvc": scrub.NewPersistentVolumeClaim,
-		"po":  scrub.NewPod,
-		"rs":  scrub.NewReplicaSet,
-		"svc": scrub.NewService,
-		"sa":  scrub.NewServiceAccount,
-		"sts": scrub.NewStatefulSet,
-		"pdb": scrub.NewPodDisruptionBudget,
-		"ing": scrub.NewIngress,
-		"np":  scrub.NewNetworkPolicy,
-		"psp": scrub.NewPodSecurityPolicy,
+		"cluster":                 scrub.NewCluster,
+		"configmap":               scrub.NewConfigMap,
+		"secret":                  scrub.NewSecret,
+		"deployment":              scrub.NewDeployment,
+		"daemonset":               scrub.NewDaemonSet,
+		"horizontalpodautoscaler": scrub.NewHorizontalPodAutoscaler,
+		"namespace":               scrub.NewNamespace,
+		"node":                    scrub.NewNode,
+		"persistentvolume":        scrub.NewPersistentVolume,
+		"persistentvolumeclaim":   scrub.NewPersistentVolumeClaim,
+		"pod":                     scrub.NewPod,
+		"replicaset":              scrub.NewReplicaSet,
+		"service":                 scrub.NewService,
+		"serviceaccount":          scrub.NewServiceAccount,
+		"statefulset":             scrub.NewStatefulSet,
+		"poddisruptionbudget":     scrub.NewPodDisruptionBudget,
+		"ingress":                 scrub.NewIngress,
+		"networkpolicy":           scrub.NewNetworkPolicy,
+		"podsecuritypolicy":       scrub.NewPodSecurityPolicy,
+		"clusterrole":             scrub.NewClusterRole,
+		"clusterrolebinding":      scrub.NewClusterRoleBinding,
+		"role":                    scrub.NewRole,
+		"rolebinding":             scrub.NewRoleBinding,
 	}
 }
 
@@ -255,22 +263,30 @@ func (p *Popeye) sanitize() error {
 		return err
 	}
 	codes.Refine(p.config.Codes)
-	for k, f := range p.sanitizers() {
-		if !in(p.config.Sections(), k) {
+	sections := make([]string, 0, len(p.sanitizers()))
+	for section := range p.sanitizers() {
+		sections = append(sections, section)
+	}
+	sort.StringSlice(sections).Sort()
+	for _, section := range sections {
+		if !in(p.aliases.ToResources(p.config.Sections()), section) {
 			continue
 		}
 		// Skip node checks if active namespace is set.
-		if k == "no" && p.client.ActiveNamespace() != "" {
+		if section == "node" && p.client.ActiveNamespace() != "" {
 			continue
 		}
-		s := f(cache, codes)
+
+		ctx = context.WithValue(ctx, internal.KeyRun, internal.RunInfo{Section: section})
+		s := p.sanitizers()[section](ctx, cache, codes)
 		if err := s.Sanitize(ctx); err != nil {
 			p.builder.AddError(err)
 			continue
 		}
+
 		tally := report.NewTally()
 		tally.Rollup(s.Outcome())
-		p.builder.AddSection(k, s.Outcome(), tally)
+		p.builder.AddSection(section, s.Outcome(), tally)
 	}
 
 	return nil

@@ -1,6 +1,9 @@
 package cache
 
-import v1 "k8s.io/api/core/v1"
+import (
+	"github.com/derailed/popeye/internal"
+	v1 "k8s.io/api/core/v1"
+)
 
 // ServiceAccount tracks serviceaccounts.
 type ServiceAccount struct {
@@ -25,7 +28,7 @@ func (s *ServiceAccount) ServiceAccountRefs(refs ObjReferences) {
 			if set, ok := refs[key]; ok {
 				set.Add(AllKeys)
 			} else {
-				refs[key] = StringSet{AllKeys: Blank}
+				refs[key] = internal.StringSet{AllKeys: internal.Blank}
 			}
 		}
 
@@ -34,7 +37,7 @@ func (s *ServiceAccount) ServiceAccountRefs(refs ObjReferences) {
 			if set, ok := refs[key]; ok {
 				set.Add(AllKeys)
 			} else {
-				refs[key] = StringSet{AllKeys: Blank}
+				refs[key] = internal.StringSet{AllKeys: internal.Blank}
 			}
 		}
 	}

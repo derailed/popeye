@@ -1,11 +1,12 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,23 +16,25 @@ func loadCodes(t *testing.T) *issues.Codes {
 	codes, err := issues.LoadCodes()
 	assert.Nil(t, err)
 	return codes
+
 }
 
 func TestConfigMapSanitize(t *testing.T) {
-	cm := NewConfigMap(issues.NewCollector(loadCodes(t)), newConfigMap())
+	cm := NewConfigMap(issues.NewCollector(loadCodes(t), makeConfig(t)), newConfigMap())
 
-	assert.Nil(t, cm.Sanitize(context.TODO()))
+	ctx := makeContext("configmaps")
+	assert.Nil(t, cm.Sanitize(ctx))
 	assert.Equal(t, 4, len(cm.Outcome()))
 
 	ii := cm.Outcome()["default/cm3"]
 	assert.Equal(t, 1, len(ii))
 	assert.Equal(t, "[POP-400] Used? Unable to locate resource reference", ii[0].Message)
-	assert.Equal(t, issues.InfoLevel, ii[0].Level)
+	assert.Equal(t, config.InfoLevel, ii[0].Level)
 
 	ii = cm.Outcome()["default/cm4"]
 	assert.Equal(t, 1, len(ii))
 	assert.Equal(t, `[POP-401] Key "k2" used? Unable to locate key reference`, ii[0].Message)
-	assert.Equal(t, issues.InfoLevel, ii[0].Level)
+	assert.Equal(t, config.InfoLevel, ii[0].Level)
 }
 
 // ----------------------------------------------------------------------------
@@ -44,15 +47,15 @@ func newConfigMap() configMap {
 }
 
 func (c configMap) PodRefs(refs cache.ObjReferences) {
-	refs["cm:default/cm1"] = cache.StringSet{
-		"k1": cache.Blank,
-		"k2": cache.Blank,
+	refs["cm:default/cm1"] = internal.StringSet{
+		"k1": internal.Blank,
+		"k2": internal.Blank,
 	}
-	refs["cm:default/cm2"] = cache.StringSet{
-		cache.AllKeys: cache.Blank,
+	refs["cm:default/cm2"] = internal.StringSet{
+		cache.AllKeys: internal.Blank,
 	}
-	refs["cm:default/cm4"] = cache.StringSet{
-		"k1": cache.Blank,
+	refs["cm:default/cm4"] = internal.StringSet{
+		"k1": internal.Blank,
 	}
 }
 

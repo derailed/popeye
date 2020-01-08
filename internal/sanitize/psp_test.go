@@ -1,7 +1,6 @@
 package sanitize
 
 import (
-	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal/cache"
@@ -35,15 +34,19 @@ func TestPSPSanitize(t *testing.T) {
 		},
 	}
 
-	for k, u := range uu {
+	ctx := makeContext("psp")
+	for k := range uu {
+		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			psp := NewPodSecurityPolicy(issues.NewCollector(loadCodes(t)), u.lister)
+			psp := NewPodSecurityPolicy(issues.NewCollector(loadCodes(t), makeConfig(t)), u.lister)
 
-			assert.Nil(t, psp.Sanitize(context.TODO()))
+			assert.Nil(t, psp.Sanitize(ctx))
 			assert.Equal(t, u.issues, psp.Outcome()["default/psp"])
 		})
 	}
 }
+
+// Helpers...
 
 type (
 	pspOpts struct {

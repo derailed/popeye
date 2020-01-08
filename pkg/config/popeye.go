@@ -1,7 +1,8 @@
 package config
 
 import (
-	"github.com/derailed/popeye/internal/issues"
+	"fmt"
+	"strconv"
 )
 
 const (
@@ -12,6 +13,18 @@ const (
 )
 
 type (
+	// ID represents a sanitizer code indentifier.
+	ID int
+
+	// Glossary represents a collection of codes.
+	Glossary map[ID]*Code
+
+	// Code represents a sanitizer code.
+	Code struct {
+		Message  string `yaml:"message"`
+		Severity Level  `yaml:"severity"`
+	}
+
 	// AllocationLimits tracks limit thresholds cpu and memory thresholds.
 	AllocationLimits struct {
 		CPU Allocations `yaml:"cpu"`
@@ -29,9 +42,9 @@ type (
 		AllocationLimits `yaml:"allocations"`
 		Excludes         `yaml:"excludes"`
 
-		Node  Node            `yaml:"node"`
-		Pod   Pod             `yaml:"pod"`
-		Codes issues.Glossary `yaml:"codes"`
+		Node  Node     `yaml:"node"`
+		Pod   Pod      `yaml:"pod"`
+		Codes Glossary `yaml:"codes"`
 	}
 )
 
@@ -46,4 +59,13 @@ func NewPopeye() Popeye {
 		Node:     newNode(),
 		Pod:      newPod(),
 	}
+}
+
+// Format hydrates a message with arguments.
+func (c *Code) Format(code ID, args ...interface{}) string {
+	msg := "[POP-" + strconv.Itoa(int(code)) + "] "
+	if len(args) == 0 {
+		return msg + c.Message
+	}
+	return msg + fmt.Sprintf(c.Message, args...)
 }

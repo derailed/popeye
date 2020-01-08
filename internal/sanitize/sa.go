@@ -3,6 +3,7 @@ package sanitize
 import (
 	"context"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
 
@@ -23,13 +24,25 @@ type (
 		ListServiceAccounts() map[string]*v1.ServiceAccount
 	}
 
+	// ClusterRoleBindingRefs tracks crb references.
+	ClusterRoleBindingRefs interface {
+		ClusterRoleRefs(cache.ObjReferences)
+	}
+
+	// RoleBindingRefs tracks rb references.
+	RoleBindingRefs interface {
+		RoleRefs(cache.ObjReferences)
+	}
+
 	// ClusterRoleBindingLister list all available ClusterRoleBindings.
 	ClusterRoleBindingLister interface {
+		ClusterRoleBindingRefs
 		ListClusterRoleBindings() map[string]*rbacv1.ClusterRoleBinding
 	}
 
 	// RoleBindingLister list all available ClusterRoleBindings.
 	RoleBindingLister interface {
+		RoleBindingRefs
 		ListRoleBindings() map[string]*rbacv1.RoleBinding
 	}
 
@@ -41,7 +54,7 @@ type (
 	}
 )
 
-// NewServiceAccount returns a new ServiceAccount linter.
+// NewServiceAccount returns a new sanitizer.
 func NewServiceAccount(co *issues.Collector, lister ServiceAccountLister) *ServiceAccount {
 	return &ServiceAccount{
 		Collector:            co,
@@ -50,7 +63,7 @@ func NewServiceAccount(co *issues.Collector, lister ServiceAccountLister) *Servi
 
 }
 
-// Sanitize a serviceaccount.
+// Sanitize cleanse the resource.
 func (s *ServiceAccount) Sanitize(ctx context.Context) error {
 	refs := make(map[string]struct{}, 20)
 	if err := s.crbRefs(refs); err != nil {
@@ -66,43 +79,49 @@ func (s *ServiceAccount) Sanitize(ctx context.Context) error {
 
 	for fqn, sa := range s.ListServiceAccounts() {
 		s.InitOutcome(fqn)
-		s.checkMounts(fqn, sa.AutomountServiceAccountToken)
-		s.checkSecretRefs(fqn, sa.Secrets)
-		s.checkPullSecretRefs(fqn, sa.ImagePullSecrets)
+		ctx = internal.WithFQN(ctx, fqn)
+
+		s.checkMounts(ctx, sa.AutomountServiceAccountToken)
+		s.checkSecretRefs(ctx, sa.Secrets)
+		s.checkPullSecretRefs(ctx, sa.ImagePullSecrets)
 		if _, ok := refs[fqn]; !ok {
-			s.AddCode(400, fqn)
+			s.AddCode(ctx, 400)
+		}
+
+		if s.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+			s.ClearOutcome(fqn)
 		}
 	}
 
 	return nil
 }
 
-func (s *ServiceAccount) checkSecretRefs(fqn string, refs []v1.ObjectReference) {
-	ns, _ := namespaced(fqn)
+func (s *ServiceAccount) checkSecretRefs(ctx context.Context, refs []v1.ObjectReference) {
+	ns, _ := namespaced(internal.MustExtractFQN(ctx))
 	for _, ref := range refs {
 		if ref.Namespace != "" {
 			ns = ref.Namespace
 		}
 		sfqn := cache.FQN(ns, ref.Name)
 		if _, ok := s.ListSecrets()[sfqn]; !ok {
-			s.AddCode(304, fqn, sfqn)
+			s.AddCode(ctx, 304, sfqn)
 		}
 	}
 }
 
-func (s *ServiceAccount) checkPullSecretRefs(fqn string, refs []v1.LocalObjectReference) {
-	ns, _ := namespaced(fqn)
+func (s *ServiceAccount) checkPullSecretRefs(ctx context.Context, refs []v1.LocalObjectReference) {
+	ns, _ := namespaced(internal.MustExtractFQN(ctx))
 	for _, ref := range refs {
 		sfqn := cache.FQN(ns, ref.Name)
 		if _, ok := s.ListSecrets()[sfqn]; !ok {
-			s.AddCode(305, fqn, sfqn)
+			s.AddCode(ctx, 305, sfqn)
 		}
 	}
 }
 
-func (s *ServiceAccount) checkMounts(fqn string, b *bool) {
+func (s *ServiceAccount) checkMounts(ctx context.Context, b *bool) {
 	if b != nil && *b {
-		s.AddCode(303, fqn)
+		s.AddCode(ctx, 303)
 	}
 }
 

@@ -8,12 +8,13 @@ import (
 	"unicode/utf8"
 
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/pkg/config"
 )
 
 // Issue represents a sanitizer issues.
 type Issue interface {
-	MaxSeverity(string) issues.Level
-	Severity() issues.Level
+	MaxSeverity(string) config.Level
+	Severity() config.Level
 	Description() string
 	HasSubIssues() bool
 	SubIssues() map[string][]Issue
@@ -94,7 +95,7 @@ func (s *Sanitizer) Comment(msg string) {
 }
 
 // Dump all errors to output.
-func (s *Sanitizer) Dump(l issues.Level, ii issues.Issues) {
+func (s *Sanitizer) Dump(l config.Level, ii issues.Issues) {
 	groups := ii.Group()
 	keys := make([]string, len(groups))
 	for k := range groups {
@@ -123,12 +124,12 @@ func (s *Sanitizer) Dump(l issues.Level, ii issues.Issues) {
 }
 
 // Print a colorized message.
-func (s *Sanitizer) Print(l issues.Level, indent int, msg string) {
+func (s *Sanitizer) Print(l config.Level, indent int, msg string) {
 	s.write(l, indent, msg)
 }
 
 // Write a colorized message to stdout.
-func (s *Sanitizer) write(l issues.Level, indent int, msg string) {
+func (s *Sanitizer) write(l config.Level, indent int, msg string) {
 	if msg == "" || msg == "." {
 		return
 	}
@@ -192,7 +193,7 @@ func formatLine(str string, indent, width int) string {
 				line = spacer + t
 				length = len(spacer) + l
 			} else {
-				line += " " + t
+				line += t + " "
 				length += l
 			}
 			tokens = tokens[1:]

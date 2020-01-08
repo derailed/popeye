@@ -16,9 +16,10 @@ func TestLintLevel(t *testing.T) {
 		"":      OkLevel,
 	}
 
-	for k, e := range uu {
+	for k := range uu {
+		u, key := uu[k], k
 		t.Run(k, func(t *testing.T) {
-			assert.Equal(t, e, ToIssueLevel(&k))
+			assert.Equal(t, u, ToIssueLevel(&key))
 		})
 	}
 }

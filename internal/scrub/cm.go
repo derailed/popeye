@@ -4,45 +4,31 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal/cache"
-	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/sanitize"
 )
 
-// ConfigMap represents a configMap sanitizer.
+// ConfigMap represents a configMap scruber.
 type ConfigMap struct {
 	*issues.Collector
 	*cache.Pod
 	*cache.ConfigMap
 }
 
-// Sanitizer represents a resource sanitizer.
-type Sanitizer interface {
-	Collector
-	Sanitize(context.Context) error
-}
+// NewConfigMap return a new ConfigMap scruber.
+func NewConfigMap(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
+	s := ConfigMap{Collector: issues.NewCollector(codes, c.config)}
 
-// Collector collects sanitization issues.
-type Collector interface {
-	MaxSeverity(res string) issues.Level
-	Outcome() issues.Outcome
-}
-
-// NewConfigMap return a new ConfigMap sanitizer.
-func NewConfigMap(c *Cache, codes *issues.Codes) Sanitizer {
-	s := ConfigMap{Collector: issues.NewCollector(codes)}
-
-	cms, err := dag.ListConfigMaps(c.client, c.config)
+	var err error
+	s.ConfigMap, err = c.configmaps()
 	if err != nil {
-		s.AddErr("configmaps", err)
+		s.AddErr(ctx, err)
 	}
-	s.ConfigMap = cache.NewConfigMap(cms)
 
-	pod, err := c.pods()
+	s.Pod, err = c.pods()
 	if err != nil {
-		s.AddErr("pods", err)
+		s.AddErr(ctx, err)
 	}
-	s.Pod = pod
 
 	return &s
 }

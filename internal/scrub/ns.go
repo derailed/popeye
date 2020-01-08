@@ -4,33 +4,31 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal/cache"
-	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/sanitize"
 )
 
-// Namespace represents a Namespace sanitizer.
+// Namespace represents a Namespace scruber.
 type Namespace struct {
 	*issues.Collector
 	*cache.Namespace
 	*cache.Pod
 }
 
-// NewNamespace return a new Namespace sanitizer.
-func NewNamespace(c *Cache, codes *issues.Codes) Sanitizer {
-	n := Namespace{Collector: issues.NewCollector(codes)}
+// NewNamespace return a new Namespace scruber.
+func NewNamespace(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
+	n := Namespace{Collector: issues.NewCollector(codes, c.config)}
 
-	ss, err := dag.ListNamespaces(c.client, c.config)
+	var err error
+	n.Namespace, err = c.namespaces()
 	if err != nil {
-		n.AddErr("namespaces", err)
+		n.AddErr(ctx, err)
 	}
-	n.Namespace = cache.NewNamespace(ss)
 
-	pod, err := c.pods()
+	n.Pod, err = c.pods()
 	if err != nil {
-		n.AddErr("pods", err)
+		n.AddErr(ctx, err)
 	}
-	n.Pod = pod
 
 	return &n
 }

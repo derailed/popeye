@@ -4,7 +4,7 @@ import (
 	pv1beta1 "k8s.io/api/policy/v1beta1"
 )
 
-// PodSecurityPolicyKey tracks PodSecurityPolicy ressource references
+// PodSecurityPolicyKey tracks PodSecurityPolicy resource references
 const PodSecurityPolicyKey = "psp"
 
 // PodSecurityPolicy represents PodSecurityPolicy cache.

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
@@ -29,7 +30,7 @@ func NewConfig(flags *Flags) (*Config, error) {
 			return nil, err
 		}
 		if err := yaml.Unmarshal(f, &cfg); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Invalid spinach config file -- %w", err)
 		}
 	}
 	cfg.Flags = flags

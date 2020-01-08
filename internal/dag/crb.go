@@ -3,7 +3,6 @@ package dag
 import (
 	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
-	"github.com/rs/zerolog/log"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -16,7 +15,7 @@ func ListClusterRoleBindings(c *k8s.Client, cfg *config.Config) (map[string]*rba
 	}
 	res := make(map[string]*rbacv1.ClusterRoleBinding, len(crbs))
 	for fqn, crb := range crbs {
-		if !cfg.ShouldExclude("clusterrolebinding", fqn) {
+		if includeNS(c, crb.Namespace) {
 			res[fqn] = crb
 		}
 	}
@@ -28,7 +27,6 @@ func ListClusterRoleBindings(c *k8s.Client, cfg *config.Config) (map[string]*rba
 func listAllClusterRoleBindings(c *k8s.Client) (map[string]*rbacv1.ClusterRoleBinding, error) {
 	ll, err := fetchClusterRoleBindings(c)
 	if err != nil {
-		log.Debug().Err(err).Msg("ListAll")
 		return nil, err
 	}
 

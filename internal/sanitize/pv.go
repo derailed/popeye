@@ -3,6 +3,7 @@ package sanitize
 import (
 	"context"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	v1 "k8s.io/api/core/v1"
 )
@@ -20,7 +21,7 @@ type (
 	}
 )
 
-// NewPersistentVolume returns a new PersistentVolume sanitizer.
+// NewPersistentVolume returns a new sanitizer.
 func NewPersistentVolume(co *issues.Collector, lister PersistentVolumeLister) *PersistentVolume {
 	return &PersistentVolume{
 		Collector:              co,
@@ -28,23 +29,29 @@ func NewPersistentVolume(co *issues.Collector, lister PersistentVolumeLister) *P
 	}
 }
 
-// Sanitize a PersistentVolume.
+// Sanitize cleanse the resource.
 func (p *PersistentVolume) Sanitize(ctx context.Context) error {
 	for fqn, pv := range p.ListPersistentVolumes() {
 		p.InitOutcome(fqn)
-		p.checkBound(fqn, pv.Status.Phase)
+		ctx = internal.WithFQN(ctx, fqn)
+
+		p.checkBound(ctx, pv.Status.Phase)
+
+		if p.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+			p.ClearOutcome(fqn)
+		}
 	}
 
 	return nil
 }
 
-func (p *PersistentVolume) checkBound(fqn string, phase v1.PersistentVolumePhase) {
+func (p *PersistentVolume) checkBound(ctx context.Context, phase v1.PersistentVolumePhase) {
 	switch phase {
 	case v1.VolumeAvailable:
-		p.AddCode(1000, fqn)
+		p.AddCode(ctx, 1000)
 	case v1.VolumePending:
-		p.AddCode(1001, fqn)
+		p.AddCode(ctx, 1001)
 	case v1.VolumeFailed:
-		p.AddCode(1002, fqn)
+		p.AddCode(ctx, 1002)
 	}
 }

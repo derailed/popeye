@@ -4,12 +4,11 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal/cache"
-	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/sanitize"
 )
 
-// ServiceAccount represents a ServiceAccount sanitizer.
+// ServiceAccount represents a ServiceAccount scruber.
 type ServiceAccount struct {
 	*issues.Collector
 	*cache.ServiceAccount
@@ -20,45 +19,40 @@ type ServiceAccount struct {
 	*cache.Ingress
 }
 
-// NewServiceAccount return a new ServiceAccount sanitizer.
-func NewServiceAccount(c *Cache, codes *issues.Codes) Sanitizer {
-	s := ServiceAccount{Collector: issues.NewCollector(codes)}
+// NewServiceAccount return a new ServiceAccount scruber.
+func NewServiceAccount(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
+	s := ServiceAccount{Collector: issues.NewCollector(codes, c.config)}
 
-	sas, err := c.serviceaccounts()
+	var err error
+	s.ServiceAccount, err = c.serviceaccounts()
 	if err != nil {
-		s.AddErr("serviceaccounts", err)
+		s.AddErr(ctx, err)
 	}
-	s.ServiceAccount = sas
 
-	pod, err := c.pods()
+	s.Pod, err = c.pods()
 	if err != nil {
-		s.AddErr("pods", err)
+		s.AddErr(ctx, err)
 	}
-	s.Pod = pod
 
-	crbs, err := dag.ListClusterRoleBindings(c.client, c.config)
+	s.ClusterRoleBinding, err = c.clusterrolebindings()
 	if err != nil {
-		s.AddErr("clusterrolebindings", err)
+		s.AddErr(ctx, err)
 	}
-	s.ClusterRoleBinding = cache.NewClusterRoleBinding(crbs)
 
-	rbs, err := dag.ListRoleBindings(c.client, c.config)
+	s.RoleBinding, err = c.rolebindings()
 	if err != nil {
-		s.AddErr("rolebindings", err)
+		s.AddErr(ctx, err)
 	}
-	s.RoleBinding = cache.NewRoleBinding(rbs)
 
-	secrets, err := dag.ListSecrets(c.client, c.config)
+	s.Secret, err = c.secrets()
 	if err != nil {
-		s.AddErr("secrets", err)
+		s.AddErr(ctx, err)
 	}
-	s.Secret = cache.NewSecret(secrets)
 
-	ing, err := c.ingresses()
+	s.Ingress, err = c.ingresses()
 	if err != nil {
-		s.AddErr("ingresses", err)
+		s.AddErr(ctx, err)
 	}
-	s.Ingress = ing
 
 	return &s
 }

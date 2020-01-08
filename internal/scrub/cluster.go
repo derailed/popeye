@@ -10,7 +10,7 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 )
 
-// Cluster represents a Cluster sanitizer.
+// Cluster represents a Cluster scruber.
 type Cluster struct {
 	*issues.Collector
 	*cache.Cluster
@@ -19,19 +19,19 @@ type Cluster struct {
 	client *k8s.Client
 }
 
-// NewCluster return a new Cluster sanitizer.
-func NewCluster(c *Cache, codes *issues.Codes) Sanitizer {
+// NewCluster return a new Cluster scruber.
+func NewCluster(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	cl := Cluster{
 		client:    c.client,
 		Config:    c.config,
-		Collector: issues.NewCollector(codes),
+		Collector: issues.NewCollector(codes, c.config),
 	}
 
-	clu, err := c.cluster()
+	var err error
+	cl.Cluster, err = c.cluster()
 	if err != nil {
-		cl.AddErr("cluster", err)
+		cl.AddErr(ctx, err)
 	}
-	cl.Cluster = clu
 
 	return &cl
 }
