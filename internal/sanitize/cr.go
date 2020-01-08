@@ -9,7 +9,7 @@ import (
 )
 
 type (
-	// CRList lists roles and rolebindings.
+	// CRLister lists roles and rolebindings.
 	CRLister interface {
 		ClusterRoleLister
 		ClusterRoleBindingLister

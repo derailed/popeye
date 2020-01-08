@@ -12,6 +12,7 @@ const rxMarker = "rx:"
 var regExp = regexp.MustCompile(`\A` + rxMarker)
 
 type (
+	// Exclusion represents a resource exclusion.
 	Exclusion struct {
 		Name  string
 		Codes []ID
