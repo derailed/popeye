@@ -21,7 +21,7 @@ func NewAliases() *Aliases {
 	return &a
 }
 
-// ToResource converts aliases to resource names.
+// ToResources converts aliases to resource names.
 func (a *Aliases) ToResources(ss []string) []string {
 	aa := make([]string, len(ss))
 	for i := 0; i < len(ss); i++ {
