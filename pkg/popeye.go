@@ -157,12 +157,16 @@ func (p *Popeye) dumpStd(mode, header bool) error {
 // address *string, level *string, format, cluster, namespace string
 func (p *Popeye) dumpPrometheus() error {
 	pusher := p.builder.ToPrometheus(
-		p.flags.PushGatewayAddress,
-		p.flags.OutputDetail,
-		p.flags.LintLevel,
+		p.outputTarget,
+		p.flags,
 		p.client.ActiveCluster(),
 		p.client.ActiveNamespace(),
 	)
+	if *p.flags.Save {
+		if err := p.dumpJSON(); err != nil {
+			return err
+		}
+	}
 	return pusher.Add()
 }
 
@@ -230,6 +234,7 @@ func (p *Popeye) ensureOutput() error {
 	ext := "txt"
 	switch *p.flags.Output {
 	case "json":
+	case "prometheus":
 		ext = "json"
 	case "junit":
 		ext = "xml"
