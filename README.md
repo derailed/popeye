@@ -185,6 +185,7 @@ Popeye can generate sanitizer reports in a variety of formats. You can use the -
 | json       | As JSON                                      |         |                                              |
 | junit      | For the Java melancholic                     |         |                                              |
 | prometheus | Dumps report a prometheus scrappable metrics |         | [dardanel](https://github.com/eminugurkenar) |
+| score      | Just the score value (0-100)                 |         | [kabute](https://github.com/kabute)          |
 
 ## The SpinachYAML Configuration
 

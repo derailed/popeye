@@ -133,6 +133,16 @@ func (p *Popeye) dumpJSON() error {
 	return nil
 }
 
+func (p *Popeye) dumpScore() error {
+	res, err := p.builder.ToScore()
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(p.outputTarget, "%v\n", res)
+
+	return nil
+}
+
 func (p *Popeye) dumpStd(mode, header bool) error {
 	var (
 		w = bufio.NewWriter(p.outputTarget)
@@ -178,6 +188,8 @@ func (p *Popeye) dump(printHeader bool) error {
 		err = p.dumpJSON()
 	case report.PrometheusFormat:
 		err = p.dumpPrometheus()
+	case report.ScoreFormat:
+		err = p.dumpScore()
 	default:
 		err = p.dumpStd(p.flags.OutputFormat() == report.JurassicFormat, printHeader)
 	}
