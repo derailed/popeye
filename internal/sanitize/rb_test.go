@@ -19,11 +19,11 @@ func TestRBSanitize(t *testing.T) {
 	}{
 		"used": {
 			key:    "default/rb1",
-			lister: makeRBLister(rbOpts{name: "rb1", refKind: "ClusterRole", refName: "cr1"}),
+			lister: makeRBLister(rbOpts{name: "rb1", refKind: "Role", refName: "r1"}),
 		},
 		"unused": {
 			key:    "default/rb1",
-			lister: makeRBLister(rbOpts{name: "rb1", refKind: "ClusterRole", refName: "blah"}),
+			lister: makeRBLister(rbOpts{name: "rb1", refKind: "Role", refName: "blah"}),
 			issues: []config.ID{1300},
 		},
 	}
