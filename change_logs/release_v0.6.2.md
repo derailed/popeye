@@ -14,6 +14,11 @@ If you dig this tool, please make some noise on social! [@kitesurfer](https://tw
 
 Maintenance release!
 
+# GitHub Sponsorships
+
+As you may have noticed this project now offers a GitHub Sponsor button (over there 👆).
+If you feel `Popeye` sanitizers are helping you diagnose potential cluster issues and his saving you some cycles, you may consider sponsorizing this project. Thank you for your gesture of kindness and for supporting Popeye!! (not to mention helping replainish my liquids during oh-dark-thirty hours 🍺🍹🍸)
+
 ---
 
 ## Resolved Bugs
