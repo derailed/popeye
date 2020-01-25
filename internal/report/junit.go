@@ -60,7 +60,7 @@ type Error struct {
 	Type    string   `xml:"type,attr"`
 }
 
-func junitMarshal(b *Builder) ([]byte, error) {
+func junitMarshal(b *Builder, level config.Level) ([]byte, error) {
 	s := TestSuites{
 		Name:   "Popeye",
 		Tests:  len(b.Report.Sections),
@@ -68,13 +68,13 @@ func junitMarshal(b *Builder) ([]byte, error) {
 	}
 
 	for _, section := range b.Report.Sections {
-		s.Suites = append(s.Suites, newSuite(section, b))
+		s.Suites = append(s.Suites, newSuite(section, b, level))
 	}
 
 	return xml.MarshalIndent(s, "", "\t")
 }
 
-func newSuite(s Section, b *Builder) TestSuite {
+func newSuite(s Section, b *Builder, level config.Level) TestSuite {
 	total, fails, errs := numTests(s.Outcome)
 	ts := TestSuite{
 		Name:     b.aliases.FromAlias(s.Title),
@@ -82,7 +82,7 @@ func newSuite(s Section, b *Builder) TestSuite {
 		Failures: fails,
 		Errors:   errs,
 	}
-	ts.Properties = tallyToProps(s.Tally)
+	ts.Properties = tallyToProps(s.Tally, level)
 
 	for k, v := range s.Outcome {
 		ts.TestCases = append(ts.TestCases, newTestCase(k, v))
@@ -111,7 +111,7 @@ func newTestCase(res string, ii issues.Issues) TestCase {
 
 func numTests(o issues.Outcome) (total, fails, errors int) {
 	for _, v := range o {
-		total += len(v)
+		total += 1
 		for _, i := range v {
 			if i.Level >= config.WarnLevel {
 				fails++
@@ -124,11 +124,13 @@ func numTests(o issues.Outcome) (total, fails, errors int) {
 	return
 }
 
-func tallyToProps(t *Tally) []Property {
+func tallyToProps(t *Tally, level config.Level) []Property {
 	var p []Property
 
 	for i, s := range t.counts {
-		p = append(p, newProp(indexToTally(i), strconv.Itoa(s)))
+		if i >= int(level) {
+			p = append(p, newProp(indexToTally(i), strconv.Itoa(s)))
+		}
 	}
 
 	p = append(p, newProp("Score", fmt.Sprintf("%d%%", t.score)))

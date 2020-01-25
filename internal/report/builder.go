@@ -91,9 +91,9 @@ func (b *Builder) AddSection(name string, o issues.Outcome, t *Tally) {
 }
 
 // ToJunit dumps sanitizer to JUnit.
-func (b *Builder) ToJunit() (string, error) {
+func (b *Builder) ToJunit(level config.Level) (string, error) {
 	b.augment()
-	raw, err := junitMarshal(b)
+	raw, err := junitMarshal(b, level)
 	if err != nil {
 		return "", err
 	}

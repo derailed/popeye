@@ -59,3 +59,16 @@ func (o Outcome) For(section, group string) Issues {
 
 	return ii
 }
+
+func (o Outcome) Filter(level config.Level) Outcome {
+	for k, issues := range o {
+		vv := make(Issues, 0, len(issues))
+		for _, issue := range issues {
+			if issue.Level >= level {
+				vv = append(vv, issue)
+			}
+		}
+		o[k] = vv
+	}
+	return o
+}

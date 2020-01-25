@@ -101,7 +101,7 @@ func (p *Popeye) Sanitize() error {
 }
 
 func (p *Popeye) dumpJunit() error {
-	res, err := p.builder.ToJunit()
+	res, err := p.builder.ToJunit(config.Level(p.config.LinterLevel()))
 	if err != nil {
 		return err
 	}
@@ -292,9 +292,10 @@ func (p *Popeye) sanitize() error {
 			continue
 		}
 
+		o := s.Outcome().Filter(config.Level(p.config.LinterLevel()))
 		tally := report.NewTally()
-		tally.Rollup(s.Outcome())
-		p.builder.AddSection(section, s.Outcome(), tally)
+		tally.Rollup(o)
+		p.builder.AddSection(section, o, tally)
 	}
 
 	return nil

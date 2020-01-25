@@ -23,7 +23,7 @@ func TestBuilderJunit(t *testing.T) {
 	ta.Rollup(o)
 	b.AddSection("fred", o, ta)
 	b.AddError(errors.New("boom"))
-	s, err := b.ToJunit()
+	s, err := b.ToJunit(config.OkLevel)
 
 	assert.Nil(t, err)
 	assert.Equal(t, reportJunit, s)

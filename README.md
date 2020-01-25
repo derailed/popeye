@@ -177,15 +177,15 @@ popeye help
 Popeye can generate sanitizer reports in a variety of formats. You can use the -o cli option and pick your poison from there.
 
 
-| Format     | Description                                  | Default | Credits                                      |
-|------------|----------------------------------------------|---------|----------------------------------------------|
-| standard   | The full monty output iconized and colorized | yes     |                                              |
-| jurassic   | No icons or color like it's 1989             |         |                                              |
-| yaml       | As YAML                                      |         |                                              |
-| json       | As JSON                                      |         |                                              |
-| junit      | For the Java melancholic                     |         |                                              |
-| prometheus | Dumps report a prometheus scrappable metrics |         | [dardanel](https://github.com/eminugurkenar) |
-| score      | Just the score value (0-100)                 |         | [kabute](https://github.com/kabute)          |
+| Format     | Description                                            | Default | Credits                                      |
+|------------|--------------------------------------------------------|---------|----------------------------------------------|
+| standard   | The full monty output iconized and colorized           | yes     |                                              |
+| jurassic   | No icons or color like it's 1989                       |         |                                              |
+| yaml       | As YAML                                                |         |                                              |
+| json       | As JSON                                                |         |                                              |
+| junit      | For the Java melancholic                               |         |                                              |
+| prometheus | Dumps report a prometheus scrappable metrics           |         | [dardanel](https://github.com/eminugurkenar) |
+| score      | Returns a single cluster sanitizer score value (0-100) |         | [kabute](https://github.com/kabute)          |
 
 ## The SpinachYAML Configuration
 
