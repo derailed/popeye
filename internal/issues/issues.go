@@ -60,6 +60,7 @@ func (o Outcome) For(section, group string) Issues {
 	return ii
 }
 
+// Filter filters outcomes based on sanitizer level.
 func (o Outcome) Filter(level config.Level) Outcome {
 	for k, issues := range o {
 		vv := make(Issues, 0, len(issues))
