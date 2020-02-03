@@ -92,17 +92,9 @@ func initPopeyeFlags() {
 		"Specify if you want Popeye to persist the output to a file",
 	)
 
-	rootCmd.Flags().BoolVarP(
-		flags.SaveToS3,
-		"save-to-s3",
-		"",
-		false,
-		"Specify if you want Popeye to persist the output to a S3 bucket",
-	)
-
 	rootCmd.Flags().StringVarP(
 		flags.S3Bucket,
-		"s3bucket",
+		"s3-bucket",
 		"",
 		"",
 		"Specify to which S3 bucket you want to save the output file",

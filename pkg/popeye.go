@@ -115,7 +115,7 @@ func (p *Popeye) Sanitize() error {
 			if err := p.outputTarget.Close(); err != nil {
 				log.Fatal().Err(err).Msg("Closing report")
 			}
-		case isSet(p.flags.SaveToS3):
+		case isSetStr(p.flags.S3Bucket):
 			// Create a single AWS session (we can re use this if we're uploading many files)
 			s, err := session.NewSession(&aws.Config{})
 			if err != nil {
@@ -286,7 +286,7 @@ func NopWriter(i io.ReadWriter) io.ReadWriteCloser {
 func (p *Popeye) ensureOutput() error {
 	p.outputTarget = os.Stdout
 	if !isSet(p.flags.Save) &&
-		!isSet(p.flags.SaveToS3) {
+		!isSetStr(p.flags.S3Bucket) {
 		return nil
 	}
 
@@ -305,7 +305,7 @@ func (p *Popeye) ensureOutput() error {
 		if err != nil {
 			return err
 		}
-	case isSet(p.flags.SaveToS3):
+	case isSetStr(p.flags.S3Bucket):
 		f = NopWriter(bytes.NewBufferString(""))
 	default:
 	}
@@ -365,6 +365,10 @@ func (p *Popeye) sanitize() error {
 
 func isSet(b *bool) bool {
 	return b != nil && *b
+}
+
+func isSetStr(s *string) bool {
+	return s != nil && *s != ""
 }
 
 func ensurePath(path string, mod os.FileMode) error {
