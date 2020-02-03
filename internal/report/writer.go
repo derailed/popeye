@@ -60,7 +60,11 @@ func (s *Sanitizer) Open(msg string, t *Tally) {
 		fmt.Fprintf(s, "%s", strings.Repeat(" ", indent))
 		fmt.Fprintf(s, "%s", out)
 	}
-	fmt.Fprintf(s, "\n%s", s.Color(strings.Repeat("┅", Width), ColorLighSlate))
+	titleSeparator := "┅"
+	if s.jurassicMode {
+		titleSeparator = "="
+	}
+	fmt.Fprintf(s, "\n%s", s.Color(strings.Repeat(titleSeparator, Width), ColorLighSlate))
 	fmt.Fprintln(s)
 }
 
