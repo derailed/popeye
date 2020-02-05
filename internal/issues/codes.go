@@ -287,6 +287,9 @@ codes:
   1105:
     message:  No associated endpoints
     severity: 3
+  1106:
+    message:  "No target ports match service port %s"
+    severity: 3
 
   # -------------------------------------------------------------------------
   # NetworkPolicies

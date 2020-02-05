@@ -2,7 +2,6 @@ package sanitize
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	"github.com/derailed/popeye/internal"
@@ -55,7 +54,7 @@ func (s *Service) Sanitize(ctx context.Context) error {
 		s.checkEndpoints(ctx, svc.Spec.Selector, svc.Spec.Type)
 		s.checkType(ctx, svc.Spec.Type)
 
-		if s.NoConcerns(fqn) && s.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+		if s.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
 			s.ClearOutcome(fqn)
 		}
 	}
@@ -81,9 +80,8 @@ func (s *Service) checkPorts(ctx context.Context, sel map[string]string, ports [
 		return
 	}
 	for _, p := range ports {
-		err := checkServicePort(p, pports)
-		if err != nil {
-			s.AddErr(ctx, err)
+		if !checkServicePort(p, pports) {
+			s.AddCode(ctx, 1106, portAsStr(p))
 			continue
 		}
 		if !checkNamedTargetPort(p) {
@@ -125,13 +123,13 @@ func checkNamedTargetPort(port v1.ServicePort) bool {
 }
 
 // CheckServicePort
-func checkServicePort(port v1.ServicePort, ports map[string]string) error {
+func checkServicePort(port v1.ServicePort, ports map[string]string) bool {
 	fqn := servicePortFQN(port)
 	if _, ok := ports[fqn]; ok {
-		return nil
+		return true
 	}
 
-	return fmt.Errorf("No target ports match service port `%s", portAsStr(port))
+	return false
 }
 
 // PortsForPod computes a port map for a given pod.

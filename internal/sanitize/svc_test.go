@@ -182,6 +182,25 @@ func TestSVCSanitize(t *testing.T) {
 			),
 			0,
 		},
+		"unmatchedSvcPort": {
+			makeSvcLister(
+				svcOpts{
+					kind:         v1.ServiceTypeClusterIP,
+					hasSelector:  true,
+					hasPod:       true,
+					hasEndPoints: true,
+					ports: []v1.ServicePort{
+						{
+							Name:       "p3",
+							Port:       15014,
+							Protocol:   v1.ProtocolTCP,
+							TargetPort: intstr.Parse("15014"),
+						},
+					},
+				},
+			),
+			1,
+		},
 	}
 
 	ctx := makeContext("svc")
