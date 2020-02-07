@@ -28,6 +28,7 @@ replace (
 require (
 	contrib.go.opencensus.io/exporter/ocagent v0.6.0 // indirect
 	github.com/Azure/go-autorest v11.5.0+incompatible // indirect
+	github.com/aws/aws-sdk-go v1.27.2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.2.1 // indirect
 	github.com/googleapis/gnostic v0.2.0 // indirect

@@ -93,6 +93,14 @@ func initPopeyeFlags() {
 	)
 
 	rootCmd.Flags().StringVarP(
+		flags.S3Bucket,
+		"s3-bucket",
+		"",
+		"",
+		"Specify to which S3 bucket you want to save the output file",
+	)
+
+	rootCmd.Flags().StringVarP(
 		flags.LintLevel,
 		"lint",
 		"l",

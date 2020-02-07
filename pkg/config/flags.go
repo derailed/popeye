@@ -12,6 +12,8 @@ type Flags struct {
 	Output             *string
 	ClearScreen        *bool
 	Save               *bool
+	SaveToS3           *bool
+	S3Bucket           *string
 	CheckOverAllocs    *bool
 	AllNamespaces      *bool
 	Spinach            *string
@@ -26,6 +28,8 @@ func NewFlags() *Flags {
 		Output:             strPtr("standard"),
 		AllNamespaces:      boolPtr(false),
 		Save:               boolPtr(false),
+		SaveToS3:           boolPtr(false),
+		S3Bucket:           strPtr(""),
 		ClearScreen:        boolPtr(false),
 		CheckOverAllocs:    boolPtr(false),
 		Spinach:            strPtr(""),

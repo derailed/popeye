@@ -154,6 +154,19 @@ Example to save report in working directory:
   $ POPEYE_REPORT_DIR=$(pwd) popeye --save
 ```
 
+### Save the report to S3
+
+You could also save the generated report to an AWS S3 bucket with providing the flag `--s3-bucket`, as parameter you need to provide the name of the S3 bucket where you want to store the report.
+
+Underlying the AWS Go lib is used which is handling the credential loading for more information check out the official [documentation](https://docs.aws.amazon.com/sdk-for-go/api/aws/session/).
+
+
+Example to save report to S3:
+
+```shell
+  $ popeye --s3-bucket=NAME-OF-YOUR-S3-BUCKET --out=json
+```
+
 ## The Command Line
 
 You can use Popeye standalone or using a spinach yaml config to
