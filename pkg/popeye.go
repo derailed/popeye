@@ -133,6 +133,16 @@ func (p *Popeye) dumpJSON() error {
 	return nil
 }
 
+func (p *Popeye) dumpHTML() error {
+	res, err := p.builder.ToHTML()
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(p.outputTarget, "%v\n", res)
+
+	return nil
+}
+
 func (p *Popeye) dumpScore() error {
 	res, err := p.builder.ToScore()
 	if err != nil {
@@ -186,6 +196,8 @@ func (p *Popeye) dump(printHeader bool) error {
 		err = p.dumpYAML()
 	case report.JSONFormat:
 		err = p.dumpJSON()
+	case report.HTMLFormat:
+		err = p.dumpHTML()
 	case report.PrometheusFormat:
 		err = p.dumpPrometheus()
 	case report.ScoreFormat:
@@ -243,6 +255,8 @@ func (p *Popeye) ensureOutput() error {
 		ext = "xml"
 	case "yaml":
 		ext = "yml"
+	case "html":
+		ext = "html"
 	}
 
 	const outFmt = "sanitizer_%s_%d.%s"

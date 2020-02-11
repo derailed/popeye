@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"text/template"
+	"os"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
@@ -25,6 +27,9 @@ const (
 
 	// JSONFormat dumps sanitizer as JSON.
 	JSONFormat = "json"
+
+	// HTMLFormat dumps sanitizer as HTML
+	HTMLFormat = "html"
 
 	// JunitFormat dumps sanitizer as JUnit report.
 	JunitFormat = "junit"
@@ -131,6 +136,17 @@ func (b *Builder) ToJSON() (string, error) {
 	}
 
 	return string(raw), nil
+}
+
+// ToHTML dumps sanitizer to HTML.
+func (b *Builder) ToHTML() (string, error) {
+	b.augment()
+	tmpl, err := template.ParseFiles("./internal/report/assets/template.html")
+	if err != nil { panic(err) }
+	err = tmpl.Execute(os.Stdout, b)
+	if err != nil { panic(err) }
+ 
+	return "", nil
 }
 
 // ToPrometheus returns prometheus pusher.

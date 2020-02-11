@@ -1,0 +1,52 @@
+<html>
+  <head>
+    <title>Popeye Scan Results</title>
+  </head>
+  <style>
+    .popeye-img {
+      max-width: 175px;
+    }
+    .upper {
+      text-transform: uppercase;
+    }
+    .upper:after {
+      content: 'S';
+    }
+    .msg {
+      margin-left: 25px;
+      display: block;
+    }
+    .issue {
+      display: block;
+    }
+    .summary {
+      display: inline-block;
+    }
+    h2 {
+      color: blue;
+    }
+    h3 {
+      border-bottom: 1px solid black;
+      width: 50%;
+    }
+  </style>
+  <body>
+
+
+    <a href="https://github.com/derailed/popeye"><img class="popeye-img" src="https://github.com/derailed/popeye/raw/master/assets/popeye.png"></a>
+    <span class="summary"><h2>Popeye Summary</h2><span>Your cluster score: <span id="score">{{ .Report.Score }}</span> -- <span id="grade">{{ .Report.Grade }}</span></span></span>
+
+    {{range $val := .Report.Sections }}
+        <h3 id="title"><span class="upper">{{ $val.Title }}</span> (<span id="length">{{ len $val.Outcome }}</span>)
+        <span id="Error">{{ $val.Tally.MarshalYAML.Error }} </span><g-emoji class="g-emoji" alias="boom" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/1f4a5.png">💥</g-emoji>
+        <span id="Warn">{{ $val.Tally.MarshalYAML.Warn }} </span><g-emoji class="g-emoji" alias="scream" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/1f631.png">😱</g-emoji>
+        <span id="Info">{{ $val.Tally.MarshalYAML.Info }} </span><g-emoji class="g-emoji" alias="loud_sound" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/1f50a.png">🔊</g-emoji>
+        <span id="OK">{{ $val.Tally.MarshalYAML.OK }} </span><g-emoji class="g-emoji" alias="white_check_mark" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/2705.png">✅</g-emoji>
+        <span id="score">{{ $val.Tally.Score }}</span></h3>
+
+        {{ range $key, $value := $val.Outcome }}<span class="issue">{{ $key }}</span>{{ $length := len $value }}
+        {{ if ne $length 0 }} {{ $temp :=  index $value 0 }}<span class="msg"> {{(index $value 0).Message}}</span>{{ end }}{{ end }}
+    {{end}}
+
+  </body>
+</html>
