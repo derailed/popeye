@@ -19,6 +19,7 @@ type Flags struct {
 	Spinach            *string
 	Sections           *[]string
 	PushGatewayAddress *string
+	FileName           *string
 }
 
 // NewFlags returns new configuration flags.
@@ -30,6 +31,7 @@ func NewFlags() *Flags {
 		Save:               boolPtr(false),
 		SaveToS3:           boolPtr(false),
 		S3Bucket:           strPtr(""),
+		FileName:           strPtr(""),
 		ClearScreen:        boolPtr(false),
 		CheckOverAllocs:    boolPtr(false),
 		Spinach:            strPtr(""),

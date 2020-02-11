@@ -37,6 +37,9 @@ var (
 const outFmt = "sanitizer_%s_%d.%s"
 
 func (p *Popeye) fileName() string {
+	if isSetStr(p.flags.FileName) {
+		return fmt.Sprintf(outFmt, *p.flags.FileName, time.Now().UnixNano(), p.fileExt())
+	}
 	return fmt.Sprintf(outFmt, p.client.ActiveCluster(), time.Now().UnixNano(), p.fileExt())
 }
 
@@ -117,7 +120,8 @@ func (p *Popeye) Sanitize() error {
 			}
 		case isSetStr(p.flags.S3Bucket):
 			// Create a single AWS session (we can re use this if we're uploading many files)
-			s, err := session.NewSession(&aws.Config{})
+			s, err := session.NewSession(&aws.Config{
+				LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors)})
 			if err != nil {
 				log.Fatal().Err(err).Msg("Create S3 Session")
 			}
