@@ -37,8 +37,8 @@ var (
 const outFmt = "sanitizer_%s_%d.%s"
 
 func (p *Popeye) fileName() string {
-	if isSetStr(p.flags.FileName) {
-		return fmt.Sprintf(outFmt, *p.flags.FileName, time.Now().UnixNano(), p.fileExt())
+	if isSetStr(p.flags.K8sPopeyeClusterName) {
+		return fmt.Sprintf(outFmt, *p.flags.K8sPopeyeClusterName, time.Now().UnixNano(), p.fileExt())
 	}
 	return fmt.Sprintf(outFmt, p.client.ActiveCluster(), time.Now().UnixNano(), p.fileExt())
 }

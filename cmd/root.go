@@ -101,8 +101,8 @@ func initPopeyeFlags() {
 	)
 
 	rootCmd.Flags().StringVarP(
-		flags.FileName,
-		"filename",
+		flags.K8sPopeyeClusterName,
+		"k8s-popeye-cluster-name",
 		"",
 		"",
 		"Specify the filename for the saved report",
