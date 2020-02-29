@@ -93,6 +93,10 @@ func (c *Client) ActiveCluster() string {
 		return *c.flags.ClusterName
 	}
 
+	if isSet(c.flags.K8sPopeyeClusterName) {
+		return *c.flags.K8sPopeyeClusterName
+	}
+
 	cfg, err := c.RawConfig()
 	if err != nil {
 		return "n/a"
