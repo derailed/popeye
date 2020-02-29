@@ -76,81 +76,52 @@ func bomb(msg string) {
 }
 
 func initPopeyeFlags() {
-	rootCmd.Flags().StringVarP(
-		flags.Output,
-		"out",
-		"o",
+	rootCmd.Flags().StringVarP(flags.Output, "out", "o",
 		"standard",
 		"Specify the output type (standard, jurassic, yaml, json, junit, prometheus, score)",
 	)
 
-	rootCmd.Flags().BoolVarP(
-		flags.Save,
-		"save",
-		"",
+	rootCmd.Flags().BoolVarP(flags.Save, "save", "",
 		false,
 		"Specify if you want Popeye to persist the output to a file",
 	)
 
-	rootCmd.Flags().StringVarP(
-		flags.S3Bucket,
-		"s3-bucket",
-		"",
+	rootCmd.Flags().StringVarP(flags.S3Bucket, "s3-bucket", "",
 		"",
 		"Specify to which S3 bucket you want to save the output file",
 	)
 
-	rootCmd.Flags().StringVarP(
-		flags.K8sPopeyeClusterName,
-		"k8s-popeye-cluster-name",
+	rootCmd.Flags().StringVarP(flags.InClusterName, "cluster-name", "",
 		"",
-		"",
-		"Specify the filename for the saved report",
+		"Specificy a cluster name when running popeye in cluster",
 	)
 
-	rootCmd.Flags().StringVarP(
-		flags.LintLevel,
-		"lint",
-		"l",
+	rootCmd.Flags().StringVarP(flags.LintLevel, "lint", "l",
 		"ok",
 		"Specify a lint level (ok, info, warn, error)",
 	)
 
-	rootCmd.PersistentFlags().BoolVarP(
-		flags.ClearScreen,
-		"clear",
-		"c",
+	rootCmd.PersistentFlags().BoolVarP(flags.ClearScreen, "clear", "c",
 		false,
 		"Clears the screen before a run",
 	)
 
-	rootCmd.Flags().BoolVarP(
-		flags.CheckOverAllocs,
-		"over-allocs",
-		"",
+	rootCmd.Flags().BoolVarP(flags.CheckOverAllocs, "over-allocs", "",
 		false,
 		"Check for cpu/memory over allocations",
 	)
 
-	rootCmd.Flags().BoolVarP(
-		flags.AllNamespaces,
-		"all-namespaces",
-		"A",
+	rootCmd.Flags().BoolVarP(flags.AllNamespaces, "all-namespaces", "A",
 		false,
 		"Sanitize all namespaces",
 	)
 
-	rootCmd.Flags().StringVarP(
-		flags.Spinach,
-		"file",
-		"f",
+	rootCmd.Flags().StringVarP(flags.Spinach, "file", "f",
 		"",
 		"Use a spinach YAML configuration file",
 	)
 
-	rootCmd.Flags().StringSliceVarP(
-		flags.Sections,
-		"sections", "s",
+	rootCmd.Flags().StringSliceVarP(flags.Sections, "sections", "s",
 		[]string{},
 		"Specifies which resources to include in the scan ie -s po,svc",
 	)

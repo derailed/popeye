@@ -87,19 +87,26 @@ func (c *Client) IsActiveNamespace(ns string) bool {
 	return ns == c.ActiveNamespace()
 }
 
-// ActiveCluster get the current cluster name.
-func (c *Client) ActiveCluster() string {
-	if isSet(c.flags.ClusterName) {
-		return *c.flags.ClusterName
-	}
+// NAValue represents a missing value.
+const NAValue = "n/a"
 
-	if isSet(c.flags.K8sPopeyeClusterName) {
-		return *c.flags.K8sPopeyeClusterName
+// ActiveCluster get the current cluster name.
+func (c *Client) ActiveCluster() (name string) {
+	defer func() {
+		if name == NAValue && isSet(c.flags.InClusterName) {
+			name = *c.flags.InClusterName
+		}
+	}()
+
+	name = NAValue
+	if isSet(c.flags.ClusterName) {
+		name = *c.flags.ClusterName
+		return
 	}
 
 	cfg, err := c.RawConfig()
 	if err != nil {
-		return "n/a"
+		return
 	}
 
 	ctx := cfg.CurrentContext
@@ -108,10 +115,10 @@ func (c *Client) ActiveCluster() string {
 	}
 
 	if ctx, ok := cfg.Contexts[ctx]; ok {
-		return ctx.Cluster
+		name = ctx.Cluster
 	}
 
-	return "n/a"
+	return
 }
 
 // RawConfig fetch the current kubeconfig with no overrides.

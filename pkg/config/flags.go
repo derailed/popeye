@@ -8,36 +8,36 @@ import (
 type Flags struct {
 	*genericclioptions.ConfigFlags
 
-	LintLevel            *string
-	Output               *string
-	ClearScreen          *bool
-	Save                 *bool
-	SaveToS3             *bool
-	S3Bucket             *string
-	CheckOverAllocs      *bool
-	AllNamespaces        *bool
-	Spinach              *string
-	Sections             *[]string
-	PushGatewayAddress   *string
-	K8sPopeyeClusterName *string
+	LintLevel          *string
+	Output             *string
+	ClearScreen        *bool
+	Save               *bool
+	SaveToS3           *bool
+	S3Bucket           *string
+	CheckOverAllocs    *bool
+	AllNamespaces      *bool
+	Spinach            *string
+	Sections           *[]string
+	PushGatewayAddress *string
+	InClusterName      *string
 }
 
 // NewFlags returns new configuration flags.
 func NewFlags() *Flags {
 	return &Flags{
-		LintLevel:            strPtr(defaultLintLevel),
-		Output:               strPtr("standard"),
-		AllNamespaces:        boolPtr(false),
-		Save:                 boolPtr(false),
-		SaveToS3:             boolPtr(false),
-		S3Bucket:             strPtr(""),
-		K8sPopeyeClusterName: strPtr(""),
-		ClearScreen:          boolPtr(false),
-		CheckOverAllocs:      boolPtr(false),
-		Spinach:              strPtr(""),
-		Sections:             &[]string{},
-		ConfigFlags:          genericclioptions.NewConfigFlags(false),
-		PushGatewayAddress:   strPtr("")}
+		LintLevel:          strPtr(defaultLintLevel),
+		Output:             strPtr("standard"),
+		AllNamespaces:      boolPtr(false),
+		Save:               boolPtr(false),
+		SaveToS3:           boolPtr(false),
+		S3Bucket:           strPtr(""),
+		InClusterName:      strPtr(""),
+		ClearScreen:        boolPtr(false),
+		CheckOverAllocs:    boolPtr(false),
+		Spinach:            strPtr(""),
+		Sections:           &[]string{},
+		ConfigFlags:        genericclioptions.NewConfigFlags(false),
+		PushGatewayAddress: strPtr("")}
 }
 
 // OutputFormat returns the report output format.
