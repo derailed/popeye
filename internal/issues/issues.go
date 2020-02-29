@@ -1,6 +1,8 @@
 package issues
 
 import (
+	"sort"
+
 	"github.com/derailed/popeye/pkg/config"
 )
 
@@ -25,6 +27,33 @@ func (i Issues) MaxSeverity() config.Level {
 	}
 
 	return max
+}
+
+func (i Issues) Sort(l config.Level) Issues {
+	ii := make(Issues, 0, len(i))
+	gg := i.Group()
+	keys := make(sort.StringSlice, 0, len(gg))
+	for k := range gg {
+		keys = append(keys, k)
+	}
+	keys.Sort()
+	for _, group := range keys {
+		sev := gg[group].MaxSeverity()
+		if sev < l {
+			continue
+		}
+		for _, i := range gg[group] {
+			if i.Level < l {
+				continue
+			}
+			if i.Group == Root {
+				ii = append(ii, i)
+				continue
+			}
+			ii = append(ii, i)
+		}
+	}
+	return ii
 }
 
 // Group collect issues as groups.

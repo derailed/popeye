@@ -78,7 +78,7 @@ func bomb(msg string) {
 func initPopeyeFlags() {
 	rootCmd.Flags().StringVarP(flags.Output, "out", "o",
 		"standard",
-		"Specify the output type (standard, jurassic, yaml, json, junit, prometheus, score)",
+		"Specify the output type (standard, jurassic, yaml, json, html, junit, prometheus, score)",
 	)
 
 	rootCmd.Flags().BoolVarP(flags.Save, "save", "",

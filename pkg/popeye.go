@@ -48,6 +48,8 @@ func (p *Popeye) fileExt() string {
 		return "xml"
 	case "yaml":
 		return "yml"
+	case "html":
+		return "html"
 	default:
 		return "txt"
 	}
@@ -180,6 +182,16 @@ func (p *Popeye) dumpJSON() error {
 	return nil
 }
 
+func (p *Popeye) dumpHTML() error {
+	res, err := p.builder.ToHTML()
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(p.outputTarget, "%v\n", res)
+
+	return nil
+
+}
 func (p *Popeye) dumpScore() error {
 	res, err := p.builder.ToScore()
 	if err != nil {
@@ -213,7 +225,6 @@ func (p *Popeye) dumpStd(mode, header bool) error {
 func (p *Popeye) dumpPrometheus() error {
 	pusher := p.builder.ToPrometheus(
 		p.flags.PushGatewayAddress,
-		p.client.ActiveCluster(),
 		p.client.ActiveNamespace(),
 	)
 	return pusher.Add()
@@ -225,6 +236,7 @@ func (p *Popeye) dump(printHeader bool) error {
 		return errors.New("Nothing to report, check section name or permissions")
 	}
 
+	p.builder.SetClusterName(p.client.ActiveCluster())
 	var err error
 	switch p.flags.OutputFormat() {
 	case report.JunitFormat:
@@ -233,6 +245,8 @@ func (p *Popeye) dump(printHeader bool) error {
 		err = p.dumpYAML()
 	case report.JSONFormat:
 		err = p.dumpJSON()
+	case report.HTMLFormat:
+		err = p.dumpHTML()
 	case report.PrometheusFormat:
 		err = p.dumpPrometheus()
 	case report.ScoreFormat:
@@ -286,8 +300,7 @@ func NopWriter(i io.ReadWriter) io.ReadWriteCloser {
 
 func (p *Popeye) ensureOutput() error {
 	p.outputTarget = os.Stdout
-	if !isSet(p.flags.Save) &&
-		!isSetStr(p.flags.S3Bucket) {
+	if !isSet(p.flags.Save) && !isSetStr(p.flags.S3Bucket) {
 		return nil
 	}
 
@@ -306,13 +319,12 @@ func (p *Popeye) ensureOutput() error {
 		if err != nil {
 			return err
 		}
+		fmt.Println(fPath)
 	case isSetStr(p.flags.S3Bucket):
 		f = NopWriter(bytes.NewBufferString(""))
-	default:
 	}
 	p.outputTarget = f
 
-	fmt.Printf("Sanitizer saved to: %s\n", p.fileName())
 	return nil
 }
 
