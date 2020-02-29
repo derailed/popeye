@@ -1,10 +1,13 @@
 package report
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"sort"
 	"strings"
+	"text/template"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
@@ -26,6 +29,9 @@ const (
 	// JSONFormat dumps sanitizer as JSON.
 	JSONFormat = "json"
 
+	// HTMLFormat dumps sanitizer as HTML
+	HTMLFormat = "html"
+
 	// JunitFormat dumps sanitizer as JUnit report.
 	JunitFormat = "junit"
 
@@ -39,8 +45,9 @@ const (
 type (
 	// Builder represents sanitizer
 	Builder struct {
-		Report  Report `json:"popeye" yaml:"popeye"`
-		aliases *internal.Aliases
+		Report      Report `json:"popeye" yaml:"popeye"`
+		aliases     *internal.Aliases
+		clusterName string
 	}
 
 	// Report represents the output of a sanitization pass.
@@ -64,6 +71,21 @@ type (
 // NewBuilder returns a new sanitizer report.
 func NewBuilder(a *internal.Aliases) *Builder {
 	return &Builder{aliases: a}
+}
+
+// SetClusterName sets the current cluster name.
+func (b *Builder) SetClusterName(s string) {
+	b.clusterName = s
+}
+
+// ClusterName returns the cluster name.
+func (b *Builder) ClusterName() string {
+	return b.clusterName
+}
+
+// Aliases returns resource aliases.
+func (b *Builder) Aliases() *internal.Aliases {
+	return b.aliases
 }
 
 // HasContent checks if we actually have anything to report.
@@ -133,13 +155,39 @@ func (b *Builder) ToJSON() (string, error) {
 	return string(raw), nil
 }
 
+// ToHTML dumps sanitizer to HTML.
+func (b *Builder) ToHTML() (string, error) {
+	b.augment()
+	raw, err := ioutil.ReadFile("./internal/report/assets/template.html")
+	if err != nil {
+		return "", err
+	}
+
+	fMap := template.FuncMap{
+		"toEmoji": toEmoji,
+		"toTitle": Titleize,
+		"isRoot":  isRoot,
+	}
+	tpl, err := template.New("sanitize").Funcs(fMap).Parse(string(raw))
+	if err != nil {
+		return "", err
+	}
+
+	buff := bytes.NewBufferString("")
+	if err := tpl.Execute(buff, b); err != nil {
+		return "", err
+	}
+
+	return buff.String(), nil
+}
+
 // ToPrometheus returns prometheus pusher.
-func (b *Builder) ToPrometheus(address *string, cluster, namespace string) *push.Pusher {
+func (b *Builder) ToPrometheus(address *string, namespace string) *push.Pusher {
 	b.augment()
 	if namespace == "" {
 		namespace = "all"
 	}
-	return prometheusMarshal(b, address, cluster, namespace)
+	return prometheusMarshal(b, address, b.clusterName, namespace)
 }
 
 // ToScore dumps sanitizer to only the score value.
@@ -166,11 +214,11 @@ func (b *Builder) PrintSummary(s *Sanitizer) {
 }
 
 // PrintClusterInfo displays cluster information.
-func (b *Builder) PrintClusterInfo(s *Sanitizer, name string, metrics bool) {
-	if name == "" {
-		name = "n/a"
+func (b *Builder) PrintClusterInfo(s *Sanitizer, clusterName string, metrics bool) {
+	if clusterName == "" {
+		clusterName = "n/a"
 	}
-	s.Open(Titleize(b.aliases, fmt.Sprintf("General [%s]", name), -1), nil)
+	s.Open(Titleize(b.aliases, fmt.Sprintf("General [%s]", clusterName), -1), nil)
 	{
 		s.Print(config.OkLevel, 1, "Connectivity")
 		if metrics {
@@ -240,7 +288,6 @@ func (b *Builder) PrintReport(level config.Level, s *Sanitizer) {
 // ----------------------------------------------------------------------------
 // Helpers...
 
-// Titleize computes a section title.
 func Titleize(a *internal.Aliases, res string, count int) string {
 	res = a.FromAlias(res)
 	if count <= 0 || res == "general" {
@@ -248,4 +295,24 @@ func Titleize(a *internal.Aliases, res string, count int) string {
 	}
 
 	return strings.ToUpper(fmt.Sprintf("%s (%d scanned)", a.Pluralize(res), count))
+}
+
+func isRoot(g string) bool {
+	return g == issues.Root
+}
+
+func toEmoji(level config.Level) (s string) {
+	switch level {
+	case config.ErrorLevel:
+		s = "fas fa-bomb"
+	case config.WarnLevel:
+		s = "fas fa-radiation-alt"
+	case config.InfoLevel:
+		s = "fas fa-info-circle"
+	case config.OkLevel:
+		s = "far fa-check-circle"
+	default:
+		s = "fas fa-info-circle"
+	}
+	return s
 }
