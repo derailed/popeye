@@ -290,10 +290,12 @@ type readWriteCloser struct {
 	io.ReadWriter
 }
 
+// Close close read stream.
 func (wC readWriteCloser) Close() error {
 	return nil
 }
 
+// NopWriter fake writer.
 func NopWriter(i io.ReadWriter) io.ReadWriteCloser {
 	return &readWriteCloser{i}
 }

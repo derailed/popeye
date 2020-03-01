@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-<img src="https://raw.githubusercontent.com/derailed/popeye/master/assets/popeye.png" align="right" width="100" height="auto"/>
+<img src="https://raw.githubusercontent.com/derailed/popeye/master/assets/popeye_feature.png" align="right" width="100" height="auto"/>
 
 <br/>
 <br/>

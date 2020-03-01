@@ -29,6 +29,7 @@ func (i Issues) MaxSeverity() config.Level {
 	return max
 }
 
+// Sort sorts issues.
 func (i Issues) Sort(l config.Level) Issues {
 	ii := make(Issues, 0, len(i))
 	gg := i.Group()

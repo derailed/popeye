@@ -25,7 +25,7 @@ func TestNewConfig(t *testing.T) {
 
 func TestNewConfigWithFile(t *testing.T) {
 	var (
-		dir = "assets/sp1.yml"
+		dir = "testdata/sp1.yml"
 		ss  = []string{"s1", "s2"}
 		f   = NewFlags()
 	)
@@ -53,7 +53,7 @@ func TestNewConfigWithFile(t *testing.T) {
 
 func TestNewConfigNoResourceSpec(t *testing.T) {
 	var (
-		dir = "assets/sp2.yml"
+		dir = "testdata/sp2.yml"
 		f   = NewFlags()
 	)
 	f.Spinach = &dir
@@ -69,7 +69,7 @@ func TestNewConfigNoResourceSpec(t *testing.T) {
 
 func TestNewConfigFileToast(t *testing.T) {
 	var (
-		dir = "assets/sp_old.yml"
+		dir = "testdata/sp_old.yml"
 		f   = NewFlags()
 	)
 	f.Spinach = &dir
@@ -80,7 +80,7 @@ func TestNewConfigFileToast(t *testing.T) {
 
 func TestNewConfigFileNoExists(t *testing.T) {
 	var (
-		dir = "assets/spinach.yml"
+		dir = "testdata/spinach.yml"
 		f   = NewFlags()
 	)
 	f.Spinach = &dir
