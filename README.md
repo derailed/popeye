@@ -195,6 +195,7 @@ Popeye can generate sanitizer reports in a variety of formats. You can use the -
 | standard   | The full monty output iconized and colorized           | yes     |                                              |
 | jurassic   | No icons or color like it's 1989                       |         |                                              |
 | yaml       | As YAML                                                |         |                                              |
+| html       | As HTML                                                |         |                                              |
 | json       | As JSON                                                |         |                                              |
 | junit      | For the Java melancholic                               |         |                                              |
 | prometheus | Dumps report a prometheus scrappable metrics           |         | [dardanel](https://github.com/eminugurkenar) |
@@ -293,7 +294,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: popeye
-              image: quay.io/derailed/popeye:v0.3.6
+              image: quay.io/derailed/popeye:v0.7.0
               imagePullPolicy: IfNotPresent
               args:
                 - -o
@@ -304,7 +305,7 @@ spec:
                   memory: 100Mi
 ```
 
-## Popeye has got your RBAC!
+## Popeye got your RBAC!
 
 In order for Popeye to do his work, the signed-in user must have enough RBAC oomph to
 get/list the resources mentioned above.
