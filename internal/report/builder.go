@@ -288,7 +288,7 @@ func (b *Builder) PrintReport(level config.Level, s *Sanitizer) {
 // ----------------------------------------------------------------------------
 // Helpers...
 
-// Titelize renders a section title.
+// Titleize renders a section title.
 func Titleize(a *internal.Aliases, res string, count int) string {
 	res = a.FromAlias(res)
 	if count <= 0 || res == "general" {
