@@ -167,6 +167,32 @@ Example to save report to S3:
   $ popeye --s3-bucket=NAME-OF-YOUR-S3-BUCKET --out=json
 ```
 
+### Run public docker image locally
+
+You don't have to build and/or install the binary to run popeye: you can just
+run it directly from DockerHub. The default command when you run the docker
+container is `popeye`, so you just need to pass whatever cli args are normally
+passed to popeye.  To access your clusters, map your local kube config
+directory into the container with `-v` :
+
+```shell
+  $ docker run --rm -it -v $HOME/.kube:/root/.kube derailed/popeye:latest --context foo -n bar
+```
+
+Running the above docker command with `--rm` means that the container gets
+deleted with popeye exits. When you use `--save`, it will write it to /tmp in
+the container and then delete the container when popeye exits, which means you
+lose the output. To get around this, map /tmp to the container's /tmp:
+
+```shell
+  $ docker run --rm -it -v $HOME/.kube:/root/.kube -v /tmp:/tmp derailed/popeye:latest --context foo -n bar --save
+  /tmp/popeye/sanitizer_foo_1583042166995001900.txt
+
+  # Docker has exited, but the file is in your /tmp
+  $ cat /tmp/popeye/sanitizer_foo_1583042166995001900.txt
+    <snip>
+```
+
 ## The Command Line
 
 You can use Popeye standalone or using a spinach yaml config to
