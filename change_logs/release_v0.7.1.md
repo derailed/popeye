@@ -20,8 +20,7 @@ Maintenance Release!
 
 ## Resolved Bugs/PRs
 
-* [Issue #73](https://github.com/derailed/popeye/issues/73)
-* [PR 81](https://github.com/derailed/popeye/pull/81)
+* [Issue #85](https://github.com/derailed/popeye/issues/85)
 
 ---
 
