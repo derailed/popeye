@@ -170,13 +170,14 @@ Example to save report to S3:
 ### Run public docker image locally
 
 You don't have to build and/or install the binary to run popeye: you can just
-run it directly from DockerHub. The default command when you run the docker
-container is `popeye`, so you just need to pass whatever cli args are normally
-passed to popeye.  To access your clusters, map your local kube config
-directory into the container with `-v` :
+run it directly from the official docker repo on quay.io. The default command
+when you run the docker container is `popeye`, so you just need to pass
+whatever cli args are normally passed to popeye.  To access your clusters, map
+your local kube config directory into the container with `-v` :
 
 ```shell
-  $ docker run --rm -it -v $HOME/.kube:/root/.kube derailed/popeye:latest --context foo -n bar
+  $ docker run --rm -it -v $HOME/.kube:/root/.kube \
+      quay.io/derailed/popeye:latest --context foo -n bar
 ```
 
 Running the above docker command with `--rm` means that the container gets
@@ -185,10 +186,12 @@ the container and then delete the container when popeye exits, which means you
 lose the output. To get around this, map /tmp to the container's /tmp:
 
 ```shell
-  $ docker run --rm -it -v $HOME/.kube:/root/.kube -v /tmp:/tmp derailed/popeye:latest --context foo -n bar --save
+  $ docker run --rm -it -v $HOME/.kube:/root/.kube -v /tmp:/tmp \
+      quay.ioderailed/popeye:latest --context foo -n bar --save
   /tmp/popeye/sanitizer_foo_1583042166995001900.txt
 
-  # Docker has exited, but the file is in your /tmp
+  # Docker has exited, and the container has been deleted, but the file
+  # is in your /tmp subdir because you mapped it into the container
   $ cat /tmp/popeye/sanitizer_foo_1583042166995001900.txt
     <snip>
 ```
