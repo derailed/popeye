@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"sort"
 	"strings"
 	"text/template"
@@ -158,17 +157,13 @@ func (b *Builder) ToJSON() (string, error) {
 // ToHTML dumps sanitizer to HTML.
 func (b *Builder) ToHTML() (string, error) {
 	b.augment()
-	raw, err := ioutil.ReadFile("./internal/report/assets/template.html")
-	if err != nil {
-		return "", err
-	}
 
 	fMap := template.FuncMap{
 		"toEmoji": toEmoji,
 		"toTitle": Titleize,
 		"isRoot":  isRoot,
 	}
-	tpl, err := template.New("sanitize").Funcs(fMap).Parse(string(raw))
+	tpl, err := template.New("sanitize").Funcs(fMap).Parse(htmlTemplate)
 	if err != nil {
 		return "", err
 	}

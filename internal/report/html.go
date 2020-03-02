@@ -1,5 +1,7 @@
-<html>
+package report
 
+var htmlTemplate = `
+<html>
 <head>
   <title>Popeye Sanitizer Report</title>
   <script src="https://kit.fontawesome.com/b45e86135f.js" crossorigin="anonymous"></script>
@@ -263,3 +265,4 @@
 </body>
 
 </html>
+`
