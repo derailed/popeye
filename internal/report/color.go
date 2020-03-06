@@ -36,7 +36,7 @@ func Colorizef(c Color, fmat string, args ...interface{}) string {
 
 // Colorize a string based on given color.
 func Colorize(s string, c Color) string {
-	return "\033[38;5;" + strconv.Itoa(int(c)) + ";m" + s + "\033[0m"
+	return "\033[38;5;" + strconv.Itoa(int(c)) + "m" + s + "\033[0m"
 }
 
 func colorForLevel(l config.Level) Color {
