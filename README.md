@@ -212,7 +212,7 @@ NOTE: This file will change as Popeye matures!
 
 NOTE! Please thread carefully here with your regex as more resources than expected may get excluded from the report via a *loose* regex rule. When your cluster resources change, this could lead to rendering sanitization sub-optimal. Once in a while it might be a good idea to run Popeye `Config less` to make sure you are trapping any new issues that may have arised in your clusters...
 
-Here is an example spinach file as it stands in this release. There is a fuller eks based spinach file in this repo under `spinach`. (BTW: for new comers into the project, might be a great way to contribute by adding cluster specific spinach file PRs...)
+Here is an example spinach file as it stands in this release. There is a fuller eks and aks based spinach file in this repo under `spinach`. (BTW: for new comers into the project, might be a great way to contribute by adding cluster specific spinach file PRs...)
 
 ```yaml
 # A Popeye sample configuration file
