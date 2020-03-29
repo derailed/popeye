@@ -5,14 +5,14 @@ import (
 
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/sanitize"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/types"
 )
 
 // ClusterRoleBinding represents a ClusterRoleBinding scruber.
 type ClusterRoleBinding struct {
-	client *k8s.Client
+	client types.Connection
 	*config.Config
 	*issues.Collector
 
@@ -24,7 +24,7 @@ type ClusterRoleBinding struct {
 // NewClusterRoleBinding return a new ClusterRoleBinding scruber.
 func NewClusterRoleBinding(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	crb := ClusterRoleBinding{
-		client:    c.client,
+		client:    c.factory.Client(),
 		Config:    c.config,
 		Collector: issues.NewCollector(codes, c.config),
 	}

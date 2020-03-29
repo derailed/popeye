@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -55,7 +55,7 @@ func (d *Deployment) Sanitize(ctx context.Context) error {
 		d.checkDeprecation(ctx, dp)
 		d.checkDeployment(ctx, dp)
 		d.checkContainers(ctx, dp.Spec.Template.Spec)
-		pmx := k8s.PodsMetrics{}
+		pmx := client.PodsMetrics{}
 		podsMetrics(d, pmx)
 		d.checkUtilization(ctx, over, dp, pmx)
 
@@ -71,7 +71,7 @@ func (d *Deployment) checkDeprecation(ctx context.Context, dp *appsv1.Deployment
 	const current = "apps/v1"
 
 	fqn := internal.MustExtractFQN(ctx)
-	rev, err := resourceRev(fqn, dp.Annotations)
+	rev, err := resourceRev(fqn, "Deployment", dp.Annotations)
 	if err != nil {
 		rev = revFromLink(dp.SelfLink)
 		if rev == "" {
@@ -111,7 +111,7 @@ func (d *Deployment) checkContainers(ctx context.Context, spec v1.PodSpec) {
 }
 
 // CheckUtilization checks deployments requested resources vs current utilization.
-func (d *Deployment) checkUtilization(ctx context.Context, over bool, dp *appsv1.Deployment, pmx k8s.PodsMetrics) {
+func (d *Deployment) checkUtilization(ctx context.Context, over bool, dp *appsv1.Deployment, pmx client.PodsMetrics) {
 	mx := d.deploymentUsage(dp, pmx)
 	if mx.RequestCPU.IsZero() && mx.RequestMEM.IsZero() {
 		return
@@ -121,9 +121,9 @@ func (d *Deployment) checkUtilization(ctx context.Context, over bool, dp *appsv1
 }
 
 // DeploymentUsage finds deployment running pods and compute current vs requested resource usage.
-func (d *Deployment) deploymentUsage(dp *appsv1.Deployment, pmx k8s.PodsMetrics) ConsumptionMetrics {
+func (d *Deployment) deploymentUsage(dp *appsv1.Deployment, pmx client.PodsMetrics) ConsumptionMetrics {
 	var mx ConsumptionMetrics
-	for pfqn, pod := range d.ListPodsBySelector(dp.Spec.Selector) {
+	for pfqn, pod := range d.ListPodsBySelector(dp.Namespace, dp.Spec.Selector) {
 		cpu, mem := computePodResources(pod.Spec)
 		mx.QOS = pod.Status.QOSClass
 		mx.RequestCPU.Add(cpu)
@@ -154,18 +154,18 @@ func pullOverAllocs(ctx context.Context) bool {
 }
 
 // PodsMetrics gathers pod's container metrics from metrics server.
-func podsMetrics(l PodsMetricsLister, pmx k8s.PodsMetrics) {
+func podsMetrics(l PodsMetricsLister, pmx client.PodsMetrics) {
 	for fqn, mx := range l.ListPodsMetrics() {
-		cmx := k8s.ContainerMetrics{}
+		cmx := client.ContainerMetrics{}
 		podToContainerMetrics(mx, cmx)
 		pmx[fqn] = cmx
 	}
 }
 
 // PodToContainerMetrics gather pod's container metrics from metrics server.
-func podToContainerMetrics(pmx *mv1beta1.PodMetrics, cmx k8s.ContainerMetrics) {
+func podToContainerMetrics(pmx *mv1beta1.PodMetrics, cmx client.ContainerMetrics) {
 	for _, co := range pmx.Containers {
-		cmx[co.Name] = k8s.Metrics{
+		cmx[co.Name] = client.Metrics{
 			CurrentCPU: *co.Usage.Cpu(),
 			CurrentMEM: *co.Usage.Memory(),
 		}
@@ -197,7 +197,7 @@ func computePodResources(spec v1.PodSpec) (cpu, mem resource.Quantity) {
 }
 
 // ResourceRev is resource was deployed via kubectl check annotation for manifest rev.
-func resourceRev(fqn string, a map[string]string) (string, error) {
+func resourceRev(fqn string, kind string, a map[string]string) (string, error) {
 	raw, ok := a["kubectl.kubernetes.io/last-applied-configuration"]
 	if !ok {
 		return "", fmt.Errorf("Raw resource manifest not available for %s", fqn)
@@ -207,7 +207,11 @@ func resourceRev(fqn string, a map[string]string) (string, error) {
 	if err := json.Unmarshal([]byte(raw), &m); err != nil {
 		return "", err
 	}
-	return m["apiVersion"].(string), nil
+	if m["kind"] == kind {
+		return m["apiVersion"].(string), nil
+	}
+
+	return "", errors.New("no matching resource kind")
 }
 
 // RevFromLink. extract resource version from selflink.

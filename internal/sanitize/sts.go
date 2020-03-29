@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	appsv1 "k8s.io/api/apps/v1"
 )
 
@@ -47,7 +47,7 @@ func NewStatefulSet(co *issues.Collector, lister StatefulSetLister) *StatefulSet
 
 // Sanitize cleanse the resource.
 func (s *StatefulSet) Sanitize(ctx context.Context) error {
-	pmx := k8s.PodsMetrics{}
+	pmx := client.PodsMetrics{}
 	podsMetrics(s, pmx)
 
 	over := pullOverAllocs(ctx)
@@ -71,7 +71,7 @@ func (s *StatefulSet) Sanitize(ctx context.Context) error {
 func (s *StatefulSet) checkDeprecation(ctx context.Context, st *appsv1.StatefulSet) {
 	const current = "apps/v1"
 
-	rev, err := resourceRev(internal.MustExtractFQN(ctx), st.Annotations)
+	rev, err := resourceRev(internal.MustExtractFQN(ctx), "StatefulSet", st.Annotations)
 	if err != nil {
 		rev = revFromLink(st.SelfLink)
 		if rev == "" {
@@ -136,7 +136,7 @@ func checkMEM(ctx context.Context, c CollectorLimiter, over bool, mx Consumption
 	}
 }
 
-func (s *StatefulSet) checkUtilization(ctx context.Context, over bool, st *appsv1.StatefulSet, pmx k8s.PodsMetrics) {
+func (s *StatefulSet) checkUtilization(ctx context.Context, over bool, st *appsv1.StatefulSet, pmx client.PodsMetrics) {
 	mx := s.statefulsetUsage(st, pmx)
 	if mx.RequestCPU.IsZero() && mx.RequestMEM.IsZero() {
 		return
@@ -146,9 +146,9 @@ func (s *StatefulSet) checkUtilization(ctx context.Context, over bool, st *appsv
 	checkMEM(ctx, s, over, mx)
 }
 
-func (s *StatefulSet) statefulsetUsage(st *appsv1.StatefulSet, pmx k8s.PodsMetrics) ConsumptionMetrics {
+func (s *StatefulSet) statefulsetUsage(st *appsv1.StatefulSet, pmx client.PodsMetrics) ConsumptionMetrics {
 	var mx ConsumptionMetrics
-	for pfqn, pod := range s.ListPodsBySelector(st.Spec.Selector) {
+	for pfqn, pod := range s.ListPodsBySelector(st.Namespace, st.Spec.Selector) {
 		cpu, mem := computePodResources(pod.Spec)
 		mx.QOS = pod.Status.QOSClass
 		mx.RequestCPU.Add(cpu)

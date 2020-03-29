@@ -61,7 +61,7 @@ func (a *Aliases) init() {
 		"configmap":               {ShortNames: StringSet{"cm": Blank}},
 		"clusterrole":             {ShortNames: StringSet{"cr": Blank}},
 		"clusterrolebinding":      {ShortNames: StringSet{"crb": Blank}},
-		"deployment":              {ShortNames: StringSet{"dp": Blank, "deploy": Blank}, Plural: "deployments"},
+		"deployment":              {ShortNames: StringSet{"dp": Blank, "deploy": Blank}},
 		"daemonset":               {ShortNames: StringSet{"ds": Blank}},
 		"horizontalpodautoscaler": {ShortNames: StringSet{"hpa": Blank}},
 		"ingress":                 {ShortNames: StringSet{"ing": Blank}, Plural: "ingresses"},

@@ -1,22 +1,29 @@
 package dag
 
 import (
-	"github.com/derailed/popeye/internal/k8s"
+	"context"
+	"errors"
+
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
+	"github.com/derailed/popeye/internal/dao"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/types"
 	rbacv1 "k8s.io/api/rbac/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListRoles list included Roles.
-func ListRoles(c *k8s.Client, cfg *config.Config) (map[string]*rbacv1.Role, error) {
-	ros, err := listAllRoles(c)
+func ListRoles(f types.Factory, cfg *config.Config) (map[string]*rbacv1.Role, error) {
+	ros, err := listAllRoles(f)
 	if err != nil {
 		return nil, err
 	}
 
 	res := make(map[string]*rbacv1.Role, len(ros))
 	for fqn, ro := range ros {
-		if includeNS(c, ro.Namespace) {
+		if includeNS(f.Client(), ro.Namespace) {
 			res[fqn] = ro
 		}
 	}
@@ -25,8 +32,8 @@ func ListRoles(c *k8s.Client, cfg *config.Config) (map[string]*rbacv1.Role, erro
 }
 
 // ListAllRoles fetch all Roles on the cluster.
-func listAllRoles(c *k8s.Client) (map[string]*rbacv1.Role, error) {
-	ll, err := fetchRoles(c)
+func listAllRoles(f types.Factory) (map[string]*rbacv1.Role, error) {
+	ll, err := fetchRoles(f)
 	if err != nil {
 		return nil, err
 	}
@@ -40,6 +47,24 @@ func listAllRoles(c *k8s.Client) (map[string]*rbacv1.Role, error) {
 }
 
 // FetchRoleBindings retrieves all RoleBindings on the cluster.
-func fetchRoles(c *k8s.Client) (*rbacv1.RoleList, error) {
-	return c.DialOrDie().RbacV1().Roles(c.ActiveNamespace()).List(metav1.ListOptions{})
+func fetchRoles(f types.Factory) (*rbacv1.RoleList, error) {
+	var res dao.Resource
+	res.Init(f, client.NewGVR("rbac.authorization.k8s.io/v1/roles"))
+
+	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
+	oo, err := res.List(ctx, client.AllNamespaces)
+	if err != nil {
+		return nil, err
+	}
+	var ll rbacv1.RoleList
+	for _, o := range oo {
+		var ro rbacv1.Role
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(o.(*unstructured.Unstructured).Object, &ro)
+		if err != nil {
+			return nil, errors.New("expecting role resource")
+		}
+		ll.Items = append(ll.Items, ro)
+	}
+
+	return &ll, nil
 }

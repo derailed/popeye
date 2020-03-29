@@ -17,12 +17,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/report"
 	"github.com/derailed/popeye/internal/sanitize"
 	"github.com/derailed/popeye/internal/scrub"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/types"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -30,14 +31,14 @@ import (
 var (
 	// LogFile the path to our logs.
 	LogFile = filepath.Join(os.TempDir(), fmt.Sprintf("popeye.log"))
-	// DumpDir indicates a directory location for sanitixer reports.
+	// DumpDir indicates a directory location for sanitizer reports.
 	DumpDir = dumpDir()
 )
 
 const outFmt = "sanitizer_%s_%d.%s"
 
 func (p *Popeye) fileName() string {
-	return fmt.Sprintf(outFmt, p.client.ActiveCluster(), time.Now().UnixNano(), p.fileExt())
+	return fmt.Sprintf(outFmt, p.factory.Client().ActiveCluster(), time.Now().UnixNano(), p.fileExt())
 }
 
 func (p *Popeye) fileExt() string {
@@ -67,7 +68,7 @@ type (
 
 	// Popeye a kubernetes sanitizer.
 	Popeye struct {
-		client       *k8s.Client
+		factory      types.Factory
 		config       *config.Config
 		outputTarget io.ReadWriteCloser
 		log          *zerolog.Logger
@@ -86,7 +87,6 @@ func NewPopeye(flags *config.Flags, log *zerolog.Logger) (*Popeye, error) {
 
 	a := internal.NewAliases()
 	p := Popeye{
-		client:  k8s.NewClient(flags),
 		config:  cfg,
 		log:     log,
 		flags:   flags,
@@ -97,16 +97,66 @@ func NewPopeye(flags *config.Flags, log *zerolog.Logger) (*Popeye, error) {
 	return &p, nil
 }
 
+// SetFactory sets the resource factory.
+func (p *Popeye) SetFactory(f types.Factory) {
+	p.factory = f
+}
+
+func (p *Popeye) initFactory() {
+	clt := client.InitConnectionOrDie(client.NewConfig(p.flags.ConfigFlags))
+	f := client.NewFactory(clt)
+
+	ns := client.AllNamespaces
+	if p.flags.ConfigFlags.Namespace != nil {
+		ns = *p.flags.ConfigFlags.Namespace
+	}
+	f.Start(ns)
+	f.ForResource(ns, "policy/v1beta1/poddisruptionbudgets")
+	f.ForResource(ns, "policy/v1beta1/podsecuritypolicies")
+	f.ForResource(ns, "extensions/v1beta1/ingresses")
+	f.ForResource(ns, "networking.k8s.io/v1/networkpolicies")
+	f.ForResource(ns, "autoscaling/v1/horizontalpodautoscalers")
+	f.ForResource(ns, "apps/v1/deployments")
+	f.ForResource(ns, "apps/v1/replicasets")
+	f.ForResource(ns, "apps/v1/daemonsets")
+	f.ForResource(ns, "apps/v1/statefulsets")
+	f.ForResource(ns, "v1/limitranges")
+	f.ForResource(ns, "v1/services")
+	f.ForResource(ns, "v1/endpoints")
+	f.ForResource(ns, "v1/nodes")
+	f.ForResource(ns, "v1/namespaces")
+	f.ForResource(ns, "v1/pods")
+	f.ForResource(ns, "v1/configmaps")
+	f.ForResource(ns, "v1/secrets")
+	f.ForResource(ns, "v1/serviceaccounts")
+	f.ForResource(ns, "v1/persistentvolumes")
+	f.ForResource(ns, "v1/persistentvolumeclaims")
+	f.ForResource(ns, "rbac.authorization.k8s.io/v1/clusterroles")
+	f.ForResource(ns, "rbac.authorization.k8s.io/v1/clusterrolebindings")
+	f.ForResource(ns, "rbac.authorization.k8s.io/v1/roles")
+	f.ForResource(ns, "rbac.authorization.k8s.io/v1/rolebindings")
+	f.WaitForCacheSync()
+
+	p.factory = f
+}
+
 // Init configures popeye prior to sanitization.
 func (p *Popeye) Init() error {
+	if p.factory == nil {
+		p.initFactory()
+	}
 	if !isSet(p.flags.Save) {
 		return p.ensureOutput()
 	}
-
 	if err := ensurePath(DumpDir, 0755); err != nil {
 		return err
 	}
+
 	return p.ensureOutput()
+}
+
+func (p *Popeye) SetOutputTarget(s io.ReadWriteCloser) {
+	p.outputTarget = s
 }
 
 // Sanitize scans a cluster for potential issues.
@@ -137,8 +187,6 @@ func (p *Popeye) Sanitize() error {
 			if _, err = uploader.Upload(upParams); err != nil {
 				log.Fatal().Err(err).Msg("S3 Upload")
 			}
-
-		default:
 		}
 	}()
 
@@ -211,11 +259,8 @@ func (p *Popeye) dumpStd(mode, header bool) error {
 	if header {
 		p.builder.PrintHeader(s)
 	}
-	mx, err := p.client.ClusterHasMetrics()
-	if err != nil {
-		mx = false
-	}
-	p.builder.PrintClusterInfo(s, p.client.ActiveCluster(), mx)
+	mx := p.factory.Client().HasMetrics()
+	p.builder.PrintClusterInfo(s, p.factory.Client().ActiveCluster(), mx)
 	p.builder.PrintReport(config.Level(p.config.LinterLevel()), s)
 	p.builder.PrintSummary(s)
 
@@ -225,7 +270,7 @@ func (p *Popeye) dumpStd(mode, header bool) error {
 func (p *Popeye) dumpPrometheus() error {
 	pusher := p.builder.ToPrometheus(
 		p.flags.PushGatewayAddress,
-		p.client.ActiveNamespace(),
+		p.factory.Client().ActiveNamespace(),
 	)
 	return pusher.Add()
 }
@@ -236,7 +281,7 @@ func (p *Popeye) dump(printHeader bool) error {
 		return errors.New("Nothing to report, check section name or permissions")
 	}
 
-	p.builder.SetClusterName(p.client.ActiveCluster())
+	p.builder.SetClusterName(p.factory.Client().ActiveCluster())
 	var err error
 	switch p.flags.OutputFormat() {
 	case report.JunitFormat:
@@ -339,7 +384,7 @@ func (p *Popeye) sanitize() error {
 		*p.flags.CheckOverAllocs,
 	)
 
-	cache := scrub.NewCache(p.client, p.config)
+	cache := scrub.NewCache(p.factory, p.config)
 	codes, err := issues.LoadCodes()
 	if err != nil {
 		return err
@@ -355,11 +400,12 @@ func (p *Popeye) sanitize() error {
 			continue
 		}
 		// Skip node checks if active namespace is set.
-		if section == "node" && p.client.ActiveNamespace() != "" {
+		if section == "node" && p.factory.Client().ActiveNamespace() != client.AllNamespaces {
 			continue
 		}
 
 		ctx = context.WithValue(ctx, internal.KeyRun, internal.RunInfo{Section: section})
+		ctx = context.WithValue(ctx, internal.KeyFactory, p.factory)
 		s := p.sanitizers()[section](ctx, cache, codes)
 		if err := s.Sanitize(ctx); err != nil {
 			p.builder.AddError(err)

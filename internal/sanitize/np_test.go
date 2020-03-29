@@ -120,7 +120,7 @@ func (n *np) ListNamespacesBySelector(sel *metav1.LabelSelector) map[string]*v1.
 	}
 }
 
-func (n *np) ListPodsBySelector(sel *metav1.LabelSelector) map[string]*v1.Pod {
+func (n *np) ListPodsBySelector(ns string, sel *metav1.LabelSelector) map[string]*v1.Pod {
 	if n.opts.pod {
 		return map[string]*v1.Pod{}
 	}
@@ -136,7 +136,7 @@ func (n *np) ListPods() map[string]*v1.Pod {
 	}
 }
 
-func (n *np) GetPod(map[string]string) *v1.Pod {
+func (n *np) GetPod(string, map[string]string) *v1.Pod {
 	return nil
 }
 

@@ -99,7 +99,7 @@ func TestNodeSanitizer(t *testing.T) {
 		"outOfDisk": {
 			makeNodeLister(nodeOpts{
 				nodes: map[string]*v1.Node{
-					"n1": makeCondNode(v1.NodeOutOfDisk, v1.ConditionTrue),
+					"n1": makeCondNode(v1.NodeDiskPressure, v1.ConditionTrue),
 				},
 				metrics: map[string]*mv1beta1.NodeMetrics{
 					"n1": makeNodeMX("500m", "100Mi"),
@@ -221,7 +221,7 @@ func (n *node) ListPods() map[string]*v1.Pod {
 	return n.opts.pods
 }
 
-func (n *node) GetPod(map[string]string) *v1.Pod {
+func (n *node) GetPod(string, map[string]string) *v1.Pod {
 	return nil
 }
 

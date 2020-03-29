@@ -56,12 +56,12 @@ func (n *NetworkPolicy) Sanitize(ctx context.Context) error {
 	return nil
 }
 
-func (n *NetworkPolicy) checkPodSelector(ctx context.Context, sel *metav1.LabelSelector, kind string) {
+func (n *NetworkPolicy) checkPodSelector(ctx context.Context, ns string, sel *metav1.LabelSelector, kind string) {
 	if sel == nil {
 		return
 	}
 
-	if pods := n.ListPodsBySelector(sel); len(pods) == 0 {
+	if pods := n.ListPodsBySelector(ns, sel); len(pods) == 0 {
 		n.AddCode(ctx, 1200, kind)
 	}
 }
@@ -79,14 +79,14 @@ func (n *NetworkPolicy) checkNSSelector(ctx context.Context, sel *metav1.LabelSe
 func (n *NetworkPolicy) checkRefs(ctx context.Context, np *nv1.NetworkPolicy) {
 	for _, ing := range np.Spec.Ingress {
 		for _, f := range ing.From {
-			n.checkPodSelector(ctx, f.PodSelector, "Ingress")
+			n.checkPodSelector(ctx, np.Namespace, f.PodSelector, "Ingress")
 			n.checkNSSelector(ctx, f.NamespaceSelector, "Ingress")
 		}
 	}
 
 	for _, eg := range np.Spec.Egress {
 		for _, f := range eg.To {
-			n.checkPodSelector(ctx, f.PodSelector, "Egress")
+			n.checkPodSelector(ctx, np.Namespace, f.PodSelector, "Egress")
 			n.checkNSSelector(ctx, f.NamespaceSelector, "Egress")
 		}
 	}
@@ -95,7 +95,7 @@ func (n *NetworkPolicy) checkRefs(ctx context.Context, np *nv1.NetworkPolicy) {
 func (n *NetworkPolicy) checkDeprecation(ctx context.Context, np *nv1.NetworkPolicy) {
 	const current = "networking.k8s.io/v1"
 
-	rev, err := resourceRev(internal.MustExtractFQN(ctx), np.Annotations)
+	rev, err := resourceRev(internal.MustExtractFQN(ctx), "NetworkPolicy", np.Annotations)
 	if err != nil {
 		rev = revFromLink(np.SelfLink)
 		if rev == "" {

@@ -238,6 +238,9 @@ codes:
   710:
     message:  Memory threshold (%d%%) reached %d%%
     severity: 2
+  711:
+    message: Scheduling disabled
+    severity: 2
 
   # -------------------------------------------------------------------------
   # Namespace

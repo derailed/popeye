@@ -61,7 +61,7 @@ func (p pvc) ListPods() map[string]*v1.Pod {
 	}
 }
 
-func (p pvc) GetPod(map[string]string) *v1.Pod {
+func (p pvc) GetPod(string, map[string]string) *v1.Pod {
 	return nil
 }
 

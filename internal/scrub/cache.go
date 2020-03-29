@@ -1,19 +1,19 @@
 package scrub
 
 import (
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/types"
 )
 
 type dial struct {
-	client *k8s.Client
-	config *config.Config
+	factory types.Factory
+	config  *config.Config
 }
 
-func newDial(c *k8s.Client, cfg *config.Config) *dial {
+func newDial(f types.Factory, cfg *config.Config) *dial {
 	return &dial{
-		client: c,
-		config: cfg,
+		factory: f,
+		config:  cfg,
 	}
 }
 
@@ -29,8 +29,8 @@ type Cache struct {
 }
 
 // NewCache returns a new resource cache
-func NewCache(c *k8s.Client, cfg *config.Config) *Cache {
-	d := newDial(c, cfg)
+func NewCache(f types.Factory, cfg *config.Config) *Cache {
+	d := newDial(f, cfg)
 	return &Cache{
 		dial:   d,
 		core:   newCore(d),

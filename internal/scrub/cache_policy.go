@@ -20,7 +20,7 @@ func (p *policy) podsecuritypolicies() (*cache.PodSecurityPolicy, error) {
 	if p.psp != nil {
 		return p.psp, nil
 	}
-	psps, err := dag.ListPodSecurityPolicies(p.client, p.config)
+	psps, err := dag.ListPodSecurityPolicies(p.factory, p.config)
 	p.psp = cache.NewPodSecurityPolicy(psps)
 
 	return p.psp, err
@@ -30,7 +30,7 @@ func (p *policy) networkpolicies() (*cache.NetworkPolicy, error) {
 	if p.np != nil {
 		return p.np, nil
 	}
-	nps, err := dag.ListNetworkPolicies(p.client, p.config)
+	nps, err := dag.ListNetworkPolicies(p.factory, p.config)
 	p.np = cache.NewNetworkPolicy(nps)
 
 	return p.np, err

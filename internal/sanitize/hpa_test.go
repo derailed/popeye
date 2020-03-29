@@ -259,7 +259,7 @@ func (h *hpa) ListAvailableMetrics(map[string]*v1.Node) v1.ResourceList {
 	}
 }
 
-func (h *hpa) GetPod(map[string]string) *v1.Pod {
+func (h *hpa) GetPod(string, map[string]string) *v1.Pod {
 	return &v1.Pod{}
 }
 

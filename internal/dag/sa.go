@@ -1,22 +1,29 @@
 package dag
 
 import (
-	"github.com/derailed/popeye/internal/k8s"
+	"context"
+	"errors"
+
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
+	"github.com/derailed/popeye/internal/dao"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/types"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListServiceAccounts list included ServiceAccounts.
-func ListServiceAccounts(c *k8s.Client, cfg *config.Config) (map[string]*v1.ServiceAccount, error) {
-	sas, err := listAllServiceAccounts(c)
+func ListServiceAccounts(f types.Factory, cfg *config.Config) (map[string]*v1.ServiceAccount, error) {
+	sas, err := listAllServiceAccounts(f)
 	if err != nil {
 		return map[string]*v1.ServiceAccount{}, err
 	}
 
 	res := make(map[string]*v1.ServiceAccount, len(sas))
 	for fqn, sa := range sas {
-		if includeNS(c, sa.Namespace) {
+		if includeNS(f.Client(), sa.Namespace) {
 			res[fqn] = sa
 		}
 	}
@@ -25,8 +32,8 @@ func ListServiceAccounts(c *k8s.Client, cfg *config.Config) (map[string]*v1.Serv
 }
 
 // ListAllServiceAccounts fetch all ServiceAccounts on the cluster.
-func listAllServiceAccounts(c *k8s.Client) (map[string]*v1.ServiceAccount, error) {
-	ll, err := fetchServiceAccounts(c)
+func listAllServiceAccounts(f types.Factory) (map[string]*v1.ServiceAccount, error) {
+	ll, err := fetchServiceAccounts(f)
 	if err != nil {
 		return nil, err
 	}
@@ -40,6 +47,25 @@ func listAllServiceAccounts(c *k8s.Client) (map[string]*v1.ServiceAccount, error
 }
 
 // FetchServiceAccounts retrieves all ServiceAccounts on the cluster.
-func fetchServiceAccounts(c *k8s.Client) (*v1.ServiceAccountList, error) {
-	return c.DialOrDie().CoreV1().ServiceAccounts(c.ActiveNamespace()).List(metav1.ListOptions{})
+func fetchServiceAccounts(f types.Factory) (*v1.ServiceAccountList, error) {
+	var res dao.Resource
+	res.Init(f, client.NewGVR("v1/serviceaccounts"))
+
+	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
+	oo, err := res.List(ctx, client.AllNamespaces)
+	if err != nil {
+		return nil, err
+	}
+	var ll v1.ServiceAccountList
+	for _, o := range oo {
+		var sa v1.ServiceAccount
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(o.(*unstructured.Unstructured).Object, &sa)
+		if err != nil {
+			return nil, errors.New("expecting serviceaccount resource")
+		}
+		ll.Items = append(ll.Items, sa)
+	}
+
+	return &ll, nil
+
 }

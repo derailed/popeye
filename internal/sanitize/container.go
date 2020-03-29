@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/derailed/popeye/internal"
-	"github.com/derailed/popeye/internal/k8s"
+	"github.com/derailed/popeye/internal/client"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -104,7 +104,7 @@ func (c *Container) checkNamedPorts(ctx context.Context, co v1.Container) {
 	}
 }
 
-func (c *Container) checkUtilization(ctx context.Context, co v1.Container, cmx k8s.Metrics) {
+func (c *Container) checkUtilization(ctx context.Context, co v1.Container, cmx client.Metrics) {
 	cpu, mem, qos := containerResources(co)
 	if cpu != nil && mem != nil {
 		ccpu, cmem := cmx.CurrentCPU, cmx.CurrentMEM

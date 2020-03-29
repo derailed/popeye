@@ -22,7 +22,7 @@ func (r *rbac) roles() (*cache.Role, error) {
 	if r.ro != nil {
 		return r.ro, nil
 	}
-	ros, err := dag.ListRoles(r.client, r.config)
+	ros, err := dag.ListRoles(r.factory, r.config)
 	r.ro = cache.NewRole(ros)
 
 	return r.ro, err
@@ -32,7 +32,7 @@ func (r *rbac) rolebindings() (*cache.RoleBinding, error) {
 	if r.rb != nil {
 		return r.rb, nil
 	}
-	rbs, err := dag.ListRoleBindings(r.client, r.config)
+	rbs, err := dag.ListRoleBindings(r.factory, r.config)
 	r.rb = cache.NewRoleBinding(rbs)
 
 	return r.rb, err
@@ -42,7 +42,7 @@ func (r *rbac) clusterroles() (*cache.ClusterRole, error) {
 	if r.cr != nil {
 		return r.cr, nil
 	}
-	crs, err := dag.ListClusterRoles(r.client, r.config)
+	crs, err := dag.ListClusterRoles(r.factory, r.config)
 	r.cr = cache.NewClusterRole(crs)
 
 	return r.cr, err
@@ -52,7 +52,7 @@ func (r *rbac) clusterrolebindings() (*cache.ClusterRoleBinding, error) {
 	if r.crb != nil {
 		return r.crb, nil
 	}
-	crbs, err := dag.ListClusterRoleBindings(r.client, r.config)
+	crbs, err := dag.ListClusterRoleBindings(r.factory, r.config)
 	r.crb = cache.NewClusterRoleBinding(crbs)
 
 	return r.crb, err

@@ -401,7 +401,7 @@ func (d *dp) MEMResourceLimits() config.Allocations {
 	}
 }
 
-func (d *dp) ListPodsBySelector(sel *metav1.LabelSelector) map[string]*v1.Pod {
+func (d *dp) ListPodsBySelector(ns string, sel *metav1.LabelSelector) map[string]*v1.Pod {
 	return map[string]*v1.Pod{
 		"default/p1": makeFullPod(podOpts{
 			coOpts: d.opts.coOpts,

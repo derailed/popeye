@@ -31,7 +31,7 @@ func NewHorizontalPodAutoscaler(ctx context.Context, c *Cache, codes *issues.Cod
 	}
 
 	var err error
-	ss, err := dag.ListHorizontalPodAutoscalers(c.client, c.config)
+	ss, err := dag.ListHorizontalPodAutoscalers(c.factory, c.config)
 	if err != nil {
 		h.AddErr(ctx, err)
 	}

@@ -76,7 +76,7 @@ func (r *pdb) ListPods() map[string]*v1.Pod {
 	}
 }
 
-func (r *pdb) GetPod(map[string]string) *v1.Pod {
+func (r *pdb) GetPod(ns string, sel map[string]string) *v1.Pod {
 	if r.opts.pod {
 		return nil
 	}

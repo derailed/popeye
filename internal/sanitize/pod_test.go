@@ -188,7 +188,7 @@ func (p *pod) ListPods() map[string]*v1.Pod {
 	return p.opts.pods
 }
 
-func (p *pod) GetPod(map[string]string) *v1.Pod {
+func (p *pod) GetPod(string, map[string]string) *v1.Pod {
 	return nil
 }
 

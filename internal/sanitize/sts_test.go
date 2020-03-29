@@ -295,7 +295,7 @@ func (s *sts) ListStatefulSets() map[string]*appsv1.StatefulSet {
 	}
 }
 
-func (s *sts) ListPodsBySelector(sel *metav1.LabelSelector) map[string]*v1.Pod {
+func (s *sts) ListPodsBySelector(ns string, sel *metav1.LabelSelector) map[string]*v1.Pod {
 	return map[string]*v1.Pod{
 		"default/p1": makeFullPod(podOpts{
 			coOpts: coOpts{

@@ -1,15 +1,22 @@
 package dag
 
 import (
-	"github.com/derailed/popeye/internal/k8s"
+	"context"
+	"errors"
+
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
+	"github.com/derailed/popeye/internal/dao"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/types"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListPersistentVolumes list all included PersistentVolumes.
-func ListPersistentVolumes(c *k8s.Client, cfg *config.Config) (map[string]*v1.PersistentVolume, error) {
-	pvs, err := listAllPersistentVolumes(c)
+func ListPersistentVolumes(f types.Factory, cfg *config.Config) (map[string]*v1.PersistentVolume, error) {
+	pvs, err := listAllPersistentVolumes(f)
 	if err != nil {
 		return nil, err
 	}
@@ -23,8 +30,8 @@ func ListPersistentVolumes(c *k8s.Client, cfg *config.Config) (map[string]*v1.Pe
 }
 
 // ListAllPersistentVolumes fetch all PersistentVolumes on the cluster.
-func listAllPersistentVolumes(c *k8s.Client) (map[string]*v1.PersistentVolume, error) {
-	ll, err := fetchPersistentVolumes(c)
+func listAllPersistentVolumes(f types.Factory) (map[string]*v1.PersistentVolume, error) {
+	ll, err := fetchPersistentVolumes(f)
 	if err != nil {
 		return nil, err
 	}
@@ -38,6 +45,24 @@ func listAllPersistentVolumes(c *k8s.Client) (map[string]*v1.PersistentVolume, e
 }
 
 // FetchPersistentVolumes retrieves all PersistentVolumes on the cluster.
-func fetchPersistentVolumes(c *k8s.Client) (*v1.PersistentVolumeList, error) {
-	return c.DialOrDie().CoreV1().PersistentVolumes().List(metav1.ListOptions{})
+func fetchPersistentVolumes(f types.Factory) (*v1.PersistentVolumeList, error) {
+	var res dao.Resource
+	res.Init(f, client.NewGVR("v1/persistentvolumes"))
+
+	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
+	oo, err := res.List(ctx, client.AllNamespaces)
+	if err != nil {
+		return nil, err
+	}
+	var ll v1.PersistentVolumeList
+	for _, o := range oo {
+		var pv v1.PersistentVolume
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(o.(*unstructured.Unstructured).Object, &pv)
+		if err != nil {
+			return nil, errors.New("expecting persistentvolume resource")
+		}
+		ll.Items = append(ll.Items, pv)
+	}
+
+	return &ll, nil
 }

@@ -246,7 +246,7 @@ func (s *svc) ListServices() map[string]*v1.Service {
 	}
 }
 
-func (s *svc) GetPod(map[string]string) *v1.Pod {
+func (s *svc) GetPod(string, map[string]string) *v1.Pod {
 	if s.opts.hasPod {
 		return makeSvcPod("p1")
 	}

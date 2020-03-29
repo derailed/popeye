@@ -5,9 +5,9 @@ import (
 
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/sanitize"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/types"
 )
 
 // Cluster represents a Cluster scruber.
@@ -16,13 +16,13 @@ type Cluster struct {
 	*cache.Cluster
 	*config.Config
 
-	client *k8s.Client
+	client types.Connection
 }
 
 // NewCluster return a new Cluster scruber.
 func NewCluster(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	cl := Cluster{
-		client:    c.client,
+		client:    c.factory.Client(),
 		Config:    c.config,
 		Collector: issues.NewCollector(codes, c.config),
 	}

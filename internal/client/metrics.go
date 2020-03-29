@@ -1,4 +1,4 @@
-package k8s
+package client
 
 import (
 	"k8s.io/apimachinery/pkg/api/resource"

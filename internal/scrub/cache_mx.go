@@ -20,7 +20,7 @@ func (m *mx) podsMx() (*cache.PodsMetrics, error) {
 	if m.podMx != nil {
 		return m.podMx, nil
 	}
-	pmx, err := dag.ListPodsMetrics(m.client)
+	pmx, err := dag.ListPodsMetrics(m.factory.Client())
 	m.podMx = cache.NewPodsMetrics(pmx)
 
 	return m.podMx, err
@@ -30,7 +30,7 @@ func (m *mx) nodesMx() (*cache.NodesMetrics, error) {
 	if m.nodeMx != nil {
 		return m.nodeMx, nil
 	}
-	nmx, err := dag.ListNodesMetrics(m.client)
+	nmx, err := dag.ListNodesMetrics(m.factory.Client())
 	m.nodeMx = cache.NewNodesMetrics(nmx)
 
 	return m.nodeMx, err

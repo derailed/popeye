@@ -3,7 +3,7 @@ package sanitize
 // import (
 // 	"testing"
 
-// 	"github.com/derailed/popeye/internal/k8s"
+// 	"github.com/derailed/popeye/internal/client"
 // 	v1 "k8s.io/api/core/v1"
 // )
 

@@ -1,7 +1,7 @@
 package dag
 
 import (
-	"github.com/derailed/popeye/internal/k8s"
+	"github.com/derailed/popeye/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -15,6 +15,6 @@ func metaFQN(m metav1.ObjectMeta) string {
 }
 
 // IncludeNS checks if namespace should be included.
-func includeNS(c *k8s.Client, ns string) bool {
+func includeNS(c types.Connection, ns string) bool {
 	return c.IsActiveNamespace(ns)
 }

@@ -49,7 +49,7 @@ func (p *PodSecurityPolicy) Sanitize(ctx context.Context) error {
 func (p *PodSecurityPolicy) checkDeprecation(ctx context.Context, psp *pv1beta1.PodSecurityPolicy) {
 	const current = "policy/v1beta1"
 
-	rev, err := resourceRev(internal.MustExtractFQN(ctx), psp.Annotations)
+	rev, err := resourceRev(internal.MustExtractFQN(ctx), "PodSecurityPolicy", psp.Annotations)
 	if err != nil {
 		rev = revFromLink(psp.SelfLink)
 		if rev == "" {

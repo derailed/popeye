@@ -39,7 +39,7 @@ type PodLimiter interface {
 
 // PodSelectorLister list a collection of pod matching a selector.
 type PodSelectorLister interface {
-	ListPodsBySelector(sel *metav1.LabelSelector) map[string]*v1.Pod
+	ListPodsBySelector(ns string, sel *metav1.LabelSelector) map[string]*v1.Pod
 }
 
 // ConfigLister tracks configuration parameters.

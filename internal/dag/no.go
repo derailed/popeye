@@ -1,15 +1,22 @@
 package dag
 
 import (
-	"github.com/derailed/popeye/internal/k8s"
+	"context"
+	"errors"
+
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
+	"github.com/derailed/popeye/internal/dao"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/types"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListNodes list all included Nodes.
-func ListNodes(c *k8s.Client, cfg *config.Config) (map[string]*v1.Node, error) {
-	nos, err := listAllNodes(c)
+func ListNodes(f types.Factory, cfg *config.Config) (map[string]*v1.Node, error) {
+	nos, err := listAllNodes(f)
 	if err != nil {
 		return nil, err
 	}
@@ -22,8 +29,8 @@ func ListNodes(c *k8s.Client, cfg *config.Config) (map[string]*v1.Node, error) {
 }
 
 // ListAllNodes fetch all Nodes on the cluster.
-func listAllNodes(c *k8s.Client) (map[string]*v1.Node, error) {
-	ll, err := fetchNodes(c)
+func listAllNodes(f types.Factory) (map[string]*v1.Node, error) {
+	ll, err := fetchNodes(f)
 	if err != nil {
 		return nil, err
 	}
@@ -37,6 +44,25 @@ func listAllNodes(c *k8s.Client) (map[string]*v1.Node, error) {
 }
 
 // FetchNodes retrieves all Nodes on the cluster.
-func fetchNodes(c *k8s.Client) (*v1.NodeList, error) {
-	return c.DialOrDie().CoreV1().Nodes().List(metav1.ListOptions{})
+func fetchNodes(f types.Factory) (*v1.NodeList, error) {
+	// return c.DialOrDie().CoreV1().Nodes().List(metav1.ListOptions{})
+	var res dao.Resource
+	res.Init(f, client.NewGVR("v1/nodes"))
+
+	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
+	oo, err := res.List(ctx, client.AllNamespaces)
+	if err != nil {
+		return nil, err
+	}
+	var ll v1.NodeList
+	for _, o := range oo {
+		var no v1.Node
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(o.(*unstructured.Unstructured).Object, &no)
+		if err != nil {
+			return nil, errors.New("expecting node resource")
+		}
+		ll.Items = append(ll.Items, no)
+	}
+
+	return &ll, nil
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime/debug"
 	"strings"
 
@@ -21,12 +22,20 @@ var (
 	date    = "n/a"
 	flags   = config.NewFlags()
 	rootCmd = &cobra.Command{
-		Use:   "popeye",
+		Use:   execName(),
 		Short: "A Kubernetes Cluster sanitizer and linter",
 		Long:  `Popeye scans your Kubernetes clusters and reports potential resource issues.`,
 		Run:   doIt,
 	}
 )
+
+func execName() string {
+	n := "popeye"
+	if strings.HasPrefix(filepath.Base(os.Args[0]), "kubectl-") {
+		return "kubectl-" + n
+	}
+	return n
+}
 
 func init() {
 	rootCmd.AddCommand(versionCmd())

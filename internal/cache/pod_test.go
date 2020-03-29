@@ -42,7 +42,7 @@ func TestGetPod(t *testing.T) {
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			po := p.GetPod(u.sel)
+			po := p.GetPod("default", u.sel)
 			if po == nil {
 				assert.Equal(t, u.e, "")
 			} else {
@@ -85,7 +85,7 @@ func TestListPodsBySelector(t *testing.T) {
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			res := p.ListPodsBySelector(u.sel)
+			res := p.ListPodsBySelector("default", u.sel)
 			keys := []string{}
 			for k := range res {
 				keys = append(keys, k)

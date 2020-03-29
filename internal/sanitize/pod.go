@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	v1 "k8s.io/api/core/v1"
 	pv1beta1 "k8s.io/api/policy/v1beta1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
@@ -39,7 +39,7 @@ type (
 	// PodLister lists available pods.
 	PodLister interface {
 		ListPods() map[string]*v1.Pod
-		GetPod(sel map[string]string) *v1.Pod
+		GetPod(ns string, sel map[string]string) *v1.Pod
 	}
 
 	// PodMXLister list available pods.
@@ -79,7 +79,7 @@ func (p *Pod) Sanitize(ctx context.Context) error {
 		p.checkContainers(ctx, po)
 		p.checkPdb(ctx, po.ObjectMeta.Labels)
 		p.checkSecure(ctx, po.Spec)
-		pmx, cmx := mx[fqn], k8s.ContainerMetrics{}
+		pmx, cmx := mx[fqn], client.ContainerMetrics{}
 		containerMetrics(pmx, cmx)
 		p.checkUtilization(ctx, po, cmx)
 
@@ -96,7 +96,7 @@ func (p *Pod) checkPdb(ctx context.Context, labels map[string]string) {
 	}
 }
 
-func (p *Pod) checkUtilization(ctx context.Context, po *v1.Pod, cmx k8s.ContainerMetrics) {
+func (p *Pod) checkUtilization(ctx context.Context, po *v1.Pod, cmx client.ContainerMetrics) {
 	if len(cmx) == 0 {
 		return
 	}
@@ -208,14 +208,14 @@ func (p *Pod) checkStatus(ctx context.Context, po *v1.Pod) {
 // ----------------------------------------------------------------------------
 // Helpers...
 
-func containerMetrics(pmx *mv1beta1.PodMetrics, mx k8s.ContainerMetrics) {
+func containerMetrics(pmx *mv1beta1.PodMetrics, mx client.ContainerMetrics) {
 	// No metrics -> Bail!
 	if pmx == nil {
 		return
 	}
 
 	for _, co := range pmx.Containers {
-		mx[co.Name] = k8s.Metrics{
+		mx[co.Name] = client.Metrics{
 			CurrentCPU: *co.Usage.Cpu(),
 			CurrentMEM: *co.Usage.Memory(),
 		}

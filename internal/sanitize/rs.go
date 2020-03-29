@@ -54,7 +54,7 @@ func (r *ReplicaSet) Sanitize(ctx context.Context) error {
 func (r *ReplicaSet) checkDeprecation(ctx context.Context, rs *appsv1.ReplicaSet) {
 	const current = "apps/v1"
 
-	rev, err := resourceRev(internal.MustExtractFQN(ctx), rs.Annotations)
+	rev, err := resourceRev(internal.MustExtractFQN(ctx), "ReplicaSet", rs.Annotations)
 	if err != nil {
 		rev = revFromLink(rs.SelfLink)
 		if rev == "" {

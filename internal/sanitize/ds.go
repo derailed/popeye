@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 )
@@ -50,7 +50,7 @@ func (d *DaemonSet) Sanitize(ctx context.Context) error {
 
 		d.checkDeprecation(ctx, ds)
 		d.checkContainers(ctx, ds.Spec.Template.Spec)
-		pmx := k8s.PodsMetrics{}
+		pmx := client.PodsMetrics{}
 		podsMetrics(d, pmx)
 		d.checkUtilization(ctx, over, ds, pmx)
 
@@ -65,7 +65,7 @@ func (d *DaemonSet) Sanitize(ctx context.Context) error {
 func (d *DaemonSet) checkDeprecation(ctx context.Context, ds *appsv1.DaemonSet) {
 	const current = "apps/v1"
 
-	rev, err := resourceRev(internal.MustExtractFQN(ctx), ds.Annotations)
+	rev, err := resourceRev(internal.MustExtractFQN(ctx), "DaemonSet", ds.Annotations)
 	if err != nil {
 		rev = revFromLink(ds.SelfLink)
 		if rev == "" {
@@ -90,7 +90,7 @@ func (d *DaemonSet) checkContainers(ctx context.Context, spec v1.PodSpec) {
 }
 
 // CheckUtilization checks deployments requested resources vs current utilization.
-func (d *DaemonSet) checkUtilization(ctx context.Context, over bool, ds *appsv1.DaemonSet, pmx k8s.PodsMetrics) {
+func (d *DaemonSet) checkUtilization(ctx context.Context, over bool, ds *appsv1.DaemonSet, pmx client.PodsMetrics) {
 	mx := d.daemonsetUsage(ds, pmx)
 	if mx.RequestCPU.IsZero() && mx.RequestMEM.IsZero() {
 		return
@@ -101,9 +101,9 @@ func (d *DaemonSet) checkUtilization(ctx context.Context, over bool, ds *appsv1.
 }
 
 // DaemonSetUsage finds deployment running pods and compute current vs requested resource usage.
-func (d *DaemonSet) daemonsetUsage(ds *appsv1.DaemonSet, pmx k8s.PodsMetrics) ConsumptionMetrics {
+func (d *DaemonSet) daemonsetUsage(ds *appsv1.DaemonSet, pmx client.PodsMetrics) ConsumptionMetrics {
 	var mx ConsumptionMetrics
-	for pfqn, pod := range d.ListPodsBySelector(ds.Spec.Selector) {
+	for pfqn, pod := range d.ListPodsBySelector(ds.Namespace, ds.Spec.Selector) {
 		cpu, mem := computePodResources(pod.Spec)
 		mx.QOS = pod.Status.QOSClass
 		mx.RequestCPU.Add(cpu)

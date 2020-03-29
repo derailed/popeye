@@ -5,14 +5,14 @@ import (
 
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/internal/sanitize"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/types"
 )
 
 // Role represents a Role scruber.
 type Role struct {
-	client *k8s.Client
+	client types.Connection
 	*config.Config
 	*issues.Collector
 
@@ -24,7 +24,7 @@ type Role struct {
 // NewRole return a new Role scruber.
 func NewRole(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	crb := Role{
-		client:    c.client,
+		client:    c.factory.Client(),
 		Config:    c.config,
 		Collector: issues.NewCollector(codes, c.config),
 	}

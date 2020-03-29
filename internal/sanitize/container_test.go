@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/k8s"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -16,7 +16,7 @@ import (
 func TestContainerCheckUtilization(t *testing.T) {
 	uu := map[string]struct {
 		co     v1.Container
-		mx     k8s.Metrics
+		mx     client.Metrics
 		issues int
 	}{
 		"cool": {
@@ -26,7 +26,7 @@ func TestContainerCheckUtilization(t *testing.T) {
 				lcpu: "10m",
 				lmem: "10Mi",
 			}),
-			mx: k8s.Metrics{CurrentCPU: toQty("1m"), CurrentMEM: toQty("1Mi")},
+			mx: client.Metrics{CurrentCPU: toQty("1m"), CurrentMEM: toQty("1Mi")},
 		},
 		"cpuOver": {
 			co: makeContainer("c1", coOpts{
@@ -35,7 +35,7 @@ func TestContainerCheckUtilization(t *testing.T) {
 				lcpu: "100m",
 				lmem: "10Mi",
 			}),
-			mx:     k8s.Metrics{CurrentCPU: toQty("200m"), CurrentMEM: toQty("2Mi")},
+			mx:     client.Metrics{CurrentCPU: toQty("200m"), CurrentMEM: toQty("2Mi")},
 			issues: 1,
 		},
 		"memOver": {
@@ -45,7 +45,7 @@ func TestContainerCheckUtilization(t *testing.T) {
 				lcpu: "100m",
 				lmem: "10Mi",
 			}),
-			mx:     k8s.Metrics{CurrentCPU: toQty("10m"), CurrentMEM: toQty("20Mi")},
+			mx:     client.Metrics{CurrentCPU: toQty("10m"), CurrentMEM: toQty("20Mi")},
 			issues: 1,
 		},
 		"bothOver": {
@@ -55,7 +55,7 @@ func TestContainerCheckUtilization(t *testing.T) {
 				lcpu: "100m",
 				lmem: "10Mi",
 			}),
-			mx:     k8s.Metrics{CurrentCPU: toQty("5"), CurrentMEM: toQty("20Mi")},
+			mx:     client.Metrics{CurrentCPU: toQty("5"), CurrentMEM: toQty("20Mi")},
 			issues: 2,
 		},
 		"LimOver": {
@@ -65,7 +65,7 @@ func TestContainerCheckUtilization(t *testing.T) {
 				lcpu: "100m",
 				lmem: "10Mi",
 			}),
-			mx:     k8s.Metrics{CurrentCPU: toQty("5"), CurrentMEM: toQty("20Mi")},
+			mx:     client.Metrics{CurrentCPU: toQty("5"), CurrentMEM: toQty("20Mi")},
 			issues: 2,
 		},
 	}

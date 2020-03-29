@@ -1,22 +1,29 @@
 package dag
 
 import (
-	"github.com/derailed/popeye/internal/k8s"
+	"context"
+	"errors"
+
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
+	"github.com/derailed/popeye/internal/dao"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/types"
 	pv1beta1 "k8s.io/api/policy/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListPodSecurityPolicies list all included PodSecurityPolicies.
-func ListPodSecurityPolicies(c *k8s.Client, cfg *config.Config) (map[string]*pv1beta1.PodSecurityPolicy, error) {
-	dps, err := listAllPodSecurityPolicys(c)
+func ListPodSecurityPolicies(f types.Factory, cfg *config.Config) (map[string]*pv1beta1.PodSecurityPolicy, error) {
+	dps, err := listAllPodSecurityPolicys(f)
 	if err != nil {
 		return map[string]*pv1beta1.PodSecurityPolicy{}, err
 	}
 
 	res := make(map[string]*pv1beta1.PodSecurityPolicy, len(dps))
 	for fqn, dp := range dps {
-		if includeNS(c, dp.Namespace) {
+		if includeNS(f.Client(), dp.Namespace) {
 			res[fqn] = dp
 		}
 	}
@@ -25,8 +32,8 @@ func ListPodSecurityPolicies(c *k8s.Client, cfg *config.Config) (map[string]*pv1
 }
 
 // ListAllPodSecurityPolicys fetch all PodSecurityPolicys on the cluster.
-func listAllPodSecurityPolicys(c *k8s.Client) (map[string]*pv1beta1.PodSecurityPolicy, error) {
-	ll, err := fetchPodSecurityPolicys(c)
+func listAllPodSecurityPolicys(f types.Factory) (map[string]*pv1beta1.PodSecurityPolicy, error) {
+	ll, err := fetchPodSecurityPolicys(f)
 	if err != nil {
 		return nil, err
 	}
@@ -40,6 +47,25 @@ func listAllPodSecurityPolicys(c *k8s.Client) (map[string]*pv1beta1.PodSecurityP
 }
 
 // FetchPodSecurityPolicys retrieves all PodSecurityPolicys on the cluster.
-func fetchPodSecurityPolicys(c *k8s.Client) (*pv1beta1.PodSecurityPolicyList, error) {
-	return c.DialOrDie().PolicyV1beta1().PodSecurityPolicies().List(metav1.ListOptions{})
+func fetchPodSecurityPolicys(f types.Factory) (*pv1beta1.PodSecurityPolicyList, error) {
+	var res dao.Resource
+	res.Init(f, client.NewGVR("policy/v1beta1/podsecuritypolicies"))
+
+	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
+	oo, err := res.List(ctx, client.AllNamespaces)
+	if err != nil {
+		return nil, err
+	}
+	var ll pv1beta1.PodSecurityPolicyList
+	for _, o := range oo {
+		var psp pv1beta1.PodSecurityPolicy
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(o.(*unstructured.Unstructured).Object, &psp)
+		if err != nil {
+			return nil, errors.New("expecting configmap resource")
+		}
+		ll.Items = append(ll.Items, psp)
+	}
+
+	return &ll, nil
+
 }

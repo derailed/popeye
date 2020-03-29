@@ -54,7 +54,7 @@ func (i *Ingress) Sanitize(ctx context.Context) error {
 func (i *Ingress) checkDeprecation(ctx context.Context, ing *nv1beta1.Ingress) {
 	const current = "networking.k8s.io/v1beta1"
 
-	rev, err := resourceRev(internal.MustExtractFQN(ctx), ing.Annotations)
+	rev, err := resourceRev(internal.MustExtractFQN(ctx), "Ingress", ing.Annotations)
 	if err != nil {
 		rev = revFromLink(ing.SelfLink)
 		if rev == "" {

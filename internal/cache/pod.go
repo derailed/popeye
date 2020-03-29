@@ -22,13 +22,13 @@ func (p *Pod) ListPods() map[string]*v1.Pod {
 }
 
 // ListPodsBySelector list all pods matching the given selector.
-func (p *Pod) ListPodsBySelector(sel *metav1.LabelSelector) map[string]*v1.Pod {
+func (p *Pod) ListPodsBySelector(ns string, sel *metav1.LabelSelector) map[string]*v1.Pod {
 	res := map[string]*v1.Pod{}
 	if sel == nil {
 		return res
 	}
 	for fqn, po := range p.pods {
-		if matchLabels(po.ObjectMeta.Labels, sel.MatchLabels) {
+		if po.Namespace == ns && matchLabels(po.ObjectMeta.Labels, sel.MatchLabels) {
 			res[fqn] = po
 		}
 	}
@@ -37,8 +37,8 @@ func (p *Pod) ListPodsBySelector(sel *metav1.LabelSelector) map[string]*v1.Pod {
 }
 
 // GetPod returns a pod via a label query.
-func (p *Pod) GetPod(sel map[string]string) *v1.Pod {
-	res := p.ListPodsBySelector(&metav1.LabelSelector{MatchLabels: sel})
+func (p *Pod) GetPod(ns string, sel map[string]string) *v1.Pod {
+	res := p.ListPodsBySelector(ns, &metav1.LabelSelector{MatchLabels: sel})
 	for _, v := range res {
 		return v
 	}

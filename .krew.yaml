@@ -1,0 +1,57 @@
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: popeye
+spec:
+  homepage: https://popeyecli.io
+  shortDescription: Scans your clusters for potential resource issues.
+  version: {{ .TagName }}
+  description: |
+    Popeye is a utility that scans live Kubernetes clusters and reports
+    potential issues with deployed resources and configurations.
+    It sanitizes your cluster based on what's deployed and not what's
+    sitting on disk. By scanning your cluster, it detects misconfigurations
+    and ensure best practices are in place thus preventing potential future
+    headaches. It aims at reducing the cognitive overload one faces when
+    operating a Kubernetes cluster in the wild. Furthermore, if your
+    cluster employs a metric-server, it reports potential resources
+    over/under allocations and attempts to warn you should your cluster
+    run out of capacity.
+
+    Popeye is a readonly tool, it does not alter any of your Kubernetes
+    resources in any way!
+
+  platforms:
+    - selector:
+        matchLabels:
+          os: darwin
+          arch: amd64
+      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_darwin_amd64.tar.gz" .TagName }}
+          files:
+        - from: popeye
+          to: kubectl-popeye
+        - from: LICENSE
+          to: "."
+      bin: kubectl-popeye
+    - selector:
+        matchLabels:
+          os: linux
+          arch: amd64
+      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Linux_x86_64.tar.gz" .TagName }}
+      files:
+        - from: popeye
+          to: kubectl-popeye
+        - from: LICENSE
+          to: "."
+      bin: kubectl-popeye
+    - selector:
+        matchLabels:
+          os: windows
+          arch: amd64
+      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Windows_x86_64.tar.gz" .TagName }}
+      files:
+        - from: popeye.exe
+          to: kubectl-popeye.exe
+        - from: LICENSE
+          to: "."
+      bin: kubectl-popeye.exe

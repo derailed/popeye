@@ -108,7 +108,7 @@ func (s sa) ListSecrets() map[string]*v1.Secret {
 	}
 }
 
-func (s sa) GetPod(map[string]string) *v1.Pod {
+func (s sa) GetPod(ns string, sel map[string]string) *v1.Pod {
 	return nil
 }
 

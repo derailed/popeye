@@ -1,22 +1,29 @@
 package dag
 
 import (
-	"github.com/derailed/popeye/internal/k8s"
+	"context"
+	"errors"
+
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
+	"github.com/derailed/popeye/internal/dao"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/types"
 	rbacv1 "k8s.io/api/rbac/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListRoleBindings list included RoleBindings.
-func ListRoleBindings(c *k8s.Client, cfg *config.Config) (map[string]*rbacv1.RoleBinding, error) {
-	rbs, err := listAllRoleBindings(c)
+func ListRoleBindings(f types.Factory, cfg *config.Config) (map[string]*rbacv1.RoleBinding, error) {
+	rbs, err := listAllRoleBindings(f)
 	if err != nil {
 		return nil, err
 	}
 
 	res := make(map[string]*rbacv1.RoleBinding, len(rbs))
 	for fqn, rb := range rbs {
-		if includeNS(c, rb.Namespace) {
+		if includeNS(f.Client(), rb.Namespace) {
 			res[fqn] = rb
 		}
 	}
@@ -25,8 +32,8 @@ func ListRoleBindings(c *k8s.Client, cfg *config.Config) (map[string]*rbacv1.Rol
 }
 
 // ListAllRoleBindings fetch all RoleBindings on the cluster.
-func listAllRoleBindings(c *k8s.Client) (map[string]*rbacv1.RoleBinding, error) {
-	ll, err := fetchRoleBindings(c)
+func listAllRoleBindings(f types.Factory) (map[string]*rbacv1.RoleBinding, error) {
+	ll, err := fetchRoleBindings(f)
 	if err != nil {
 		return nil, err
 	}
@@ -40,6 +47,24 @@ func listAllRoleBindings(c *k8s.Client) (map[string]*rbacv1.RoleBinding, error) 
 }
 
 // FetchRoleBindings retrieves all RoleBindings on the cluster.
-func fetchRoleBindings(c *k8s.Client) (*rbacv1.RoleBindingList, error) {
-	return c.DialOrDie().RbacV1().RoleBindings(c.ActiveNamespace()).List(metav1.ListOptions{})
+func fetchRoleBindings(f types.Factory) (*rbacv1.RoleBindingList, error) {
+	var res dao.Resource
+	res.Init(f, client.NewGVR("rbac.authorization.k8s.io/v1/rolebindings"))
+
+	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
+	oo, err := res.List(ctx, client.AllNamespaces)
+	if err != nil {
+		return nil, err
+	}
+	var ll rbacv1.RoleBindingList
+	for _, o := range oo {
+		var rb rbacv1.RoleBinding
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(o.(*unstructured.Unstructured).Object, &rb)
+		if err != nil {
+			return nil, errors.New("expecting rolebinding resource")
+		}
+		ll.Items = append(ll.Items, rb)
+	}
+
+	return &ll, nil
 }

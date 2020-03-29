@@ -47,7 +47,7 @@ func (p *PodDisruptionBudget) Sanitize(ctx context.Context) error {
 }
 
 func (p *PodDisruptionBudget) checkInUse(ctx context.Context, pdb *pv1beta1.PodDisruptionBudget) {
-	if p.GetPod(pdb.Spec.Selector.MatchLabels) == nil {
+	if p.GetPod(pdb.Namespace, pdb.Spec.Selector.MatchLabels) == nil {
 		p.AddCode(ctx, 900)
 		return
 	}

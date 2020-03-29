@@ -97,36 +97,36 @@ func (h *HorizontalPodAutoscaler) Sanitize(ctx context.Context) error {
 func (h *HorizontalPodAutoscaler) checkResources(ctx context.Context, max, current int32, rList, res v1.ResourceList) v1.ResourceList {
 	rcpu, rmem := rList.Cpu(), rList.Memory()
 	acpu, amem := *res.Cpu(), *res.Memory()
-	trcpu, trmem := rcpu.Copy(), rmem.Copy()
+	trcpu, trmem := rcpu.DeepCopy(), rmem.DeepCopy()
 	for i := 1; i <= int(max-current); i++ {
 		trcpu.Add(*rcpu)
 		trmem.Add(*rmem)
 	}
-	if toMC(*trcpu) > toMC(acpu) {
-		cpu := trcpu.Copy()
+	if toMC(trcpu) > toMC(acpu) {
+		cpu := trcpu.DeepCopy()
 		cpu.Sub(acpu)
-		h.AddCode(ctx, 602, current, max, asMC(acpu), asMC(*cpu))
+		h.AddCode(ctx, 602, current, max, asMC(acpu), asMC(cpu))
 	}
-	if toMB(*trmem) > toMB(amem) {
-		mem := trmem.Copy()
+	if toMB(trmem) > toMB(amem) {
+		mem := trmem.DeepCopy()
 		mem.Sub(amem)
-		h.AddCode(ctx, 603, current, max, asMB(amem), asMB(*mem))
+		h.AddCode(ctx, 603, current, max, asMB(amem), asMB(mem))
 	}
 
-	return v1.ResourceList{v1.ResourceCPU: *trcpu, v1.ResourceMemory: *trmem}
+	return v1.ResourceList{v1.ResourceCPU: trcpu, v1.ResourceMemory: trmem}
 }
 
 func (h *HorizontalPodAutoscaler) checkUtilization(ctx context.Context, tcpu, tmem resource.Quantity, res v1.ResourceList) {
 	acpu, amem := *res.Cpu(), *res.Memory()
 	ctx = internal.WithFQN(ctx, "HPA")
 	if toMC(tcpu) > toMC(acpu) {
-		cpu := tcpu.Copy()
+		cpu := tcpu.DeepCopy()
 		cpu.Sub(acpu)
-		h.AddCode(ctx, 604, asMC(tcpu), asMC(acpu), asMC(*cpu))
+		h.AddCode(ctx, 604, asMC(tcpu), asMC(acpu), asMC(cpu))
 	}
 	if toMB(tmem) > toMB(amem) {
-		mem := tmem.Copy()
+		mem := tmem.DeepCopy()
 		mem.Sub(amem)
-		h.AddCode(ctx, 605, asMB(tmem), asMB(amem), asMB(*mem))
+		h.AddCode(ctx, 605, asMB(tmem), asMB(amem), asMB(mem))
 	}
 }

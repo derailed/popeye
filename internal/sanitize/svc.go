@@ -21,7 +21,7 @@ type (
 
 	// PodGetter find a single pod matching service selector.
 	PodGetter interface {
-		GetPod(map[string]string) *v1.Pod
+		GetPod(ns string, sel map[string]string) *v1.Pod
 	}
 
 	// EndPointLister find all service endpoints.
@@ -50,7 +50,7 @@ func (s *Service) Sanitize(ctx context.Context) error {
 		s.InitOutcome(fqn)
 		ctx = internal.WithFQN(ctx, fqn)
 
-		s.checkPorts(ctx, svc.Spec.Selector, svc.Spec.Ports)
+		s.checkPorts(ctx, svc.Namespace, svc.Spec.Selector, svc.Spec.Ports)
 		s.checkEndpoints(ctx, svc.Spec.Selector, svc.Spec.Type)
 		s.checkType(ctx, svc.Spec.Type)
 
@@ -62,8 +62,8 @@ func (s *Service) Sanitize(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) checkPorts(ctx context.Context, sel map[string]string, ports []v1.ServicePort) {
-	po := s.GetPod(sel)
+func (s *Service) checkPorts(ctx context.Context, ns string, sel map[string]string, ports []v1.ServicePort) {
+	po := s.GetPod(ns, sel)
 	if po == nil {
 		if len(sel) > 0 {
 			s.AddCode(ctx, 1100)
