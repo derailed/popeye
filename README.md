@@ -212,7 +212,7 @@ For example, the FQN of a pod named `fred-1234` in the namespace `blee` will be 
 
 NOTE! Please be careful with your regex as more resources than expected may get excluded from the report with a *loose* regex rule. When your cluster resources change, this could lead to a sub-optimal sanitization. Once in a while it might be a good idea to run Popeye „configless“ to make sure you will recognize any new issues that may have arisen in your clusters…
 
-Here is an example spinach file as it stands in this release. There is a fuller EKS based spinach file in this repo at [spinach/spinach_eks.yml](spinach/spinach_eks.yml). (BTW: for newcomers to the project, it might be a great way to contribute by adding cluster specific spinach file PRs…)
+Here is an example spinach file as it stands in this release. There is a fuller eks and aks based spinach file in this repo under `spinach`. (BTW: for new comers into the project, might be a great way to contribute by adding cluster specific spinach file PRs...)
 
 ```yaml
 # A Popeye sample configuration file
