@@ -450,20 +450,6 @@ func ensurePath(path string, mod os.FileMode) error {
 	return nil
 }
 
-func in(list []string, member string) bool {
-	if len(list) == 0 {
-		return true
-	}
-
-	for _, m := range list {
-		if m == member {
-			return true
-		}
-	}
-
-	return false
-}
-
 func dumpDir() string {
 	if d := os.Getenv("POPEYE_REPORT_DIR"); d != "" {
 		return d
