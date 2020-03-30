@@ -48,7 +48,7 @@ func (n *NetworkPolicy) Sanitize(ctx context.Context) error {
 		n.checkDeprecation(ctx, np)
 		n.checkRefs(ctx, np)
 
-		if n.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+		if n.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			n.ClearOutcome(fqn)
 		}
 	}

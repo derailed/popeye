@@ -1,10 +1,10 @@
 package sanitize
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/derailed/popeye/internal"
-	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +22,7 @@ func loadCodes(t *testing.T) *issues.Codes {
 func TestConfigMapSanitize(t *testing.T) {
 	cm := NewConfigMap(issues.NewCollector(loadCodes(t), makeConfig(t)), newConfigMap())
 
-	ctx := makeContext("configmaps")
+	ctx := makeContext("v1/configmaps", "configmaps")
 	assert.Nil(t, cm.Sanitize(ctx))
 	assert.Equal(t, 4, len(cm.Outcome()))
 
@@ -46,17 +46,15 @@ func newConfigMap() configMap {
 	return configMap{}
 }
 
-func (c configMap) PodRefs(refs cache.ObjReferences) {
-	refs["cm:default/cm1"] = internal.StringSet{
+func (c configMap) PodRefs(refs *sync.Map) {
+	refs.Store("cm:default/cm1", internal.StringSet{
 		"k1": internal.Blank,
 		"k2": internal.Blank,
-	}
-	refs["cm:default/cm2"] = internal.StringSet{
-		cache.AllKeys: internal.Blank,
-	}
-	refs["cm:default/cm4"] = internal.StringSet{
+	})
+	refs.Store("cm:default/cm2", internal.AllKeys)
+	refs.Store("cm:default/cm4", internal.StringSet{
 		"k1": internal.Blank,
-	}
+	})
 }
 
 func (c configMap) ListConfigMaps() map[string]*v1.ConfigMap {

@@ -128,7 +128,7 @@ func (f *Factory) WaitForCacheSync() {
 	for ns, fac := range f.factories {
 		m := fac.WaitForCacheSync(f.stopChan)
 		for k, v := range m {
-			log.Debug().Msgf("CACHE `%q Loaded %t:%s", ns, v, k)
+			log.Debug().Msgf("CACHE %q synched %t:%s", ns, v, k)
 		}
 	}
 }

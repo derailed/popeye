@@ -1,6 +1,7 @@
 package sanitize
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/derailed/popeye/internal"
@@ -29,7 +30,7 @@ func TestROSanitize(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("roles")
+	ctx := makeContext("rbac.authorization.k8s.io/v1/roles", "roles")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
@@ -83,11 +84,11 @@ func (r *ro) ListRoles() map[string]*rbacv1.Role {
 	}
 }
 
-func (r *ro) ClusterRoleRefs(refs cache.ObjReferences) {
-	refs[cache.ResFqn(cache.RoleKey, "default/ro2")] = internal.StringSet{"all": internal.Empty{}}
+func (r *ro) ClusterRoleRefs(refs *sync.Map) {
+	refs.Store(cache.ResFqn(cache.RoleKey, "default/ro2"), internal.AllKeys)
 }
-func (r *ro) RoleRefs(refs cache.ObjReferences) {
-	refs[cache.ResFqn(cache.RoleKey, "default/ro1")] = internal.StringSet{"all": internal.Empty{}}
+func (r *ro) RoleRefs(refs *sync.Map) {
+	refs.Store(cache.ResFqn(cache.RoleKey, "default/ro1"), internal.AllKeys)
 }
 
 func makeCRB(name, refKind, refName string) *rbacv1.ClusterRoleBinding {

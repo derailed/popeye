@@ -1,6 +1,7 @@
 package sanitize
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/derailed/popeye/internal/cache"
@@ -38,7 +39,7 @@ func TestSASanitize(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("sa")
+	ctx := makeContext("v1/serviceaccounts", "sa")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
@@ -93,13 +94,11 @@ func (s sa) ListPods() map[string]*v1.Pod {
 	}
 }
 
-func (s sa) RoleRefs(cache.ObjReferences)        {}
-func (s sa) ClusterRoleRefs(cache.ObjReferences) {}
-func (s sa) IngressRefs(cache.ObjReferences)     {}
-
-func (s sa) ServiceAccountRefs(cache.ObjReferences) {}
-
-func (s sa) PodRefs(cache.ObjReferences) {}
+func (s sa) RoleRefs(*sync.Map)           {}
+func (s sa) ClusterRoleRefs(*sync.Map)    {}
+func (s sa) IngressRefs(*sync.Map)        {}
+func (s sa) ServiceAccountRefs(*sync.Map) {}
+func (s sa) PodRefs(*sync.Map)            {}
 
 func (s sa) ListSecrets() map[string]*v1.Secret {
 	return map[string]*v1.Secret{

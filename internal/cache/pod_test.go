@@ -2,8 +2,10 @@ package cache
 
 import (
 	"sort"
+	"sync"
 	"testing"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -105,14 +107,28 @@ func TestPodRefsVolume(t *testing.T) {
 
 	p := NewPod(pods)
 
-	refs := ObjReferences{}
-	p.PodRefs(refs)
+	var refs sync.Map
+	p.PodRefs(&refs)
 
-	assert.Equal(t, 2, len(refs["cm:default/cm1"]))
-	assert.Equal(t, 2, len(refs["cm:default/cm2"]))
-	assert.Equal(t, 1, len(refs["sec:default/s1"]))
-	assert.Equal(t, 1, len(refs["sec:default/s2"]))
-	assert.Equal(t, 1, len(refs["ns"]))
+	ii, ok := refs.Load("cm:default/cm1")
+	assert.True(t, ok)
+	assert.Equal(t, 2, len(ii.(internal.StringSet)))
+
+	ii, ok = refs.Load("cm:default/cm2")
+	assert.True(t, ok)
+	assert.Equal(t, 2, len(ii.(internal.StringSet)))
+
+	ii, ok = refs.Load("sec:default/s1")
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(ii.(internal.StringSet)))
+
+	ii, ok = refs.Load("sec:default/s2")
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(ii.(internal.StringSet)))
+
+	ii, ok = refs.Load("ns")
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(ii.(internal.StringSet)))
 }
 
 func TestPodRefsEnvFrom(t *testing.T) {
@@ -124,13 +140,24 @@ func TestPodRefsEnvFrom(t *testing.T) {
 
 	p := NewPod(pods)
 
-	refs := ObjReferences{}
-	p.PodRefs(refs)
+	var refs sync.Map
+	p.PodRefs(&refs)
 
-	assert.Equal(t, 1, len(refs["cm:default/r1"]))
-	assert.Equal(t, 1, len(refs["cm:default/r2"]))
-	assert.Equal(t, 1, len(refs["sec:default/r1"]))
-	assert.Equal(t, 1, len(refs["sec:default/r2"]))
+	ii, ok := refs.Load("cm:default/r1")
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(ii.(internal.StringSet)))
+
+	ii, ok = refs.Load("cm:default/r2")
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(ii.(internal.StringSet)))
+
+	ii, ok = refs.Load("sec:default/r1")
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(ii.(internal.StringSet)))
+
+	ii, ok = refs.Load("sec:default/r2")
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(ii.(internal.StringSet)))
 }
 
 func TestPodRefsEnv(t *testing.T) {
@@ -139,13 +166,24 @@ func TestPodRefsEnv(t *testing.T) {
 		"default/p2": makePodEnv("p2", "r2", true),
 	}
 	p := NewPod(pods)
-	refs := ObjReferences{}
-	p.PodRefs(refs)
+	var refs sync.Map
+	p.PodRefs(&refs)
 
-	assert.Equal(t, 2, len(refs["cm:default/r1"]))
-	assert.Equal(t, 2, len(refs["cm:default/r2"]))
-	assert.Equal(t, 1, len(refs["sec:default/r1"]))
-	assert.Equal(t, 1, len(refs["sec:default/r2"]))
+	ii, ok := refs.Load("cm:default/r1")
+	assert.True(t, ok)
+	assert.Equal(t, 2, len(ii.(internal.StringSet)))
+
+	ii, ok = refs.Load("cm:default/r2")
+	assert.True(t, ok)
+	assert.Equal(t, 2, len(ii.(internal.StringSet)))
+
+	ii, ok = refs.Load("sec:default/r1")
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(ii.(internal.StringSet)))
+
+	ii, ok = refs.Load("sec:default/r2")
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(ii.(internal.StringSet)))
 }
 
 func TestPodPullImageSecrets(t *testing.T) {
@@ -155,13 +193,24 @@ func TestPodPullImageSecrets(t *testing.T) {
 	}
 
 	p := NewPod(pods)
-	refs := ObjReferences{}
-	p.PodRefs(refs)
+	var refs sync.Map
+	p.PodRefs(&refs)
 
-	assert.Equal(t, 1, len(refs["sec:default/r1"]))
-	assert.Equal(t, 1, len(refs["sec:default/r2"]))
-	assert.Equal(t, 1, len(refs["sec:default/s1"]))
-	assert.Equal(t, 1, len(refs["sec:default/s2"]))
+	ii, ok := refs.Load("cm:default/r1")
+	assert.True(t, ok)
+	assert.Equal(t, 2, len(ii.(internal.StringSet)))
+
+	ii, ok = refs.Load("cm:default/r2")
+	assert.True(t, ok)
+	assert.Equal(t, 2, len(ii.(internal.StringSet)))
+
+	ii, ok = refs.Load("sec:default/s1")
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(ii.(internal.StringSet)))
+
+	ii, ok = refs.Load("sec:default/s2")
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(ii.(internal.StringSet)))
 }
 
 func TestNamespaced(t *testing.T) {

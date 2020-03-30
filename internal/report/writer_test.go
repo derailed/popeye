@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
@@ -84,15 +85,15 @@ func TestDump(t *testing.T) {
 	}{
 		{
 			issues.Outcome{
-				"fred": issues.Issues{issues.New(issues.Root, config.WarnLevel, "Yo Mama!")},
+				"fred": issues.Issues{issues.New(client.NewGVR("fred"), issues.Root, config.WarnLevel, "Yo Mama!")},
 			},
 			"    😱 \x1b[38;5;220;mYo Mama!.\x1b[0m\n",
 		},
 		{
 			issues.Outcome{
 				"fred": issues.Issues{
-					issues.New("c1", config.ErrorLevel, "Yo Mama!"),
-					issues.New("c1", config.ErrorLevel, "Yo!"),
+					issues.New(client.NewGVR("fred"), "c1", config.ErrorLevel, "Yo Mama!"),
+					issues.New(client.NewGVR("fred"), "c1", config.ErrorLevel, "Yo!"),
 				},
 			},
 			"    🐳 \x1b[38;5;75;mc1\x1b[0m\n      💥 \x1b[38;5;196;mYo Mama!.\x1b[0m\n      💥 \x1b[38;5;196;mYo!.\x1b[0m\n",
@@ -125,9 +126,9 @@ func TestOpen(t *testing.T) {
 	}{
 		{
 			issues.Outcome{
-				"fred": issues.Issues{issues.New(issues.Root, config.WarnLevel, "Yo Mama!")},
+				"fred": issues.Issues{issues.New(client.NewGVR("fred"), issues.Root, config.WarnLevel, "Yo Mama!")},
 			},
-			"\n\x1b[38;5;75;mblee\x1b[0m" + strings.Repeat(" ", 75) + "💥 0 😱 1 🔊 0 ✅ 0 \x1b[38;5;196;m0\x1b[0m٪\n\x1b[38;5;75;m" + strings.Repeat("┅", Width) + "\x1b[0m\n",
+			"\n\x1b[38;5;75;mblee\x1b[0m" + strings.Repeat(" ", 75) + "💥 0 😱 1 🔊 0 ✅ 0 \x1b[38;5;196;m0\x1b[0m٪\n\x1b[38;5;75;m" + strings.Repeat("┅", Width+1) + "\x1b[0m\n",
 		},
 	}
 
@@ -149,7 +150,7 @@ func TestOpenClose(t *testing.T) {
 	s.Open("fred", nil)
 	s.Close()
 
-	assert.Equal(t, "\n\x1b[38;5;75;mfred\x1b[0m\n\x1b[38;5;75;m"+strings.Repeat("┅", Width)+"\x1b[0m\n\n", w.String())
+	assert.Equal(t, "\n\x1b[38;5;75;mfred\x1b[0m\n\x1b[38;5;75;m"+strings.Repeat("┅", Width+1)+"\x1b[0m\n\n", w.String())
 }
 
 func TestFormatLine(t *testing.T) {

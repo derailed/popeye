@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,8 +21,8 @@ func TestNoConcerns(t *testing.T) {
 		},
 		"issues": {
 			issues: []Issue{
-				New(Root, config.InfoLevel, "blee"),
-				New(Root, config.WarnLevel, "blee"),
+				New(client.NewGVR("blee"), Root, config.InfoLevel, "blee"),
+				New(client.NewGVR("blee"), Root, config.WarnLevel, "blee"),
 			},
 		},
 	}
@@ -51,8 +52,8 @@ func TestMaxSeverity(t *testing.T) {
 		},
 		"mix": {
 			issues: []Issue{
-				New(Root, config.InfoLevel, "blee"),
-				New(Root, config.WarnLevel, "blee"),
+				New(client.NewGVR("fred"), Root, config.InfoLevel, "blee"),
+				New(client.NewGVR("fred"), Root, config.WarnLevel, "blee"),
 			},
 			section:  Root,
 			severity: config.WarnLevel,
@@ -60,8 +61,8 @@ func TestMaxSeverity(t *testing.T) {
 		},
 		"same": {
 			issues: []Issue{
-				New(Root, config.InfoLevel, "blee"),
-				New(Root, config.InfoLevel, "blee"),
+				New(client.NewGVR("fred"), Root, config.InfoLevel, "blee"),
+				New(client.NewGVR("fred"), Root, config.InfoLevel, "blee"),
 			},
 			section:  Root,
 			severity: config.InfoLevel,
@@ -69,9 +70,9 @@ func TestMaxSeverity(t *testing.T) {
 		},
 		"error": {
 			issues: []Issue{
-				New(Root, config.ErrorLevel, "blee"),
-				New(Root, config.InfoLevel, "blee"),
-				New(Root, config.InfoLevel, "blee"),
+				New(client.NewGVR("fred"), Root, config.ErrorLevel, "blee"),
+				New(client.NewGVR("fred"), Root, config.InfoLevel, "blee"),
+				New(client.NewGVR("fred"), Root, config.InfoLevel, "blee"),
 			},
 			section:  Root,
 			severity: config.ErrorLevel,
@@ -248,7 +249,7 @@ func makeConfig(t *testing.T) *config.Config {
 }
 
 func makeContext(section, fqn, group string) context.Context {
-	return context.WithValue(context.Background(), internal.KeyRun, internal.RunInfo{
+	return context.WithValue(context.Background(), internal.KeyRunInfo, internal.RunInfo{
 		Section: section,
 		Group:   group,
 		FQN:     fqn,

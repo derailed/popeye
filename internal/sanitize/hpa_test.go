@@ -80,7 +80,7 @@ func TestHPASanitizeDP(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("hpa")
+	ctx := makeContext("autoscaling/v1/horizontalpodautoscalers", "hpa")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
@@ -165,7 +165,7 @@ func TestHPASanitizeSTS(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("hpa")
+	ctx := makeContext("autoscaling/v1/horizontalpodautoscalers", "hpa")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {

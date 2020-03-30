@@ -27,6 +27,7 @@ func TestPSPSanitize(t *testing.T) {
 			}),
 			issues: issues.Issues{
 				issues.Issue{
+					GVR:     "policy/v1beta1/podsecuritypolicies",
 					Group:   "__root__",
 					Level:   2,
 					Message: `[POP-403] Deprecated PodSecurityPolicy API group "extensions/v1beta1". Use "policy/v1beta1" instead`},
@@ -34,7 +35,7 @@ func TestPSPSanitize(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("psp")
+	ctx := makeContext("policy/v1beta1/podsecuritypolicies", "psp")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {

@@ -194,13 +194,12 @@ var htmlTemplate = `
       </div>
     </div>
 
-    {{ $aliases := .Aliases }}
     {{ range $section := .Report.Sections }}
     <div class="section">
       <hr />
       <div class="section-title">
         {{ $count := len $section.Outcome }}
-        {{ toTitle $aliases $section.Title $count }}
+        {{ toTitle $section.Title $count }}
       </div>
       <div class="scores">
         <span class="scorer level-3"> <i class="{{ toEmoji 3 }}"></i> {{ $section.Tally.MarshalYAML.Error }} </span>

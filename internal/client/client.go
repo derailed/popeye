@@ -242,6 +242,8 @@ func (a *APIClient) HasMetrics() bool {
 
 // DialOrDie returns a handle to api server or die.
 func (a *APIClient) DialOrDie() kubernetes.Interface {
+	a.mx.Lock()
+	defer a.mx.Unlock()
 	if a.client != nil {
 		return a.client
 	}

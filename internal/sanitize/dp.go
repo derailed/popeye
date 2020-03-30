@@ -59,7 +59,7 @@ func (d *Deployment) Sanitize(ctx context.Context) error {
 		podsMetrics(d, pmx)
 		d.checkUtilization(ctx, over, dp, pmx)
 
-		if d.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+		if d.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			d.ClearOutcome(fqn)
 		}
 	}
@@ -146,7 +146,7 @@ func (d *Deployment) deploymentUsage(dp *appsv1.Deployment, pmx client.PodsMetri
 
 // PullOverAllocs check for over allocation setting in context.
 func pullOverAllocs(ctx context.Context) bool {
-	over := ctx.Value(PopeyeKey("OverAllocs"))
+	over := ctx.Value(internal.KeyOverAllocs)
 	if over == nil {
 		return false
 	}

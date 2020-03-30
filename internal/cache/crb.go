@@ -2,6 +2,7 @@ package cache
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/derailed/popeye/internal"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -23,14 +24,13 @@ func (c *ClusterRoleBinding) ListClusterRoleBindings() map[string]*rbacv1.Cluste
 }
 
 // ClusterRoleRefs computes all clusterrole external references.
-func (c *ClusterRoleBinding) ClusterRoleRefs(refs ObjReferences) {
+func (c *ClusterRoleBinding) ClusterRoleRefs(refs *sync.Map) {
 	for fqn, crb := range c.crbs {
 		key := ResFqn(strings.ToLower(crb.RoleRef.Kind), FQN(crb.Namespace, crb.RoleRef.Name))
-		if c, ok := refs[key]; ok {
-			c.Add(fqn)
+		if c, ok := refs.Load(key); ok {
+			c.(internal.StringSet).Add(fqn)
 		} else {
-			refs[key] = internal.StringSet{fqn: internal.Blank}
+			refs.Store(key, internal.StringSet{fqn: internal.Blank})
 		}
-
 	}
 }

@@ -153,7 +153,7 @@ func TestNodeSanitizer(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("nodes")
+	ctx := makeContext("v1/nodes", "nodes")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {

@@ -2,6 +2,7 @@ package sanitize
 
 import (
 	"context"
+	"sync"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
@@ -18,12 +19,12 @@ type (
 
 	// SARefs tracks ServiceAccount object references.
 	SARefs interface {
-		ServiceAccountRefs(cache.ObjReferences)
+		ServiceAccountRefs(*sync.Map)
 	}
 
 	// IngressRefs tracks Ingress object references.
 	IngressRefs interface {
-		IngressRefs(cache.ObjReferences)
+		IngressRefs(*sync.Map)
 	}
 
 	// SecretLister list available Secrets on a cluster.
@@ -45,32 +46,32 @@ func NewSecret(co *issues.Collector, lister SecretLister) *Secret {
 
 // Sanitize cleanse the resource.
 func (s *Secret) Sanitize(ctx context.Context) error {
-	refs := cache.ObjReferences{}
+	var refs sync.Map
 
-	s.PodRefs(refs)
-	s.ServiceAccountRefs(refs)
-	s.IngressRefs(refs)
-	s.checkInUse(ctx, refs)
+	s.PodRefs(&refs)
+	s.ServiceAccountRefs(&refs)
+	s.IngressRefs(&refs)
+	s.checkInUse(ctx, &refs)
 
 	return nil
 }
 
-func (s *Secret) checkInUse(ctx context.Context, refs cache.ObjReferences) {
+func (s *Secret) checkInUse(ctx context.Context, refs *sync.Map) {
 	for fqn, sec := range s.ListSecrets() {
 		s.InitOutcome(fqn)
 		ctx = internal.WithFQN(ctx, fqn)
 		defer func(fqn string, ctx context.Context) {
-			if s.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+			if s.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 				s.ClearOutcome(fqn)
 			}
 		}(fqn, ctx)
 
-		keys, ok := refs[cache.ResFqn(cache.SecretKey, fqn)]
+		keys, ok := refs.Load(cache.ResFqn(cache.SecretKey, fqn))
 		if !ok {
 			s.AddCode(ctx, 400)
 			continue
 		}
-		if keys.Has(cache.AllKeys) {
+		if keys.(internal.StringSet).Has(internal.All) {
 			continue
 		}
 
@@ -78,7 +79,7 @@ func (s *Secret) checkInUse(ctx context.Context, refs cache.ObjReferences) {
 		for k := range sec.Data {
 			kk.Add(k)
 		}
-		deltas := keys.Diff(kk)
+		deltas := keys.(internal.StringSet).Diff(kk)
 		for k := range deltas {
 			s.AddCode(ctx, 401, k)
 		}

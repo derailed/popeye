@@ -34,9 +34,7 @@ func (c *Collector) InitOutcome(fqn string) {
 
 // ClearOutcome delete all fqn related issues.
 func (c *Collector) ClearOutcome(fqn string) {
-	if len(c.outcomes[fqn]) == 0 {
-		delete(c.outcomes, fqn)
-	}
+	delete(c.outcomes, fqn)
 }
 
 // NoConcerns returns true is scan is successful.
@@ -57,7 +55,7 @@ func (c *Collector) AddSubCode(ctx context.Context, code config.ID, args ...inte
 		log.Error().Err(fmt.Errorf("No code with ID %d", code)).Msg("AddSubCode failed")
 	}
 	if !c.ShouldExclude(run.Section, run.FQN, code) {
-		c.addIssue(run.FQN, New(run.Group, co.Severity, co.Format(code, args...)))
+		c.addIssue(run.FQN, New(run.GroupGVR, run.Group, co.Severity, co.Format(code, args...)))
 	}
 }
 
@@ -70,7 +68,7 @@ func (c *Collector) AddCode(ctx context.Context, code config.ID, args ...interfa
 		panic(fmt.Errorf("No code with ID %d", code))
 	}
 	if !c.ShouldExclude(run.Section, run.FQN, code) {
-		c.addIssue(run.FQN, New(Root, co.Severity, co.Format(code, args...)))
+		c.addIssue(run.FQN, New(run.SectionGVR, Root, co.Severity, co.Format(code, args...)))
 	}
 }
 
@@ -78,7 +76,7 @@ func (c *Collector) AddCode(ctx context.Context, code config.ID, args ...interfa
 func (c *Collector) AddErr(ctx context.Context, errs ...error) {
 	run := internal.MustExtractRunInfo(ctx)
 	for _, e := range errs {
-		c.addIssue(run.FQN, New(Root, config.ErrorLevel, e.Error()))
+		c.addIssue(run.FQN, New(run.SectionGVR, Root, config.ErrorLevel, e.Error()))
 	}
 }
 

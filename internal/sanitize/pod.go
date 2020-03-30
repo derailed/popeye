@@ -6,6 +6,7 @@ import (
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/rs/zerolog/log"
 	v1 "k8s.io/api/core/v1"
 	pv1beta1 "k8s.io/api/policy/v1beta1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
@@ -83,7 +84,8 @@ func (p *Pod) Sanitize(ctx context.Context) error {
 		containerMetrics(pmx, cmx)
 		p.checkUtilization(ctx, po, cmx)
 
-		if p.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+		if p.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
+			log.Debug().Msgf("CLEARING %q", fqn)
 			p.ClearOutcome(fqn)
 		}
 	}
@@ -129,13 +131,13 @@ func (p *Pod) checkSecure(ctx context.Context, spec v1.PodSpec) {
 	for _, co := range spec.InitContainers {
 		if !checkCOSecurityContext(co) && !podSec {
 			victims++
-			p.AddSubCode(internal.WithGroup(ctx, co.Name), 306)
+			p.AddSubCode(internal.WithGroup(ctx, client.NewGVR("containers"), co.Name), 306)
 		}
 	}
 	for _, co := range spec.Containers {
 		if !checkCOSecurityContext(co) && !podSec {
 			victims++
-			p.AddSubCode(internal.WithGroup(ctx, co.Name), 306)
+			p.AddSubCode(internal.WithGroup(ctx, client.NewGVR("containers"), co.Name), 306)
 		}
 	}
 	if victims > 0 && !podSec {

@@ -1,6 +1,8 @@
 package scrub
 
 import (
+	"sync"
+
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 )
@@ -8,6 +10,7 @@ import (
 type apps struct {
 	*dial
 
+	mx  sync.Mutex
 	dp  *cache.Deployment
 	ds  *cache.DaemonSet
 	sts *cache.StatefulSet
@@ -19,6 +22,9 @@ func newApps(d *dial) *apps {
 }
 
 func (a *apps) deployments() (*cache.Deployment, error) {
+	a.mx.Lock()
+	defer a.mx.Unlock()
+
 	if a.dp != nil {
 		return a.dp, nil
 	}
@@ -29,6 +35,9 @@ func (a *apps) deployments() (*cache.Deployment, error) {
 }
 
 func (a *apps) replicasets() (*cache.ReplicaSet, error) {
+	a.mx.Lock()
+	defer a.mx.Unlock()
+
 	if a.rs != nil {
 		return a.rs, nil
 	}
@@ -39,6 +48,9 @@ func (a *apps) replicasets() (*cache.ReplicaSet, error) {
 }
 
 func (a *apps) daemonSets() (*cache.DaemonSet, error) {
+	a.mx.Lock()
+	defer a.mx.Unlock()
+
 	if a.ds != nil {
 		return a.ds, nil
 	}
@@ -49,6 +61,9 @@ func (a *apps) daemonSets() (*cache.DaemonSet, error) {
 }
 
 func (a *apps) statefulsets() (*cache.StatefulSet, error) {
+	a.mx.Lock()
+	defer a.mx.Unlock()
+
 	if a.sts != nil {
 		return a.sts, nil
 	}

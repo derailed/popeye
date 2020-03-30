@@ -1,10 +1,10 @@
 package sanitize
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/derailed/popeye/internal"
-	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +28,7 @@ func TestRBSanitize(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("rb")
+	ctx := makeContext("rbac.authorization.k8s.io/v1/rolebindings", "rb")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
@@ -75,6 +75,6 @@ func (r *rb) ListRoles() map[string]*rbacv1.Role {
 	}
 }
 
-func (r *rb) RoleRefs(refs cache.ObjReferences) {
-	refs["default/ro1"] = internal.StringSet{"all": internal.Empty{}}
+func (r *rb) RoleRefs(refs *sync.Map) {
+	refs.Store("default/ro1", internal.AllKeys)
 }

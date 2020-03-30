@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
@@ -40,11 +41,11 @@ func TestTallyRollup(t *testing.T) {
 		{
 			issues.Outcome{
 				"a": {
-					issues.New(issues.Root, config.InfoLevel, ""),
-					issues.New(issues.Root, config.WarnLevel, ""),
+					issues.New(client.NewGVR("fred"), issues.Root, config.InfoLevel, ""),
+					issues.New(client.NewGVR("fred"), issues.Root, config.WarnLevel, ""),
 				},
 				"b": {
-					issues.New(issues.Root, config.ErrorLevel, ""),
+					issues.New(client.NewGVR("fred"), issues.Root, config.ErrorLevel, ""),
 				},
 				"c": {},
 			},
@@ -68,11 +69,11 @@ func TestTallyScore(t *testing.T) {
 		{
 			issues.Outcome{
 				"a": {
-					issues.New(issues.Root, config.InfoLevel, ""),
-					issues.New(issues.Root, config.WarnLevel, ""),
+					issues.New(client.NewGVR("fred"), issues.Root, config.InfoLevel, ""),
+					issues.New(client.NewGVR("fred"), issues.Root, config.WarnLevel, ""),
 				},
 				"b": {
-					issues.New(issues.Root, config.ErrorLevel, ""),
+					issues.New(client.NewGVR("fred"), issues.Root, config.ErrorLevel, ""),
 				},
 				"c": {},
 			},
@@ -96,11 +97,11 @@ func TestTallyWidth(t *testing.T) {
 		{
 			issues.Outcome{
 				"a": {
-					issues.New(issues.Root, config.InfoLevel, ""),
-					issues.New(issues.Root, config.WarnLevel, ""),
+					issues.New(client.NewGVR("fred"), issues.Root, config.InfoLevel, ""),
+					issues.New(client.NewGVR("fred"), issues.Root, config.WarnLevel, ""),
 				},
 				"b": {
-					issues.New(issues.Root, config.ErrorLevel, ""),
+					issues.New(client.NewGVR("fred"), issues.Root, config.ErrorLevel, ""),
 				},
 				"c": {},
 			},

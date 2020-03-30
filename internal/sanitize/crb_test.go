@@ -1,9 +1,9 @@
 package sanitize
 
 import (
+	"sync"
 	"testing"
 
-	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +28,7 @@ func TestCRBSanitize(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("crb")
+	ctx := makeContext("crbs", "crb")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
@@ -77,8 +77,8 @@ func (c *crb) ListRoles() map[string]*rbacv1.Role {
 	}
 }
 
-func (c *crb) ClusterRoleRefs(cache.ObjReferences)        {}
-func (c *crb) ClusterRoleBindingRefs(cache.ObjReferences) {}
+func (c *crb) ClusterRoleRefs(*sync.Map)        {}
+func (c *crb) ClusterRoleBindingRefs(*sync.Map) {}
 
 func makeCR(n string) *rbacv1.ClusterRole {
 	return &rbacv1.ClusterRole{

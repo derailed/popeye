@@ -1,8 +1,10 @@
 package cache_test
 
 import (
+	"sync"
 	"testing"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/stretchr/testify/assert"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -10,18 +12,17 @@ import (
 
 func TestRoleRef(t *testing.T) {
 	cr := cache.NewRoleBinding(makeRBMap())
-	refs := make(cache.ObjReferences)
-	cr.RoleRefs(refs)
+	var refs sync.Map
+	cr.RoleRefs(&refs)
 
-	assert.Equal(t, 2, len(refs))
-	m, ok := refs["clusterrole:cr1"]
+	m, ok := refs.Load("clusterrole:cr1")
 	assert.True(t, ok)
-	_, ok = m["rb1"]
+	_, ok = m.(internal.StringSet)["rb1"]
 	assert.True(t, ok)
 
-	m, ok = refs["role:blee/r1"]
+	m, ok = refs.Load("role:blee/r1")
 	assert.True(t, ok)
-	_, ok = m["rb2"]
+	_, ok = m.(internal.StringSet)["rb2"]
 	assert.True(t, ok)
 }
 

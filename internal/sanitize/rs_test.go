@@ -27,6 +27,7 @@ func TestRSSanitize(t *testing.T) {
 			}),
 			issues: issues.Issues{
 				issues.Issue{
+					GVR:     "apps/v1/replicasets",
 					Group:   "__root__",
 					Level:   2,
 					Message: `[POP-403] Deprecated ReplicaSet API group "extensions/v1beta1". Use "apps/v1" instead`},
@@ -34,7 +35,7 @@ func TestRSSanitize(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("rs")
+	ctx := makeContext("apps/v1/replicasets", "rs")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {

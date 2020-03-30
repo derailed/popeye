@@ -38,7 +38,7 @@ func (p *PodDisruptionBudget) Sanitize(ctx context.Context) error {
 
 		p.checkInUse(ctx, pdb)
 
-		if p.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+		if p.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			p.ClearOutcome(fqn)
 		}
 	}

@@ -1,10 +1,10 @@
 package sanitize
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/derailed/popeye/internal"
-	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +13,7 @@ import (
 )
 
 func TestSecretSanitize(t *testing.T) {
-	ctx := makeContext("secret")
+	ctx := makeContext("v1/secrets", "secret")
 	s := NewSecret(issues.NewCollector(loadCodes(t), makeConfig(t)), newSecret())
 
 	assert.Nil(t, s.Sanitize(ctx))
@@ -39,25 +39,21 @@ func newSecret() secretMock {
 	return secretMock{}
 }
 
-func (m secretMock) PodRefs(refs cache.ObjReferences) {
-	refs["sec:default/sec1"] = internal.StringSet{
+func (m secretMock) PodRefs(refs *sync.Map) {
+	refs.Store("sec:default/sec1", internal.StringSet{
 		"k1": internal.Blank,
 		"k2": internal.Blank,
-	}
-	refs["sec:default/sec2"] = internal.StringSet{
-		"all": internal.Blank,
-	}
-	refs["sec:default/sec4"] = internal.StringSet{
+	})
+	refs.Store("sec:default/sec2", internal.AllKeys)
+	refs.Store("sec:default/sec4", internal.StringSet{
 		"k1": internal.Blank,
-	}
+	})
 }
 
-func (m secretMock) IngressRefs(cache.ObjReferences) {}
+func (m secretMock) IngressRefs(*sync.Map) {}
 
-func (m secretMock) ServiceAccountRefs(refs cache.ObjReferences) {
-	refs["sec:default/sec5"] = internal.StringSet{
-		"all": internal.Blank,
-	}
+func (m secretMock) ServiceAccountRefs(refs *sync.Map) {
+	refs.Store("sec:default/sec5", internal.AllKeys)
 }
 
 func (m secretMock) ListSecrets() map[string]*v1.Secret {

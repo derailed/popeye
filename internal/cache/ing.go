@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"sync"
+
 	"github.com/derailed/popeye/internal"
 	nv1beta1 "k8s.io/api/extensions/v1beta1"
 )
@@ -24,7 +26,7 @@ func (d *Ingress) ListIngresses() map[string]*nv1beta1.Ingress {
 }
 
 // IngressRefs computes all ingress external references.
-func (d *Ingress) IngressRefs(refs ObjReferences) {
+func (d *Ingress) IngressRefs(refs *sync.Map) {
 	for _, ing := range d.ings {
 		for _, tls := range ing.Spec.TLS {
 			d.trackReference(refs, ResFqn(SecretKey, FQN(ing.Namespace, tls.SecretName)))
@@ -32,10 +34,6 @@ func (d *Ingress) IngressRefs(refs ObjReferences) {
 	}
 }
 
-func (d *Ingress) trackReference(refs ObjReferences, key string) {
-	if set, ok := refs[key]; ok {
-		set.Add(AllKeys)
-	} else {
-		refs[key] = internal.StringSet{AllKeys: internal.Blank}
-	}
+func (d *Ingress) trackReference(refs *sync.Map, key string) {
+	refs.Store(key, internal.AllKeys)
 }

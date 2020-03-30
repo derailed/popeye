@@ -20,7 +20,7 @@ func TestPVSanitize(t *testing.T) {
 		"failed":    {makePVLister(pvOpts{phase: v1.VolumeFailed}), 1},
 	}
 
-	ctx := makeContext("pv")
+	ctx := makeContext("v1/persistentvolumes", "pv")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {

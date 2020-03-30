@@ -25,6 +25,7 @@ func TestPDBSanitize(t *testing.T) {
 			lister: makePDBLister(pdbOpts{pod: true}),
 			issues: issues.Issues{
 				issues.Issue{
+					GVR:     "policy/v1beta1/poddisruptionbudgets",
 					Group:   "__root__",
 					Level:   2,
 					Message: "[POP-900] Used? No pods match selector"},
@@ -32,7 +33,7 @@ func TestPDBSanitize(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("pdb")
+	ctx := makeContext("policy/v1beta1/poddisruptionbudgets", "pdb")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {

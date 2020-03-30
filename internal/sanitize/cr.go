@@ -2,6 +2,7 @@ package sanitize
 
 import (
 	"context"
+	"sync"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
@@ -33,25 +34,24 @@ func NewClusterRole(c *issues.Collector, lister CRLister) *ClusterRole {
 
 // Sanitize a configmap.
 func (c *ClusterRole) Sanitize(ctx context.Context) error {
-	crRefs := cache.ObjReferences{}
-	c.ClusterRoleRefs(crRefs)
-	c.RoleRefs(crRefs)
-	c.checkInUse(ctx, crRefs)
+	var crRefs sync.Map
+	c.ClusterRoleRefs(&crRefs)
+	c.RoleRefs(&crRefs)
+	c.checkInUse(ctx, &crRefs)
 
 	return nil
 }
 
-func (c *ClusterRole) checkInUse(ctx context.Context, refs cache.ObjReferences) {
+func (c *ClusterRole) checkInUse(ctx context.Context, refs *sync.Map) {
 	for fqn := range c.ListClusterRoles() {
 		c.InitOutcome(fqn)
 		ctx = internal.WithFQN(ctx, fqn)
 
-		_, ok := refs[cache.ResFqn(cache.ClusterRoleKey, fqn)]
+		_, ok := refs.Load(cache.ResFqn(cache.ClusterRoleKey, fqn))
 		if !ok {
 			c.AddCode(ctx, 400)
 		}
-
-		if c.NoConcerns(fqn) && c.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+		if c.NoConcerns(fqn) && c.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			c.ClearOutcome(fqn)
 		}
 	}

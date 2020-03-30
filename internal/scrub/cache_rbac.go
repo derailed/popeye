@@ -1,6 +1,8 @@
 package scrub
 
 import (
+	"sync"
+
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 )
@@ -8,6 +10,7 @@ import (
 type rbac struct {
 	*dial
 
+	mx  sync.Mutex
 	crb *cache.ClusterRoleBinding
 	cr  *cache.ClusterRole
 	rb  *cache.RoleBinding
@@ -19,6 +22,9 @@ func newRBAC(d *dial) *rbac {
 }
 
 func (r *rbac) roles() (*cache.Role, error) {
+	r.mx.Lock()
+	defer r.mx.Unlock()
+
 	if r.ro != nil {
 		return r.ro, nil
 	}
@@ -29,6 +35,9 @@ func (r *rbac) roles() (*cache.Role, error) {
 }
 
 func (r *rbac) rolebindings() (*cache.RoleBinding, error) {
+	r.mx.Lock()
+	defer r.mx.Unlock()
+
 	if r.rb != nil {
 		return r.rb, nil
 	}
@@ -39,6 +48,9 @@ func (r *rbac) rolebindings() (*cache.RoleBinding, error) {
 }
 
 func (r *rbac) clusterroles() (*cache.ClusterRole, error) {
+	r.mx.Lock()
+	defer r.mx.Unlock()
+
 	if r.cr != nil {
 		return r.cr, nil
 	}
@@ -49,6 +61,9 @@ func (r *rbac) clusterroles() (*cache.ClusterRole, error) {
 }
 
 func (r *rbac) clusterrolebindings() (*cache.ClusterRoleBinding, error) {
+	r.mx.Lock()
+	defer r.mx.Unlock()
+
 	if r.crb != nil {
 		return r.crb, nil
 	}

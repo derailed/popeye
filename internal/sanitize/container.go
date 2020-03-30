@@ -34,7 +34,7 @@ func NewContainer(fqn string, c LimitCollector) *Container {
 
 func (c *Container) sanitize(ctx context.Context, co v1.Container, checkProbes bool) {
 	ctx = internal.WithFQN(ctx, c.fqn)
-	ctx = internal.WithGroup(ctx, co.Name)
+	ctx = internal.WithGroup(ctx, client.NewGVR("containers"), co.Name)
 	c.checkImageTags(ctx, co.Image)
 	c.checkResources(ctx, co)
 	if checkProbes {

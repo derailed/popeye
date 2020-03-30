@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/derailed/popeye/internal"
@@ -20,11 +21,12 @@ func TestServiceAccountRefs(t *testing.T) {
 		"default/sa1": makeSASecrets("sa1"),
 	})
 	for _, u := range uu {
-		refs := ObjReferences{}
-		sa.ServiceAccountRefs(refs)
-		assert.Equal(t, 2, len(refs))
+		var refs sync.Map
+		sa.ServiceAccountRefs(&refs)
 		for _, k := range u.keys {
-			assert.Equal(t, internal.StringSet{AllKeys: internal.Blank}, refs[k])
+			v, ok := refs.Load(k)
+			assert.True(t, ok)
+			assert.Equal(t, internal.AllKeys, v.(internal.StringSet))
 		}
 	}
 }

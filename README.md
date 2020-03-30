@@ -1,4 +1,4 @@
-<img src="assets/popeye_logo.png" align="right" width="250" heigh="auto">
+<img src="assets/popeye_logo.png" align="right" width="250" height="auto">
 
 # Popeye - A Kubernetes Cluster Sanitizer
 
@@ -64,6 +64,14 @@ Popeye is available on Linux, OSX and Windows platforms.
    # Run
    popeye
    ```
+
+## PreFlight Checks
+
+* Popeye uses 256 colors terminal mode. On `Nix system make sure TERM is set accordingly.
+
+    ```shell
+    export TERM=xterm-256color
+    ```
 
 ## Sanitizers
 

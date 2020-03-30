@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/magiconair/properties/assert"
@@ -24,11 +25,9 @@ func TestIngressRefs(t *testing.T) {
 		},
 	})
 
-	refs := ObjReferences{}
-	ing.IngressRefs(refs)
+	var refs sync.Map
+	ing.IngressRefs(&refs)
 
-	_, exists := refs["sec:default/foo"]
-
-	assert.Equal(t, len(refs), 1)
-	assert.Equal(t, exists, true)
+	_, ok := refs.Load("sec:default/foo")
+	assert.Equal(t, ok, true)
 }

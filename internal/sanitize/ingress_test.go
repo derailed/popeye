@@ -23,6 +23,7 @@ func TestIngressSanitize(t *testing.T) {
 			rev: "extensions/v1beta1",
 			e: issues.Issues{
 				{
+					GVR:     "extensions/v1/ingresses",
 					Group:   issues.Root,
 					Message: `[POP-403] Deprecated Ingress API group "extensions/v1beta1". Use "networking.k8s.io/v1beta1" instead`,
 					Level:   config.WarnLevel,
@@ -31,7 +32,7 @@ func TestIngressSanitize(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("ing")
+	ctx := makeContext("extensions/v1/ingresses", "ing")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {

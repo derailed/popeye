@@ -1,6 +1,8 @@
 package scrub
 
 import (
+	"sync"
+
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 )
@@ -8,6 +10,7 @@ import (
 type core struct {
 	*dial
 
+	mx        sync.Mutex
 	namespace *cache.Namespace
 	cm        *cache.ConfigMap
 	pod       *cache.Pod
@@ -25,6 +28,9 @@ func newCore(d *dial) *core {
 }
 
 func (c *core) services() (*cache.Service, error) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+
 	if c.svc != nil {
 		return c.svc, nil
 	}
@@ -35,6 +41,9 @@ func (c *core) services() (*cache.Service, error) {
 }
 
 func (c *core) endpoints() (*cache.Endpoints, error) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+
 	if c.ep != nil {
 		return c.ep, nil
 	}
@@ -45,6 +54,9 @@ func (c *core) endpoints() (*cache.Endpoints, error) {
 }
 
 func (c *core) secrets() (*cache.Secret, error) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+
 	if c.sec != nil {
 		return c.sec, nil
 	}
@@ -55,6 +67,9 @@ func (c *core) secrets() (*cache.Secret, error) {
 }
 
 func (c *core) persistentvolumes() (*cache.PersistentVolume, error) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+
 	if c.pv != nil {
 		return c.pv, nil
 	}
@@ -65,6 +80,9 @@ func (c *core) persistentvolumes() (*cache.PersistentVolume, error) {
 }
 
 func (c *core) persistentvolumeclaims() (*cache.PersistentVolumeClaim, error) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+
 	if c.pvc != nil {
 		return c.pvc, nil
 	}
@@ -75,6 +93,9 @@ func (c *core) persistentvolumeclaims() (*cache.PersistentVolumeClaim, error) {
 }
 
 func (c *core) configmaps() (*cache.ConfigMap, error) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+
 	if c.cm != nil {
 		return c.cm, nil
 	}
@@ -85,6 +106,9 @@ func (c *core) configmaps() (*cache.ConfigMap, error) {
 }
 
 func (c *core) namespaces() (*cache.Namespace, error) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+
 	if c.namespace != nil {
 		return c.namespace, nil
 	}
@@ -95,6 +119,9 @@ func (c *core) namespaces() (*cache.Namespace, error) {
 }
 
 func (c *core) nodes() (*cache.Node, error) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+
 	if c.node != nil {
 		return c.node, nil
 	}
@@ -105,6 +132,9 @@ func (c *core) nodes() (*cache.Node, error) {
 }
 
 func (c *core) pods() (*cache.Pod, error) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+
 	if c.pod != nil {
 		return c.pod, nil
 	}
@@ -115,6 +145,9 @@ func (c *core) pods() (*cache.Pod, error) {
 }
 
 func (c *core) serviceaccounts() (*cache.ServiceAccount, error) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+
 	if c.sa != nil {
 		return c.sa, nil
 	}

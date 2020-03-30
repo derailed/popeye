@@ -203,7 +203,7 @@ func TestSVCSanitize(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("svc")
+	ctx := makeContext("v1/services", "svc")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {

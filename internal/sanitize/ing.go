@@ -43,7 +43,7 @@ func (i *Ingress) Sanitize(ctx context.Context) error {
 
 		i.checkDeprecation(ctx, ing)
 
-		if i.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+		if i.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			i.ClearOutcome(fqn)
 		}
 	}

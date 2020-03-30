@@ -2,6 +2,7 @@ package sanitize
 
 import (
 	"context"
+	"sync"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
@@ -26,12 +27,12 @@ type (
 
 	// ClusterRoleBindingRefs tracks crb references.
 	ClusterRoleBindingRefs interface {
-		ClusterRoleRefs(cache.ObjReferences)
+		ClusterRoleRefs(*sync.Map)
 	}
 
 	// RoleBindingRefs tracks rb references.
 	RoleBindingRefs interface {
-		RoleRefs(cache.ObjReferences)
+		RoleRefs(*sync.Map)
 	}
 
 	// ClusterRoleBindingLister list all available ClusterRoleBindings.
@@ -88,7 +89,7 @@ func (s *ServiceAccount) Sanitize(ctx context.Context) error {
 			s.AddCode(ctx, 400)
 		}
 
-		if s.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+		if s.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			s.ClearOutcome(fqn)
 		}
 	}

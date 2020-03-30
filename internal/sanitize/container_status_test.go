@@ -3,6 +3,7 @@ package sanitize
 import (
 	"testing"
 
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
@@ -33,7 +34,7 @@ func TestContainerStatusSanitize(t *testing.T) {
 				State:        v1.ContainerState{},
 			},
 			1,
-			issues.New("c1", config.ErrorLevel, "[POP-204] Pod is not ready [0/1]"),
+			issues.New(client.NewGVR("containers"), "c1", config.ErrorLevel, "[POP-204] Pod is not ready [0/1]"),
 		},
 		"waitingNoReason": {
 			v1.ContainerStatus{
@@ -45,7 +46,7 @@ func TestContainerStatusSanitize(t *testing.T) {
 				},
 			},
 			1,
-			issues.New("c1", config.ErrorLevel, "[POP-203] Pod is waiting [0/1] blah"),
+			issues.New(client.NewGVR("containers"), "c1", config.ErrorLevel, "[POP-203] Pod is waiting [0/1] blah"),
 		},
 		"waiting": {
 			v1.ContainerStatus{
@@ -57,7 +58,7 @@ func TestContainerStatusSanitize(t *testing.T) {
 				},
 			},
 			1,
-			issues.New("c1", config.ErrorLevel, "[POP-202] Pod is waiting [0/1]"),
+			issues.New(client.NewGVR("containers"), "c1", config.ErrorLevel, "[POP-202] Pod is waiting [0/1]"),
 		},
 		"terminatedReason": {
 			v1.ContainerStatus{
@@ -69,7 +70,7 @@ func TestContainerStatusSanitize(t *testing.T) {
 				},
 			},
 			1,
-			issues.New("c1", config.WarnLevel, "[POP-201] Pod is terminating [1/1] blah"),
+			issues.New(client.NewGVR("containers"), "c1", config.WarnLevel, "[POP-201] Pod is terminating [1/1] blah"),
 		},
 		"terminated": {
 			v1.ContainerStatus{
@@ -81,7 +82,7 @@ func TestContainerStatusSanitize(t *testing.T) {
 				},
 			},
 			1,
-			issues.New("c1", config.WarnLevel, "[POP-200] Pod is terminating [1/1]"),
+			issues.New(client.NewGVR("containers"), "c1", config.WarnLevel, "[POP-200] Pod is terminating [1/1]"),
 		},
 		"terminatedNotReady": {
 			v1.ContainerStatus{
@@ -102,11 +103,11 @@ func TestContainerStatusSanitize(t *testing.T) {
 				RestartCount: 11,
 			},
 			1,
-			issues.New("c1", config.WarnLevel, "[POP-205] Pod was restarted (11) times"),
+			issues.New(client.NewGVR("containers"), "c1", config.WarnLevel, "[POP-205] Pod was restarted (11) times"),
 		},
 	}
 
-	ctx := makeContext("containers")
+	ctx := makeContext("containers", "containers")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {

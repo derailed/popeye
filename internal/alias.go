@@ -1,84 +1,135 @@
 package internal
 
-// BOZO!! Canned for now - make k8s call for these and refine.
+import (
+	"fmt"
+	"strings"
 
-// Alias represents a resource alias.
-type Alias struct {
-	ShortNames StringSet
-	Plural     string
-}
+	"github.com/derailed/popeye/internal/client"
+	"github.com/derailed/popeye/types"
+	"github.com/rs/zerolog/log"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
-// Aliases represents a collection of aliases.
+// ResourceMetas represents a collection of resource metadata.
+type ResourceMetas map[client.GVR]metav1.APIResource
+
+// Aliases represents a collection of resource aliases.
 type Aliases struct {
-	aliases map[string]Alias
+	aliases map[string]client.GVR
+	metas   ResourceMetas
 }
 
-// NewAliases returns a new alias glossary.
 func NewAliases() *Aliases {
-	a := Aliases{}
-	a.init()
+	a := Aliases{
+		aliases: make(map[string]client.GVR),
+		metas:   make(ResourceMetas),
+	}
 
 	return &a
 }
 
+func (a *Aliases) Init(f types.Factory, gvrs []string) error {
+	if err := a.loadPreferred(f); err != nil {
+		return err
+	}
+	for _, k := range gvrs {
+		gvr := client.NewGVR(k)
+		res, ok := a.metas[gvr]
+		if !ok {
+			panic(fmt.Sprintf("No res meta found for %s", gvr))
+		}
+		a.aliases[res.Name] = gvr
+		a.aliases[res.SingularName] = gvr
+		for _, n := range res.ShortNames {
+			a.aliases[n] = gvr
+		}
+	}
+	a.aliases["cl"] = client.NewGVR("cluster")
+	a.aliases["sec"] = client.NewGVR("v1/secrets")
+	a.aliases["dp"] = client.NewGVR("apps/v1/deployments")
+	a.aliases["cr"] = client.NewGVR("rbac.authorization.k8s.io/v1/clusterroles")
+	a.aliases["crb"] = client.NewGVR("rbac.authorization.k8s.io/v1/clusterrolebindings")
+	a.aliases["ro"] = client.NewGVR("rbac.authorization.k8s.io/v1/roles")
+	a.aliases["rb"] = client.NewGVR("rbac.authorization.k8s.io/v1/rolebindings")
+	a.aliases["np"] = client.NewGVR("networking.k8s.io/v1/networkpolicies")
+
+	return nil
+}
+
+func (a *Aliases) TitleFor(s string, plural bool) string {
+	gvr, ok := a.aliases[s]
+	if !ok {
+		panic(fmt.Sprintf("No alias for %q", s))
+	}
+	m, ok := a.metas[gvr]
+	if !ok {
+		panic(fmt.Sprintf("No meta for %q", gvr))
+	}
+	if plural {
+		return m.Name
+	}
+	return m.SingularName
+}
+
+func (a *Aliases) loadPreferred(f types.Factory) error {
+	rr, err := f.Client().CachedDiscoveryOrDie().ServerPreferredResources()
+	if err != nil {
+		return err
+	}
+	for _, r := range rr {
+		for _, res := range r.APIResources {
+			gvr := client.FromGVAndR(r.GroupVersion, res.Name)
+			res.Group, res.Version = gvr.G(), gvr.V()
+			if res.SingularName == "" {
+				res.SingularName = strings.ToLower(res.Kind)
+			}
+			a.metas[gvr] = res
+		}
+	}
+
+	a.metas[client.NewGVR("cluster")] = metav1.APIResource{
+		Name: "cluster",
+	}
+
+	return nil
+}
+
 // ToResources converts aliases to resource names.
-func (a *Aliases) ToResources(ss []string) []string {
-	aa := make([]string, len(ss))
-	for i := 0; i < len(ss); i++ {
-		aa[i] = a.FromAlias(ss[i])
-	}
-	return aa
-}
-
-// Pluralize returns a plural form.
-func (a Aliases) Pluralize(res string) string {
-	if v, ok := a.aliases[res]; ok {
-		if v.Plural != "" {
-			return v.Plural
+func (a *Aliases) ToResources(nn []string) []string {
+	rr := make([]string, 0, len(nn))
+	for _, n := range nn {
+		if gvr, ok := a.aliases[n]; ok {
+			rr = append(rr, gvr.R())
+		} else {
+			panic(fmt.Sprintf("no aliases for %q", n))
 		}
 	}
-	return res + "s"
+	return rr
 }
 
-// FromAlias returns the resource name from an alias.
-func (a Aliases) FromAlias(res string) string {
-	if _, ok := a.aliases[res]; ok {
-		return res
+func (a *Aliases) Singular(gvr client.GVR) string {
+	m, ok := a.metas[gvr]
+	if !ok {
+		log.Error().Msgf("Missing meta for gvr %q", gvr)
+		return gvr.R()
 	}
+	return m.SingularName
+}
 
-	for k, v := range a.aliases {
-		if _, ok := v.ShortNames[res]; ok {
-			return k
+func (a *Aliases) Exclude(gvr client.GVR, sections []string) bool {
+	if len(sections) == 0 {
+		return false
+	}
+	var matches int
+	for _, s := range sections {
+		agvr, ok := a.aliases[s]
+		if !ok {
+			continue
+		}
+		if agvr.String() == gvr.String() {
+			matches++
 		}
 	}
 
-	return res
-}
-
-func (a *Aliases) init() {
-	a.aliases = map[string]Alias{
-		"cluster":                 {ShortNames: StringSet{"cl": Blank}},
-		"configmap":               {ShortNames: StringSet{"cm": Blank}},
-		"clusterrole":             {ShortNames: StringSet{"cr": Blank}},
-		"clusterrolebinding":      {ShortNames: StringSet{"crb": Blank}},
-		"deployment":              {ShortNames: StringSet{"dp": Blank, "deploy": Blank}},
-		"daemonset":               {ShortNames: StringSet{"ds": Blank}},
-		"horizontalpodautoscaler": {ShortNames: StringSet{"hpa": Blank}},
-		"ingress":                 {ShortNames: StringSet{"ing": Blank}, Plural: "ingresses"},
-		"node":                    {ShortNames: StringSet{"no": Blank}},
-		"networkpolicy":           {ShortNames: StringSet{"np": Blank}, Plural: "networkpolicies"},
-		"namespace":               {ShortNames: StringSet{"ns": Blank}},
-		"poddisruptionbudget":     {ShortNames: StringSet{"pdb": Blank}},
-		"pod":                     {ShortNames: StringSet{"po": Blank}},
-		"podsecuritypolicy":       {ShortNames: StringSet{"psp": Blank}, Plural: "podsecuritypolicies"},
-		"persistentvolume":        {ShortNames: StringSet{"pv": Blank}},
-		"persistentvolumeclaim":   {ShortNames: StringSet{"pvc": Blank}},
-		"rolebinding":             {ShortNames: StringSet{"rb": Blank}},
-		"role":                    {ShortNames: StringSet{"ro": Blank}},
-		"replicaset":              {ShortNames: StringSet{"rs": Blank}},
-		"serviceaccount":          {ShortNames: StringSet{"sa": Blank}},
-		"secret":                  {ShortNames: StringSet{"sec": Blank}},
-		"statefulset":             {ShortNames: StringSet{"sts": Blank}},
-		"service":                 {ShortNames: StringSet{"svc": Blank}},
-	}
+	return matches == 0
 }

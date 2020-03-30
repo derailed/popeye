@@ -49,7 +49,7 @@ func (r *RoleBinding) Sanitize(ctx context.Context) error {
 			}
 		}
 
-		if r.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+		if r.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			r.ClearOutcome(fqn)
 		}
 	}

@@ -60,7 +60,7 @@ func TestPodCheckSecure(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("po")
+	ctx := makeContext("v1/pods", "po")
 	ctx = internal.WithFQN(ctx, "default/p1")
 	for k := range uu {
 		u := uu[k]
@@ -148,7 +148,7 @@ func TestPodSanitize(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("po")
+	ctx := makeContext("v1/pods", "po")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {

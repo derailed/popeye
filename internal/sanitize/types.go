@@ -10,9 +10,6 @@ import (
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
-// PopeyeKey tracks context keys.
-type PopeyeKey string
-
 // Collector collects sub issues.
 type Collector interface {
 	// Outcome collects issues.

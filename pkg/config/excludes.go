@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 const rxMarker = "rx:"
@@ -36,14 +37,16 @@ func newExcludes() Excludes {
 }
 
 // ExcludeFQN checks if a given named resource should be excluded.
-func (e Excludes) ExcludeFQN(section, fqn string) bool {
-	excludes, ok := e[section]
+func (e Excludes) ExcludeFQN(gvr, fqn string) bool {
+	log.Debug().Msgf("EXCLUDE %q::%q", gvr, fqn)
+	excludes, ok := e[gvr]
 	if !ok {
 		return false
 	}
 
 	for _, exclude := range excludes {
 		if exclude.Match(fqn) {
+			log.Debug().Msgf("EXCLUDING %q", fqn)
 			return true
 		}
 	}

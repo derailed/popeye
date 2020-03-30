@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/pkg/config"
 	v1 "k8s.io/api/core/v1"
 )
@@ -34,7 +35,7 @@ func newContainerStatus(c Collector, fqn string, count int, isInit bool, restart
 
 func (c *containerStatus) sanitize(ctx context.Context, s v1.ContainerStatus) {
 	ctx = internal.WithFQN(ctx, c.fqn)
-	ctx = internal.WithGroup(ctx, s.Name)
+	ctx = internal.WithGroup(ctx, client.NewGVR("containers"), s.Name)
 	c.rollup(s)
 	if c.terminated > 0 && c.ready == 0 {
 		return

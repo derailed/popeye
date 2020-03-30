@@ -77,7 +77,7 @@ func junitMarshal(b *Builder, level config.Level) ([]byte, error) {
 func newSuite(s Section, b *Builder, level config.Level) TestSuite {
 	total, fails, errs := numTests(s.Outcome)
 	ts := TestSuite{
-		Name:     b.aliases.FromAlias(s.Title),
+		Name:     s.Title,
 		Tests:    total,
 		Failures: fails,
 		Errors:   errs,

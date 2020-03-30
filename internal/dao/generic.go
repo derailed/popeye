@@ -18,7 +18,6 @@ type Generic struct {
 }
 
 // List returns a collection of resources.
-// BOZO!! no auth check??
 func (g *Generic) List(ctx context.Context, ns string) ([]runtime.Object, error) {
 	labelSel, ok := ctx.Value(internal.KeyLabels).(string)
 	if !ok {

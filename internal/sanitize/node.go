@@ -61,7 +61,7 @@ func (n *Node) Sanitize(ctx context.Context) error {
 			n.checkUtilization(ctx, nmx[fqn])
 		}
 
-		if n.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+		if n.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			n.ClearOutcome(fqn)
 		}
 	}

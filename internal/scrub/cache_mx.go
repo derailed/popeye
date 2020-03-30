@@ -1,6 +1,8 @@
 package scrub
 
 import (
+	"sync"
+
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 )
@@ -8,6 +10,7 @@ import (
 type mx struct {
 	*dial
 
+	mx     sync.Mutex
 	nodeMx *cache.NodesMetrics
 	podMx  *cache.PodsMetrics
 }
@@ -17,6 +20,9 @@ func newMX(d *dial) *mx {
 }
 
 func (m *mx) podsMx() (*cache.PodsMetrics, error) {
+	m.mx.Lock()
+	defer m.mx.Unlock()
+
 	if m.podMx != nil {
 		return m.podMx, nil
 	}
@@ -27,6 +33,9 @@ func (m *mx) podsMx() (*cache.PodsMetrics, error) {
 }
 
 func (m *mx) nodesMx() (*cache.NodesMetrics, error) {
+	m.mx.Lock()
+	defer m.mx.Unlock()
+
 	if m.nodeMx != nil {
 		return m.nodeMx, nil
 	}

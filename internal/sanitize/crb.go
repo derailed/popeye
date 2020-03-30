@@ -66,7 +66,7 @@ func (c *ClusterRoleBinding) checkInUse(ctx context.Context) {
 			}
 		}
 
-		if c.NoConcerns(fqn) && c.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+		if c.NoConcerns(fqn) && c.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			c.ClearOutcome(fqn)
 		}
 	}

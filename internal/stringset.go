@@ -1,5 +1,8 @@
 package internal
 
+// AllKeys indicates all data keys are being used when referencing a cm or secret.
+const All = "all"
+
 // Empty denotes an empty value.
 type Empty struct{}
 
@@ -8,6 +11,8 @@ var Blank = Empty{}
 
 // StringSet represents a set of strings.
 type StringSet map[string]Empty
+
+var AllKeys = StringSet{All: Blank}
 
 // Add a collection of elements to the set.
 func (ss StringSet) Add(strs ...string) {

@@ -43,14 +43,12 @@ func (n *Namespace) Sanitize(ctx context.Context) error {
 	for fqn, ns := range available {
 		n.InitOutcome(fqn)
 		ctx = internal.WithFQN(ctx, fqn)
-
 		if n.checkActive(ctx, ns.Status.Phase) {
 			if _, ok := used[fqn]; !ok {
 				n.AddCode(ctx, 400)
 			}
 		}
-
-		if n.NoConcerns(fqn) && n.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+		if n.NoConcerns(fqn) && n.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			n.ClearOutcome(fqn)
 		}
 	}

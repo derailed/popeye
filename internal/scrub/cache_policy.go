@@ -1,6 +1,8 @@
 package scrub
 
 import (
+	"sync"
+
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 )
@@ -8,6 +10,7 @@ import (
 type policy struct {
 	*dial
 
+	mx  sync.Mutex
 	np  *cache.NetworkPolicy
 	psp *cache.PodSecurityPolicy
 }
@@ -17,6 +20,9 @@ func newPolicy(d *dial) *policy {
 }
 
 func (p *policy) podsecuritypolicies() (*cache.PodSecurityPolicy, error) {
+	p.mx.Lock()
+	defer p.mx.Unlock()
+
 	if p.psp != nil {
 		return p.psp, nil
 	}
@@ -27,6 +33,9 @@ func (p *policy) podsecuritypolicies() (*cache.PodSecurityPolicy, error) {
 }
 
 func (p *policy) networkpolicies() (*cache.NetworkPolicy, error) {
+	p.mx.Lock()
+	defer p.mx.Unlock()
+
 	if p.np != nil {
 		return p.np, nil
 	}

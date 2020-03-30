@@ -2,6 +2,7 @@ package cache
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/derailed/popeye/internal"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -26,13 +27,11 @@ func (r *RoleBinding) ListRoleBindings() map[string]*rbacv1.RoleBinding {
 }
 
 // RoleRefs computes all role external references.
-func (r *RoleBinding) RoleRefs(refs ObjReferences) {
+func (r *RoleBinding) RoleRefs(refs *sync.Map) {
 	for fqn, rb := range r.rbs {
 		key := ResFqn(strings.ToLower(rb.RoleRef.Kind), FQN(rb.Namespace, rb.RoleRef.Name))
-		if c, ok := refs[key]; ok {
-			c.Add(fqn)
-		} else {
-			refs[key] = internal.StringSet{fqn: internal.Blank}
+		if c, ok := refs.LoadOrStore(key, internal.StringSet{fqn: internal.Blank}); ok {
+			c.(internal.StringSet).Add(fqn)
 		}
 	}
 }

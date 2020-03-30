@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
@@ -19,6 +20,7 @@ func TestClusterSanitize(t *testing.T) {
 			major: "1", minor: "15",
 			e: issues.Issues{
 				{
+					GVR:     "clusters",
 					Group:   issues.Root,
 					Message: "[POP-406] K8s version OK",
 					Level:   config.OkLevel,
@@ -29,6 +31,7 @@ func TestClusterSanitize(t *testing.T) {
 			major: "1", minor: "11",
 			e: issues.Issues{
 				{
+					GVR:     "clusters",
 					Group:   issues.Root,
 					Message: "[POP-405] Is this a jurassic cluster? Might want to upgrade K8s a bit",
 					Level:   config.WarnLevel,
@@ -37,7 +40,7 @@ func TestClusterSanitize(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("cluster")
+	ctx := makeContext("clusters", "cluster")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
@@ -57,9 +60,10 @@ func makeConfig(t *testing.T) *config.Config {
 	return c
 }
 
-func makeContext(section string) context.Context {
-	return context.WithValue(context.Background(), internal.KeyRun, internal.RunInfo{
-		Section: section,
+func makeContext(gvr, section string) context.Context {
+	return context.WithValue(context.Background(), internal.KeyRunInfo, internal.RunInfo{
+		Section:    section,
+		SectionGVR: client.NewGVR(gvr),
 	})
 }
 

@@ -2,7 +2,9 @@ package scrub
 
 import (
 	"context"
+	"sync"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/sanitize"
@@ -35,10 +37,10 @@ func NewNamespace(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer 
 
 // ReferencedNamespaces fetch all namespaces referenced by pods.
 func (n *Namespace) ReferencedNamespaces(res map[string]struct{}) {
-	refs := cache.ObjReferences{}
-	n.Pod.PodRefs(refs)
-	if nss, ok := refs["ns"]; ok {
-		for ns := range nss {
+	var refs sync.Map
+	n.Pod.PodRefs(&refs)
+	if ss, ok := refs.Load("ns"); ok {
+		for ns := range ss.(internal.StringSet) {
 			res[ns] = struct{}{}
 		}
 	}

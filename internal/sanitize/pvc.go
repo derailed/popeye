@@ -48,7 +48,7 @@ func (p *PersistentVolumeClaim) Sanitize(ctx context.Context) error {
 		p.InitOutcome(fqn)
 		ctx = internal.WithFQN(ctx, fqn)
 		defer func(fqn string, ctx context.Context) {
-			if p.Config.ExcludeFQN(internal.MustExtractSection(ctx), fqn) {
+			if p.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 				p.ClearOutcome(fqn)
 			}
 		}(fqn, ctx)
