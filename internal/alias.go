@@ -120,7 +120,7 @@ func (a *Aliases) Singular(gvr client.GVR) string {
 	return m.SingularName
 }
 
-// Excludes checks if section should be excluded from the report.
+// Exclude checks if section should be excluded from the report.
 func (a *Aliases) Exclude(gvr client.GVR, sections []string) bool {
 	if len(sections) == 0 {
 		return false
