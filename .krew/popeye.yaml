@@ -5,7 +5,7 @@ metadata:
 spec:
   homepage: https://popeyecli.io
   shortDescription: 🧭 A Kubernetes cluster resource sanitizer
-  version: v0.7.1
+  version: v0.8.0
   description: |
     Popeye is a utility that scans live Kubernetes clusters and reports
     potential issues with deployed resources and configurations.
@@ -25,7 +25,7 @@ spec:
         matchLabels:
           os: darwin
           arch: amd64
-      uri: https://github.com/derailed/popeye/releases/download/v0.7.1/popeye_Darwin_x86_64.tar.gz
+      uri: https://github.com/derailed/popeye/releases/download/v0.8.0/popeye_Darwin_x86_64.tar.gz
       sha256: e5f84baafbfa7170a02c0777e0dac5e7009c19c4b487d512b8f0e21298f10484
       files:
         - from: popeye
@@ -37,7 +37,7 @@ spec:
         matchLabels:
           os: linux
           arch: amd64
-      uri: https://github.com/derailed/popeye/releases/download/v0.7.1/popeye_Linux_x86_64.tar.gz
+      uri: https://github.com/derailed/popeye/releases/download/v0.8.0/popeye_Linux_x86_64.tar.gz
       sha256: d4d7d776e05a0de5b681cb5421e3d9884103b902142313d8371e4f5e6b3d66dd
       files:
         - from: popeye
@@ -49,7 +49,7 @@ spec:
         matchLabels:
           os: windows
           arch: amd64
-      uri: https://github.com/derailed/popeye/releases/download/v0.7.1/popeye_Windows_x86_64.tar.gz
+      uri: https://github.com/derailed/popeye/releases/download/v0.8.0/popeye_Windows_x86_64.tar.gz
       sha256: a743da9715abaf320d3b9391bd0cff8f914300d0cd289a733a29224fde72fea7
       files:
         - from: popeye.exe
