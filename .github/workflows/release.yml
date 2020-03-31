@@ -1,4 +1,4 @@
-name: release
+name: krew
 
 on:
   push:
