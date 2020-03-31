@@ -29,11 +29,11 @@ func TestError(t *testing.T) {
 	}{
 		{
 			fmt.Errorf("crapola"),
-			"\n💥 \x1b[38;5;196;mblee: crapola\x1b[0m\n",
+			"\n💥 \x1b[38;5;196mblee: crapola\x1b[0m\n",
 		},
 		{
 			fmt.Errorf(strings.Repeat("#", 200)),
-			"\n💥 \x1b[38;5;196;mblee: " + strings.Repeat("#", Width-9) + "\x1b[0m\n\x1b[38;5;196;m" + strings.Repeat("#", Width-3) + "\x1b[0m\n\x1b[38;5;196;m" + strings.Repeat("#", Width-88) + "\x1b[0m\n",
+			"\n💥 \x1b[38;5;196mblee: " + strings.Repeat("#", Width-9) + "\x1b[0m\n\x1b[38;5;196m" + strings.Repeat("#", Width-3) + "\x1b[0m\n\x1b[38;5;196m" + strings.Repeat("#", Width-88) + "\x1b[0m\n",
 		},
 	}
 
@@ -55,17 +55,17 @@ func TestPrint(t *testing.T) {
 		{
 			"Yo mama",
 			1,
-			"  · \x1b[38;5;155;mYo mama\x1b[0m\x1b[38;5;250;m" + strings.Repeat(".", Width-12) + "\x1b[0m✅\n",
+			"  · \x1b[38;5;155mYo mama\x1b[0m\x1b[38;5;250m" + strings.Repeat(".", Width-12) + "\x1b[0m✅\n",
 		},
 		{
 			strings.Repeat("#", Width-8),
 			1,
-			"  · \x1b[38;5;155;m" + strings.Repeat("#", Width-8) + "\x1b[0m\x1b[38;5;250;m...\x1b[0m✅\n",
+			"  · \x1b[38;5;155m" + strings.Repeat("#", Width-8) + "\x1b[0m\x1b[38;5;250m...\x1b[0m✅\n",
 		},
 		{
 			"Yo mama",
 			2,
-			"    ✅ \x1b[38;5;155;mYo mama\x1b[0m\n",
+			"    ✅ \x1b[38;5;155mYo mama\x1b[0m\n",
 		},
 	}
 
@@ -87,7 +87,7 @@ func TestDump(t *testing.T) {
 			issues.Outcome{
 				"fred": issues.Issues{issues.New(client.NewGVR("fred"), issues.Root, config.WarnLevel, "Yo Mama!")},
 			},
-			"    😱 \x1b[38;5;220;mYo Mama!.\x1b[0m\n",
+			"    😱 \x1b[38;5;220mYo Mama!.\x1b[0m\n",
 		},
 		{
 			issues.Outcome{
@@ -96,7 +96,7 @@ func TestDump(t *testing.T) {
 					issues.New(client.NewGVR("fred"), "c1", config.ErrorLevel, "Yo!"),
 				},
 			},
-			"    🐳 \x1b[38;5;75;mc1\x1b[0m\n      💥 \x1b[38;5;196;mYo Mama!.\x1b[0m\n      💥 \x1b[38;5;196;mYo!.\x1b[0m\n",
+			"    🐳 \x1b[38;5;75mc1\x1b[0m\n      💥 \x1b[38;5;196mYo Mama!.\x1b[0m\n      💥 \x1b[38;5;196mYo!.\x1b[0m\n",
 		},
 	}
 
@@ -128,7 +128,7 @@ func TestOpen(t *testing.T) {
 			issues.Outcome{
 				"fred": issues.Issues{issues.New(client.NewGVR("fred"), issues.Root, config.WarnLevel, "Yo Mama!")},
 			},
-			"\n\x1b[38;5;75;mblee\x1b[0m" + strings.Repeat(" ", 75) + "💥 0 😱 1 🔊 0 ✅ 0 \x1b[38;5;196;m0\x1b[0m٪\n\x1b[38;5;75;m" + strings.Repeat("┅", Width+1) + "\x1b[0m\n",
+			"\n\x1b[38;5;75mblee\x1b[0m" + strings.Repeat(" ", 75) + "💥 0 😱 1 🔊 0 ✅ 0 \x1b[38;5;196m0\x1b[0m٪\n\x1b[38;5;75m" + strings.Repeat("┅", Width+1) + "\x1b[0m\n",
 		},
 	}
 
@@ -150,7 +150,7 @@ func TestOpenClose(t *testing.T) {
 	s.Open("fred", nil)
 	s.Close()
 
-	assert.Equal(t, "\n\x1b[38;5;75;mfred\x1b[0m\n\x1b[38;5;75;m"+strings.Repeat("┅", Width+1)+"\x1b[0m\n\n", w.String())
+	assert.Equal(t, "\n\x1b[38;5;75mfred\x1b[0m\n\x1b[38;5;75m"+strings.Repeat("┅", Width+1)+"\x1b[0m\n\n", w.String())
 }
 
 func TestFormatLine(t *testing.T) {

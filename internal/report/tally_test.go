@@ -15,7 +15,7 @@ func TestTallyWrite(t *testing.T) {
 		jurassic bool
 		e        string
 	}{
-		{false, "💥 0 😱 0 🔊 0 ✅ 0 \x1b[38;5;196;m0\x1b[0m٪"},
+		{false, "💥 0 😱 0 🔊 0 ✅ 0 \x1b[38;5;196m0\x1b[0m٪"},
 		{true, "E:0 W:0 I:0 OK:0 0%%"},
 	}
 
@@ -105,7 +105,7 @@ func TestTallyWidth(t *testing.T) {
 				},
 				"c": {},
 			},
-			"💥 1 😱 1 🔊 0 ✅ 1 \x1b[38;5;196;m33\x1b[0m٪",
+			"💥 1 😱 1 🔊 0 ✅ 1 \x1b[38;5;196m33\x1b[0m٪",
 		},
 	}
 

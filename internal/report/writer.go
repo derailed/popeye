@@ -52,7 +52,7 @@ func (s *Sanitizer) Open(msg string, t *Tally) {
 	fmt.Fprintf(s, "\n%s", s.Color(msg, ColorLighSlate))
 	if t != nil && t.IsValid() {
 		out := t.Dump(s)
-		spacer := 13
+		spacer := 12
 		if s.jurassicMode {
 			spacer = 2
 		}
