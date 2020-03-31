@@ -13,10 +13,10 @@ popeye:
       overPercUtilization: 50
   # Excludes define rules to exampt resources from sanitization
   excludes:
-    clusterrolebinding:
+    rbac.authorization.k8s.io/v1/clusterrolebinding:
       - name: rx:system
       - name: rx:eks
-    clusterrole:
+    rbac.authorization.k8s.io/v1/clusterrole:
       - name: rx:eks
         codes:
           - 400
@@ -38,31 +38,31 @@ popeye:
       - name: cluster-admin
         codes:
           - 400
-    configmap:
+    rbac.authorization.k8s.io/v1/rolebinding:
       - name: rx:kube
-    daemonset:
+    rbac.authorization.k8s.io/v1/role:
+      - name: rx:kube
+    apps/v1/daemonset:
       - name: rx:kube-system
-    deployment:
+    apps/v1/deployment:
       - name: rx:kube-system
-    networkpolicy:
+    apps/v1/replicaset:
+      - name: rx:kube
+    networking.k8s.io/v1/networkpolicy:
       - name: rx:freddy
-    namespace:
-      - name: rx:kube
-    pod:
-      - name: rx:kube
-    podsecuritypolicy:
+    policy/v1beta1/podsecuritypolicy:
       - name: rx:eks
-    rolebinding:
+    v1/configmap:
       - name: rx:kube
-    role:
+    v1/namespace:
       - name: rx:kube
-    replicaset:
+    v1/pod:
       - name: rx:kube
-    serviceaccount:
+    v1/serviceaccount:
       - name: rx:kube
-    secret:
+    v1/secret:
       - name: rx:kube
-    service:
+    v1/service:
       - name: rx:kube
         codes:
           - 404
