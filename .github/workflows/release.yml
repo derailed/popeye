@@ -2,32 +2,32 @@ name: release
 
 on:
   push:
-    tags: 
-      - 'v*.*.*'
+    tags:
+      - "v*.*.*"
 
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
-    - name: Fetch Tag Info
-      id: get_tag
-      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-    - name: Checkout
-      uses: actions/checkout@v2.0.0
-      with:
-        ref: ${{ steps.get_tag.outputs.VERSION }}
-    - name: Setup Go
-      uses: actions/setup-go@v1.0.0
-      with:
-        go-version: 1.14
-    - name: GoReleaser
-      uses: goreleaser/goreleaser-action@v1.3.1
-      with:
-        version: latest
-        args: release --rm-dist --release-notes=change_logs/release_${{ steps.get_tag.outputs.VERSION }}.md
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Update new version in krew-index
-      uses: rajatjindal/krew-release-bot@v0.0.32
-      with:
-        plugin-name: kubectl-popeye  
+      - name: Fetch Tag Info
+        id: get_tag
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      - name: Checkout
+        uses: actions/checkout@v2.0.0
+        with:
+          ref: ${{ steps.get_tag.outputs.VERSION }}
+      - name: Setup Go
+        uses: actions/setup-go@v1.0.0
+        with:
+          version: 1.14
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v1.3.1
+        with:
+          version: latest
+          args: release --rm-dist --release-notes=change_logs/release_${{ steps.get_tag.outputs.VERSION }}.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update new version in krew-index
+        uses: rajatjindal/krew-release-bot@v0.0.32
+        with:
+          plugin-name: kubectl-popeye
