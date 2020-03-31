@@ -19,6 +19,7 @@ type Aliases struct {
 	metas   ResourceMetas
 }
 
+// NewAliases returns a new instance.
 func NewAliases() *Aliases {
 	a := Aliases{
 		aliases: make(map[string]client.GVR),
@@ -28,6 +29,7 @@ func NewAliases() *Aliases {
 	return &a
 }
 
+// Init loads the aliases glossary.
 func (a *Aliases) Init(f types.Factory, gvrs []string) error {
 	if err := a.loadPreferred(f); err != nil {
 		return err
@@ -56,6 +58,7 @@ func (a *Aliases) Init(f types.Factory, gvrs []string) error {
 	return nil
 }
 
+// TitleFor produces a section title from an alias.
 func (a *Aliases) TitleFor(s string, plural bool) string {
 	gvr, ok := a.aliases[s]
 	if !ok {
@@ -107,6 +110,7 @@ func (a *Aliases) ToResources(nn []string) []string {
 	return rr
 }
 
+// Singular returns a singular resource name.
 func (a *Aliases) Singular(gvr client.GVR) string {
 	m, ok := a.metas[gvr]
 	if !ok {
@@ -116,6 +120,7 @@ func (a *Aliases) Singular(gvr client.GVR) string {
 	return m.SingularName
 }
 
+// Excludes checks if section should be excluded from the report.
 func (a *Aliases) Exclude(gvr client.GVR, sections []string) bool {
 	if len(sections) == 0 {
 		return false

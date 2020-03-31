@@ -53,6 +53,7 @@ type Authorizer interface {
 	CanI(ns, gvr string, verbs []string) (bool, error)
 }
 
+// Config represents an api server configuration.
 type Config interface {
 	CurrentNamespaceName() (string, error)
 	CurrentClusterName() (string, error)

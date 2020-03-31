@@ -85,6 +85,7 @@ func (s Sections) Less(i, j int) bool {
 	return sortorder.NaturalLess(s[i].singular, s[j].singular)
 }
 
+// NewBuilder returns a new instance.
 func NewBuilder() *Builder {
 	return &Builder{}
 }

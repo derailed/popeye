@@ -1,6 +1,6 @@
 package internal
 
-// AllKeys indicates all data keys are being used when referencing a cm or secret.
+// All indicates all data keys are being used when referencing a cm or secret.
 const All = "all"
 
 // Empty denotes an empty value.
@@ -12,6 +12,7 @@ var Blank = Empty{}
 // StringSet represents a set of strings.
 type StringSet map[string]Empty
 
+// AllKeys indicates all keys are present.
 var AllKeys = StringSet{All: Blank}
 
 // Add a collection of elements to the set.

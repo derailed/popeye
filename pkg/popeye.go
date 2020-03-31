@@ -172,6 +172,7 @@ func (p *Popeye) sanitizers() map[string]scrubFn {
 	}
 }
 
+// SetOutputTarget sets up a new output stream writer.
 func (p *Popeye) SetOutputTarget(s io.ReadWriteCloser) {
 	p.outputTarget = s
 }

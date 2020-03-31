@@ -35,7 +35,7 @@ func MustExtractFQN(ctx context.Context) string {
 	return r.FQN
 }
 
-// MustExtractSection extract section from context or die.
+// MustExtractSectionGVR extract section gvr from context or die.
 func MustExtractSectionGVR(ctx context.Context) string {
 	r := MustExtractRunInfo(ctx)
 	return r.SectionGVR.String()
