@@ -4,23 +4,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListServiceAccounts list included ServiceAccounts.
-func ListServiceAccounts(f types.Factory, cfg *config.Config) (map[string]*v1.ServiceAccount, error) {
-	sas, err := listAllServiceAccounts(f)
+func ListServiceAccounts(ctx context.Context) (map[string]*v1.ServiceAccount, error) {
+	sas, err := listAllServiceAccounts(ctx)
 	if err != nil {
 		return map[string]*v1.ServiceAccount{}, err
 	}
 
+	f := mustExtractFactory(ctx)
 	res := make(map[string]*v1.ServiceAccount, len(sas))
 	for fqn, sa := range sas {
 		if includeNS(f.Client(), sa.Namespace) {
@@ -32,8 +31,8 @@ func ListServiceAccounts(f types.Factory, cfg *config.Config) (map[string]*v1.Se
 }
 
 // ListAllServiceAccounts fetch all ServiceAccounts on the cluster.
-func listAllServiceAccounts(f types.Factory) (map[string]*v1.ServiceAccount, error) {
-	ll, err := fetchServiceAccounts(f)
+func listAllServiceAccounts(ctx context.Context) (map[string]*v1.ServiceAccount, error) {
+	ll, err := fetchServiceAccounts(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +46,14 @@ func listAllServiceAccounts(f types.Factory) (map[string]*v1.ServiceAccount, err
 }
 
 // FetchServiceAccounts retrieves all ServiceAccounts on the cluster.
-func fetchServiceAccounts(f types.Factory) (*v1.ServiceAccountList, error) {
+func fetchServiceAccounts(ctx context.Context) (*v1.ServiceAccountList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().CoreV1().ServiceAccounts(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("v1/serviceaccounts"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

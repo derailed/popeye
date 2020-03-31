@@ -10,4 +10,5 @@ const (
 	KeyFields     ContextKey = "fields"
 	KeyOverAllocs ContextKey = "overAllocs"
 	KeyRunInfo    ContextKey = "runInfo"
+	KeyConfig     ContextKey = "config"
 )

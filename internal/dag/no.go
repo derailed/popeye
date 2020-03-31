@@ -4,19 +4,17 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListNodes list all included Nodes.
-func ListNodes(f types.Factory, cfg *config.Config) (map[string]*v1.Node, error) {
-	nos, err := listAllNodes(f)
+func ListNodes(ctx context.Context) (map[string]*v1.Node, error) {
+	nos, err := listAllNodes(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -29,8 +27,8 @@ func ListNodes(f types.Factory, cfg *config.Config) (map[string]*v1.Node, error)
 }
 
 // ListAllNodes fetch all Nodes on the cluster.
-func listAllNodes(f types.Factory) (map[string]*v1.Node, error) {
-	ll, err := fetchNodes(f)
+func listAllNodes(ctx context.Context) (map[string]*v1.Node, error) {
+	ll, err := fetchNodes(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -44,12 +42,14 @@ func listAllNodes(f types.Factory) (map[string]*v1.Node, error) {
 }
 
 // FetchNodes retrieves all Nodes on the cluster.
-func fetchNodes(f types.Factory) (*v1.NodeList, error) {
-	// return c.DialOrDie().CoreV1().Nodes().List(metav1.ListOptions{})
+func fetchNodes(ctx context.Context) (*v1.NodeList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("v1/nodes"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

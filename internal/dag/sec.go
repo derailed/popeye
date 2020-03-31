@@ -4,23 +4,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListSecrets list all included Secrets.
-func ListSecrets(f types.Factory, cfg *config.Config) (map[string]*v1.Secret, error) {
-	secs, err := listAllSecrets(f)
+func ListSecrets(ctx context.Context) (map[string]*v1.Secret, error) {
+	secs, err := listAllSecrets(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	f := mustExtractFactory(ctx)
 	res := make(map[string]*v1.Secret, len(secs))
 	for fqn, sec := range secs {
 		if includeNS(f.Client(), sec.Namespace) {
@@ -32,8 +31,8 @@ func ListSecrets(f types.Factory, cfg *config.Config) (map[string]*v1.Secret, er
 }
 
 // ListAllSecrets fetch all Secrets on the cluster.
-func listAllSecrets(f types.Factory) (map[string]*v1.Secret, error) {
-	ll, err := fetchSecrets(f)
+func listAllSecrets(ctx context.Context) (map[string]*v1.Secret, error) {
+	ll, err := fetchSecrets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +46,14 @@ func listAllSecrets(f types.Factory) (map[string]*v1.Secret, error) {
 }
 
 // FetchSecrets retrieves all Secrets on the cluster.
-func fetchSecrets(f types.Factory) (*v1.SecretList, error) {
+func fetchSecrets(ctx context.Context) (*v1.SecretList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().CoreV1().Secrets(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("v1/secrets"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

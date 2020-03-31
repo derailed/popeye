@@ -1,8 +1,10 @@
 package scrub
 
 import (
+	"context"
 	"sync"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 )
@@ -27,7 +29,9 @@ func (e *ext) cluster() (*cache.Cluster, error) {
 	if e.cl != nil {
 		return e.cl, nil
 	}
-	major, minor, err := dag.ListVersion(e.factory.Client(), e.config)
+	ctx, cancel := e.context()
+	defer cancel()
+	major, minor, err := dag.ListVersion(ctx)
 	e.cl = cache.NewCluster(major, minor)
 
 	return e.cl, err
@@ -40,7 +44,9 @@ func (e *ext) ingresses() (*cache.Ingress, error) {
 	if e.ing != nil {
 		return e.ing, nil
 	}
-	ings, err := dag.ListIngresses(e.factory, e.config)
+	ctx, cancel := e.context()
+	defer cancel()
+	ings, err := dag.ListIngresses(ctx)
 	e.ing = cache.NewIngress(ings)
 
 	return e.ing, err
@@ -53,8 +59,19 @@ func (e *ext) podDisruptionBudgets() (*cache.PodDisruptionBudget, error) {
 	if e.pdb != nil {
 		return e.pdb, nil
 	}
-	pdbs, err := dag.ListPodDisruptionBudgets(e.factory, e.config)
+	ctx, cancel := e.context()
+	defer cancel()
+	pdbs, err := dag.ListPodDisruptionBudgets(ctx)
 	e.pdb = cache.NewPodDisruptionBudget(pdbs)
 
 	return e.pdb, err
+}
+
+// Helpers...
+
+func (e *ext) context() (context.Context, context.CancelFunc) {
+	ctx := context.WithValue(context.Background(), internal.KeyFactory, e.factory)
+	ctx = context.WithValue(ctx, internal.KeyConfig, e.config)
+
+	return context.WithCancel(ctx)
 }

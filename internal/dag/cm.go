@@ -4,23 +4,24 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+// ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
+
 // ListConfigMaps list all included ConfigMaps.
-func ListConfigMaps(f types.Factory, cfg *config.Config) (map[string]*v1.ConfigMap, error) {
-	cms, err := listAllConfigMaps(f)
+func ListConfigMaps(ctx context.Context) (map[string]*v1.ConfigMap, error) {
+	cms, err := listAllConfigMaps(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	f := mustExtractFactory(ctx)
 	res := make(map[string]*v1.ConfigMap, len(cms))
 	for fqn, cm := range cms {
 		if includeNS(f.Client(), cm.Namespace) {
@@ -32,8 +33,8 @@ func ListConfigMaps(f types.Factory, cfg *config.Config) (map[string]*v1.ConfigM
 }
 
 // ListAllConfigMaps fetch all ConfigMaps on the cluster.
-func listAllConfigMaps(f types.Factory) (map[string]*v1.ConfigMap, error) {
-	ll, err := fetchConfigMaps(f)
+func listAllConfigMaps(ctx context.Context) (map[string]*v1.ConfigMap, error) {
+	ll, err := fetchConfigMaps(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +48,14 @@ func listAllConfigMaps(f types.Factory) (map[string]*v1.ConfigMap, error) {
 }
 
 // FetchConfigMaps retrieves all ConfigMaps on the cluster.
-func fetchConfigMaps(f types.Factory) (*v1.ConfigMapList, error) {
+func fetchConfigMaps(ctx context.Context) (*v1.ConfigMapList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().CoreV1().ConfigMaps(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("v1/configmaps"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

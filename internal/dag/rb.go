@@ -4,23 +4,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListRoleBindings list included RoleBindings.
-func ListRoleBindings(f types.Factory, cfg *config.Config) (map[string]*rbacv1.RoleBinding, error) {
-	rbs, err := listAllRoleBindings(f)
+func ListRoleBindings(ctx context.Context) (map[string]*rbacv1.RoleBinding, error) {
+	rbs, err := listAllRoleBindings(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	f := mustExtractFactory(ctx)
 	res := make(map[string]*rbacv1.RoleBinding, len(rbs))
 	for fqn, rb := range rbs {
 		if includeNS(f.Client(), rb.Namespace) {
@@ -32,8 +31,8 @@ func ListRoleBindings(f types.Factory, cfg *config.Config) (map[string]*rbacv1.R
 }
 
 // ListAllRoleBindings fetch all RoleBindings on the cluster.
-func listAllRoleBindings(f types.Factory) (map[string]*rbacv1.RoleBinding, error) {
-	ll, err := fetchRoleBindings(f)
+func listAllRoleBindings(ctx context.Context) (map[string]*rbacv1.RoleBinding, error) {
+	ll, err := fetchRoleBindings(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +46,14 @@ func listAllRoleBindings(f types.Factory) (map[string]*rbacv1.RoleBinding, error
 }
 
 // FetchRoleBindings retrieves all RoleBindings on the cluster.
-func fetchRoleBindings(f types.Factory) (*rbacv1.RoleBindingList, error) {
+func fetchRoleBindings(ctx context.Context) (*rbacv1.RoleBindingList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().RbacV1().RoleBindings(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("rbac.authorization.k8s.io/v1/rolebindings"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

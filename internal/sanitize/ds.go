@@ -54,7 +54,7 @@ func (d *DaemonSet) Sanitize(ctx context.Context) error {
 		podsMetrics(d, pmx)
 		d.checkUtilization(ctx, over, ds, pmx)
 
-		if d.NoConcerns(fqn) && d.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
+		if d.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			d.ClearOutcome(fqn)
 		}
 	}

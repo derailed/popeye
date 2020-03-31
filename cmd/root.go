@@ -68,6 +68,7 @@ func doIt(cmd *cobra.Command, args []string) {
 	if err != nil {
 		bomb(fmt.Sprintf("%v", err))
 	}
+	flags.StandAlone = true
 	popeye, err := pkg.NewPopeye(flags, &log.Logger)
 	if err != nil {
 		bomb(fmt.Sprintf("Popeye configuration load failed %v", err))

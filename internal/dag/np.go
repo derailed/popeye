@@ -4,23 +4,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	nv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListNetworkPolicies list all included NetworkPolicies.
-func ListNetworkPolicies(f types.Factory, cfg *config.Config) (map[string]*nv1.NetworkPolicy, error) {
-	dps, err := listAllNetworkPolicies(f)
+func ListNetworkPolicies(ctx context.Context) (map[string]*nv1.NetworkPolicy, error) {
+	dps, err := listAllNetworkPolicies(ctx)
 	if err != nil {
 		return map[string]*nv1.NetworkPolicy{}, err
 	}
 
+	f := mustExtractFactory(ctx)
 	res := make(map[string]*nv1.NetworkPolicy, len(dps))
 	for fqn, dp := range dps {
 		if includeNS(f.Client(), dp.Namespace) {
@@ -32,8 +31,8 @@ func ListNetworkPolicies(f types.Factory, cfg *config.Config) (map[string]*nv1.N
 }
 
 // ListAllNetworkPolicies fetch all NetworkPolicies on the cluster.
-func listAllNetworkPolicies(f types.Factory) (map[string]*nv1.NetworkPolicy, error) {
-	ll, err := fetchNetworkPolicies(f)
+func listAllNetworkPolicies(ctx context.Context) (map[string]*nv1.NetworkPolicy, error) {
+	ll, err := fetchNetworkPolicies(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +46,14 @@ func listAllNetworkPolicies(f types.Factory) (map[string]*nv1.NetworkPolicy, err
 }
 
 // FetchNetworkPolicies retrieves all NetworkPolicies on the cluster.
-func fetchNetworkPolicies(f types.Factory) (*nv1.NetworkPolicyList, error) {
+func fetchNetworkPolicies(ctx context.Context) (*nv1.NetworkPolicyList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().NetworkingV1().NetworkPolicies(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("networking.k8s.io/v1/networkpolicies"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

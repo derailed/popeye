@@ -1,8 +1,10 @@
 package scrub
 
 import (
+	"context"
 	"sync"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 )
@@ -26,7 +28,9 @@ func (p *policy) podsecuritypolicies() (*cache.PodSecurityPolicy, error) {
 	if p.psp != nil {
 		return p.psp, nil
 	}
-	psps, err := dag.ListPodSecurityPolicies(p.factory, p.config)
+	ctx, cancel := p.context()
+	defer cancel()
+	psps, err := dag.ListPodSecurityPolicies(ctx)
 	p.psp = cache.NewPodSecurityPolicy(psps)
 
 	return p.psp, err
@@ -39,8 +43,19 @@ func (p *policy) networkpolicies() (*cache.NetworkPolicy, error) {
 	if p.np != nil {
 		return p.np, nil
 	}
-	nps, err := dag.ListNetworkPolicies(p.factory, p.config)
+	ctx, cancel := p.context()
+	defer cancel()
+	nps, err := dag.ListNetworkPolicies(ctx)
 	p.np = cache.NewNetworkPolicy(nps)
 
 	return p.np, err
+}
+
+// Helpers...
+
+func (p *policy) context() (context.Context, context.CancelFunc) {
+	ctx := context.WithValue(context.Background(), internal.KeyFactory, p.factory)
+	ctx = context.WithValue(ctx, internal.KeyConfig, p.config)
+
+	return context.WithCancel(ctx)
 }

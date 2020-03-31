@@ -4,23 +4,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	pv1beta1 "k8s.io/api/policy/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListPodDisruptionBudgets list all included PodDisruptionBudgets.
-func ListPodDisruptionBudgets(f types.Factory, cfg *config.Config) (map[string]*pv1beta1.PodDisruptionBudget, error) {
-	pdbs, err := listAllPodDisruptionBudgets(f)
+func ListPodDisruptionBudgets(ctx context.Context) (map[string]*pv1beta1.PodDisruptionBudget, error) {
+	pdbs, err := listAllPodDisruptionBudgets(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	f := mustExtractFactory(ctx)
 	res := make(map[string]*pv1beta1.PodDisruptionBudget, len(pdbs))
 	for fqn, pdb := range pdbs {
 		if includeNS(f.Client(), pdb.Namespace) {
@@ -32,8 +31,8 @@ func ListPodDisruptionBudgets(f types.Factory, cfg *config.Config) (map[string]*
 }
 
 // ListAllPodDisruptionBudgets fetch all PodDisruptionBudgets on the cluster.
-func listAllPodDisruptionBudgets(f types.Factory) (map[string]*pv1beta1.PodDisruptionBudget, error) {
-	ll, err := fetchPodDisruptionBudgets(f)
+func listAllPodDisruptionBudgets(ctx context.Context) (map[string]*pv1beta1.PodDisruptionBudget, error) {
+	ll, err := fetchPodDisruptionBudgets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +46,14 @@ func listAllPodDisruptionBudgets(f types.Factory) (map[string]*pv1beta1.PodDisru
 }
 
 // fetchPodDisruptionBudgets retrieves all PodDisruptionBudgets on the cluster.
-func fetchPodDisruptionBudgets(f types.Factory) (*pv1beta1.PodDisruptionBudgetList, error) {
+func fetchPodDisruptionBudgets(ctx context.Context) (*pv1beta1.PodDisruptionBudgetList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().PolicyV1beta1().PodDisruptionBudgets(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("policy/v1beta1/poddisruptionbudgets"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

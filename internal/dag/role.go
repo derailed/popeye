@@ -4,23 +4,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListRoles list included Roles.
-func ListRoles(f types.Factory, cfg *config.Config) (map[string]*rbacv1.Role, error) {
-	ros, err := listAllRoles(f)
+func ListRoles(ctx context.Context) (map[string]*rbacv1.Role, error) {
+	ros, err := listAllRoles(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	f := mustExtractFactory(ctx)
 	res := make(map[string]*rbacv1.Role, len(ros))
 	for fqn, ro := range ros {
 		if includeNS(f.Client(), ro.Namespace) {
@@ -32,8 +31,8 @@ func ListRoles(f types.Factory, cfg *config.Config) (map[string]*rbacv1.Role, er
 }
 
 // ListAllRoles fetch all Roles on the cluster.
-func listAllRoles(f types.Factory) (map[string]*rbacv1.Role, error) {
-	ll, err := fetchRoles(f)
+func listAllRoles(ctx context.Context) (map[string]*rbacv1.Role, error) {
+	ll, err := fetchRoles(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +46,14 @@ func listAllRoles(f types.Factory) (map[string]*rbacv1.Role, error) {
 }
 
 // FetchRoleBindings retrieves all RoleBindings on the cluster.
-func fetchRoles(f types.Factory) (*rbacv1.RoleList, error) {
+func fetchRoles(ctx context.Context) (*rbacv1.RoleList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().RbacV1().Roles(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("rbac.authorization.k8s.io/v1/roles"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

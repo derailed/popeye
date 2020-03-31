@@ -4,22 +4,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListClusterRoleBindings list included ClusterRoleBindings.
-func ListClusterRoleBindings(f types.Factory, cfg *config.Config) (map[string]*rbacv1.ClusterRoleBinding, error) {
-	crbs, err := listAllClusterRoleBindings(f)
+func ListClusterRoleBindings(ctx context.Context) (map[string]*rbacv1.ClusterRoleBinding, error) {
+	crbs, err := listAllClusterRoleBindings(ctx)
 	if err != nil {
 		return map[string]*rbacv1.ClusterRoleBinding{}, err
 	}
+
+	f := mustExtractFactory(ctx)
 	res := make(map[string]*rbacv1.ClusterRoleBinding, len(crbs))
 	for fqn, crb := range crbs {
 		if includeNS(f.Client(), crb.Namespace) {
@@ -31,8 +31,8 @@ func ListClusterRoleBindings(f types.Factory, cfg *config.Config) (map[string]*r
 }
 
 // ListAllClusterRoleBindings fetch all ClusterRoleBindings on the cluster.
-func listAllClusterRoleBindings(f types.Factory) (map[string]*rbacv1.ClusterRoleBinding, error) {
-	ll, err := fetchClusterRoleBindings(f)
+func listAllClusterRoleBindings(ctx context.Context) (map[string]*rbacv1.ClusterRoleBinding, error) {
+	ll, err := fetchClusterRoleBindings(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -46,11 +46,14 @@ func listAllClusterRoleBindings(f types.Factory) (map[string]*rbacv1.ClusterRole
 }
 
 // FetchClusterRoleBindings retrieves all ClusterRoleBindings on the cluster.
-func fetchClusterRoleBindings(f types.Factory) (*rbacv1.ClusterRoleBindingList, error) {
+func fetchClusterRoleBindings(ctx context.Context) (*rbacv1.ClusterRoleBindingList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().RbacV1().ClusterRoleBindings().List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("rbac.authorization.k8s.io/v1/clusterrolebindings"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

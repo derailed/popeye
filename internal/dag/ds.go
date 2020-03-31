@@ -4,23 +4,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListDaemonSets list all included DaemonSets.
-func ListDaemonSets(f types.Factory, cfg *config.Config) (map[string]*appsv1.DaemonSet, error) {
-	dps, err := listAllDaemonSets(f)
+func ListDaemonSets(ctx context.Context) (map[string]*appsv1.DaemonSet, error) {
+	dps, err := listAllDaemonSets(ctx)
 	if err != nil {
 		return map[string]*appsv1.DaemonSet{}, err
 	}
 
+	f := mustExtractFactory(ctx)
 	res := make(map[string]*appsv1.DaemonSet, len(dps))
 	for fqn, dp := range dps {
 		if includeNS(f.Client(), dp.Namespace) {
@@ -32,8 +31,8 @@ func ListDaemonSets(f types.Factory, cfg *config.Config) (map[string]*appsv1.Dae
 }
 
 // ListAllDaemonSets fetch all DaemonSets on the cluster.
-func listAllDaemonSets(f types.Factory) (map[string]*appsv1.DaemonSet, error) {
-	ll, err := fetchDaemonSets(f)
+func listAllDaemonSets(ctx context.Context) (map[string]*appsv1.DaemonSet, error) {
+	ll, err := fetchDaemonSets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +46,14 @@ func listAllDaemonSets(f types.Factory) (map[string]*appsv1.DaemonSet, error) {
 }
 
 // FetchDaemonSets retrieves all DaemonSets on the cluster.
-func fetchDaemonSets(f types.Factory) (*appsv1.DaemonSetList, error) {
+func fetchDaemonSets(ctx context.Context) (*appsv1.DaemonSetList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().AppsV1().DaemonSets(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("apps/v1/daemonsets"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

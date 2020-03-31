@@ -1,13 +1,11 @@
 package dag
 
-import (
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
-)
+import "context"
 
 // ListVersion return server api version.
-func ListVersion(c types.Connection, cfg *config.Config) (string, string, error) {
-	v, err := c.DialOrDie().Discovery().ServerVersion()
+func ListVersion(ctx context.Context) (string, string, error) {
+	f := mustExtractFactory(ctx)
+	v, err := f.Client().DialOrDie().Discovery().ServerVersion()
 	if err != nil {
 		return "", "", err
 	}

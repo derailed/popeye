@@ -4,23 +4,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	pv1beta1 "k8s.io/api/policy/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListPodSecurityPolicies list all included PodSecurityPolicies.
-func ListPodSecurityPolicies(f types.Factory, cfg *config.Config) (map[string]*pv1beta1.PodSecurityPolicy, error) {
-	dps, err := listAllPodSecurityPolicys(f)
+func ListPodSecurityPolicies(ctx context.Context) (map[string]*pv1beta1.PodSecurityPolicy, error) {
+	dps, err := listAllPodSecurityPolicys(ctx)
 	if err != nil {
 		return map[string]*pv1beta1.PodSecurityPolicy{}, err
 	}
 
+	f := mustExtractFactory(ctx)
 	res := make(map[string]*pv1beta1.PodSecurityPolicy, len(dps))
 	for fqn, dp := range dps {
 		if includeNS(f.Client(), dp.Namespace) {
@@ -32,8 +31,8 @@ func ListPodSecurityPolicies(f types.Factory, cfg *config.Config) (map[string]*p
 }
 
 // ListAllPodSecurityPolicys fetch all PodSecurityPolicys on the cluster.
-func listAllPodSecurityPolicys(f types.Factory) (map[string]*pv1beta1.PodSecurityPolicy, error) {
-	ll, err := fetchPodSecurityPolicys(f)
+func listAllPodSecurityPolicys(ctx context.Context) (map[string]*pv1beta1.PodSecurityPolicy, error) {
+	ll, err := fetchPodSecurityPolicys(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +46,14 @@ func listAllPodSecurityPolicys(f types.Factory) (map[string]*pv1beta1.PodSecurit
 }
 
 // FetchPodSecurityPolicys retrieves all PodSecurityPolicys on the cluster.
-func fetchPodSecurityPolicys(f types.Factory) (*pv1beta1.PodSecurityPolicyList, error) {
+func fetchPodSecurityPolicys(ctx context.Context) (*pv1beta1.PodSecurityPolicyList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().PolicyV1beta1().PodSecurityPolicies().List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("policy/v1beta1/podsecuritypolicies"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

@@ -67,7 +67,9 @@ func NewPopeye(flags *config.Flags, log *zerolog.Logger) (*Popeye, error) {
 // Init configures popeye prior to sanitization.
 func (p *Popeye) Init() error {
 	if p.factory == nil {
-		p.initFactory()
+		if err := p.initFactory(); err != nil {
+			return err
+		}
 	}
 	p.aliases = internal.NewAliases()
 	if err := p.aliases.Init(p.factory, p.scannedGVRs()); err != nil {
@@ -117,21 +119,29 @@ func (p *Popeye) scannedGVRs() []string {
 		"rbac.authorization.k8s.io/v1/rolebindings",
 	}
 }
-func (p *Popeye) initFactory() {
+func (p *Popeye) initFactory() error {
 	clt := client.InitConnectionOrDie(client.NewConfig(p.flags.ConfigFlags))
 	f := client.NewFactory(clt)
+	p.factory = f
 
+	if p.flags.StandAlone {
+		return nil
+	}
 	ns := client.AllNamespaces
 	if p.flags.ConfigFlags.Namespace != nil {
 		ns = *p.flags.ConfigFlags.Namespace
 	}
 	f.Start(ns)
 	for _, gvr := range p.scannedGVRs() {
+		ok, err := clt.CanI(client.AllNamespaces, gvr, types.ReadAllAccess)
+		if !ok || err != nil {
+			return fmt.Errorf("Current user does not have read access for resource %q -- %v", gvr, err)
+		}
 		f.ForResource(client.AllNamespaces, gvr)
 	}
 	f.WaitForCacheSync()
 
-	p.factory = f
+	return nil
 }
 
 func (p *Popeye) sanitizers() map[string]scrubFn {
@@ -205,10 +215,6 @@ func (p *Popeye) Sanitize() error {
 }
 
 func (p *Popeye) sanitize() error {
-	defer func(t time.Time) {
-		log.Debug().Msgf("SANITIZERS %v", time.Since(t))
-	}(time.Now())
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	ctx = context.WithValue(ctx, internal.KeyOverAllocs, *p.flags.CheckOverAllocs)

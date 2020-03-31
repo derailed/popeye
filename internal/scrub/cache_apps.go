@@ -1,8 +1,10 @@
 package scrub
 
 import (
+	"context"
 	"sync"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 )
@@ -28,7 +30,9 @@ func (a *apps) deployments() (*cache.Deployment, error) {
 	if a.dp != nil {
 		return a.dp, nil
 	}
-	dps, err := dag.ListDeployments(a.factory, a.config)
+	ctx, cancel := a.context()
+	defer cancel()
+	dps, err := dag.ListDeployments(ctx)
 	a.dp = cache.NewDeployment(dps)
 
 	return a.dp, err
@@ -41,7 +45,9 @@ func (a *apps) replicasets() (*cache.ReplicaSet, error) {
 	if a.rs != nil {
 		return a.rs, nil
 	}
-	rss, err := dag.ListReplicaSets(a.factory, a.config)
+	ctx, cancel := a.context()
+	defer cancel()
+	rss, err := dag.ListReplicaSets(ctx)
 	a.rs = cache.NewReplicaSet(rss)
 
 	return a.rs, err
@@ -54,7 +60,9 @@ func (a *apps) daemonSets() (*cache.DaemonSet, error) {
 	if a.ds != nil {
 		return a.ds, nil
 	}
-	ds, err := dag.ListDaemonSets(a.factory, a.config)
+	ctx, cancel := a.context()
+	defer cancel()
+	ds, err := dag.ListDaemonSets(ctx)
 	a.ds = cache.NewDaemonSet(ds)
 
 	return a.ds, err
@@ -68,8 +76,19 @@ func (a *apps) statefulsets() (*cache.StatefulSet, error) {
 		return a.sts, nil
 	}
 
-	sts, err := dag.ListStatefulSets(a.factory, a.config)
+	ctx, cancel := a.context()
+	defer cancel()
+	sts, err := dag.ListStatefulSets(ctx)
 	a.sts = cache.NewStatefulSet(sts)
 
 	return a.sts, err
+}
+
+// Helpers...
+
+func (a *apps) context() (context.Context, context.CancelFunc) {
+	ctx := context.WithValue(context.Background(), internal.KeyFactory, a.factory)
+	ctx = context.WithValue(ctx, internal.KeyConfig, a.config)
+
+	return context.WithCancel(ctx)
 }

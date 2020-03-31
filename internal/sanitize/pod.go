@@ -6,7 +6,6 @@ import (
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/rs/zerolog/log"
 	v1 "k8s.io/api/core/v1"
 	pv1beta1 "k8s.io/api/policy/v1beta1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
@@ -85,7 +84,6 @@ func (p *Pod) Sanitize(ctx context.Context) error {
 		p.checkUtilization(ctx, po, cmx)
 
 		if p.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
-			log.Debug().Msgf("CLEARING %q", fqn)
 			p.ClearOutcome(fqn)
 		}
 	}

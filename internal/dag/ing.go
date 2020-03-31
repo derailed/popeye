@@ -4,23 +4,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	nv1beta1 "k8s.io/api/extensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListIngresses list all included Ingresses.
-func ListIngresses(f types.Factory, cfg *config.Config) (map[string]*nv1beta1.Ingress, error) {
-	ings, err := listAllIngresses(f)
+func ListIngresses(ctx context.Context) (map[string]*nv1beta1.Ingress, error) {
+	ings, err := listAllIngresses(ctx)
 	if err != nil {
 		return map[string]*nv1beta1.Ingress{}, err
 	}
 
+	f := mustExtractFactory(ctx)
 	res := make(map[string]*nv1beta1.Ingress, len(ings))
 	for fqn, ing := range ings {
 		if includeNS(f.Client(), ing.Namespace) {
@@ -32,12 +31,11 @@ func ListIngresses(f types.Factory, cfg *config.Config) (map[string]*nv1beta1.In
 }
 
 // ListAllIngresses fetch all Ingresses on the cluster.
-func listAllIngresses(f types.Factory) (map[string]*nv1beta1.Ingress, error) {
-	ll, err := fetchIngresses(f)
+func listAllIngresses(ctx context.Context) (map[string]*nv1beta1.Ingress, error) {
+	ll, err := fetchIngresses(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	ings := make(map[string]*nv1beta1.Ingress, len(ll.Items))
 	for i := range ll.Items {
 		ings[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -47,11 +45,14 @@ func listAllIngresses(f types.Factory) (map[string]*nv1beta1.Ingress, error) {
 }
 
 // FetchIngresses retrieves all Ingresses on the cluster.
-func fetchIngresses(f types.Factory) (*nv1beta1.IngressList, error) {
+func fetchIngresses(ctx context.Context) (*nv1beta1.IngressList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().ExtensionsV1beta1().Ingresses(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("extensions/v1beta1/ingresses"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

@@ -1,8 +1,10 @@
 package scrub
 
 import (
+	"context"
 	"sync"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 )
@@ -28,7 +30,9 @@ func (r *rbac) roles() (*cache.Role, error) {
 	if r.ro != nil {
 		return r.ro, nil
 	}
-	ros, err := dag.ListRoles(r.factory, r.config)
+	ctx, cancel := r.context()
+	defer cancel()
+	ros, err := dag.ListRoles(ctx)
 	r.ro = cache.NewRole(ros)
 
 	return r.ro, err
@@ -41,7 +45,9 @@ func (r *rbac) rolebindings() (*cache.RoleBinding, error) {
 	if r.rb != nil {
 		return r.rb, nil
 	}
-	rbs, err := dag.ListRoleBindings(r.factory, r.config)
+	ctx, cancel := r.context()
+	defer cancel()
+	rbs, err := dag.ListRoleBindings(ctx)
 	r.rb = cache.NewRoleBinding(rbs)
 
 	return r.rb, err
@@ -54,7 +60,9 @@ func (r *rbac) clusterroles() (*cache.ClusterRole, error) {
 	if r.cr != nil {
 		return r.cr, nil
 	}
-	crs, err := dag.ListClusterRoles(r.factory, r.config)
+	ctx, cancel := r.context()
+	defer cancel()
+	crs, err := dag.ListClusterRoles(ctx)
 	r.cr = cache.NewClusterRole(crs)
 
 	return r.cr, err
@@ -67,8 +75,19 @@ func (r *rbac) clusterrolebindings() (*cache.ClusterRoleBinding, error) {
 	if r.crb != nil {
 		return r.crb, nil
 	}
-	crbs, err := dag.ListClusterRoleBindings(r.factory, r.config)
+	ctx, cancel := r.context()
+	defer cancel()
+	crbs, err := dag.ListClusterRoleBindings(ctx)
 	r.crb = cache.NewClusterRoleBinding(crbs)
 
 	return r.crb, err
+}
+
+// Helpers...
+
+func (r *rbac) context() (context.Context, context.CancelFunc) {
+	ctx := context.WithValue(context.Background(), internal.KeyFactory, r.factory)
+	ctx = context.WithValue(ctx, internal.KeyConfig, r.config)
+
+	return context.WithCancel(ctx)
 }

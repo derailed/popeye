@@ -4,23 +4,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListHorizontalPodAutoscalers list all included HorizontalPodAutoscalers.
-func ListHorizontalPodAutoscalers(f types.Factory, cfg *config.Config) (map[string]*autoscalingv1.HorizontalPodAutoscaler, error) {
-	hpas, err := listAllHorizontalPodAutoscalers(f)
+func ListHorizontalPodAutoscalers(ctx context.Context) (map[string]*autoscalingv1.HorizontalPodAutoscaler, error) {
+	hpas, err := listAllHorizontalPodAutoscalers(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	f := mustExtractFactory(ctx)
 	res := make(map[string]*autoscalingv1.HorizontalPodAutoscaler, len(hpas))
 	for fqn, hpa := range hpas {
 		if includeNS(f.Client(), hpa.Namespace) {
@@ -32,8 +31,8 @@ func ListHorizontalPodAutoscalers(f types.Factory, cfg *config.Config) (map[stri
 }
 
 // ListAllHorizontalPodAutoscalers fetch all HorizontalPodAutoscalers on the cluster.
-func listAllHorizontalPodAutoscalers(f types.Factory) (map[string]*autoscalingv1.HorizontalPodAutoscaler, error) {
-	ll, err := fetchHorizontalPodAutoscalers(f)
+func listAllHorizontalPodAutoscalers(ctx context.Context) (map[string]*autoscalingv1.HorizontalPodAutoscaler, error) {
+	ll, err := fetchHorizontalPodAutoscalers(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +46,14 @@ func listAllHorizontalPodAutoscalers(f types.Factory) (map[string]*autoscalingv1
 }
 
 // FetchHorizontalPodAutoscalers retrieves all HorizontalPodAutoscalers on the cluster.
-func fetchHorizontalPodAutoscalers(f types.Factory) (*autoscalingv1.HorizontalPodAutoscalerList, error) {
+func fetchHorizontalPodAutoscalers(ctx context.Context) (*autoscalingv1.HorizontalPodAutoscalerList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().AutoscalingV1().HorizontalPodAutoscalers(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("autoscaling/v1/horizontalpodautoscalers"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

@@ -4,23 +4,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListLimitRanges list all included LimitRanges.
-func ListLimitRanges(f types.Factory, cfg *config.Config) (map[string]*v1.LimitRange, error) {
-	lrs, err := listAllLimitRanges(f)
+func ListLimitRanges(ctx context.Context) (map[string]*v1.LimitRange, error) {
+	lrs, err := listAllLimitRanges(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	f := mustExtractFactory(ctx)
 	res := make(map[string]*v1.LimitRange, len(lrs))
 	for fqn, lr := range lrs {
 		if includeNS(f.Client(), lr.Namespace) {
@@ -32,8 +31,8 @@ func ListLimitRanges(f types.Factory, cfg *config.Config) (map[string]*v1.LimitR
 }
 
 // ListAllLimitRanges fetch all LimitRanges on the cluster.
-func listAllLimitRanges(f types.Factory) (map[string]*v1.LimitRange, error) {
-	ll, err := fetchLimitRanges(f)
+func listAllLimitRanges(ctx context.Context) (map[string]*v1.LimitRange, error) {
+	ll, err := fetchLimitRanges(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +46,14 @@ func listAllLimitRanges(f types.Factory) (map[string]*v1.LimitRange, error) {
 }
 
 // fetchLimitRanges retrieves all LimitRanges on the cluster.
-func fetchLimitRanges(f types.Factory) (*v1.LimitRangeList, error) {
+func fetchLimitRanges(ctx context.Context) (*v1.LimitRangeList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().CoreV1().LimitRanges(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("v1/limitranges"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

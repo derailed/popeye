@@ -4,23 +4,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListNamespaces list all included Namespaces.
-func ListNamespaces(f types.Factory, cfg *config.Config) (map[string]*v1.Namespace, error) {
-	nss, err := listAllNamespaces(f)
+func ListNamespaces(ctx context.Context) (map[string]*v1.Namespace, error) {
+	nss, err := listAllNamespaces(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	f := mustExtractFactory(ctx)
 	res := make(map[string]*v1.Namespace, len(nss))
 	for fqn, ns := range nss {
 		if includeNS(f.Client(), ns.Name) {
@@ -32,8 +31,8 @@ func ListNamespaces(f types.Factory, cfg *config.Config) (map[string]*v1.Namespa
 }
 
 // ListAllNamespaces fetch all Namespaces on the cluster.
-func listAllNamespaces(f types.Factory) (map[string]*v1.Namespace, error) {
-	ll, err := fetchNamespaces(f)
+func listAllNamespaces(ctx context.Context) (map[string]*v1.Namespace, error) {
+	ll, err := fetchNamespaces(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +46,14 @@ func listAllNamespaces(f types.Factory) (map[string]*v1.Namespace, error) {
 }
 
 // FetchNamespaces retrieves all Namespaces on the cluster.
-func fetchNamespaces(f types.Factory) (*v1.NamespaceList, error) {
+func fetchNamespaces(ctx context.Context) (*v1.NamespaceList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("v1/namespaces"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

@@ -3,6 +3,7 @@ package scrub
 import (
 	"context"
 
+	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
@@ -30,8 +31,12 @@ func NewHorizontalPodAutoscaler(ctx context.Context, c *Cache, codes *issues.Cod
 		Config:    c.config,
 	}
 
+	ctx = context.WithValue(ctx, internal.KeyFactory, c.factory)
+	ctx = context.WithValue(ctx, internal.KeyConfig, c.config)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	var err error
-	ss, err := dag.ListHorizontalPodAutoscalers(c.factory, c.config)
+	ss, err := dag.ListHorizontalPodAutoscalers(ctx)
 	if err != nil {
 		h.AddErr(ctx, err)
 	}

@@ -4,19 +4,17 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListPersistentVolumes list all included PersistentVolumes.
-func ListPersistentVolumes(f types.Factory, cfg *config.Config) (map[string]*v1.PersistentVolume, error) {
-	pvs, err := listAllPersistentVolumes(f)
+func ListPersistentVolumes(ctx context.Context) (map[string]*v1.PersistentVolume, error) {
+	pvs, err := listAllPersistentVolumes(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -30,8 +28,8 @@ func ListPersistentVolumes(f types.Factory, cfg *config.Config) (map[string]*v1.
 }
 
 // ListAllPersistentVolumes fetch all PersistentVolumes on the cluster.
-func listAllPersistentVolumes(f types.Factory) (map[string]*v1.PersistentVolume, error) {
-	ll, err := fetchPersistentVolumes(f)
+func listAllPersistentVolumes(ctx context.Context) (map[string]*v1.PersistentVolume, error) {
+	ll, err := fetchPersistentVolumes(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -45,11 +43,14 @@ func listAllPersistentVolumes(f types.Factory) (map[string]*v1.PersistentVolume,
 }
 
 // FetchPersistentVolumes retrieves all PersistentVolumes on the cluster.
-func fetchPersistentVolumes(f types.Factory) (*v1.PersistentVolumeList, error) {
+func fetchPersistentVolumes(ctx context.Context) (*v1.PersistentVolumeList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().CoreV1().PersistentVolumes().List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("v1/persistentvolumes"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err

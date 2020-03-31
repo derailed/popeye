@@ -4,23 +4,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
 	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListDeployments list all included Deployments.
-func ListDeployments(f types.Factory, cfg *config.Config) (map[string]*appsv1.Deployment, error) {
-	dps, err := listAllDeployments(f)
+func ListDeployments(ctx context.Context) (map[string]*appsv1.Deployment, error) {
+	dps, err := listAllDeployments(ctx)
 	if err != nil {
 		return map[string]*appsv1.Deployment{}, err
 	}
 
+	f := mustExtractFactory(ctx)
 	res := make(map[string]*appsv1.Deployment, len(dps))
 	for fqn, dp := range dps {
 		if includeNS(f.Client(), dp.Namespace) {
@@ -32,8 +31,8 @@ func ListDeployments(f types.Factory, cfg *config.Config) (map[string]*appsv1.De
 }
 
 // ListAllDeployments fetch all Deployments on the cluster.
-func listAllDeployments(f types.Factory) (map[string]*appsv1.Deployment, error) {
-	ll, err := fetchDeployments(f)
+func listAllDeployments(ctx context.Context) (map[string]*appsv1.Deployment, error) {
+	ll, err := fetchDeployments(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +46,14 @@ func listAllDeployments(f types.Factory) (map[string]*appsv1.Deployment, error) 
 }
 
 // FetchDeployments retrieves all Deployments on the cluster.
-func fetchDeployments(f types.Factory) (*appsv1.DeploymentList, error) {
+func fetchDeployments(ctx context.Context) (*appsv1.DeploymentList, error) {
+	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	if cfg.Flags.StandAlone {
+		return f.Client().DialOrDie().AppsV1().Deployments(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+	}
+
 	var res dao.Resource
 	res.Init(f, client.NewGVR("apps/v1/deployments"))
-
-	ctx := context.WithValue(context.Background(), internal.KeyFactory, f)
 	oo, err := res.List(ctx, client.AllNamespaces)
 	if err != nil {
 		return nil, err
