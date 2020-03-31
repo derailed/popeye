@@ -6,7 +6,7 @@ on:
       - "v*.*.*"
 
 jobs:
-  goreleaser:
+  krew:
     runs-on: ubuntu-latest
     steps:
       - name: Fetch Tag Info
