@@ -104,10 +104,10 @@ func TestGVRAsResourceName(t *testing.T) {
 		gvr string
 		e   string
 	}{
-		"full":  {"apps/v1/deployments", "deployments.v1.apps"},
-		"core":  {"v1/pods", "pods.v1."},
-		"popeye":   {"users", "users.."},
-		"empty": {"", ".."},
+		"full":   {"apps/v1/deployments", "deployments.v1.apps"},
+		"core":   {"v1/pods", "pods.v1."},
+		"popeye": {"users", "users.."},
+		"empty":  {"", ".."},
 	}
 
 	for k := range uu {
@@ -123,10 +123,10 @@ func TestToR(t *testing.T) {
 		gvr string
 		e   string
 	}{
-		"full":  {"apps/v1/deployments", "deployments"},
-		"core":  {"v1/pods", "pods"},
-		"popeye":   {"users", "users"},
-		"empty": {"", ""},
+		"full":   {"apps/v1/deployments", "deployments"},
+		"core":   {"v1/pods", "pods"},
+		"popeye": {"users", "users"},
+		"empty":  {"", ""},
 	}
 
 	for k := range uu {
@@ -142,10 +142,10 @@ func TestToG(t *testing.T) {
 		gvr string
 		e   string
 	}{
-		"full":  {"apps/v1/deployments", "apps"},
-		"core":  {"v1/pods", ""},
-		"popeye":   {"users", ""},
-		"empty": {"", ""},
+		"full":   {"apps/v1/deployments", "apps"},
+		"core":   {"v1/pods", ""},
+		"popeye": {"users", ""},
+		"empty":  {"", ""},
 	}
 
 	for k := range uu {
@@ -161,10 +161,10 @@ func TestToV(t *testing.T) {
 		gvr string
 		e   string
 	}{
-		"full":  {"apps/v1/deployments", "v1"},
-		"core":  {"v1beta1/pods", "v1beta1"},
-		"popeye":   {"users", ""},
-		"empty": {"", ""},
+		"full":   {"apps/v1/deployments", "v1"},
+		"core":   {"v1beta1/pods", "v1beta1"},
+		"popeye": {"users", ""},
+		"empty":  {"", ""},
 	}
 
 	for k := range uu {
@@ -179,10 +179,10 @@ func TestToString(t *testing.T) {
 	uu := map[string]struct {
 		gvr string
 	}{
-		"full":  {"apps/v1/deployments"},
-		"core":  {"v1beta1/pods"},
-		"popeye":   {"users"},
-		"empty": {""},
+		"full":   {"apps/v1/deployments"},
+		"core":   {"v1beta1/pods"},
+		"popeye": {"users"},
+		"empty":  {""},
 	}
 
 	for k := range uu {
