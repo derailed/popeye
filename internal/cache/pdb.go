@@ -2,6 +2,7 @@ package cache
 
 import (
 	v1beta1 "k8s.io/api/policy/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // PodDisruptionBudgetKey tracks PodDisruptionBudget resource references
@@ -25,7 +26,11 @@ func (c *PodDisruptionBudget) ListPodDisruptionBudgets() map[string]*v1beta1.Pod
 // ForLabels returns a pdb whose selector match the given labels. Returns nil if no match.
 func (c *PodDisruptionBudget) ForLabels(labels map[string]string) *v1beta1.PodDisruptionBudget {
 	for _, pdb := range c.ListPodDisruptionBudgets() {
-		if matchLabels(labels, pdb.Spec.Selector.MatchLabels) {
+		m, err := metav1.LabelSelectorAsMap(pdb.Spec.Selector)
+		if err == nil {
+			continue
+		}
+		if matchLabels(labels, m) {
 			return pdb
 		}
 	}

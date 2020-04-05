@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -30,12 +31,17 @@ const outFmt = "sanitizer_%s_%d.%s"
 
 var (
 	// LogFile the path to our logs.
-	LogFile = filepath.Join(os.TempDir(), fmt.Sprintf("popeye.log"))
+	LogFile = filepath.Join(os.TempDir(), "popeye.log")
 	// DumpDir indicates a directory location for sanitizer reports.
 	DumpDir = dumpDir()
 )
 
 type scrubFn func(context.Context, *scrub.Cache, *issues.Codes) scrub.Sanitizer
+
+type run struct {
+	outcome issues.Outcome
+	gvr     client.GVR
+}
 
 // Popeye represents a kubernetes linter/sanitizer.
 type Popeye struct {
@@ -228,12 +234,7 @@ func (p *Popeye) sanitize() error {
 	}
 	codes.Refine(p.config.Codes)
 
-	type run struct {
-		outcome issues.Outcome
-		gvr     client.GVR
-	}
 	c := make(chan run, 2)
-
 	var total int
 	var nodeGVR = client.NewGVR("v1/nodes")
 	for k, fn := range p.sanitizers() {
@@ -247,14 +248,7 @@ func (p *Popeye) sanitize() error {
 		}
 		total++
 		ctx = context.WithValue(ctx, internal.KeyRunInfo, internal.RunInfo{Section: gvr.R(), SectionGVR: gvr})
-		go func(ctx context.Context, gvr client.GVR, f scrubFn, c chan run) {
-			resource := f(ctx, cache, codes)
-			if err := resource.Sanitize(ctx); err != nil {
-				p.builder.AddError(err)
-			}
-			o := resource.Outcome().Filter(config.Level(p.config.LinterLevel()))
-			c <- run{gvr: gvr, outcome: o}
-		}(ctx, gvr, fn, c)
+		go p.sanitizer(ctx, gvr, fn, c, cache, codes)
 	}
 
 	if total == 0 {
@@ -272,6 +266,22 @@ func (p *Popeye) sanitize() error {
 	}
 
 	return nil
+}
+
+func (p *Popeye) sanitizer(ctx context.Context, gvr client.GVR, f scrubFn, c chan run, cache *scrub.Cache, codes *issues.Codes) {
+	defer func() {
+		if e := recover(); e != nil {
+			log.Error().Msgf("Popeye CHOCKED! %#v", e)
+			log.Error().Msgf("%v", string(debug.Stack()))
+		}
+	}()
+
+	resource := f(ctx, cache, codes)
+	if err := resource.Sanitize(ctx); err != nil {
+		p.builder.AddError(err)
+	}
+	o := resource.Outcome().Filter(config.Level(p.config.LinterLevel()))
+	c <- run{gvr: gvr, outcome: o}
 }
 
 func (p *Popeye) dumpJunit() error {

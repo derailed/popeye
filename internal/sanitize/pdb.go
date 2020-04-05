@@ -5,7 +5,9 @@ import (
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/rs/zerolog/log"
 	pv1beta1 "k8s.io/api/policy/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type (
@@ -47,7 +49,12 @@ func (p *PodDisruptionBudget) Sanitize(ctx context.Context) error {
 }
 
 func (p *PodDisruptionBudget) checkInUse(ctx context.Context, pdb *pv1beta1.PodDisruptionBudget) {
-	if p.GetPod(pdb.Namespace, pdb.Spec.Selector.MatchLabels) == nil {
+	m, err := metav1.LabelSelectorAsMap(pdb.Spec.Selector)
+	if err != nil {
+		log.Error().Err(err).Msg("No selectors found")
+		return
+	}
+	if p.GetPod(pdb.Namespace, m) == nil {
 		p.AddCode(ctx, 900)
 		return
 	}
