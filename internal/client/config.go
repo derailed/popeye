@@ -216,7 +216,7 @@ func (c *Config) CurrentUserName() (string, error) {
 
 // CurrentNamespaceName retrieves the active namespace.
 func (c *Config) CurrentNamespaceName() (string, error) {
-	if isSet(c.flags.Namespace) {
+	if c.flags.Namespace != nil {
 		return *c.flags.Namespace, nil
 	}
 

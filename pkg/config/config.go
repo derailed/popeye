@@ -4,14 +4,11 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/derailed/popeye/internal/client"
 	"gopkg.in/yaml.v2"
 )
 
-const (
-	defaultLintLevel = "ok"
-	// AllNamespaces represents all namespaces.
-	AllNamespaces string = ""
-)
+const defaultLintLevel = "ok"
 
 // Config tracks Popeye configuration options.
 type Config struct {
@@ -35,8 +32,11 @@ func NewConfig(flags *Flags) (*Config, error) {
 	}
 	cfg.Flags = flags
 
+	if flags.Namespace != nil && *flags.Namespace == client.AllNamespaces {
+		flags.Namespace = nil
+	}
 	if flags.AllNamespaces != nil && *flags.AllNamespaces {
-		all := AllNamespaces
+		all := client.AllNamespaces
 		flags.Namespace = &all
 	}
 	cfg.LintLevel = int(ToIssueLevel(flags.LintLevel))

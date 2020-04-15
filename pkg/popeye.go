@@ -137,6 +137,7 @@ func (p *Popeye) initFactory() error {
 	if p.flags.ConfigFlags.Namespace != nil {
 		ns = *p.flags.ConfigFlags.Namespace
 	}
+
 	f.Start(ns)
 	for _, gvr := range p.scannedGVRs() {
 		ok, err := clt.CanI(client.AllNamespaces, gvr, types.ReadAllAccess)
@@ -242,6 +243,7 @@ func (p *Popeye) sanitize() error {
 		if p.aliases.Exclude(gvr, p.config.Sections()) {
 			continue
 		}
+
 		// Skip node sanitizer if active namespace is set.
 		if gvr == nodeGVR && p.factory.Client().ActiveNamespace() != client.AllNamespaces {
 			continue
