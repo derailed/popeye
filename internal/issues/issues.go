@@ -79,7 +79,7 @@ func (o Outcome) MaxGroupSeverity(section, group string) config.Level {
 
 // For returns issues for a given section/group.
 func (o Outcome) For(section, group string) Issues {
-	var ii Issues
+	ii := make(Issues, 0, len(o[section]))
 	for _, item := range o[section] {
 		if item.Group != group {
 			continue

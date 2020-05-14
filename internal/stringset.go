@@ -22,6 +22,15 @@ func (ss StringSet) Add(strs ...string) {
 	}
 }
 
+// Clone returns a new copy.
+func (ss StringSet) Clone() StringSet {
+	clone := make(StringSet, len(ss))
+	for k, v := range ss {
+		clone[k] = v
+	}
+	return clone
+}
+
 // Has checks if an item is in the set.
 func (ss StringSet) Has(s string) bool {
 	_, ok := ss[s]

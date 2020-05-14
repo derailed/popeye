@@ -312,7 +312,7 @@ func makeEp(s string, ips ...string) *v1.Endpoints {
 			Namespace: "default",
 		},
 	}
-	var add []v1.EndpointAddress
+	add := make([]v1.EndpointAddress, 0, len(ips))
 	for _, ip := range ips {
 		add = append(add, v1.EndpointAddress{IP: ip})
 	}

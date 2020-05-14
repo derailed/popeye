@@ -90,19 +90,9 @@ func (p *Pod) containerRefs(pfqn string, co v1.Container, refs *sync.Map) {
 	for _, e := range co.EnvFrom {
 		switch {
 		case e.ConfigMapRef != nil:
-			cmRef := e.ConfigMapRef
-			efqn := ResFqn(ConfigMapKey, FQN(ns, cmRef.Name))
-			if s, ok := refs.LoadOrStore(efqn, internal.AllKeys); ok {
-				s.(internal.StringSet).Add(internal.All)
-				continue
-			}
+			refs.Store(ResFqn(ConfigMapKey, FQN(ns, e.ConfigMapRef.Name)), internal.AllKeys)
 		case e.SecretRef != nil:
-			secRef := e.SecretRef
-			efqn := ResFqn(SecretKey, FQN(ns, secRef.Name))
-			if s, ok := refs.LoadOrStore(efqn, internal.AllKeys); ok {
-				s.(internal.StringSet).Add(internal.All)
-				continue
-			}
+			refs.Store(ResFqn(SecretKey, FQN(ns, e.SecretRef.Name)), internal.AllKeys)
 		}
 	}
 }
@@ -113,7 +103,11 @@ func (p *Pod) secretRefs(ns string, ref *v1.SecretKeySelector, refs *sync.Map) {
 	}
 	key := ResFqn(SecretKey, FQN(ns, ref.LocalObjectReference.Name))
 	if s, ok := refs.LoadOrStore(key, internal.StringSet{ref.Key: internal.Blank}); ok {
-		s.(internal.StringSet).Add(ref.Key)
+		if ss, ok := s.(internal.StringSet); ok {
+			cp := ss.Clone()
+			cp.Add(ref.Key)
+			refs.Store(key, cp)
+		}
 	}
 }
 
@@ -123,7 +117,11 @@ func (p *Pod) configMapRefs(ns string, ref *v1.ConfigMapKeySelector, refs *sync.
 	}
 	key := ResFqn(ConfigMapKey, FQN(ns, ref.LocalObjectReference.Name))
 	if s, ok := refs.LoadOrStore(key, internal.StringSet{ref.Key: internal.Blank}); ok {
-		s.(internal.StringSet).Add(ref.Key)
+		if ss, ok := s.(internal.StringSet); ok {
+			cp := ss.Clone()
+			cp.Add(ref.Key)
+			refs.Store(key, cp)
+		}
 	}
 }
 
@@ -131,15 +129,13 @@ func (*Pod) volumeRefs(ns string, vv []v1.Volume, refs *sync.Map) {
 	for _, v := range vv {
 		sv := v.VolumeSource.Secret
 		if sv != nil {
-			sfqn := FQN(ns, sv.SecretName)
-			addKeys(SecretKey, sfqn, sv.Items, refs)
+			addKeys(SecretKey, FQN(ns, sv.SecretName), sv.Items, refs)
 			continue
 		}
 
 		cmv := v.VolumeSource.ConfigMap
 		if cmv != nil {
-			sfqn := FQN(ns, cmv.LocalObjectReference.Name)
-			addKeys(ConfigMapKey, sfqn, cmv.Items, refs)
+			addKeys(ConfigMapKey, FQN(ns, cmv.LocalObjectReference.Name), cmv.Items, refs)
 		}
 	}
 }
@@ -148,7 +144,7 @@ func (*Pod) volumeRefs(ns string, vv []v1.Volume, refs *sync.Map) {
 // Helpers...
 
 func addKeys(kind, rfqn string, items []v1.KeyToPath, refs *sync.Map) {
-	set := make(internal.StringSet)
+	set := make(internal.StringSet, len(items))
 	if len(items) == 0 {
 		set.Add(internal.All)
 	}
