@@ -27,7 +27,7 @@ func (c *PodDisruptionBudget) ListPodDisruptionBudgets() map[string]*v1beta1.Pod
 func (c *PodDisruptionBudget) ForLabels(labels map[string]string) *v1beta1.PodDisruptionBudget {
 	for _, pdb := range c.ListPodDisruptionBudgets() {
 		m, err := metav1.LabelSelectorAsMap(pdb.Spec.Selector)
-		if err == nil {
+		if err != nil {
 			continue
 		}
 		if matchLabels(labels, m) {

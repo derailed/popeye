@@ -2,6 +2,7 @@ package sanitize
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
@@ -91,6 +92,7 @@ func (p *Pod) Sanitize(ctx context.Context) error {
 }
 
 func (p *Pod) checkPdb(ctx context.Context, labels map[string]string) {
+	fmt.Println("Checking...")
 	if p.ForLabels(labels) == nil {
 		p.AddCode(ctx, 206)
 	}

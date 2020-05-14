@@ -21,6 +21,8 @@ Maintenance Release!
 ## Resolved Bugs/PRs
 
 - Fix concurrent map access issue
+- [Issue #100](https://github.com/derailed/popeye/issues/100)
+- [Issue #94](https://github.com/derailed/popeye/issues/94)
 
 ---
 
