@@ -1,0 +1,97 @@
+popeye:
+  excludes:
+    serviceaccount:
+      # We don’t check the kube* service accounts - this is part of the platform
+      - name: rx:^kube
+      - name: default/default
+        codes:
+          - 400
+  
+    # Exclude some codes for default services
+    service:
+      # This service is of type NodePort, which is intentional (1104)
+      - name: default/kubernetes
+        codes:
+          - 1104 
+      
+      # The ports here are not named yet (1102)
+      - name: kube-system/kube-dns
+        codes:
+         - 1102
+      
+      # The port here is not named yet (1102)
+      - name: kube-system/node-exporter
+        codes:
+         - 1102
+
+      # We don’t want to check tiller, it’s only here for backwards compatibility to helm2
+      - name: kube-system/tiller-deploy
+
+      # We don’t need to check the metrics-server, this is managed by MetaKube
+      - name: kube-system/metrics-server
+
+    # Exclude Secrets in the system namespaces
+    secret:
+      - name: rx:^kube
+      
+      # The default token may be unused
+      - name: rx:default/default-token
+        codes:
+          - 400
+    
+    # RoleBindings for platform services can be excluded
+    rolebinding:
+      - name: rx:^kube
+      - name: rx:^default/system
+      - name: default/machine-controller
+
+    # Roles for platform services can be excluded
+    role:
+      - name: rx:^kube
+      - name: rx:^default/system
+      - name: default/machine-controller
+
+    # ReplicaSets for platform services can be excluded
+    replicaset:
+      - name: rx:^kube
+
+    # MetaKube provides you with some SysEleven PodSecurityPolicies that we don’t want to scan here
+    podsecuritypolicy:
+      - name: rx:^syseleven
+
+    # PodDisruptionBudgets for platform services can be excluded
+    poddisruptionbudget:
+      - name: kube-system/coredns
+
+    # Pods for platform services can be excluded
+    pod:
+      - name: rx:^kube-system/
+
+    # Nodes are platform services and can be excluded
+    node:
+      - name: rx:.*
+
+    # We don’t want to sanitize the default namespaces:
+    namespace:
+      - name: default 
+      - name: kube-node-lease 
+      - name: kube-public
+      - name: kube-system
+
+    # Deployments for platform services can be excluded
+    deployment:
+      - name: rx:^kube-system
+
+    # Daemonsets for platform services can be excluded
+    daemonset:
+      - name: rx:^kube-system
+
+    # ConfigMaps for platform services can be excluded
+    configmap:
+      - name: rx:^kube-system
+      - name: kube-public/cluster-info
+
+    clusterrole:
+      - name: rx:.*
+        codes:
+          - 400
