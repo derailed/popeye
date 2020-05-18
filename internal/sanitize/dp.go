@@ -93,10 +93,6 @@ func (d *Deployment) checkDeployment(ctx context.Context, dp *appsv1.Deployment)
 	if dp.Status.AvailableReplicas == 0 {
 		d.AddCode(ctx, 501)
 	}
-
-	if dp.Status.CollisionCount != nil && *dp.Status.CollisionCount > 0 {
-		d.AddCode(ctx, 502, *dp.Status.CollisionCount)
-	}
 }
 
 // CheckContainers runs thru deployment template and checks pod configuration.

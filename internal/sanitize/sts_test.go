@@ -67,19 +67,6 @@ func TestSTSSanitizer(t *testing.T) {
 				issues.New(client.NewGVR("apps/v1/statefulsets"), issues.Root, config.WarnLevel, "[POP-500] Zero scale detected"),
 			},
 		},
-		"collisions": {
-			lister: makeSTSLister(stsOpts{
-				coOpts:      coOpts{rcpu: "100m", rmem: "10Mi"},
-				replicas:    1,
-				currentReps: 1,
-				collisions:  1,
-				rev:         "apps/v1",
-				ccpu:        "100m", cmem: "10Mi",
-			}),
-			issues: issues.Issues{
-				issues.New(client.NewGVR("apps/v1/statefulsets"), issues.Root, config.ErrorLevel, "[POP-502] ReplicaSet collisions detected (1)"),
-			},
-		},
 	}
 
 	ctx := makeContext("apps/v1/statefulsets", "sts")

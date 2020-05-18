@@ -131,26 +131,6 @@ func TestDPSanitize(t *testing.T) {
 				issues.New(client.NewGVR("apps/v1/deployments"), issues.Root, config.WarnLevel, "[POP-501] Used? No available replicas found"),
 			},
 		},
-		"collisions": {
-			lister: makeDPLister(dpOpts{
-				rev:        "apps/v1",
-				reps:       1,
-				availReps:  1,
-				collisions: 1,
-				coOpts: coOpts{
-					image: "fred:0.0.1",
-					rcpu:  "10m",
-					rmem:  "10Mi",
-					lcpu:  "10m",
-					lmem:  "10Mi",
-				},
-				ccpu: "10m",
-				cmem: "10Mi",
-			}),
-			issues: issues.Issues{
-				issues.New(client.NewGVR("apps/v1/deployments"), issues.Root, config.ErrorLevel, "[POP-502] ReplicaSet collisions detected (1)"),
-			},
-		},
 	}
 
 	ctx := makeContext("apps/v1/deployments", "deployment")

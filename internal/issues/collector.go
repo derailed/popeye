@@ -54,7 +54,7 @@ func (c *Collector) AddSubCode(ctx context.Context, code config.ID, args ...inte
 	if !ok {
 		log.Error().Err(fmt.Errorf("No code with ID %d", code)).Msg("AddSubCode failed")
 	}
-	if !c.ShouldExclude(run.Section, run.FQN, code) {
+	if !c.ShouldExclude(run.SectionGVR.String(), run.FQN, code) {
 		c.addIssue(run.FQN, New(run.GroupGVR, run.Group, co.Severity, co.Format(code, args...)))
 	}
 }
@@ -67,7 +67,7 @@ func (c *Collector) AddCode(ctx context.Context, code config.ID, args ...interfa
 		// BOZO!! refact once codes are in!!
 		panic(fmt.Errorf("No code with ID %d", code))
 	}
-	if !c.ShouldExclude(run.Section, run.FQN, code) {
+	if !c.ShouldExclude(run.SectionGVR.String(), run.FQN, code) {
 		c.addIssue(run.FQN, New(run.SectionGVR, Root, co.Severity, co.Format(code, args...)))
 	}
 }

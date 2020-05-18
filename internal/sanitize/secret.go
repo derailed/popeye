@@ -61,7 +61,7 @@ func (s *Secret) checkInUse(ctx context.Context, refs *sync.Map) {
 		s.InitOutcome(fqn)
 		ctx = internal.WithFQN(ctx, fqn)
 		defer func(fqn string, ctx context.Context) {
-			if s.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
+			if s.NoConcerns(fqn) && s.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 				s.ClearOutcome(fqn)
 			}
 		}(fqn, ctx)

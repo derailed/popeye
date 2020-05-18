@@ -93,10 +93,6 @@ func (s *StatefulSet) checkStatefulSet(ctx context.Context, st *appsv1.StatefulS
 	if st.Status.CurrentReplicas == 0 {
 		s.AddCode(ctx, 501)
 	}
-
-	if st.Status.CollisionCount != nil && *st.Status.CollisionCount > 0 {
-		s.AddCode(ctx, 502, *st.Status.CollisionCount)
-	}
 }
 
 func (s *StatefulSet) checkContainers(ctx context.Context, st *appsv1.StatefulSet) {

@@ -168,9 +168,6 @@ codes:
   501:
     message:  "Used? No available replicas found"
     severity: 2
-  502:
-    message:  "ReplicaSet collisions detected (%d)"
-    severity: 3
   503:
     message:  "At current load, CPU under allocated. Current:%s vs Requested:%s (%s)"
     severity: 2
