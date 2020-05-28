@@ -1,6 +1,6 @@
 module github.com/derailed/popeye
 
-go 1.13
+go 1.14
 
 require (
 	github.com/Azure/go-autorest v14.0.0+incompatible // indirect

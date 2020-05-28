@@ -44,8 +44,12 @@ func listAllNodes(ctx context.Context) (map[string]*v1.Node, error) {
 // FetchNodes retrieves all Nodes on the cluster.
 func fetchNodes(ctx context.Context) (*v1.NodeList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	dial, err := f.Client().Dial()
+	if err != nil {
+		return nil, err
+	}
 	if cfg.Flags.StandAlone {
-		return f.Client().DialOrDie().CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+		return dial.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource

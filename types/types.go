@@ -69,19 +69,19 @@ type Connection interface {
 	Config() Config
 
 	// DialOrDie connects to api server.
-	DialOrDie() kubernetes.Interface
+	Dial() (kubernetes.Interface, error)
 
 	// CachedDiscoveryOrDie connects to discovery client.
-	CachedDiscoveryOrDie() *disk.CachedDiscoveryClient
+	CachedDiscovery() (*disk.CachedDiscoveryClient, error)
 
 	// RestConfigOrDie connects to rest client.
-	RestConfigOrDie() *restclient.Config
+	RestConfig() (*restclient.Config, error)
 
 	// MXDial connects to metrics server.
 	MXDial() (*versioned.Clientset, error)
 
-	// DynDialOrDie connects to dynamic client.
-	DynDialOrDie() dynamic.Interface
+	// DynDial connects to dynamic client.
+	DynDial() (dynamic.Interface, error)
 
 	// HasMetrics checks if metrics server is available.
 	HasMetrics() bool
@@ -95,8 +95,8 @@ type Connection interface {
 	// ActiveNamespace returns the current namespace.
 	ActiveNamespace() string
 
-	// IsActiveNamespace checks if given ns is active.
-	IsActiveNamespace(string) bool
+	// // IsActiveNamespace checks if given ns is active.
+	// IsActiveNamespace(string) bool
 }
 
 // Factory represents a resource factory.
@@ -111,7 +111,7 @@ type Factory interface {
 	List(gvr, ns string, wait bool, sel labels.Selector) ([]runtime.Object, error)
 
 	// ForResource fetch an informer for a given resource.
-	ForResource(ns, gvr string) informers.GenericInformer
+	ForResource(ns, gvr string) (informers.GenericInformer, error)
 
 	// CanForResource fetch an informer for a given resource if authorized
 	CanForResource(ns, gvr string, verbs []string) (informers.GenericInformer, error)

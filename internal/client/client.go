@@ -24,11 +24,10 @@ import (
 )
 
 const (
-	cacheSize        = 100
-	cacheExpiry      = 5 * time.Minute
-	cacheMXKey       = "metrics"
-	cacheMXAPIKey    = "metricsAPI"
-	checkConnTimeout = 10 * time.Second
+	cacheSize     = 100
+	cacheExpiry   = 5 * time.Minute
+	cacheMXKey    = "metrics"
+	cacheMXAPIKey = "metricsAPI"
 	// CallTimeout represents api call timeout limit.
 	CallTimeout = 5 * time.Second
 )
@@ -133,7 +132,12 @@ func (a *APIClient) CanI(ns, gvr string, verbs []string) (auth bool, err error) 
 			return auth, nil
 		}
 	}
-	dial, sar := a.DialOrDie().AuthorizationV1().SelfSubjectAccessReviews(), makeSAR(ns, gvr)
+
+	c, err := a.Dial()
+	if err != nil {
+		return false, err
+	}
+	dial, sar := c.AuthorizationV1().SelfSubjectAccessReviews(), makeSAR(ns, gvr)
 	ctx, cancel := context.WithTimeout(context.Background(), CallTimeout)
 	defer cancel()
 	for _, v := range verbs {
@@ -162,14 +166,24 @@ func (a *APIClient) CurrentNamespaceName() (string, error) {
 
 // ServerVersion returns the current server version info.
 func (a *APIClient) ServerVersion() (*version.Info, error) {
-	return a.CachedDiscoveryOrDie().ServerVersion()
+	cfg, err := a.CachedDiscovery()
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg.ServerVersion()
 }
 
 // ValidNamespaces returns all available namespaces.
 func (a *APIClient) ValidNamespaces() ([]v1.Namespace, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), CallTimeout)
 	defer cancel()
-	nn, err := a.DialOrDie().CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+
+	dial, err := a.Dial()
+	if err != nil {
+		return nil, err
+	}
+	nn, err := dial.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +206,7 @@ func (a *APIClient) CheckConnectivity() (status bool) {
 		if err != nil {
 			return
 		}
-		cfg.Timeout = checkConnTimeout
+		cfg.Timeout = defaultTimeout
 
 		if a.checkClientSet, err = kubernetes.NewForConfig(cfg); err != nil {
 			log.Error().Err(err).Msgf("Unable to connect to api server")
@@ -242,61 +256,70 @@ func (a *APIClient) HasMetrics() bool {
 }
 
 // DialOrDie returns a handle to api server or die.
-func (a *APIClient) DialOrDie() kubernetes.Interface {
+func (a *APIClient) Dial() (kubernetes.Interface, error) {
 	a.mx.Lock()
 	defer a.mx.Unlock()
 	if a.client != nil {
-		return a.client
+		return a.client, nil
 	}
 
-	var err error
-	if a.client, err = kubernetes.NewForConfig(a.RestConfigOrDie()); err != nil {
-		log.Fatal().Err(err).Msgf("Unable to connect to api server")
+	cfg, err := a.RestConfig()
+	if err != nil {
+		return nil, err
 	}
-	return a.client
+	if a.client, err = kubernetes.NewForConfig(cfg); err != nil {
+		return nil, err
+	}
+	return a.client, nil
 }
 
 // RestConfigOrDie returns a rest api client.
-func (a *APIClient) RestConfigOrDie() *restclient.Config {
+func (a *APIClient) RestConfig() (*restclient.Config, error) {
 	cfg, err := a.config.RESTConfig()
 	if err != nil {
-		log.Fatal().Err(err).Msgf("Unable to connect to api server")
+		return nil, err
 	}
-	return cfg
+
+	return cfg, nil
 }
 
 // CachedDiscoveryOrDie returns a cached discovery client.
-func (a *APIClient) CachedDiscoveryOrDie() *disk.CachedDiscoveryClient {
+func (a *APIClient) CachedDiscovery() (*disk.CachedDiscoveryClient, error) {
 	a.mx.Lock()
 	defer a.mx.Unlock()
 
 	if a.cachedClient != nil {
-		return a.cachedClient
+		return a.cachedClient, nil
 	}
 
-	rc := a.RestConfigOrDie()
+	rc, err := a.RestConfig()
+	if err != nil {
+		return nil, err
+	}
 	httpCacheDir := filepath.Join(mustHomeDir(), ".kube", "http-cache")
 	discCacheDir := filepath.Join(mustHomeDir(), ".kube", "cache", "discovery", toHostDir(rc.Host))
 
-	var err error
 	a.cachedClient, err = disk.NewCachedDiscoveryClientForConfig(rc, discCacheDir, httpCacheDir, 10*time.Minute)
 	if err != nil {
 		log.Panic().Msgf("Unable to connect to discovery client %v", err)
 	}
-	return a.cachedClient
+	return a.cachedClient, nil
 }
 
-// DynDialOrDie returns a handle to a dynamic interface.
-func (a *APIClient) DynDialOrDie() dynamic.Interface {
+// DynDial returns a handle to a dynamic interface.
+func (a *APIClient) DynDial() (dynamic.Interface, error) {
 	if a.dClient != nil {
-		return a.dClient
+		return a.dClient, nil
 	}
 
-	var err error
-	if a.dClient, err = dynamic.NewForConfig(a.RestConfigOrDie()); err != nil {
-		log.Panic().Err(err)
+	rc, err := a.RestConfig()
+	if err != nil {
+		return nil, err
 	}
-	return a.dClient
+	if a.dClient, err = dynamic.NewForConfig(rc); err != nil {
+		return nil, err
+	}
+	return a.dClient, nil
 }
 
 // MXDial returns a handle to the metrics server.
@@ -307,8 +330,11 @@ func (a *APIClient) MXDial() (*versioned.Clientset, error) {
 	if a.mxsClient != nil {
 		return a.mxsClient, nil
 	}
-	var err error
-	if a.mxsClient, err = versioned.NewForConfig(a.RestConfigOrDie()); err != nil {
+	rc, err := a.RestConfig()
+	if err != nil {
+		return nil, err
+	}
+	if a.mxsClient, err = versioned.NewForConfig(rc); err != nil {
 		log.Error().Err(err)
 	}
 
@@ -329,7 +355,12 @@ func (a *APIClient) supportsMetricsResources() (supported bool) {
 		return
 	}
 
-	apiGroups, err := a.CachedDiscoveryOrDie().ServerGroups()
+	dial, err := a.CachedDiscovery()
+	if err != nil {
+		log.Error().Err(err).Msg("Dial failed!")
+		return false
+	}
+	apiGroups, err := dial.ServerGroups()
 	if err != nil {
 		return
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/derailed/popeye/types"
 	"github.com/rs/zerolog/log"
@@ -16,8 +17,9 @@ import (
 )
 
 const (
-	defaultQPS   = 50
-	defaultBurst = 50
+	defaultQPS     = 100
+	defaultBurst   = 100
+	defaultTimeout = 5 * time.Second
 )
 
 // Config tracks a kubernetes configuration.
@@ -295,6 +297,8 @@ func (c *Config) RESTConfig() (*restclient.Config, error) {
 	}
 	c.restConfig.QPS = defaultQPS
 	c.restConfig.Burst = defaultBurst
+	c.restConfig.Timeout = defaultTimeout
+
 	log.Debug().Msgf("Connecting to API Server %s", c.restConfig.Host)
 
 	return c.restConfig, nil

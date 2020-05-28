@@ -45,8 +45,12 @@ func listAllPersistentVolumes(ctx context.Context) (map[string]*v1.PersistentVol
 // FetchPersistentVolumes retrieves all PersistentVolumes on the cluster.
 func fetchPersistentVolumes(ctx context.Context) (*v1.PersistentVolumeList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	dial, err := f.Client().Dial()
+	if err != nil {
+		return nil, err
+	}
 	if cfg.Flags.StandAlone {
-		return f.Client().DialOrDie().CoreV1().PersistentVolumes().List(ctx, metav1.ListOptions{})
+		return dial.CoreV1().PersistentVolumes().List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource

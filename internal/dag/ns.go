@@ -48,8 +48,12 @@ func listAllNamespaces(ctx context.Context) (map[string]*v1.Namespace, error) {
 // FetchNamespaces retrieves all Namespaces on the cluster.
 func fetchNamespaces(ctx context.Context) (*v1.NamespaceList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	dial, err := f.Client().Dial()
+	if err != nil {
+		return nil, err
+	}
 	if cfg.Flags.StandAlone {
-		return f.Client().DialOrDie().CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+		return dial.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource

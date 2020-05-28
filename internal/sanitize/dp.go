@@ -29,6 +29,7 @@ type DPLister interface {
 	PodSelectorLister
 	ConfigLister
 	DeploymentLister
+	ListServiceAccounts() map[string]*v1.ServiceAccount
 }
 
 // Deployment tracks Deployment sanitization.
@@ -88,10 +89,19 @@ func (d *Deployment) checkDeprecation(ctx context.Context, dp *appsv1.Deployment
 func (d *Deployment) checkDeployment(ctx context.Context, dp *appsv1.Deployment) {
 	if dp.Spec.Replicas == nil || (dp.Spec.Replicas != nil && *dp.Spec.Replicas == 0) {
 		d.AddCode(ctx, 500)
+		return
 	}
 
-	if dp.Status.AvailableReplicas == 0 {
-		d.AddCode(ctx, 501)
+	if dp.Spec.Replicas != nil && *dp.Spec.Replicas != dp.Status.AvailableReplicas {
+		d.AddCode(ctx, 501, *dp.Spec.Replicas, dp.Status.AvailableReplicas)
+	}
+
+	if dp.Spec.Template.Spec.ServiceAccountName == "" {
+		return
+	}
+
+	if _, ok := d.ListServiceAccounts()[dp.Spec.Template.Spec.ServiceAccountName]; !ok {
+		d.AddCode(ctx, 507, dp.Spec.Template.Spec.ServiceAccountName)
 	}
 }
 

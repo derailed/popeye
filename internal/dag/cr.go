@@ -44,8 +44,13 @@ func listAllClusterRoles(ctx context.Context) (map[string]*rbacv1.ClusterRole, e
 // FetchClusterRoles retrieves all ClusterRoles on the cluster.
 func fetchClusterRoles(ctx context.Context) (*rbacv1.ClusterRoleList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	dial, err := f.Client().Dial()
+	if err != nil {
+		return nil, err
+	}
+
 	if cfg.Flags.StandAlone {
-		return f.Client().DialOrDie().RbacV1().ClusterRoles().List(ctx, metav1.ListOptions{})
+		return dial.RbacV1().ClusterRoles().List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource

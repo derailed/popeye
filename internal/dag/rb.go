@@ -48,8 +48,12 @@ func listAllRoleBindings(ctx context.Context) (map[string]*rbacv1.RoleBinding, e
 // FetchRoleBindings retrieves all RoleBindings on the cluster.
 func fetchRoleBindings(ctx context.Context) (*rbacv1.RoleBindingList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	dial, err := f.Client().Dial()
+	if err != nil {
+		return nil, err
+	}
 	if cfg.Flags.StandAlone {
-		return f.Client().DialOrDie().RbacV1().RoleBindings(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+		return dial.RbacV1().RoleBindings(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource

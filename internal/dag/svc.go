@@ -48,8 +48,12 @@ func listAllServices(ctx context.Context) (map[string]*v1.Service, error) {
 // FetchServices retrieves all Services on the cluster.
 func fetchServices(ctx context.Context) (*v1.ServiceList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	dial, err := f.Client().Dial()
+	if err != nil {
+		return nil, err
+	}
 	if cfg.Flags.StandAlone {
-		return f.Client().DialOrDie().CoreV1().Services(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+		return dial.CoreV1().Services(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource

@@ -48,8 +48,12 @@ func listAllPodDisruptionBudgets(ctx context.Context) (map[string]*pv1beta1.PodD
 // fetchPodDisruptionBudgets retrieves all PodDisruptionBudgets on the cluster.
 func fetchPodDisruptionBudgets(ctx context.Context) (*pv1beta1.PodDisruptionBudgetList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	dial, err := f.Client().Dial()
+	if err != nil {
+		return nil, err
+	}
 	if cfg.Flags.StandAlone {
-		return f.Client().DialOrDie().PolicyV1beta1().PodDisruptionBudgets(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+		return dial.PolicyV1beta1().PodDisruptionBudgets(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource

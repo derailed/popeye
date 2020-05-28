@@ -136,7 +136,7 @@ codes:
     message: Container could be running as root user. Check SecurityContext/Image
     severity: 2
 
-    # -------------------------------------------------------------------------
+  # -------------------------------------------------------------------------
   # General
   400:
     message:  Used? Unable to locate resource reference
@@ -166,8 +166,8 @@ codes:
     message:  Zero scale detected
     severity: 2
   501:
-    message:  "Used? No available replicas found"
-    severity: 2
+    message:  "Unhealthy %d desired but have %d available"
+    severity: 3
   503:
     message:  "At current load, CPU under allocated. Current:%s vs Requested:%s (%s)"
     severity: 2
@@ -180,6 +180,11 @@ codes:
   506:
     message:  "At current load, Memory over allocated. Current:%s vs Requested:%s (%s)"
     severity: 2
+  507:
+    message: "Deployment references ServiceAccount %q which does not exist"
+    severity: 3
+
+  # -------------------------------------------------------------------------
   # HPA
   600:
     message:  HPA %s references a Deployment %s which does not exist
@@ -244,6 +249,7 @@ codes:
   800:
     message:  Namespace is inactive
     severity: 3
+
   # PodDisruptionBudget
   900:
     message:  Used? No pods match selector
@@ -251,6 +257,9 @@ codes:
   901:
     message:  MinAvailable (%d) is greater than the number of pods(%d) currently running
     severity: 2
+
+  # -------------------------------------------------------------------------
+  # PV/PVC
   1000:
     message:  Available
     severity: 1
@@ -289,6 +298,12 @@ codes:
     severity: 3
   1106:
     message:  "No target ports match service port %s"
+    severity: 3
+
+  # -------------------------------------------------------------------------
+  # ReplicaSet
+  1120:
+    message:  Unhealthy ReplicaSet %d desired but have %d ready
     severity: 3
 
   # -------------------------------------------------------------------------

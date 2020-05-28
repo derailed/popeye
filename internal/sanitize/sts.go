@@ -85,13 +85,14 @@ func (s *StatefulSet) checkDeprecation(ctx context.Context, st *appsv1.StatefulS
 	}
 }
 
-func (s *StatefulSet) checkStatefulSet(ctx context.Context, st *appsv1.StatefulSet) {
-	if st.Spec.Replicas == nil || (st.Spec.Replicas != nil && *st.Spec.Replicas == 0) {
+func (s *StatefulSet) checkStatefulSet(ctx context.Context, sts *appsv1.StatefulSet) {
+	if sts.Spec.Replicas == nil || (sts.Spec.Replicas != nil && *sts.Spec.Replicas == 0) {
 		s.AddCode(ctx, 500)
+		return
 	}
 
-	if st.Status.CurrentReplicas == 0 {
-		s.AddCode(ctx, 501)
+	if sts.Spec.Replicas != nil && *sts.Spec.Replicas != sts.Status.ReadyReplicas {
+		s.AddCode(ctx, 501, *sts.Spec.Replicas, sts.Status.ReadyReplicas)
 	}
 }
 

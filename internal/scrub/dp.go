@@ -16,6 +16,7 @@ type Deployment struct {
 	*cache.Deployment
 	*cache.PodsMetrics
 	*cache.Pod
+	*cache.ServiceAccount
 	*config.Config
 
 	client types.Connection
@@ -38,6 +39,11 @@ func NewDeployment(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer
 	d.PodsMetrics, _ = c.podsMx()
 
 	d.Pod, err = c.pods()
+	if err != nil {
+		d.AddErr(ctx, err)
+	}
+
+	d.ServiceAccount, err = c.serviceaccounts()
 	if err != nil {
 		d.AddErr(ctx, err)
 	}

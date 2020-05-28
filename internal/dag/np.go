@@ -48,8 +48,12 @@ func listAllNetworkPolicies(ctx context.Context) (map[string]*nv1.NetworkPolicy,
 // FetchNetworkPolicies retrieves all NetworkPolicies on the cluster.
 func fetchNetworkPolicies(ctx context.Context) (*nv1.NetworkPolicyList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	dial, err := f.Client().Dial()
+	if err != nil {
+		return nil, err
+	}
 	if cfg.Flags.StandAlone {
-		return f.Client().DialOrDie().NetworkingV1().NetworkPolicies(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+		return dial.NetworkingV1().NetworkPolicies(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource

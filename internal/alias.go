@@ -75,7 +75,11 @@ func (a *Aliases) TitleFor(s string, plural bool) string {
 }
 
 func (a *Aliases) loadPreferred(f types.Factory) error {
-	rr, err := f.Client().CachedDiscoveryOrDie().ServerPreferredResources()
+	dial, err := f.Client().CachedDiscovery()
+	if err != nil {
+		return err
+	}
+	rr, err := dial.ServerPreferredResources()
 	if err != nil {
 		return err
 	}

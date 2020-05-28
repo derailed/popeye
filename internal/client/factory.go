@@ -144,10 +144,14 @@ func (f *Factory) FactoryFor(ns string) di.DynamicSharedInformerFactory {
 }
 
 // SetActiveNS sets the active namespace.
-func (f *Factory) SetActiveNS(ns string) {
+func (f *Factory) SetActiveNS(ns string) error {
 	if !f.isClusterWide() {
-		f.ensureFactory(ns)
+		if _, err := f.ensureFactory(ns); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func (f *Factory) isClusterWide() bool {
@@ -164,7 +168,7 @@ func (f *Factory) CanForResource(ns, gvr string, verbs []string) (informers.Gene
 	if !IsClusterWide(ns) {
 		auth, err := f.Client().CanI(AllNamespaces, gvr, verbs)
 		if auth && err == nil {
-			return f.ForResource(AllNamespaces, gvr), nil
+			return f.ForResource(AllNamespaces, gvr)
 		}
 	}
 	auth, err := f.Client().CanI(ns, gvr, verbs)
@@ -175,40 +179,47 @@ func (f *Factory) CanForResource(ns, gvr string, verbs []string) (informers.Gene
 		return nil, fmt.Errorf("%v access denied on resource %q:%q", verbs, ns, gvr)
 	}
 
-	return f.ForResource(ns, gvr), nil
+	return f.ForResource(ns, gvr)
 }
 
 // ForResource returns an informer for a given resource.
-func (f *Factory) ForResource(ns, gvr string) informers.GenericInformer {
-	fact := f.ensureFactory(ns)
+func (f *Factory) ForResource(ns, gvr string) (informers.GenericInformer, error) {
+	fact, err := f.ensureFactory(ns)
+	if err != nil {
+		return nil, err
+	}
 	inf := fact.ForResource(NewGVR(gvr).GVR())
 	if inf == nil {
 		log.Error().Err(fmt.Errorf("MEOW! No informer for %q:%q", ns, gvr))
-		return inf
+		return inf, nil
 	}
 
 	f.mx.RLock()
 	defer f.mx.RUnlock()
 	fact.Start(f.stopChan)
 
-	return inf
+	return inf, nil
 }
 
-func (f *Factory) ensureFactory(ns string) di.DynamicSharedInformerFactory {
+func (f *Factory) ensureFactory(ns string) (di.DynamicSharedInformerFactory, error) {
 	if IsClusterWide(ns) {
 		ns = AllNamespaces
 	}
 	f.mx.Lock()
 	defer f.mx.Unlock()
 	if fac, ok := f.factories[ns]; ok {
-		return fac
+		return fac, nil
+	}
+	dial, err := f.client.DynDial()
+	if err != nil {
+		return nil, err
 	}
 	f.factories[ns] = di.NewFilteredDynamicSharedInformerFactory(
-		f.client.DynDialOrDie(),
+		dial,
 		defaultResync,
 		ns,
 		nil,
 	)
 
-	return f.factories[ns]
+	return f.factories[ns], nil
 }

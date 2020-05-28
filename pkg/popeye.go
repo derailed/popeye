@@ -144,7 +144,9 @@ func (p *Popeye) initFactory() error {
 		if !ok || err != nil {
 			return fmt.Errorf("Current user does not have read access for resource %q -- %v", gvr, err)
 		}
-		f.ForResource(client.AllNamespaces, gvr)
+		if _, err := f.ForResource(client.AllNamespaces, gvr); err != nil {
+			return err
+		}
 	}
 	f.WaitForCacheSync()
 

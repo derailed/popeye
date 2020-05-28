@@ -48,8 +48,12 @@ func listAllHorizontalPodAutoscalers(ctx context.Context) (map[string]*autoscali
 // FetchHorizontalPodAutoscalers retrieves all HorizontalPodAutoscalers on the cluster.
 func fetchHorizontalPodAutoscalers(ctx context.Context) (*autoscalingv1.HorizontalPodAutoscalerList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	dial, err := f.Client().Dial()
+	if err != nil {
+		return nil, err
+	}
 	if cfg.Flags.StandAlone {
-		return f.Client().DialOrDie().AutoscalingV1().HorizontalPodAutoscalers(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+		return dial.AutoscalingV1().HorizontalPodAutoscalers(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource

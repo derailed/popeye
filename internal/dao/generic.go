@@ -31,10 +31,14 @@ func (g *Generic) List(ctx context.Context, ns string) ([]runtime.Object, error)
 		ll  *unstructured.UnstructuredList
 		err error
 	)
+	dial, err := g.dynClient()
+	if err != nil {
+		return nil, err
+	}
 	if client.IsClusterScoped(ns) {
-		ll, err = g.dynClient().List(ctx, metav1.ListOptions{LabelSelector: labelSel})
+		ll, err = dial.List(ctx, metav1.ListOptions{LabelSelector: labelSel})
 	} else {
-		ll, err = g.dynClient().Namespace(ns).List(ctx, metav1.ListOptions{LabelSelector: labelSel})
+		ll, err = dial.Namespace(ns).List(ctx, metav1.ListOptions{LabelSelector: labelSel})
 	}
 	if err != nil {
 		return nil, err
@@ -53,7 +57,10 @@ func (g *Generic) Get(ctx context.Context, path string) (runtime.Object, error) 
 	var opts metav1.GetOptions
 
 	ns, n := client.Namespaced(path)
-	dial := g.dynClient()
+	dial, err := g.dynClient()
+	if err != nil {
+		return nil, err
+	}
 	if client.IsClusterScoped(ns) {
 		return dial.Get(ctx, n, opts)
 	}
@@ -61,6 +68,10 @@ func (g *Generic) Get(ctx context.Context, path string) (runtime.Object, error) 
 	return dial.Namespace(ns).Get(ctx, n, opts)
 }
 
-func (g *Generic) dynClient() dynamic.NamespaceableResourceInterface {
-	return g.Client().DynDialOrDie().Resource(g.gvr.GVR())
+func (g *Generic) dynClient() (dynamic.NamespaceableResourceInterface, error) {
+	dial, err := g.Client().DynDial()
+	if err != nil {
+		return nil, err
+	}
+	return dial.Resource(g.gvr.GVR()), nil
 }

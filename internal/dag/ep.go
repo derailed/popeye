@@ -48,8 +48,12 @@ func listAllEndpoints(ctx context.Context) (map[string]*v1.Endpoints, error) {
 // FetchEndpoints retrieves all Endpoints on the cluster.
 func fetchEndpoints(ctx context.Context) (*v1.EndpointsList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	dial, err := f.Client().Dial()
+	if err != nil {
+		return nil, err
+	}
 	if cfg.Flags.StandAlone {
-		return f.Client().DialOrDie().CoreV1().Endpoints(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+		return dial.CoreV1().Endpoints(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource

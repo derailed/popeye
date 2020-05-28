@@ -48,8 +48,12 @@ func listAllClusterRoleBindings(ctx context.Context) (map[string]*rbacv1.Cluster
 // FetchClusterRoleBindings retrieves all ClusterRoleBindings on the cluster.
 func fetchClusterRoleBindings(ctx context.Context) (*rbacv1.ClusterRoleBindingList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	dial, err := f.Client().Dial()
+	if err != nil {
+		return nil, err
+	}
 	if cfg.Flags.StandAlone {
-		return f.Client().DialOrDie().RbacV1().ClusterRoleBindings().List(ctx, metav1.ListOptions{})
+		return dial.RbacV1().ClusterRoleBindings().List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource

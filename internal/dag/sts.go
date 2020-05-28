@@ -48,8 +48,12 @@ func listAllStatefulSets(ctx context.Context) (map[string]*appsv1.StatefulSet, e
 // FetchStatefulSets retrieves all StatefulSets on the cluster.
 func fetchStatefulSets(ctx context.Context) (*appsv1.StatefulSetList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	dial, err := f.Client().Dial()
+	if err != nil {
+		return nil, err
+	}
 	if cfg.Flags.StandAlone {
-		return f.Client().DialOrDie().AppsV1().StatefulSets(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+		return dial.AppsV1().StatefulSets(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource

@@ -48,8 +48,12 @@ func listAllPodSecurityPolicys(ctx context.Context) (map[string]*pv1beta1.PodSec
 // FetchPodSecurityPolicys retrieves all PodSecurityPolicys on the cluster.
 func fetchPodSecurityPolicys(ctx context.Context) (*pv1beta1.PodSecurityPolicyList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	dial, err := f.Client().Dial()
+	if err != nil {
+		return nil, err
+	}
 	if cfg.Flags.StandAlone {
-		return f.Client().DialOrDie().PolicyV1beta1().PodSecurityPolicies().List(ctx, metav1.ListOptions{})
+		return dial.PolicyV1beta1().PodSecurityPolicies().List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource

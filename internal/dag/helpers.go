@@ -36,5 +36,7 @@ func metaFQN(m metav1.ObjectMeta) string {
 
 // IncludeNS checks if namespace should be included.
 func includeNS(c types.Connection, ns string) bool {
-	return c.IsActiveNamespace(ns)
+	ans, _ := c.Config().CurrentNamespaceName()
+
+	return ans == ns
 }

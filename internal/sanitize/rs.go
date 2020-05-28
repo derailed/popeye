@@ -41,6 +41,7 @@ func (r *ReplicaSet) Sanitize(ctx context.Context) error {
 		r.InitOutcome(fqn)
 		ctx = internal.WithFQN(ctx, fqn)
 
+		r.checkHealth(ctx, rs)
 		r.checkDeprecation(ctx, rs)
 
 		if r.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
@@ -49,6 +50,12 @@ func (r *ReplicaSet) Sanitize(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (r *ReplicaSet) checkHealth(ctx context.Context, rs *appsv1.ReplicaSet) {
+	if rs.Spec.Replicas != nil && *rs.Spec.Replicas != rs.Status.ReadyReplicas {
+		r.AddCode(ctx, 1120, *rs.Spec.Replicas, rs.Status.ReadyReplicas)
+	}
 }
 
 func (r *ReplicaSet) checkDeprecation(ctx context.Context, rs *appsv1.ReplicaSet) {

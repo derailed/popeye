@@ -43,7 +43,7 @@ func TestSTSSanitizer(t *testing.T) {
 				issues.New(client.NewGVR("apps/v1/statefulsets"), issues.Root, config.WarnLevel, `[POP-403] Deprecated StatefulSet API group "extensions/v1". Use "apps/v1" instead`),
 			},
 		},
-		"used?": {
+		"unhealthy": {
 			lister: makeSTSLister(stsOpts{
 				coOpts:      coOpts{rcpu: "100m", rmem: "10Mi"},
 				replicas:    1,
@@ -52,7 +52,7 @@ func TestSTSSanitizer(t *testing.T) {
 				ccpu:        "100m", cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(client.NewGVR("apps/v1/statefulsets"), issues.Root, config.WarnLevel, "[POP-501] Used? No available replicas found"),
+				issues.New(client.NewGVR("apps/v1/statefulsets"), issues.Root, config.ErrorLevel, "[POP-501] Unhealthy 1 desired but have 0 available"),
 			},
 		},
 		"zeroReplicas": {
@@ -355,6 +355,7 @@ func makeSTS(n string, opts stsOpts) *appsv1.StatefulSet {
 		},
 		Status: appsv1.StatefulSetStatus{
 			CurrentReplicas: opts.currentReps,
+			ReadyReplicas:   opts.currentReps,
 			CollisionCount:  &opts.collisions,
 		},
 	}

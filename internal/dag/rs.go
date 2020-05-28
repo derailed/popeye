@@ -48,8 +48,12 @@ func listAllReplicaSets(ctx context.Context) (map[string]*appsv1.ReplicaSet, err
 // FetchReplicaSets retrieves all ReplicaSets on the cluster.
 func fetchReplicaSets(ctx context.Context) (*appsv1.ReplicaSetList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	dial, err := f.Client().Dial()
+	if err != nil {
+		return nil, err
+	}
 	if cfg.Flags.StandAlone {
-		return f.Client().DialOrDie().AppsV1().ReplicaSets(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+		return dial.AppsV1().ReplicaSets(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource

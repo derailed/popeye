@@ -128,7 +128,7 @@ func TestDPSanitize(t *testing.T) {
 				cmem: "10Mi",
 			}),
 			issues: issues.Issues{
-				issues.New(client.NewGVR("apps/v1/deployments"), issues.Root, config.WarnLevel, "[POP-501] Used? No available replicas found"),
+				issues.New(client.NewGVR("apps/v1/deployments"), issues.Root, config.ErrorLevel, "[POP-501] Unhealthy 1 desired but have 0 available"),
 			},
 		},
 	}
@@ -402,6 +402,10 @@ func (d *dp) PodCPULimit() float64 {
 
 func (d *dp) PodMEMLimit() float64 {
 	return 100
+}
+
+func (d *dp) ListServiceAccounts() map[string]*v1.ServiceAccount {
+	return nil
 }
 
 func (d *dp) ListPodsMetrics() map[string]*mv1beta1.PodMetrics {

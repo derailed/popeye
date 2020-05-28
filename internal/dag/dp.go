@@ -48,8 +48,12 @@ func listAllDeployments(ctx context.Context) (map[string]*appsv1.Deployment, err
 // FetchDeployments retrieves all Deployments on the cluster.
 func fetchDeployments(ctx context.Context) (*appsv1.DeploymentList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
+	dial, err := f.Client().Dial()
+	if err != nil {
+		return nil, err
+	}
 	if cfg.Flags.StandAlone {
-		return f.Client().DialOrDie().AppsV1().Deployments(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+		return dial.AppsV1().Deployments(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
