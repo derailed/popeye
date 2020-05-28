@@ -8,9 +8,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -195,6 +198,12 @@ func (p *Popeye) Sanitize() error {
 				log.Fatal().Err(err).Msg("Closing report")
 			}
 		case isSetStr(p.flags.S3Bucket):
+			var bucket, key string
+			if len(strings.Split(*p.flags.S3Bucket, "/")) > 1 {
+				bucket, key = parseBucket(*p.flags.S3Bucket)
+			} else {
+				bucket = *p.flags.S3Bucket
+			}
 			// Create a single AWS session (we can re use this if we're uploading many files)
 			s, err := session.NewSession(&aws.Config{
 				LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors)})
@@ -205,8 +214,8 @@ func (p *Popeye) Sanitize() error {
 			uploader := s3manager.NewUploader(s)
 			// Upload input parameters
 			upParams := &s3manager.UploadInput{
-				Bucket: p.flags.S3Bucket,
-				Key:    aws.String(p.fileName()),
+				Bucket: aws.String(bucket),
+				Key:    aws.String(key + "/" + p.fileName()),
 				Body:   p.outputTarget,
 			}
 
@@ -476,6 +485,15 @@ func dumpDir() string {
 		return d
 	}
 	return filepath.Join(os.TempDir(), "popeye")
+}
+
+func parseBucket(bucket string) (string, string) {
+	if u, _ := url.Parse(bucket); u.Scheme != "" {
+		return u.Host, path.Clean(u.Path)
+	} else {
+		uri := strings.SplitAfterN(bucket, "/", 2)
+		return path.Clean(uri[0]), path.Clean(uri[1])
+	}
 }
 
 type readWriteCloser struct {
