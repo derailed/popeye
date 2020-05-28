@@ -331,7 +331,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: popeye
-              image: quay.io/derailed/popeye:v0.7.0
+              image: quay.io/derailed/popeye:v0.8.3
               imagePullPolicy: IfNotPresent
               args:
                 - -o
@@ -358,6 +358,7 @@ metadata:
   name:      popeye
   namespace: popeye
 
+---
 # Popeye needs get/list access on the following Kubernetes resources.
 apiVersion: rbac.authorization.k8s.io/v1
 kind:       ClusterRole
