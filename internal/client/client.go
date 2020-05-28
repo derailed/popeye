@@ -63,6 +63,7 @@ func InitConnectionOrDie(config types.Config) *APIClient {
 		cache:  cache.NewLRUExpireCache(cacheSize),
 	}
 	a.metricsAPI = a.supportsMetricsResources()
+
 	return &a
 }
 
@@ -273,7 +274,7 @@ func (a *APIClient) Dial() (kubernetes.Interface, error) {
 	return a.client, nil
 }
 
-// RestConfigOrDie returns a rest api client.
+// RestConfig returns a rest api client.
 func (a *APIClient) RestConfig() (*restclient.Config, error) {
 	cfg, err := a.config.RESTConfig()
 	if err != nil {
@@ -283,7 +284,7 @@ func (a *APIClient) RestConfig() (*restclient.Config, error) {
 	return cfg, nil
 }
 
-// CachedDiscoveryOrDie returns a cached discovery client.
+// CachedDiscovery returns a cached discovery client.
 func (a *APIClient) CachedDiscovery() (*disk.CachedDiscoveryClient, error) {
 	a.mx.Lock()
 	defer a.mx.Unlock()

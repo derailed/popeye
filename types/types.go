@@ -68,13 +68,13 @@ type Connection interface {
 	// Config returns current config.
 	Config() Config
 
-	// DialOrDie connects to api server.
+	// Dial connects to api server.
 	Dial() (kubernetes.Interface, error)
 
-	// CachedDiscoveryOrDie connects to discovery client.
+	// CachedDiscovery connects to discovery client.
 	CachedDiscovery() (*disk.CachedDiscoveryClient, error)
 
-	// RestConfigOrDie connects to rest client.
+	// RestConfig connects to rest client.
 	RestConfig() (*restclient.Config, error)
 
 	// MXDial connects to metrics server.
