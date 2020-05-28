@@ -331,7 +331,11 @@ spec:
           restartPolicy: Never
           containers:
             - name: popeye
+<<<<<<< HEAD
               image: quay.io/derailed/popeye:v0.8.4
+=======
+              image: quay.io/derailed/popeye:v0.8.3
+>>>>>>> cf31cc3351a7eb9158defda26d0c09237eb0548e
               imagePullPolicy: IfNotPresent
               args:
                 - -o
