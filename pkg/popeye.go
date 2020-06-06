@@ -125,6 +125,7 @@ func (p *Popeye) scannedGVRs() []string {
 		"rbac.authorization.k8s.io/v1/rolebindings",
 	}
 }
+
 func (p *Popeye) initFactory() error {
 	clt := client.InitConnectionOrDie(client.NewConfig(p.flags.ConfigFlags))
 	f := client.NewFactory(clt)
@@ -230,7 +231,6 @@ func (p *Popeye) sanitize() error {
 	ctx = context.WithValue(ctx, internal.KeyOverAllocs, *p.flags.CheckOverAllocs)
 	ctx = context.WithValue(ctx, internal.KeyFactory, p.factory)
 
-	cache := scrub.NewCache(p.factory, p.config)
 	codes, err := issues.LoadCodes()
 	if err != nil {
 		return err
@@ -240,6 +240,7 @@ func (p *Popeye) sanitize() error {
 	c := make(chan run, 2)
 	var total int
 	var nodeGVR = client.NewGVR("v1/nodes")
+	cache := scrub.NewCache(p.factory, p.config)
 	for k, fn := range p.sanitizers() {
 		gvr := client.NewGVR(k)
 		if p.aliases.Exclude(gvr, p.config.Sections()) {

@@ -2,6 +2,7 @@ package dag
 
 import (
 	"context"
+	"github.com/derailed/popeye/internal/client"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/pkg/config"
@@ -37,6 +38,8 @@ func metaFQN(m metav1.ObjectMeta) string {
 // IncludeNS checks if namespace should be included.
 func includeNS(c types.Connection, ns string) bool {
 	ans, _ := c.Config().CurrentNamespaceName()
-
+    if ans == client.AllNamespaces {
+    	return true
+	}
 	return ans == ns
 }
