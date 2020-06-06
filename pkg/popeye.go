@@ -8,9 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -34,6 +36,8 @@ var (
 	LogFile = filepath.Join(os.TempDir(), "popeye.log")
 	// DumpDir indicates a directory location for sanitizer reports.
 	DumpDir = dumpDir()
+	// ErrUnknownS3BucketProtocol defines the error if we can't parse the S3 URI
+	ErrUnknownS3BucketProtocol = errors.New("invalid S3 URI: hostname not valid")
 )
 
 type scrubFn func(context.Context, *scrub.Cache, *issues.Codes) scrub.Sanitizer
@@ -196,6 +200,10 @@ func (p *Popeye) Sanitize() error {
 				log.Fatal().Err(err).Msg("Closing report")
 			}
 		case isSetStr(p.flags.S3Bucket):
+			bucket, key, err := parseBucket(*p.flags.S3Bucket)
+			if err != nil {
+				log.Fatal().Err(err).Msg("Parse S3 bucket URI")
+			}
 			// Create a single AWS session (we can re use this if we're uploading many files)
 			s, err := session.NewSession(&aws.Config{
 				LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors)})
@@ -206,8 +214,8 @@ func (p *Popeye) Sanitize() error {
 			uploader := s3manager.NewUploader(s)
 			// Upload input parameters
 			upParams := &s3manager.UploadInput{
-				Bucket: p.flags.S3Bucket,
-				Key:    aws.String(p.fileName()),
+				Bucket: aws.String(bucket),
+				Key:    aws.String(key + "/" + p.fileName()),
 				Body:   p.outputTarget,
 			}
 
@@ -477,6 +485,37 @@ func dumpDir() string {
 		return d
 	}
 	return filepath.Join(os.TempDir(), "popeye")
+}
+
+func parseBucket(bucketURI string) (string, string, error) {
+	var bucket, key string
+	u, err := url.Parse(bucketURI)
+	if err != nil {
+		return "", "", err
+	}
+	switch u.Scheme {
+	// s3://bucket or s3://bucket/
+	case "s3":
+		bucket = u.Host
+		if u.Path == "" || u.Path == "/" {
+			key = ""
+		} else {
+			key = strings.Trim(u.Path, "/")
+		}
+	// bucket/ or bucket/path/to/key
+	case "":
+		uri := strings.SplitAfterN(strings.Trim(bucketURI, "/"), "/", 2)
+		bucket = strings.Trim(uri[0], "/")
+		if len(uri) == 1 {
+			key = ""
+		} else {
+			key = uri[1]
+		}
+	default:
+		return "", "", ErrUnknownS3BucketProtocol
+	}
+
+	return bucket, key, nil
 }
 
 type readWriteCloser struct {
