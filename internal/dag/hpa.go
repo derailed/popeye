@@ -14,20 +14,7 @@ import (
 
 // ListHorizontalPodAutoscalers list all included HorizontalPodAutoscalers.
 func ListHorizontalPodAutoscalers(ctx context.Context) (map[string]*autoscalingv1.HorizontalPodAutoscaler, error) {
-	hpas, err := listAllHorizontalPodAutoscalers(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	f := mustExtractFactory(ctx)
-	res := make(map[string]*autoscalingv1.HorizontalPodAutoscaler, len(hpas))
-	for fqn, hpa := range hpas {
-		if includeNS(f.Client(), hpa.Namespace) {
-			res[fqn] = hpa
-		}
-	}
-
-	return res, nil
+	return listAllHorizontalPodAutoscalers(ctx)
 }
 
 // ListAllHorizontalPodAutoscalers fetch all HorizontalPodAutoscalers on the cluster.
@@ -36,7 +23,6 @@ func listAllHorizontalPodAutoscalers(ctx context.Context) (map[string]*autoscali
 	if err != nil {
 		return nil, err
 	}
-
 	hpas := make(map[string]*autoscalingv1.HorizontalPodAutoscaler, len(ll.Items))
 	for i := range ll.Items {
 		hpas[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -48,17 +34,17 @@ func listAllHorizontalPodAutoscalers(ctx context.Context) (map[string]*autoscali
 // FetchHorizontalPodAutoscalers retrieves all HorizontalPodAutoscalers on the cluster.
 func fetchHorizontalPodAutoscalers(ctx context.Context) (*autoscalingv1.HorizontalPodAutoscalerList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.AutoscalingV1().HorizontalPodAutoscalers(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("autoscaling/v1/horizontalpodautoscalers"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

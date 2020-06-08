@@ -6,7 +6,9 @@ import (
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dag"
+	"github.com/rs/zerolog/log"
 )
 
 type apps struct {
@@ -89,6 +91,17 @@ func (a *apps) statefulsets() (*cache.StatefulSet, error) {
 func (a *apps) context() (context.Context, context.CancelFunc) {
 	ctx := context.WithValue(context.Background(), internal.KeyFactory, a.factory)
 	ctx = context.WithValue(ctx, internal.KeyConfig, a.config)
+	if a.config.Flags.ActiveNamespace != nil {
+		log.Debug().Msgf("CONTEXT-OVER -- %q", *a.config.Flags.ActiveNamespace)
+		ctx = context.WithValue(ctx, internal.KeyNamespace, *a.config.Flags.ActiveNamespace)
+	} else {
+		ns, err := a.factory.Client().Config().CurrentNamespaceName()
+		log.Debug().Msgf("CONTEXT-CLIENT -- %q::%v", ns, err)
+		if err != nil {
+			ns = client.AllNamespaces
+		}
+		ctx = context.WithValue(ctx, internal.KeyNamespace, ns)
+	}
 
 	return context.WithCancel(ctx)
 }

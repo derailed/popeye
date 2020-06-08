@@ -16,6 +16,7 @@ type DaemonSet struct {
 	*cache.DaemonSet
 	*cache.PodsMetrics
 	*cache.Pod
+	*cache.ServiceAccount
 	*config.Config
 
 	client types.Connection
@@ -35,9 +36,13 @@ func NewDaemonSet(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer 
 		d.AddErr(ctx, err)
 	}
 
+	d.Pod, err = c.pods()
+	if err != nil {
+		d.AddErr(ctx, err)
+	}
 	d.PodsMetrics, _ = c.podsMx()
 
-	d.Pod, err = c.pods()
+	d.ServiceAccount, err = c.serviceaccounts()
 	if err != nil {
 		d.AddErr(ctx, err)
 	}

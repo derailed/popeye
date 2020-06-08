@@ -6,6 +6,7 @@ import (
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dag"
 )
 
@@ -56,6 +57,15 @@ func (p *policy) networkpolicies() (*cache.NetworkPolicy, error) {
 func (p *policy) context() (context.Context, context.CancelFunc) {
 	ctx := context.WithValue(context.Background(), internal.KeyFactory, p.factory)
 	ctx = context.WithValue(ctx, internal.KeyConfig, p.config)
+	if p.config.Flags.ActiveNamespace != nil {
+		ctx = context.WithValue(ctx, internal.KeyNamespace, *p.config.Flags.ActiveNamespace)
+	} else {
+		ns, err := p.factory.Client().Config().CurrentNamespaceName()
+		if err != nil {
+			ns = client.AllNamespaces
+		}
+		ctx = context.WithValue(ctx, internal.KeyNamespace, ns)
+	}
 
 	return context.WithCancel(ctx)
 }

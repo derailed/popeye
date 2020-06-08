@@ -14,20 +14,7 @@ import (
 
 // ListClusterRoleBindings list included ClusterRoleBindings.
 func ListClusterRoleBindings(ctx context.Context) (map[string]*rbacv1.ClusterRoleBinding, error) {
-	crbs, err := listAllClusterRoleBindings(ctx)
-	if err != nil {
-		return map[string]*rbacv1.ClusterRoleBinding{}, err
-	}
-
-	f := mustExtractFactory(ctx)
-	res := make(map[string]*rbacv1.ClusterRoleBinding, len(crbs))
-	for fqn, crb := range crbs {
-		if includeNS(f.Client(), crb.Namespace) {
-			res[fqn] = crb
-		}
-	}
-
-	return res, nil
+	return listAllClusterRoleBindings(ctx)
 }
 
 // ListAllClusterRoleBindings fetch all ClusterRoleBindings on the cluster.
@@ -48,17 +35,17 @@ func listAllClusterRoleBindings(ctx context.Context) (map[string]*rbacv1.Cluster
 // FetchClusterRoleBindings retrieves all ClusterRoleBindings on the cluster.
 func fetchClusterRoleBindings(ctx context.Context) (*rbacv1.ClusterRoleBindingList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.RbacV1().ClusterRoleBindings().List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("rbac.authorization.k8s.io/v1/clusterrolebindings"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

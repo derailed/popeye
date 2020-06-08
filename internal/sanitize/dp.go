@@ -100,7 +100,7 @@ func (d *Deployment) checkDeployment(ctx context.Context, dp *appsv1.Deployment)
 		return
 	}
 
-	if _, ok := d.ListServiceAccounts()[dp.Spec.Template.Spec.ServiceAccountName]; !ok {
+	if _, ok := d.ListServiceAccounts()[client.FQN(dp.Namespace, dp.Spec.Template.Spec.ServiceAccountName)]; !ok {
 		d.AddCode(ctx, 507, dp.Spec.Template.Spec.ServiceAccountName)
 	}
 }

@@ -15,6 +15,7 @@ type StatefulSet struct {
 	*cache.Pod
 	*cache.StatefulSet
 	*cache.PodsMetrics
+	*cache.ServiceAccount
 	*config.Config
 }
 
@@ -37,6 +38,11 @@ func NewStatefulSet(ctx context.Context, c *Cache, codes *issues.Codes) Sanitize
 	}
 
 	s.PodsMetrics, _ = c.podsMx()
+
+	s.ServiceAccount, err = c.serviceaccounts()
+	if err != nil {
+		s.AddErr(ctx, err)
+	}
 
 	return &s
 }

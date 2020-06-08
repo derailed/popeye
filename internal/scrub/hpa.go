@@ -5,6 +5,7 @@ import (
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/sanitize"
@@ -21,6 +22,7 @@ type HorizontalPodAutoscaler struct {
 	*cache.NodesMetrics
 	*cache.Deployment
 	*cache.StatefulSet
+	*cache.ServiceAccount
 	*config.Config
 }
 
@@ -33,6 +35,17 @@ func NewHorizontalPodAutoscaler(ctx context.Context, c *Cache, codes *issues.Cod
 
 	ctx = context.WithValue(ctx, internal.KeyFactory, c.factory)
 	ctx = context.WithValue(ctx, internal.KeyConfig, c.config)
+	ctx = context.WithValue(ctx, internal.KeyConfig, c.config)
+	if c.config.Flags.ActiveNamespace != nil {
+		ctx = context.WithValue(ctx, internal.KeyNamespace, *c.config.Flags.ActiveNamespace)
+	} else {
+		ns, err := c.factory.Client().Config().CurrentNamespaceName()
+		if err != nil {
+			ns = client.AllNamespaces
+		}
+		ctx = context.WithValue(ctx, internal.KeyNamespace, ns)
+	}
+
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	var err error
@@ -63,8 +76,12 @@ func NewHorizontalPodAutoscaler(ctx context.Context, c *Cache, codes *issues.Cod
 	if err != nil {
 		h.AddErr(ctx, err)
 	}
-
 	h.PodsMetrics, _ = c.podsMx()
+
+	h.ServiceAccount, err = c.serviceaccounts()
+	if err != nil {
+		h.AddErr(ctx, err)
+	}
 
 	return &h
 }

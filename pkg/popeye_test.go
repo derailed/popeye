@@ -3,7 +3,7 @@ package pkg
 import "testing"
 
 func TestParseBucket(t *testing.T) {
-	var tests = []struct {
+	var uu = []struct {
 		bucketURI string
 		bucket    string
 		key       string
@@ -25,17 +25,18 @@ func TestParseBucket(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.bucketURI, func(t *testing.T) {
-			b, k, err := parseBucket(tt.bucketURI)
+	for _, v := range uu {
+		u := v
+		t.Run(u.bucketURI, func(t *testing.T) {
+			b, k, err := parseBucket(u.bucketURI)
 			if err != nil {
 				t.Errorf("error got %v, want none", err)
 			}
-			if b != tt.bucket {
-				t.Errorf("bucket got %s, want %s", b, tt.bucket)
+			if b != u.bucket {
+				t.Errorf("bucket got %s, want %s", b, u.bucket)
 			}
-			if k != tt.key {
-				t.Errorf("key got %s, want %s", k, tt.key)
+			if k != u.key {
+				t.Errorf("key got %s, want %s", k, u.key)
 			}
 		})
 	}

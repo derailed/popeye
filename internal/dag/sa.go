@@ -14,20 +14,7 @@ import (
 
 // ListServiceAccounts list included ServiceAccounts.
 func ListServiceAccounts(ctx context.Context) (map[string]*v1.ServiceAccount, error) {
-	sas, err := listAllServiceAccounts(ctx)
-	if err != nil {
-		return map[string]*v1.ServiceAccount{}, err
-	}
-
-	f := mustExtractFactory(ctx)
-	res := make(map[string]*v1.ServiceAccount, len(sas))
-	for fqn, sa := range sas {
-		if includeNS(f.Client(), sa.Namespace) {
-			res[fqn] = sa
-		}
-	}
-
-	return res, nil
+	return listAllServiceAccounts(ctx)
 }
 
 // ListAllServiceAccounts fetch all ServiceAccounts on the cluster.
@@ -36,7 +23,6 @@ func listAllServiceAccounts(ctx context.Context) (map[string]*v1.ServiceAccount,
 	if err != nil {
 		return nil, err
 	}
-
 	sas := make(map[string]*v1.ServiceAccount, len(ll.Items))
 	for i := range ll.Items {
 		sas[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -48,17 +34,17 @@ func listAllServiceAccounts(ctx context.Context) (map[string]*v1.ServiceAccount,
 // FetchServiceAccounts retrieves all ServiceAccounts on the cluster.
 func fetchServiceAccounts(ctx context.Context) (*v1.ServiceAccountList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.CoreV1().ServiceAccounts(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("v1/serviceaccounts"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

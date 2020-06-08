@@ -14,19 +14,7 @@ import (
 
 // ListPods list all filtered pods.
 func ListPods(ctx context.Context) (map[string]*v1.Pod, error) {
-	pods, err := listAllPods(ctx)
-	if err != nil {
-		return map[string]*v1.Pod{}, err
-	}
-	f := mustExtractFactory(ctx)
-	res := make(map[string]*v1.Pod, len(pods))
-	for fqn, po := range pods {
-		if includeNS(f.Client(), po.Namespace) {
-			res[fqn] = po
-		}
-	}
-
-	return res, nil
+	return listAllPods(ctx)
 }
 
 // ListAllPods fetch all Pods on the cluster.
@@ -46,17 +34,17 @@ func listAllPods(ctx context.Context) (map[string]*v1.Pod, error) {
 // FetchPods retrieves all Pods on the cluster.
 func fetchPods(ctx context.Context) (*v1.PodList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.CoreV1().Pods(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("v1/pods"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

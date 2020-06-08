@@ -14,16 +14,7 @@ import (
 
 // ListNodes list all included Nodes.
 func ListNodes(ctx context.Context) (map[string]*v1.Node, error) {
-	nos, err := listAllNodes(ctx)
-	if err != nil {
-		return nil, err
-	}
-	res := make(map[string]*v1.Node, len(nos))
-	for fqn, no := range nos {
-		res[fqn] = no
-	}
-
-	return res, nil
+	return listAllNodes(ctx)
 }
 
 // ListAllNodes fetch all Nodes on the cluster.
@@ -32,7 +23,6 @@ func listAllNodes(ctx context.Context) (map[string]*v1.Node, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	nos := make(map[string]*v1.Node, len(ll.Items))
 	for i := range ll.Items {
 		nos[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -44,17 +34,17 @@ func listAllNodes(ctx context.Context) (map[string]*v1.Node, error) {
 // FetchNodes retrieves all Nodes on the cluster.
 func fetchNodes(ctx context.Context) (*v1.NodeList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("v1/nodes"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

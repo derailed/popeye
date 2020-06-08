@@ -14,20 +14,7 @@ import (
 
 // ListPersistentVolumeClaims list all included PersistentVolumeClaims.
 func ListPersistentVolumeClaims(ctx context.Context) (map[string]*v1.PersistentVolumeClaim, error) {
-	pvcs, err := listAllPersistentVolumeClaims(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	f := mustExtractFactory(ctx)
-	res := make(map[string]*v1.PersistentVolumeClaim, len(pvcs))
-	for fqn, pvc := range pvcs {
-		if includeNS(f.Client(), pvc.Namespace) {
-			res[fqn] = pvc
-		}
-	}
-
-	return res, nil
+	return listAllPersistentVolumeClaims(ctx)
 }
 
 // ListAllPersistentVolumeClaims fetch all PersistentVolumeClaims on the cluster.
@@ -36,7 +23,6 @@ func listAllPersistentVolumeClaims(ctx context.Context) (map[string]*v1.Persiste
 	if err != nil {
 		return nil, err
 	}
-
 	pvcs := make(map[string]*v1.PersistentVolumeClaim, len(ll.Items))
 	for i := range ll.Items {
 		pvcs[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -48,17 +34,17 @@ func listAllPersistentVolumeClaims(ctx context.Context) (map[string]*v1.Persiste
 // FetchPersistentVolumeClaims retrieves all PersistentVolumeClaims on the cluster.
 func fetchPersistentVolumeClaims(ctx context.Context) (*v1.PersistentVolumeClaimList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.CoreV1().PersistentVolumeClaims(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("v1/persistentvolumeclaims"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

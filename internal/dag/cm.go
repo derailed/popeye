@@ -16,20 +16,7 @@ import (
 
 // ListConfigMaps list all included ConfigMaps.
 func ListConfigMaps(ctx context.Context) (map[string]*v1.ConfigMap, error) {
-	cms, err := listAllConfigMaps(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	f := mustExtractFactory(ctx)
-	res := make(map[string]*v1.ConfigMap, len(cms))
-	for fqn, cm := range cms {
-		if includeNS(f.Client(), cm.Namespace) {
-			res[fqn] = cm
-		}
-	}
-
-	return res, nil
+	return listAllConfigMaps(ctx)
 }
 
 // ListAllConfigMaps fetch all ConfigMaps on the cluster.
@@ -38,7 +25,6 @@ func listAllConfigMaps(ctx context.Context) (map[string]*v1.ConfigMap, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	cms := make(map[string]*v1.ConfigMap, len(ll.Items))
 	for i := range ll.Items {
 		cms[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -50,17 +36,17 @@ func listAllConfigMaps(ctx context.Context) (map[string]*v1.ConfigMap, error) {
 // FetchConfigMaps retrieves all ConfigMaps on the cluster.
 func fetchConfigMaps(ctx context.Context) (*v1.ConfigMapList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.CoreV1().ConfigMaps(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("v1/configmaps"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

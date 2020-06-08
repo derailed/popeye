@@ -14,20 +14,7 @@ import (
 
 // ListDaemonSets list all included DaemonSets.
 func ListDaemonSets(ctx context.Context) (map[string]*appsv1.DaemonSet, error) {
-	dps, err := listAllDaemonSets(ctx)
-	if err != nil {
-		return map[string]*appsv1.DaemonSet{}, err
-	}
-
-	f := mustExtractFactory(ctx)
-	res := make(map[string]*appsv1.DaemonSet, len(dps))
-	for fqn, dp := range dps {
-		if includeNS(f.Client(), dp.Namespace) {
-			res[fqn] = dp
-		}
-	}
-
-	return res, nil
+	return listAllDaemonSets(ctx)
 }
 
 // ListAllDaemonSets fetch all DaemonSets on the cluster.
@@ -36,7 +23,6 @@ func listAllDaemonSets(ctx context.Context) (map[string]*appsv1.DaemonSet, error
 	if err != nil {
 		return nil, err
 	}
-
 	dps := make(map[string]*appsv1.DaemonSet, len(ll.Items))
 	for i := range ll.Items {
 		dps[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -48,17 +34,17 @@ func listAllDaemonSets(ctx context.Context) (map[string]*appsv1.DaemonSet, error
 // FetchDaemonSets retrieves all DaemonSets on the cluster.
 func fetchDaemonSets(ctx context.Context) (*appsv1.DaemonSetList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.AppsV1().DaemonSets(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("apps/v1/daemonsets"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

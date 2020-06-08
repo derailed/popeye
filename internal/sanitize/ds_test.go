@@ -296,6 +296,10 @@ func (d *ds) PodMEMLimit() float64 {
 	return 100
 }
 
+func (d *ds) ListServiceAccounts() map[string]*v1.ServiceAccount {
+	return nil
+}
+
 func (d *ds) ListPodsMetrics() map[string]*mv1beta1.PodMetrics {
 	return map[string]*mv1beta1.PodMetrics{
 		cache.FQN("default", "p1"): makeMxPod(d.opts.ccpu, d.opts.cmem),

@@ -11,4 +11,5 @@ const (
 	KeyOverAllocs ContextKey = "overAllocs"
 	KeyRunInfo    ContextKey = "runInfo"
 	KeyConfig     ContextKey = "config"
+	KeyNamespace  ContextKey = "namespace"
 )

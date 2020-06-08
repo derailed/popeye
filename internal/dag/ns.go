@@ -14,20 +14,7 @@ import (
 
 // ListNamespaces list all included Namespaces.
 func ListNamespaces(ctx context.Context) (map[string]*v1.Namespace, error) {
-	nss, err := listAllNamespaces(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	f := mustExtractFactory(ctx)
-	res := make(map[string]*v1.Namespace, len(nss))
-	for fqn, ns := range nss {
-		if includeNS(f.Client(), ns.Name) {
-			res[fqn] = ns
-		}
-	}
-
-	return res, nil
+	return listAllNamespaces(ctx)
 }
 
 // ListAllNamespaces fetch all Namespaces on the cluster.
@@ -36,7 +23,6 @@ func listAllNamespaces(ctx context.Context) (map[string]*v1.Namespace, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	nss := make(map[string]*v1.Namespace, len(ll.Items))
 	for i := range ll.Items {
 		nss[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -48,17 +34,17 @@ func listAllNamespaces(ctx context.Context) (map[string]*v1.Namespace, error) {
 // FetchNamespaces retrieves all Namespaces on the cluster.
 func fetchNamespaces(ctx context.Context) (*v1.NamespaceList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("v1/namespaces"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

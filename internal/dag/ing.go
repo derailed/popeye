@@ -14,20 +14,7 @@ import (
 
 // ListIngresses list all included Ingresses.
 func ListIngresses(ctx context.Context) (map[string]*nv1beta1.Ingress, error) {
-	ings, err := listAllIngresses(ctx)
-	if err != nil {
-		return map[string]*nv1beta1.Ingress{}, err
-	}
-
-	f := mustExtractFactory(ctx)
-	res := make(map[string]*nv1beta1.Ingress, len(ings))
-	for fqn, ing := range ings {
-		if includeNS(f.Client(), ing.Namespace) {
-			res[fqn] = ing
-		}
-	}
-
-	return res, nil
+	return listAllIngresses(ctx)
 }
 
 // ListAllIngresses fetch all Ingresses on the cluster.
@@ -47,17 +34,17 @@ func listAllIngresses(ctx context.Context) (map[string]*nv1beta1.Ingress, error)
 // FetchIngresses retrieves all Ingresses on the cluster.
 func fetchIngresses(ctx context.Context) (*nv1beta1.IngressList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.ExtensionsV1beta1().Ingresses(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("extensions/v1beta1/ingresses"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

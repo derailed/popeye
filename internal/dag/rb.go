@@ -14,20 +14,7 @@ import (
 
 // ListRoleBindings list included RoleBindings.
 func ListRoleBindings(ctx context.Context) (map[string]*rbacv1.RoleBinding, error) {
-	rbs, err := listAllRoleBindings(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	f := mustExtractFactory(ctx)
-	res := make(map[string]*rbacv1.RoleBinding, len(rbs))
-	for fqn, rb := range rbs {
-		if includeNS(f.Client(), rb.Namespace) {
-			res[fqn] = rb
-		}
-	}
-
-	return res, nil
+	return listAllRoleBindings(ctx)
 }
 
 // ListAllRoleBindings fetch all RoleBindings on the cluster.
@@ -36,7 +23,6 @@ func listAllRoleBindings(ctx context.Context) (map[string]*rbacv1.RoleBinding, e
 	if err != nil {
 		return nil, err
 	}
-
 	rbs := make(map[string]*rbacv1.RoleBinding, len(ll.Items))
 	for i := range ll.Items {
 		rbs[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -48,17 +34,17 @@ func listAllRoleBindings(ctx context.Context) (map[string]*rbacv1.RoleBinding, e
 // FetchRoleBindings retrieves all RoleBindings on the cluster.
 func fetchRoleBindings(ctx context.Context) (*rbacv1.RoleBindingList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.RbacV1().RoleBindings(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("rbac.authorization.k8s.io/v1/rolebindings"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

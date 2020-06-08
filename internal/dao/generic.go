@@ -18,10 +18,14 @@ type Generic struct {
 }
 
 // List returns a collection of resources.
-func (g *Generic) List(ctx context.Context, ns string) ([]runtime.Object, error) {
+func (g *Generic) List(ctx context.Context) ([]runtime.Object, error) {
 	labelSel, ok := ctx.Value(internal.KeyLabels).(string)
 	if !ok {
 		log.Debug().Msgf("No label selector found in context. Listing all resources")
+	}
+	ns, ok := ctx.Value(internal.KeyNamespace).(string)
+	if !ok {
+		panic("BOOM no ns in context")
 	}
 	if client.IsAllNamespace(ns) {
 		ns = client.AllNamespaces

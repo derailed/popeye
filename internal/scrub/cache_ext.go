@@ -6,6 +6,7 @@ import (
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dag"
 )
 
@@ -72,6 +73,15 @@ func (e *ext) podDisruptionBudgets() (*cache.PodDisruptionBudget, error) {
 func (e *ext) context() (context.Context, context.CancelFunc) {
 	ctx := context.WithValue(context.Background(), internal.KeyFactory, e.factory)
 	ctx = context.WithValue(ctx, internal.KeyConfig, e.config)
+	if e.config.Flags.ActiveNamespace != nil {
+		ctx = context.WithValue(ctx, internal.KeyNamespace, *e.config.Flags.ActiveNamespace)
+	} else {
+		ns, err := e.factory.Client().Config().CurrentNamespaceName()
+		if err != nil {
+			ns = client.AllNamespaces
+		}
+		ctx = context.WithValue(ctx, internal.KeyNamespace, ns)
+	}
 
 	return context.WithCancel(ctx)
 }

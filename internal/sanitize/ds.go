@@ -21,6 +21,7 @@ type (
 	// DaemonLister list DaemonSets.
 	DaemonLister interface {
 		ListDaemonSets() map[string]*appsv1.DaemonSet
+		ListServiceAccounts() map[string]*v1.ServiceAccount
 	}
 
 	// DaemonSetLister list available DaemonSets on a cluster.
@@ -48,6 +49,7 @@ func (d *DaemonSet) Sanitize(ctx context.Context) error {
 		d.InitOutcome(fqn)
 		ctx = internal.WithFQN(ctx, fqn)
 
+		d.checkDaemonSet(ctx, ds)
 		d.checkDeprecation(ctx, ds)
 		d.checkContainers(ctx, ds.Spec.Template.Spec)
 		pmx := client.PodsMetrics{}
@@ -60,6 +62,15 @@ func (d *DaemonSet) Sanitize(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (d *DaemonSet) checkDaemonSet(ctx context.Context, ds *appsv1.DaemonSet) {
+	if ds.Spec.Template.Spec.ServiceAccountName == "" {
+		return
+	}
+	if _, ok := d.ListServiceAccounts()[client.FQN(ds.Namespace, ds.Spec.Template.Spec.ServiceAccountName)]; !ok {
+		d.AddCode(ctx, 507, ds.Spec.Template.Spec.ServiceAccountName)
+	}
 }
 
 func (d *DaemonSet) checkDeprecation(ctx context.Context, ds *appsv1.DaemonSet) {

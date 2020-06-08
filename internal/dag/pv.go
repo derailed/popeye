@@ -14,17 +14,7 @@ import (
 
 // ListPersistentVolumes list all included PersistentVolumes.
 func ListPersistentVolumes(ctx context.Context) (map[string]*v1.PersistentVolume, error) {
-	pvs, err := listAllPersistentVolumes(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	res := make(map[string]*v1.PersistentVolume, len(pvs))
-	for fqn, pv := range pvs {
-		res[fqn] = pv
-	}
-
-	return res, nil
+	return listAllPersistentVolumes(ctx)
 }
 
 // ListAllPersistentVolumes fetch all PersistentVolumes on the cluster.
@@ -33,7 +23,6 @@ func listAllPersistentVolumes(ctx context.Context) (map[string]*v1.PersistentVol
 	if err != nil {
 		return nil, err
 	}
-
 	pvs := make(map[string]*v1.PersistentVolume, len(ll.Items))
 	for i := range ll.Items {
 		pvs[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -45,17 +34,17 @@ func listAllPersistentVolumes(ctx context.Context) (map[string]*v1.PersistentVol
 // FetchPersistentVolumes retrieves all PersistentVolumes on the cluster.
 func fetchPersistentVolumes(ctx context.Context) (*v1.PersistentVolumeList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.CoreV1().PersistentVolumes().List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("v1/persistentvolumes"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

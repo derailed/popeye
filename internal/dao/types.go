@@ -21,7 +21,7 @@ type Getter interface {
 // Lister represents a resource lister.
 type Lister interface {
 	// List returns a resource collection.
-	List(ctx context.Context, ns string) ([]runtime.Object, error)
+	List(ctx context.Context) ([]runtime.Object, error)
 }
 
 // Accessor represents an accessible k8s resource.

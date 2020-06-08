@@ -296,6 +296,10 @@ func (s *sts) ListPodsBySelector(ns string, sel *metav1.LabelSelector) map[strin
 	}
 }
 
+func (s *sts) ListServiceAccounts() map[string]*v1.ServiceAccount {
+	return nil
+}
+
 func (s *sts) ListPodsMetrics() map[string]*mv1beta1.PodMetrics {
 	return map[string]*mv1beta1.PodMetrics{
 		"default/p1": makeMxPod(s.opts.ccpu, s.opts.cmem),

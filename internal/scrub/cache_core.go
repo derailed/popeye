@@ -6,6 +6,7 @@ import (
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dag"
 )
 
@@ -184,6 +185,14 @@ func (c *core) serviceaccounts() (*cache.ServiceAccount, error) {
 func (c *core) context() (context.Context, context.CancelFunc) {
 	ctx := context.WithValue(context.Background(), internal.KeyFactory, c.factory)
 	ctx = context.WithValue(ctx, internal.KeyConfig, c.config)
-
+	if c.config.Flags.ActiveNamespace != nil {
+		ctx = context.WithValue(ctx, internal.KeyNamespace, *c.config.Flags.ActiveNamespace)
+	} else {
+		ns, err := c.factory.Client().Config().CurrentNamespaceName()
+		if err != nil {
+			ns = client.AllNamespaces
+		}
+		ctx = context.WithValue(ctx, internal.KeyNamespace, ns)
+	}
 	return context.WithCancel(ctx)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
 	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 type (
@@ -28,6 +29,7 @@ type (
 		PodsMetricsLister
 
 		ListStatefulSets() map[string]*appsv1.StatefulSet
+		ListServiceAccounts() map[string]*v1.ServiceAccount
 	}
 
 	// StatefulSet represents a StatefulSet sanitizer.
@@ -94,6 +96,15 @@ func (s *StatefulSet) checkStatefulSet(ctx context.Context, sts *appsv1.Stateful
 	if sts.Spec.Replicas != nil && *sts.Spec.Replicas != sts.Status.ReadyReplicas {
 		s.AddCode(ctx, 501, *sts.Spec.Replicas, sts.Status.ReadyReplicas)
 	}
+
+	if sts.Spec.Template.Spec.ServiceAccountName == "" {
+		return
+	}
+
+	if _, ok := s.ListServiceAccounts()[client.FQN(sts.Namespace, sts.Spec.Template.Spec.ServiceAccountName)]; !ok {
+		s.AddCode(ctx, 507, sts.Spec.Template.Spec.ServiceAccountName)
+	}
+
 }
 
 func (s *StatefulSet) checkContainers(ctx context.Context, st *appsv1.StatefulSet) {

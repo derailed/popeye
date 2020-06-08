@@ -14,16 +14,7 @@ import (
 
 // ListClusterRoles list included ClusterRoles.
 func ListClusterRoles(ctx context.Context) (map[string]*rbacv1.ClusterRole, error) {
-	crs, err := listAllClusterRoles(ctx)
-	if err != nil {
-		return map[string]*rbacv1.ClusterRole{}, err
-	}
-	res := make(map[string]*rbacv1.ClusterRole, len(crs))
-	for fqn, cr := range crs {
-		res[fqn] = cr
-	}
-
-	return res, nil
+	return listAllClusterRoles(ctx)
 }
 
 // ListAllClusterRoles fetch all ClusterRoles on the cluster.
@@ -32,7 +23,6 @@ func listAllClusterRoles(ctx context.Context) (map[string]*rbacv1.ClusterRole, e
 	if err != nil {
 		return nil, err
 	}
-
 	crs := make(map[string]*rbacv1.ClusterRole, len(ll.Items))
 	for i := range ll.Items {
 		crs[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -44,18 +34,17 @@ func listAllClusterRoles(ctx context.Context) (map[string]*rbacv1.ClusterRole, e
 // FetchClusterRoles retrieves all ClusterRoles on the cluster.
 func fetchClusterRoles(ctx context.Context) (*rbacv1.ClusterRoleList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
-
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.RbacV1().ClusterRoles().List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("rbac.authorization.k8s.io/v1/clusterroles"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

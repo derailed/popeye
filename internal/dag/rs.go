@@ -14,20 +14,7 @@ import (
 
 // ListReplicaSets list all included ReplicaSets.
 func ListReplicaSets(ctx context.Context) (map[string]*appsv1.ReplicaSet, error) {
-	rss, err := listAllReplicaSets(ctx)
-	if err != nil {
-		return map[string]*appsv1.ReplicaSet{}, err
-	}
-
-	f := mustExtractFactory(ctx)
-	res := make(map[string]*appsv1.ReplicaSet, len(rss))
-	for fqn, rs := range rss {
-		if includeNS(f.Client(), rs.Namespace) {
-			res[fqn] = rs
-		}
-	}
-
-	return res, nil
+	return listAllReplicaSets(ctx)
 }
 
 // ListAllReplicaSets fetch all ReplicaSets on the cluster.
@@ -36,7 +23,6 @@ func listAllReplicaSets(ctx context.Context) (map[string]*appsv1.ReplicaSet, err
 	if err != nil {
 		return nil, err
 	}
-
 	rss := make(map[string]*appsv1.ReplicaSet, len(ll.Items))
 	for i := range ll.Items {
 		rss[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -48,17 +34,17 @@ func listAllReplicaSets(ctx context.Context) (map[string]*appsv1.ReplicaSet, err
 // FetchReplicaSets retrieves all ReplicaSets on the cluster.
 func fetchReplicaSets(ctx context.Context) (*appsv1.ReplicaSetList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.AppsV1().ReplicaSets(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("apps/v1/replicasets"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

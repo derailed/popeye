@@ -14,20 +14,7 @@ import (
 
 // ListLimitRanges list all included LimitRanges.
 func ListLimitRanges(ctx context.Context) (map[string]*v1.LimitRange, error) {
-	lrs, err := listAllLimitRanges(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	f := mustExtractFactory(ctx)
-	res := make(map[string]*v1.LimitRange, len(lrs))
-	for fqn, lr := range lrs {
-		if includeNS(f.Client(), lr.Namespace) {
-			res[fqn] = lr
-		}
-	}
-
-	return res, nil
+	return listAllLimitRanges(ctx)
 }
 
 // ListAllLimitRanges fetch all LimitRanges on the cluster.
@@ -36,7 +23,6 @@ func listAllLimitRanges(ctx context.Context) (map[string]*v1.LimitRange, error) 
 	if err != nil {
 		return nil, err
 	}
-
 	lrs := make(map[string]*v1.LimitRange, len(ll.Items))
 	for i := range ll.Items {
 		lrs[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -48,17 +34,17 @@ func listAllLimitRanges(ctx context.Context) (map[string]*v1.LimitRange, error) 
 // fetchLimitRanges retrieves all LimitRanges on the cluster.
 func fetchLimitRanges(ctx context.Context) (*v1.LimitRangeList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.CoreV1().LimitRanges(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("v1/limitranges"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

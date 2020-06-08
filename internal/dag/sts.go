@@ -14,20 +14,7 @@ import (
 
 // ListStatefulSets list available StatefulSets.
 func ListStatefulSets(ctx context.Context) (map[string]*appsv1.StatefulSet, error) {
-	sts, err := listAllStatefulSets(ctx)
-	if err != nil {
-		return map[string]*appsv1.StatefulSet{}, err
-	}
-
-	f := mustExtractFactory(ctx)
-	res := make(map[string]*appsv1.StatefulSet, len(sts))
-	for fqn, st := range sts {
-		if includeNS(f.Client(), st.Namespace) {
-			res[fqn] = st
-		}
-	}
-
-	return res, nil
+	return listAllStatefulSets(ctx)
 }
 
 // ListAllStatefulSets fetch all StatefulSets on the cluster.
@@ -36,7 +23,6 @@ func listAllStatefulSets(ctx context.Context) (map[string]*appsv1.StatefulSet, e
 	if err != nil {
 		return nil, err
 	}
-
 	sts := make(map[string]*appsv1.StatefulSet, len(ll.Items))
 	for i := range ll.Items {
 		sts[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -48,17 +34,17 @@ func listAllStatefulSets(ctx context.Context) (map[string]*appsv1.StatefulSet, e
 // FetchStatefulSets retrieves all StatefulSets on the cluster.
 func fetchStatefulSets(ctx context.Context) (*appsv1.StatefulSetList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.AppsV1().StatefulSets(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("apps/v1/statefulsets"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

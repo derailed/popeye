@@ -14,20 +14,7 @@ import (
 
 // ListDeployments list all included Deployments.
 func ListDeployments(ctx context.Context) (map[string]*appsv1.Deployment, error) {
-	dps, err := listAllDeployments(ctx)
-	if err != nil {
-		return map[string]*appsv1.Deployment{}, err
-	}
-
-	f := mustExtractFactory(ctx)
-	res := make(map[string]*appsv1.Deployment, len(dps))
-	for fqn, dp := range dps {
-		if includeNS(f.Client(), dp.Namespace) {
-			res[fqn] = dp
-		}
-	}
-
-	return res, nil
+	return listAllDeployments(ctx)
 }
 
 // ListAllDeployments fetch all Deployments on the cluster.
@@ -36,7 +23,6 @@ func listAllDeployments(ctx context.Context) (map[string]*appsv1.Deployment, err
 	if err != nil {
 		return nil, err
 	}
-
 	dps := make(map[string]*appsv1.Deployment, len(ll.Items))
 	for i := range ll.Items {
 		dps[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -48,17 +34,17 @@ func listAllDeployments(ctx context.Context) (map[string]*appsv1.Deployment, err
 // FetchDeployments retrieves all Deployments on the cluster.
 func fetchDeployments(ctx context.Context) (*appsv1.DeploymentList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.AppsV1().Deployments(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("apps/v1/deployments"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}

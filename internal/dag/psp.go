@@ -14,20 +14,7 @@ import (
 
 // ListPodSecurityPolicies list all included PodSecurityPolicies.
 func ListPodSecurityPolicies(ctx context.Context) (map[string]*pv1beta1.PodSecurityPolicy, error) {
-	dps, err := listAllPodSecurityPolicys(ctx)
-	if err != nil {
-		return map[string]*pv1beta1.PodSecurityPolicy{}, err
-	}
-
-	f := mustExtractFactory(ctx)
-	res := make(map[string]*pv1beta1.PodSecurityPolicy, len(dps))
-	for fqn, dp := range dps {
-		if includeNS(f.Client(), dp.Namespace) {
-			res[fqn] = dp
-		}
-	}
-
-	return res, nil
+	return listAllPodSecurityPolicys(ctx)
 }
 
 // ListAllPodSecurityPolicys fetch all PodSecurityPolicys on the cluster.
@@ -36,7 +23,6 @@ func listAllPodSecurityPolicys(ctx context.Context) (map[string]*pv1beta1.PodSec
 	if err != nil {
 		return nil, err
 	}
-
 	dps := make(map[string]*pv1beta1.PodSecurityPolicy, len(ll.Items))
 	for i := range ll.Items {
 		dps[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
@@ -48,17 +34,17 @@ func listAllPodSecurityPolicys(ctx context.Context) (map[string]*pv1beta1.PodSec
 // FetchPodSecurityPolicys retrieves all PodSecurityPolicys on the cluster.
 func fetchPodSecurityPolicys(ctx context.Context) (*pv1beta1.PodSecurityPolicyList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
-	dial, err := f.Client().Dial()
-	if err != nil {
-		return nil, err
-	}
 	if cfg.Flags.StandAlone {
+		dial, err := f.Client().Dial()
+		if err != nil {
+			return nil, err
+		}
 		return dial.PolicyV1beta1().PodSecurityPolicies().List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
 	res.Init(f, client.NewGVR("policy/v1beta1/podsecuritypolicies"))
-	oo, err := res.List(ctx, client.AllNamespaces)
+	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err
 	}
