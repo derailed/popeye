@@ -100,7 +100,14 @@ func (d *Deployment) checkDeployment(ctx context.Context, dp *appsv1.Deployment)
 		return
 	}
 
-	if _, ok := d.ListServiceAccounts()[dp.Spec.Template.Spec.ServiceAccountName]; !ok {
+	var serviceAccountName string
+	if dp.ObjectMeta.Namespace != "default" {
+		serviceAccountName = dp.ObjectMeta.Namespace + "/" + dp.Spec.Template.Spec.ServiceAccountName
+	} else {
+		serviceAccountName = dp.Spec.Template.Spec.ServiceAccountName
+	}
+
+	if _, ok := d.ListServiceAccounts()[serviceAccountName]; !ok {
 		d.AddCode(ctx, 507, dp.Spec.Template.Spec.ServiceAccountName)
 	}
 }
