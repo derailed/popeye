@@ -229,7 +229,7 @@ Popeye can generate sanitizer reports in a variety of formats. You can use the -
 | Format     | Description                                            | Default | Credits                                      |
 |------------|--------------------------------------------------------|---------|----------------------------------------------|
 | standard   | The full monty output iconized and colorized           | yes     |                                              |
-| jurassic   | No icons or color like it's 1989                       |         |                                              |
+| jurassic   | No icons or color like it's 1979                       |         |                                              |
 | yaml       | As YAML                                                |         |                                              |
 | html       | As HTML                                                |         |                                              |
 | json       | As JSON                                                |         |                                              |
