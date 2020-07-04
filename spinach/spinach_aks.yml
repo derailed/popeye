@@ -13,11 +13,11 @@ popeye:
       overPercUtilization: 50
   # Excludes define rules to exampt resources from sanitization
   excludes:
-    rbac.authorization.k8s.io/v1/clusterrolebinding:
+    rbac.authorization.k8s.io/v1/clusterrolebindings:
       - name: rx:system
       - name: rx:aks
       - name: rx:omsagent
-    rbac.authorization.k8s.io/v1/clusterrole:
+    rbac.authorization.k8s.io/v1/clusterroles:
       - name: omsagent-reader
         codes:
           - 400
@@ -36,31 +36,31 @@ popeye:
       - name: cluster-admin
         codes:
           - 400
-    rbac.authorization.k8s.io/v1/rolebinding:
+    rbac.authorization.k8s.io/v1/rolebindings:
       - name: rx:kube
-    rbac.authorization.k8s.io/v1/role:
+    rbac.authorization.k8s.io/v1/roles:
       - name: rx:kube
-    apps/v1/daemonset:
+    apps/v1/daemonsets:
       - name: rx:kube-system
-    apps/v1/deployment:
+    apps/v1/deployments:
       - name: rx:kube-system
-    apps/v1/replicaset:
+    apps/v1/replicasets:
       - name: rx:kube
-    networking.k8s.io/v1/networkpolicy:
+    networking.k8s.io/v1/networkpolicies:
       - name: rx:kube
-    policy/v1beta1/poddisruptionbudget:
+    policy/v1beta1/poddisruptionbudgets:
       - name: rx:kube
-    v1/configmap:
+    v1/configmaps:
       - name: rx:kube
-    v1/namespace:
+    v1/namespaces:
       - name: rx:kube
-    v1/pod:
+    v1/pods:
       - name: rx:kube
-    v1/serviceaccount:
+    v1/serviceaccounts:
       - name: rx:kube
-    v1/secret:
+    v1/secrets:
       - name: rx:kube
-    v1/service:
+    v1/services:
       - name: rx:kube
 
   # Nodes specific sanitization

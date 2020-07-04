@@ -20,7 +20,6 @@ Popeye is a readonly tool, it does not alter any of your Kubernetes resources in
 ![GitHub stars](https://img.shields.io/github/stars/derailed/popeye.svg?label=github%20stars)
 [![Releases](https://img.shields.io/github/downloads/derailed/popeye/total.svg)]()
 
-
 ---
 
 ## Installation
@@ -269,12 +268,12 @@ popeye:
   # Excludes excludes certain resources from Popeye scans
   excludes:
     # ConfigMap sanitizer exclusions...
-    configmap:
+    v1/configmaps:
       # Excludes key must match the singular form of the resource.
       # For instance this rule will exclude all configmaps named fred.v2.3 and fred.v2.4
       - name: rx:fred.+\.v\d+
     # Namespace sanitizer exclusions...
-    namespace:
+    v1/namespaces:
       # Exclude all fred* namespaces if the namespaces are not found (404), other error codes will be reported!
       - name: rx:kube
         codes:
