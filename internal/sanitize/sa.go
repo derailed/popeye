@@ -89,7 +89,7 @@ func (s *ServiceAccount) Sanitize(ctx context.Context) error {
 			s.AddCode(ctx, 400)
 		}
 
-		if s.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
+		if s.NoConcerns(fqn) && s.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			s.ClearOutcome(fqn)
 		}
 	}

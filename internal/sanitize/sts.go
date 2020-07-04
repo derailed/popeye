@@ -62,7 +62,7 @@ func (s *StatefulSet) Sanitize(ctx context.Context) error {
 		s.checkContainers(ctx, st)
 		s.checkUtilization(ctx, over, st, pmx)
 
-		if s.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
+		if s.NoConcerns(fqn) && s.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			s.ClearOutcome(fqn)
 		}
 	}

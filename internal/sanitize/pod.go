@@ -83,7 +83,7 @@ func (p *Pod) Sanitize(ctx context.Context) error {
 		containerMetrics(pmx, cmx)
 		p.checkUtilization(ctx, po, cmx)
 
-		if p.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
+		if p.NoConcerns(fqn) && p.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			p.ClearOutcome(fqn)
 		}
 	}

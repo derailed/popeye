@@ -38,7 +38,7 @@ func (p *PodSecurityPolicy) Sanitize(ctx context.Context) error {
 
 		p.checkDeprecation(ctx, psp)
 
-		if p.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
+		if p.NoConcerns(fqn) && p.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			p.ClearOutcome(fqn)
 		}
 	}

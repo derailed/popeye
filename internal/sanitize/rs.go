@@ -44,7 +44,7 @@ func (r *ReplicaSet) Sanitize(ctx context.Context) error {
 		r.checkHealth(ctx, rs)
 		r.checkDeprecation(ctx, rs)
 
-		if r.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
+		if r.NoConcerns(fqn) && r.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			r.ClearOutcome(fqn)
 		}
 	}

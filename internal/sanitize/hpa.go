@@ -85,7 +85,7 @@ func (h *HorizontalPodAutoscaler) Sanitize(ctx context.Context) error {
 		tcpu.Add(*list.Cpu())
 		tmem.Add(*list.Memory())
 
-		if h.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
+		if h.NoConcerns(fqn) && h.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			h.ClearOutcome(fqn)
 		}
 	}

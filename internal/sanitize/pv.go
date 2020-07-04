@@ -37,7 +37,7 @@ func (p *PersistentVolume) Sanitize(ctx context.Context) error {
 
 		p.checkBound(ctx, pv.Status.Phase)
 
-		if p.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
+		if p.NoConcerns(fqn) && p.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			p.ClearOutcome(fqn)
 		}
 	}

@@ -54,7 +54,7 @@ func (s *Service) Sanitize(ctx context.Context) error {
 		s.checkEndpoints(ctx, svc.Spec.Selector, svc.Spec.Type)
 		s.checkType(ctx, svc.Spec.Type)
 
-		if s.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
+		if s.NoConcerns(fqn) && s.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			s.ClearOutcome(fqn)
 		}
 	}

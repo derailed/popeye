@@ -52,7 +52,7 @@ func (r *Role) checkInUse(ctx context.Context, refs *sync.Map) {
 			r.AddCode(ctx, 400)
 		}
 
-		if r.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
+		if r.NoConcerns(fqn) && r.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			r.ClearOutcome(fqn)
 		}
 	}
