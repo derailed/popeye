@@ -154,11 +154,20 @@ By default it will create a temp directory and will store the report there,
 the path of the temp directory will be printed out on STDOUT.
 If you have the need to specify the output directory for the report,
 you can use the environment variable `POPEYE_REPORT_DIR`.
+By default, the name of the output file follow the following format : `sanitizer_<cluster-name>_<time-UnixNano>.<output-extension>` (e.g. : "sanitizer-mycluster-1594019782530851873.html").
+If you have the need to specify the output file name for the report,
+you can pass the `--output-file` flag with the filename you want as parameter.
 
 Example to save report in working directory:
 
 ```shell
   $ POPEYE_REPORT_DIR=$(pwd) popeye --save
+```
+
+Example to save report in working directory in HTML format under the name "report.html" :
+
+```shell
+  $ POPEYE_REPORT_DIR=$(pwd) popeye --save --out html --output-file report.html
 ```
 
 ### Save the report to S3
