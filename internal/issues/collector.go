@@ -68,7 +68,6 @@ func (c *Collector) AddCode(ctx context.Context, code config.ID, args ...interfa
 		panic(fmt.Errorf("No code with ID %d", code))
 	}
 	if !c.ShouldExclude(run.SectionGVR.String(), run.FQN, code) {
-		fmt.Println("ADD Issue", run.FQN, code)
 		c.addIssue(run.FQN, New(run.SectionGVR, Root, co.Severity, co.Format(code, args...)))
 	}
 }

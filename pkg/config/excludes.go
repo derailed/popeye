@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -65,10 +64,8 @@ func (e Excludes) ShouldExclude(section, fqn string, code ID) bool {
 
 // Match checks if a given named should be excluded.
 func (e Exclusions) Match(resource string, code ID) bool {
-	fmt.Printf("Match %q -- %v\n", resource, code)
 	for _, exclude := range e {
 		if exclude.Match(resource) && hasCode(exclude.Codes, code) {
-			fmt.Println("  MATCHED!!")
 			return true
 		}
 	}
