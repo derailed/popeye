@@ -7,6 +7,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	client2 "github.com/aws/aws-sdk-go/aws/client"
 	"io"
 	"net/url"
 	"os"
@@ -200,17 +201,26 @@ func (p *Popeye) Sanitize() error {
 				log.Fatal().Err(err).Msg("Closing report")
 			}
 		case isSetStr(p.flags.S3Bucket):
-			bucket, key, err := parseBucket(*p.flags.S3Bucket)
+			host, bucket, key, err := parseBucket(*p.flags.S3Bucket)
 			if err != nil {
 				log.Fatal().Err(err).Msg("Parse S3 bucket URI")
 			}
+			var s client2.ConfigProvider
 			// Create a single AWS session (we can re use this if we're uploading many files)
-			s, err := session.NewSession(&aws.Config{
-				LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors)})
-			if err != nil {
-				log.Fatal().Err(err).Msg("Create S3 Session")
-			}
-			// Create an uploader with the session and default options
+			if len(host) > 0 {
+				s, err := session.NewSession(&aws.Config{
+					Endpoint: aws.String(host),
+					LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors)})
+				if err != nil {
+					log.Fatal().Err(err).Msg("Create S3 Session")
+				}
+			} else {
+				s, err := session.NewSession(&aws.Config{
+					LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors)})
+				if err != nil {
+					log.Fatal().Err(err).Msg("Create S3 Session")
+				}
+			} // Create an uploader with the session and default options
 			uploader := s3manager.NewUploader(s)
 			// Upload input parameters
 			upParams := &s3manager.UploadInput{
@@ -487,14 +497,20 @@ func dumpDir() string {
 	return filepath.Join(os.TempDir(), "popeye")
 }
 
-func parseBucket(bucketURI string) (string, string, error) {
-	var bucket, key string
+func parseBucket(bucketURI string) (string, string, string, error) {
+	var host, bucket, key string
 	u, err := url.Parse(bucketURI)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	switch u.Scheme {
 	// s3://bucket or s3://bucket/
+	case "minio":
+		host = u.Host
+		bucketpath := strings.SplitN(u.Path, "/", 1)
+		bucket = bucketpath[0]
+		key = bucketpath[1]
+
 	case "s3":
 		bucket = u.Host
 		if u.Path == "" || u.Path == "/" {
@@ -512,10 +528,10 @@ func parseBucket(bucketURI string) (string, string, error) {
 			key = uri[1]
 		}
 	default:
-		return "", "", ErrUnknownS3BucketProtocol
+		return "", "", "", ErrUnknownS3BucketProtocol
 	}
 
-	return bucket, key, nil
+	return host, bucket, key, nil
 }
 
 type readWriteCloser struct {
