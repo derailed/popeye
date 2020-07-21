@@ -208,14 +208,15 @@ func (p *Popeye) Sanitize() error {
 			var s client2.ConfigProvider
 			// Create a single AWS session (we can re use this if we're uploading many files)
 			if len(host) > 0 {
-				s, err := session.NewSession(&aws.Config{
-					Endpoint: aws.String(host),
-					LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors)})
+				s, err = session.NewSession(&aws.Config{
+					Endpoint:         aws.String(host),
+					S3ForcePathStyle: aws.Bool(true),
+					LogLevel:         aws.LogLevel(aws.LogDebugWithRequestErrors)})
 				if err != nil {
 					log.Fatal().Err(err).Msg("Create S3 Session")
 				}
 			} else {
-				s, err := session.NewSession(&aws.Config{
+				s, err = session.NewSession(&aws.Config{
 					LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors)})
 				if err != nil {
 					log.Fatal().Err(err).Msg("Create S3 Session")
@@ -507,7 +508,7 @@ func parseBucket(bucketURI string) (string, string, string, error) {
 	// s3://bucket or s3://bucket/
 	case "minio":
 		host = u.Host
-		bucketpath := strings.SplitN(u.Path, "/", 1)
+		bucketpath := strings.SplitN(u.Path[1:], "/", 2)
 		bucket = bucketpath[0]
 		key = bucketpath[1]
 
