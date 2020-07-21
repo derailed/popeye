@@ -299,7 +299,9 @@ codes:
   1106:
     message:  "No target ports match service port %s"
     severity: 3
-
+  1107:
+    message: "LoadBalancer detected but service sets ExternalTrafficPolicy: Cluster"
+    severity: 1
   # -------------------------------------------------------------------------
   # ReplicaSet
   1120:

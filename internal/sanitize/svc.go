@@ -53,6 +53,7 @@ func (s *Service) Sanitize(ctx context.Context) error {
 		s.checkPorts(ctx, svc.Namespace, svc.Spec.Selector, svc.Spec.Ports)
 		s.checkEndpoints(ctx, svc.Spec.Selector, svc.Spec.Type)
 		s.checkType(ctx, svc.Spec.Type)
+		s.checkExternalTrafficPolicy(ctx, svc.Spec.Type, svc.Spec.ExternalTrafficPolicy)
 
 		if s.NoConcerns(fqn) && s.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			s.ClearOutcome(fqn)
@@ -96,6 +97,13 @@ func (s *Service) checkType(ctx context.Context, kind v1.ServiceType) {
 	}
 	if kind == v1.ServiceTypeNodePort {
 		s.AddCode(ctx, 1104)
+	}
+}
+func (s *Service) checkExternalTrafficPolicy(ctx context.Context, kind v1.ServiceType, policy v1.ServiceExternalTrafficPolicyType) {
+	if kind == v1.ServiceTypeLoadBalancer {
+		if policy == v1.ServiceExternalTrafficPolicyTypeCluster {
+			s.AddCode(ctx, 1107)
+		}
 	}
 }
 
