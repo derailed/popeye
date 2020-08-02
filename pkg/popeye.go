@@ -434,13 +434,10 @@ func (p *Popeye) ensureOutput() error {
 }
 
 func (p *Popeye) fileName() string {
-	var fileName string
 	if *p.flags.OutputFile == "" {
-		fileName = fmt.Sprintf(outFmt, p.factory.Client().ActiveCluster(), time.Now().UnixNano(), p.fileExt())
-	} else {
-		fileName = fmt.Sprintf(*p.flags.OutputFile)
-	}
-	return fileName
+		return fmt.Sprintf(outFmt, p.factory.Client().ActiveCluster(), time.Now().UnixNano(), p.fileExt())
+	  }
+	return fmt.Sprintf(*p.flags.OutputFile)
 }
 
 func (p *Popeye) fileExt() string {
