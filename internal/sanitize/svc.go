@@ -123,6 +123,16 @@ func (s *Service) checkEndpoints(ctx context.Context, sel map[string]string, kin
 	}
 }
 
+func (s *Service) checkTypeExternalTrafficPolicy(kind v1.ServiceType, policy v1.ServiceExternalTrafficPolicyType) {
+  if kind == v1.ServiceTypeLoadBalancer && policy == v1.ServiceExternalTrafficPolicyTypeCluster {
+		s.AddCode(ctx, 1107)
+		return
+	}
+	if kind == v1.ServiceTypeNodePort && policy == v1.ServiceExternalTrafficPolicyTypeLocal {
+		s.AddCode(ctx, 1108)
+	}
+}
+
 // ----------------------------------------------------------------------------
 // Helpers...
 
