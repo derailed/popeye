@@ -14,7 +14,7 @@ Also if you dig this tool, please make some noise on social! [@kitesurfer](https
 
 ## A Word From Our `Meager Sponsor...
 
-Contrarily to popular belief OSS is not free! If you find Popeye useful to your organization and save you some cycles while building/debugging your clusters and want to see this project grow and succeed, please consider becoming a sponsor member and hit that github button already!
+Contrarily to popular belief OSS is not free! If you find Popeye useful to your organization and saves you some cycles while building/debugging your clusters and want to see this project grow and succeed, please consider becoming a sponsor member and hit that github button already!
 
 ## Change Logs
 
