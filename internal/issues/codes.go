@@ -299,6 +299,9 @@ codes:
   1106:
     message:  "No target ports match service port %s"
     severity: 3
+  1107:
+    message:  NodePort service with externalTrafficPolicy Local detected
+    severity: 2
 
   # -------------------------------------------------------------------------
   # ReplicaSet

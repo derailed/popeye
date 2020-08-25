@@ -53,6 +53,7 @@ func (s *Service) Sanitize(ctx context.Context) error {
 		s.checkPorts(ctx, svc.Namespace, svc.Spec.Selector, svc.Spec.Ports)
 		s.checkEndpoints(ctx, svc.Spec.Selector, svc.Spec.Type)
 		s.checkType(ctx, svc.Spec.Type)
+		s.checkTypeExternalTrafficPolicy(ctx, svc.Spec.Type, svc.Spec.ExternalTrafficPolicy)
 
 		if s.NoConcerns(fqn) && s.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			s.ClearOutcome(fqn)
@@ -112,6 +113,13 @@ func (s *Service) checkEndpoints(ctx context.Context, sel map[string]string, kin
 	ep := s.GetEndpoints(internal.MustExtractFQN(ctx))
 	if ep == nil || len(ep.Subsets) == 0 {
 		s.AddCode(ctx, 1105)
+	}
+}
+
+// CheckTypeExternalTrafficPolicy runs a sanity check for inappropriate combinations of a service type and an external traffic policy
+func (s *Service) checkTypeExternalTrafficPolicy(ctx context.Context, kind v1.ServiceType, policy v1.ServiceExternalTrafficPolicyType) {
+	if kind == v1.ServiceTypeNodePort && policy == v1.ServiceExternalTrafficPolicyTypeLocal {
+		s.AddCode(ctx, 1107)
 	}
 }
 
