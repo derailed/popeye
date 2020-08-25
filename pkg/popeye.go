@@ -247,7 +247,7 @@ func (p *Popeye) sanitize() (int, error) {
 	codes.Refine(p.config.Codes)
 
 	c := make(chan run, 2)
-	var total, count int
+	var total, errCount int
 	var nodeGVR = client.NewGVR("v1/nodes")
 	cache := scrub.NewCache(p.factory, p.config)
 	for k, fn := range p.sanitizers() {
@@ -272,7 +272,7 @@ func (p *Popeye) sanitize() (int, error) {
 	for run := range c {
 		tally := report.NewTally()
 		tally.Rollup(run.outcome)
-		count += tally.ErrCount() + tally.WarnCount()
+		errCount += tally.ErrCount()
 		p.builder.AddSection(run.gvr, p.aliases.Singular(run.gvr), run.outcome, tally)
 		total--
 		if total == 0 {
@@ -280,7 +280,7 @@ func (p *Popeye) sanitize() (int, error) {
 		}
 	}
 
-	return count, nil
+	return errCount, nil
 }
 
 func (p *Popeye) sanitizer(ctx context.Context, gvr client.GVR, f scrubFn, c chan run, cache *scrub.Cache, codes *issues.Codes) {

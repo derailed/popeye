@@ -76,12 +76,12 @@ func doIt(cmd *cobra.Command, args []string) {
 	if e := popeye.Init(); e != nil {
 		bomb(e.Error())
 	}
-	count, err := popeye.Sanitize()
+	errCount, err := popeye.Sanitize()
 	if err != nil {
 		bomb(err.Error())
 	}
 
-	if count > 0 {
+	if errCount > 0 {
 		os.Exit(1)
 	}
 }
