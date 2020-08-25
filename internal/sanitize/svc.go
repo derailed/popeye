@@ -99,11 +99,14 @@ func (s *Service) checkType(ctx context.Context, kind v1.ServiceType) {
 		s.AddCode(ctx, 1104)
 	}
 }
+
 func (s *Service) checkExternalTrafficPolicy(ctx context.Context, kind v1.ServiceType, policy v1.ServiceExternalTrafficPolicyType) {
-	if kind == v1.ServiceTypeLoadBalancer {
-		if policy == v1.ServiceExternalTrafficPolicyTypeCluster {
-			s.AddCode(ctx, 1107)
-		}
+	if kind == v1.ServiceTypeLoadBalancer && policy == v1.ServiceExternalTrafficPolicyTypeCluster {
+		s.AddCode(ctx, 1107)
+		return
+	}
+	if kind == v1.ServiceTypeNodePort && policy == v1.ServiceExternalTrafficPolicyTypeLocal {
+		s.AddCode(ctx, 1108)
 	}
 }
 
@@ -120,16 +123,6 @@ func (s *Service) checkEndpoints(ctx context.Context, sel map[string]string, kin
 	ep := s.GetEndpoints(internal.MustExtractFQN(ctx))
 	if ep == nil || len(ep.Subsets) == 0 {
 		s.AddCode(ctx, 1105)
-	}
-}
-
-func (s *Service) checkTypeExternalTrafficPolicy(kind v1.ServiceType, policy v1.ServiceExternalTrafficPolicyType) {
-  if kind == v1.ServiceTypeLoadBalancer && policy == v1.ServiceExternalTrafficPolicyTypeCluster {
-		s.AddCode(ctx, 1107)
-		return
-	}
-	if kind == v1.ServiceTypeNodePort && policy == v1.ServiceExternalTrafficPolicyTypeLocal {
-		s.AddCode(ctx, 1108)
 	}
 }
 

@@ -70,7 +70,7 @@ codes:
     message:  No resource limits defined
     severity: 2
   108:
-    message:  "Unnamed port %d"
+    message:  Unnamed port %d
     severity: 1
   109:
     message:  CPU Current/Request (%s/%s) reached user %d%% threshold (%d%%)
@@ -166,22 +166,22 @@ codes:
     message:  Zero scale detected
     severity: 2
   501:
-    message:  "Unhealthy %d desired but have %d available"
+    message:  Unhealthy %d desired but have %d available
     severity: 3
   503:
-    message:  "At current load, CPU under allocated. Current:%s vs Requested:%s (%s)"
+    message:  At current load, CPU under allocated. Current:%s vs Requested:%s (%s)
     severity: 2
   504:
-    message:  "At current load, CPU over allocated. Current:%s vs Requested:%s (%s)"
+    message:  At current load, CPU over allocated. Current:%s vs Requested:%s (%s)
     severity: 2
   505:
-    message:  "At current load, Memory under allocated. Current:%s vs Requested:%s (%s)"
+    message:  At current load, Memory under allocated. Current:%s vs Requested:%s (%s)
     severity: 2
   506:
-    message:  "At current load, Memory over allocated. Current:%s vs Requested:%s (%s)"
+    message:  At current load, Memory over allocated. Current:%s vs Requested:%s (%s)
     severity: 2
   507:
-    message: "Deployment references ServiceAccount %q which does not exist"
+    message: Deployment references ServiceAccount %q which does not exist
     severity: 3
 
   # -------------------------------------------------------------------------
@@ -220,13 +220,13 @@ codes:
     message:  Out of disk space
     severity: 3
   704:
-    message:  Insuficient memory
+    message:  Insufficient memory
     severity: 2
   705:
-    message:  Insuficient disk space
+    message:  Insufficient disk space
     severity: 2
   706:
-    message:  Insuficient PIDS on Node
+    message:  Insufficient PIDs on Node
     severity: 3
   707:
     message:  No network configured on node
@@ -285,7 +285,7 @@ codes:
     message:  Skip ports check. No explicit ports detected on pod %s
     severity: 1
   1102:
-    message:  "Use of target port #%s for service port %s. Prefer named port"
+    message:  Use of target port #%s for service port %s. Prefer named port
     severity: 1
   1103:
     message:  Type Loadbalancer detected. Could be expensive
@@ -297,13 +297,13 @@ codes:
     message:  No associated endpoints
     severity: 3
   1106:
-    message:  "No target ports match service port %s"
+    message: No target ports match service port %s
     severity: 3
   1107:
-    message: "LoadBalancer detected but service sets externalTrafficPolicy: Cluster"
+    message: LoadBalancer detected but service sets externalTrafficPolicy to "Cluster"
     severity: 1
   1108:
-    message:  NodePort detected but service sets externalTrafficPolicy: Local"
+    message:  NodePort detected but service sets externalTrafficPolicy to "Local"
     severity: 1
 
   # -------------------------------------------------------------------------
