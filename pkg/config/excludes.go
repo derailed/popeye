@@ -36,7 +36,7 @@ func newExcludes() Excludes {
 	return Excludes{}
 }
 
-// ExcludeFQN checks if a given named resource should be excluded.
+// ExcludeContainer checks if a given container should be excluded.
 func (e Excludes) ExcludeContainer(gvr, fqn, container string) bool {
 	excludes, ok := e[gvr]
 	if !ok {

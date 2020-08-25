@@ -256,7 +256,7 @@ func (a *APIClient) HasMetrics() bool {
 	return flag
 }
 
-// DialOrDie returns a handle to api server or die.
+// Dial returns a handle to api server or an error
 func (a *APIClient) Dial() (kubernetes.Interface, error) {
 	a.mx.Lock()
 	defer a.mx.Unlock()
