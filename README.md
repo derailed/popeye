@@ -284,8 +284,9 @@ popeye:
       # Excludes all istio-proxy container scans for pods in the icx namespace.
       - name: rx:icx/.*
         containers:
-          # Excludes istio sidecar container from scan!
+          # Excludes istio init/sidecar container from scan!
           - istio-proxy
+          - istio-init
     # ConfigMap sanitizer exclusions...
     v1/configmaps:
       # Excludes key must match the singular form of the resource.
