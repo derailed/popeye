@@ -14,8 +14,9 @@ var regExp = regexp.MustCompile(`\A` + rxMarker)
 type (
 	// Exclusion represents a resource exclusion.
 	Exclusion struct {
-		Name  string
-		Codes []ID
+		Name       string
+		Containers []string
+		Codes      []ID
 	}
 
 	// Exclusions represents a collection of excludes items.
@@ -36,6 +37,31 @@ func newExcludes() Excludes {
 }
 
 // ExcludeFQN checks if a given named resource should be excluded.
+func (e Excludes) ExcludeContainer(gvr, fqn, container string) bool {
+	excludes, ok := e[gvr]
+	if !ok {
+		return false
+	}
+
+	for _, exclude := range excludes {
+		if exclude.Match(fqn) && in(exclude.Containers, container) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func in(ss []string, victim string) bool {
+	for _, s := range ss {
+		if s == victim {
+			return true
+		}
+	}
+	return false
+}
+
+// ExcludeFQN checks if a given named resource should be excluded.
 func (e Excludes) ExcludeFQN(gvr, fqn string) bool {
 	excludes, ok := e[gvr]
 	if !ok {
@@ -43,7 +69,7 @@ func (e Excludes) ExcludeFQN(gvr, fqn string) bool {
 	}
 
 	for _, exclude := range excludes {
-		if exclude.Match(fqn) {
+		if exclude.Match(fqn) && len(exclude.Containers) == 0 {
 			return true
 		}
 	}

@@ -76,8 +76,11 @@ func (p *Pod) Sanitize(ctx context.Context) error {
 
 		p.checkStatus(ctx, po)
 		p.checkContainerStatus(ctx, po)
-		p.checkContainers(ctx, po)
-		p.checkPdb(ctx, po.ObjectMeta.Labels)
+		p.checkContainers(ctx, fqn, po)
+
+		if !ownedByDaemonSet(po) {
+			p.checkPdb(ctx, po.ObjectMeta.Labels)
+		}
 		p.checkSecure(ctx, po.Spec)
 		pmx, cmx := mx[fqn], client.ContainerMetrics{}
 		containerMetrics(pmx, cmx)
@@ -88,6 +91,15 @@ func (p *Pod) Sanitize(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+func ownedByDaemonSet(po *v1.Pod) bool {
+	for _, o := range po.OwnerReferences {
+		if o.Kind == "DaemonSet" {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *Pod) checkPdb(ctx context.Context, labels map[string]string) {
@@ -173,13 +185,18 @@ func hasCoNonRootUser(sec *v1.SecurityContext) bool {
 	return false
 }
 
-func (p *Pod) checkContainers(ctx context.Context, po *v1.Pod) {
+func (p *Pod) checkContainers(ctx context.Context, fqn string, po *v1.Pod) {
 	co := NewContainer(internal.MustExtractFQN(ctx), p)
+	gvr := internal.MustExtractSectionGVR(ctx)
 	for _, c := range po.Spec.InitContainers {
-		co.sanitize(ctx, c, false)
+		if !p.Config.ExcludeContainer(gvr, fqn, c.Name) {
+			co.sanitize(ctx, c, false)
+		}
 	}
 	for _, c := range po.Spec.Containers {
-		co.sanitize(ctx, c, !isPartOfJob(po))
+		if !p.Config.ExcludeContainer(gvr, fqn, c.Name) {
+			co.sanitize(ctx, c, !isPartOfJob(po))
+		}
 	}
 }
 

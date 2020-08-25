@@ -31,6 +31,16 @@ func (t *Tally) Score() int {
 	return t.score
 }
 
+// ErrCount returns the number of errors found.
+func (t *Tally) ErrCount() int {
+	return t.counts[3]
+}
+
+// WarnCount returns the number of warnings found.
+func (t *Tally) WarnCount() int {
+	return t.counts[2]
+}
+
 // IsValid checks if tally is valid.
 func (t *Tally) IsValid() bool {
 	return t.valid

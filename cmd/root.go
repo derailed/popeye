@@ -73,11 +73,16 @@ func doIt(cmd *cobra.Command, args []string) {
 	if err != nil {
 		bomb(fmt.Sprintf("Popeye configuration load failed %v", err))
 	}
-	if err := popeye.Init(); err != nil {
+	if e := popeye.Init(); e != nil {
+		bomb(e.Error())
+	}
+	count, err := popeye.Sanitize()
+	if err != nil {
 		bomb(err.Error())
 	}
-	if err := popeye.Sanitize(); err != nil {
-		bomb(err.Error())
+
+	if count > 0 {
+		os.Exit(1)
 	}
 }
 

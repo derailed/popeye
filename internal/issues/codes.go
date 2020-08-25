@@ -12,7 +12,7 @@ type (
 	}
 )
 
-// LoadCodes retrieves sanitifizers codes from yaml file.
+// LoadCodes retrieves sanitizers codes from yaml file.
 func LoadCodes() (*Codes, error) {
 	var cc Codes
 	if err := yaml.Unmarshal([]byte(codes), &cc); err != nil {
@@ -121,7 +121,7 @@ codes:
     message:  Connects to API Server? ServiceAccount token is mounted
     severity: 2
   302:
-    message:  Pod could be running as root user. Check SecurityContext/image
+    message:  Pod could be running as root user. Check SecurityContext/Image
     severity: 2
   303:
     message: Do you mean it? ServiceAccount is automounting APIServer credentials

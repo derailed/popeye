@@ -1,51 +1,53 @@
 package pkg
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestParseBucket(t *testing.T) {
-	var uu = []struct {
-		bucketURI string
-		bucket    string
-		key       string
+	var uu = map[string]struct {
+		uri    string
+		bucket string
+		key    string
+		err    error
 	}{
-		{
-			"s3://bucketName/",
-			"bucketName",
-			"",
+		"s3_bucket": {
+			uri:    "s3://bucketName/",
+			bucket: "bucketName",
 		},
-		{
-			"bucket/with/subkey",
-			"bucket",
-			"with/subkey",
+		"toast": {
+			uri: "s4://bucketName/",
+			err: ErrUnknownS3BucketProtocol,
 		},
-		{
-			"/bucket/with/leading/slashes/",
-			"bucket",
-			"with/leading/slashes",
+		"with_full_key": {
+			uri:    "s3://bucketName/fred/blee",
+			bucket: "bucketName",
+			key:    "fred/blee",
+		},
+		"with_key": {
+			uri:    "bucket/with/subkey",
+			bucket: "bucket",
+			key:    "with/subkey",
+		},
+		"with_trailer": {
+			uri:    "/bucket/with/leading/slashes/",
+			bucket: "bucket",
+			key:    "with/leading/slashes",
 		},
 	}
 
-	for _, v := range uu {
-		u := v
-		t.Run(u.bucketURI, func(t *testing.T) {
-			b, k, err := parseBucket(u.bucketURI)
-			if err != nil {
-				t.Errorf("error got %v, want none", err)
+	for k := range uu {
+		u := uu[k]
+		t.Run(k, func(t *testing.T) {
+			b, k, err := parseBucket(u.uri)
+			if err != u.err {
+				t.Fatalf("error got %v, want none", err)
+				return
 			}
-			if b != u.bucket {
-				t.Errorf("bucket got %s, want %s", b, u.bucket)
-			}
-			if k != u.key {
-				t.Errorf("key got %s, want %s", k, u.key)
-			}
+			assert.Equal(t, u.bucket, b)
+			assert.Equal(t, u.key, k)
 		})
-	}
-}
-
-func TestParseBucketError(t *testing.T) {
-	bucketURI := "s4://wrongbucket"
-	_, _, err := parseBucket(bucketURI)
-	if err != ErrUnknownS3BucketProtocol {
-		t.Errorf("error expected %v, got none", ErrUnknownS3BucketProtocol)
 	}
 }
