@@ -192,7 +192,7 @@ func (p *Popeye) SetOutputTarget(s io.ReadWriteCloser) {
 }
 
 // Sanitize scans a cluster for potential issues.
-func (p *Popeye) Sanitize() error {
+func (p *Popeye) Sanitize() (int, error) {
 	defer func() {
 		switch {
 		case isSet(p.flags.Save):
@@ -226,14 +226,15 @@ func (p *Popeye) Sanitize() error {
 		}
 	}()
 
-	if err := p.sanitize(); err != nil {
-		return err
+	errCount, err := p.sanitize()
+	if err != nil {
+		return 0, err
 	}
 
-	return p.dump(true)
+	return errCount, p.dump(true)
 }
 
-func (p *Popeye) sanitize() error {
+func (p *Popeye) sanitize() (int, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	ctx = context.WithValue(ctx, internal.KeyOverAllocs, *p.flags.CheckOverAllocs)
@@ -241,12 +242,12 @@ func (p *Popeye) sanitize() error {
 
 	codes, err := issues.LoadCodes()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	codes.Refine(p.config.Codes)
 
 	c := make(chan run, 2)
-	var total int
+	var total, count int
 	var nodeGVR = client.NewGVR("v1/nodes")
 	cache := scrub.NewCache(p.factory, p.config)
 	for k, fn := range p.sanitizers() {
@@ -265,12 +266,13 @@ func (p *Popeye) sanitize() error {
 	}
 
 	if total == 0 {
-		return nil
+		return 0, nil
 	}
 
 	for run := range c {
 		tally := report.NewTally()
 		tally.Rollup(run.outcome)
+		count += tally.ErrCount() + tally.WarnCount()
 		p.builder.AddSection(run.gvr, p.aliases.Singular(run.gvr), run.outcome, tally)
 		total--
 		if total == 0 {
@@ -278,7 +280,7 @@ func (p *Popeye) sanitize() error {
 		}
 	}
 
-	return nil
+	return count, nil
 }
 
 func (p *Popeye) sanitizer(ctx context.Context, gvr client.GVR, f scrubFn, c chan run, cache *scrub.Cache, codes *issues.Codes) {
@@ -491,7 +493,6 @@ func dumpDir() string {
 }
 
 func parseBucket(bucketURI string) (string, string, error) {
-	var bucket, key string
 	u, err := url.Parse(bucketURI)
 	if err != nil {
 		return "", "", err
@@ -499,26 +500,22 @@ func parseBucket(bucketURI string) (string, string, error) {
 	switch u.Scheme {
 	// s3://bucket or s3://bucket/
 	case "s3":
-		bucket = u.Host
-		if u.Path == "" || u.Path == "/" {
-			key = ""
-		} else {
+		var key string
+		if u.Path != "" {
 			key = strings.Trim(u.Path, "/")
 		}
+		return u.Host, key, nil
 	// bucket/ or bucket/path/to/key
 	case "":
-		uri := strings.SplitAfterN(strings.Trim(bucketURI, "/"), "/", 2)
-		bucket = strings.Trim(uri[0], "/")
-		if len(uri) == 1 {
-			key = ""
-		} else {
-			key = uri[1]
+		tokens := strings.SplitAfterN(strings.Trim(u.Path, "/"), "/", 2)
+		key, bucket := "", strings.Trim(tokens[0], "/")
+		if len(tokens) > 1 {
+			key = tokens[1]
 		}
+		return bucket, key, nil
 	default:
 		return "", "", ErrUnknownS3BucketProtocol
 	}
-
-	return bucket, key, nil
 }
 
 type readWriteCloser struct {
