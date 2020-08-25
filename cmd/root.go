@@ -96,6 +96,11 @@ func initPopeyeFlags() {
 		"Specify if you want Popeye to persist the output to a file",
 	)
 
+	rootCmd.Flags().StringVarP(flags.OutputFile, "output-file", "",
+		"",
+		"Specify the name of the saved output file",
+	)
+
 	rootCmd.Flags().StringVarP(flags.S3Bucket, "s3-bucket", "",
 		"",
 		"Specify to which S3 bucket you want to save the output file",
@@ -246,6 +251,9 @@ func initFlags() {
 func checkFlags() error {
 	if flags.OutputFormat() == report.PrometheusFormat && *flags.PushGatewayAddress == "" {
 		return errors.New("Please set pushgateway-address.")
+	}
+	if !*flags.Save && *flags.OutputFile != "" {
+		return errors.New("Please set '--save' flag to use 'output-file'.")
 	}
 	return nil
 }

@@ -53,7 +53,7 @@ func (s *Service) Sanitize(ctx context.Context) error {
 		s.checkPorts(ctx, svc.Namespace, svc.Spec.Selector, svc.Spec.Ports)
 		s.checkEndpoints(ctx, svc.Spec.Selector, svc.Spec.Type)
 		s.checkType(ctx, svc.Spec.Type)
-		s.checkTypeExternalTrafficPolicy(ctx, svc.Spec.Type, svc.Spec.ExternalTrafficPolicy)
+		s.checkExternalTrafficPolicy(ctx, svc.Spec.Type, svc.Spec.ExternalTrafficPolicy)
 
 		if s.NoConcerns(fqn) && s.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			s.ClearOutcome(fqn)
@@ -99,6 +99,13 @@ func (s *Service) checkType(ctx context.Context, kind v1.ServiceType) {
 		s.AddCode(ctx, 1104)
 	}
 }
+func (s *Service) checkExternalTrafficPolicy(ctx context.Context, kind v1.ServiceType, policy v1.ServiceExternalTrafficPolicyType) {
+	if kind == v1.ServiceTypeLoadBalancer {
+		if policy == v1.ServiceExternalTrafficPolicyTypeCluster {
+			s.AddCode(ctx, 1107)
+		}
+	}
+}
 
 // CheckEndpoints runs a sanity check on this service endpoints.
 func (s *Service) checkEndpoints(ctx context.Context, sel map[string]string, kind v1.ServiceType) {
@@ -116,10 +123,13 @@ func (s *Service) checkEndpoints(ctx context.Context, sel map[string]string, kin
 	}
 }
 
-// CheckTypeExternalTrafficPolicy runs a sanity check for inappropriate combinations of a service type and an external traffic policy
-func (s *Service) checkTypeExternalTrafficPolicy(ctx context.Context, kind v1.ServiceType, policy v1.ServiceExternalTrafficPolicyType) {
-	if kind == v1.ServiceTypeNodePort && policy == v1.ServiceExternalTrafficPolicyTypeLocal {
+func (s *Service) checkTypeExternalTrafficPolicy(kind v1.ServiceType, policy v1.ServiceExternalTrafficPolicyType) {
+  if kind == v1.ServiceTypeLoadBalancer && policy == v1.ServiceExternalTrafficPolicyTypeCluster {
 		s.AddCode(ctx, 1107)
+		return
+	}
+	if kind == v1.ServiceTypeNodePort && policy == v1.ServiceExternalTrafficPolicyTypeLocal {
+		s.AddCode(ctx, 1108)
 	}
 }
 

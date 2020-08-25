@@ -12,6 +12,7 @@ type Flags struct {
 	Output             *string
 	ClearScreen        *bool
 	Save               *bool
+	OutputFile         *string
 	S3Bucket           *string
 	CheckOverAllocs    *bool
 	AllNamespaces      *bool
@@ -30,6 +31,7 @@ func NewFlags() *Flags {
 		Output:             strPtr("standard"),
 		AllNamespaces:      boolPtr(false),
 		Save:               boolPtr(false),
+		OutputFile:         strPtr(""),
 		S3Bucket:           strPtr(""),
 		InClusterName:      strPtr(""),
 		ClearScreen:        boolPtr(false),

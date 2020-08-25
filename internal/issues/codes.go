@@ -300,8 +300,11 @@ codes:
     message:  "No target ports match service port %s"
     severity: 3
   1107:
-    message:  NodePort service with externalTrafficPolicy Local detected
-    severity: 2
+    message: "LoadBalancer detected but service sets externalTrafficPolicy: Cluster"
+    severity: 1
+  1108:
+    message:  NodePort detected but service sets externalTrafficPolicy: Local"
+    severity: 1
 
   # -------------------------------------------------------------------------
   # ReplicaSet
