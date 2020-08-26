@@ -6,7 +6,7 @@ metadata:
   name: popeye
   namespace: popeye
 spec:
-  schedule: "*/2 * * * *"
+  schedule: "59 23 * * *"
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
