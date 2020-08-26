@@ -6,7 +6,7 @@ metadata:
   name: popeye
   namespace: popeye
 spec:
-  schedule: "* */1 * * *"
+  schedule: "*/2 * * * *"
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
@@ -16,7 +16,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: popeye
-              image: quay.io/derailed/popeye:v0.3.6
+              image: quay.io/derailed/popeye:latest
               imagePullPolicy: IfNotPresent
               command: ["/bin/popeye"]
               args:
