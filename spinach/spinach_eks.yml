@@ -83,7 +83,7 @@ popeye:
     # Fail if more than 3 restarts on any pods
     restarts: 3
 
-  # Code specifies a custom severity level ie critical=1, warn=2, info=3
+  # Code specifies a custom severity level ie critical=3, warn=2, info=1
   codes:
     206:
       severity: 1
