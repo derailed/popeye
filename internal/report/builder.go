@@ -11,9 +11,9 @@ import (
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/fvbommel/sortorder"
 	"github.com/prometheus/client_golang/prometheus/push"
 	"gopkg.in/yaml.v2"
-	"vbom.ml/util/sortorder"
 )
 
 const (
