@@ -200,7 +200,8 @@ your local kube config directory into the container with `-v` :
 Running the above docker command with `--rm` means that the container gets
 deleted when popeye exits. When you use `--save`, it will write it to /tmp in
 the container and then delete the container when popeye exits, which means you
-lose the output. To get around this, map /tmp to the container's /tmp:
+lose the output. To get around this, map /tmp to the container's /tmp.
+NOTE: You can override the default output directory location by setting `POPEYE_REPORT_DIR` env variable.
 
 ```shell
   docker run --rm -it \
