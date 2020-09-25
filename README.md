@@ -180,7 +180,7 @@ Underlying the AWS Go lib is used which is handling the credential loading. For 
 Example to save report to S3:
 
 ```shell
-  $ popeye --s3-bucket=NAME-OF-YOUR-S3-BUCKET/OPTIONAL/SUBDIRECTORY --out=json
+popeye --s3-bucket=NAME-OF-YOUR-S3-BUCKET/OPTIONAL/SUBDIRECTORY --out=json
 ```
 
 ### Run public docker image locally
@@ -192,8 +192,9 @@ whatever cli args are normally passed to popeye.  To access your clusters, map
 your local kube config directory into the container with `-v` :
 
 ```shell
-  $ docker run --rm -it -v $HOME/.kube:/root/.kube \
-      quay.io/derailed/popeye:latest --context foo -n bar
+  docker run --rm -it \
+    -v $HOME/.kube:/root/.kube \
+    quay.io/derailed/popeye --context foo -n bar
 ```
 
 Running the above docker command with `--rm` means that the container gets
@@ -202,13 +203,15 @@ the container and then delete the container when popeye exits, which means you
 lose the output. To get around this, map /tmp to the container's /tmp:
 
 ```shell
-  $ docker run --rm -it -v $HOME/.kube:/root/.kube -v /tmp:/tmp \
-      quay.ioderailed/popeye:latest --context foo -n bar --save
-  /tmp/popeye/sanitizer_foo_1583042166995001900.txt
+  docker run --rm -it \
+    -v $HOME/.kube:/root/.kube
+    -e POPEYE_REPORT_DIR=/tmp/popeye
+    -v /tmp:/tmp \
+    quay.io/derailed/popeye --context foo -n bar --save --output-file my_report.txt
 
   # Docker has exited, and the container has been deleted, but the file
-  # is in your /tmp subdir because you mapped it into the container
-  $ cat /tmp/popeye/sanitizer_foo_1583042166995001900.txt
+  # is in your /tmp directory because you mapped it into the container
+  $ cat /tmp/popeye/my_report.txt
     <snip>
 ```
 
@@ -351,7 +354,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: popeye
-              image: quay.io/derailed/popeye:v0.8.6
+              image: quay.io/derailed/popeye
               imagePullPolicy: IfNotPresent
               args:
                 - -o
