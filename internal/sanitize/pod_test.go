@@ -95,7 +95,8 @@ func TestPodSanitize(t *testing.T) {
 							restarts: 0,
 							state:    running,
 						},
-						phase: v1.PodRunning,
+						phase:      v1.PodRunning,
+						controlled: true,
 					}),
 				},
 			}),
@@ -121,7 +122,7 @@ func TestPodSanitize(t *testing.T) {
 					}),
 				},
 			}),
-			1,
+			2,
 		},
 		"defaultSA": {
 			makePodLister(podOpts{
@@ -141,6 +142,7 @@ func TestPodSanitize(t *testing.T) {
 							restarts: 0,
 							state:    running,
 						},
+						controlled: true,
 					}),
 				},
 			}),
@@ -171,6 +173,7 @@ type (
 		pods        map[string]*v1.Pod
 		serviceAcct string
 		certs       bool
+		controlled  bool
 	}
 
 	pod struct {
@@ -286,6 +289,15 @@ func makeFullPod(opts podOpts) *v1.Pod {
 		po.Spec.ServiceAccountName = opts.serviceAcct
 	}
 	po.Spec.AutomountServiceAccountToken = &opts.certs
+
+	if opts.controlled {
+		truthful := true
+		po.OwnerReferences = append(po.OwnerReferences, metav1.OwnerReference{
+			Kind:       "ReplicaSet",
+			Name:       "mock-replica-set",
+			Controller: &truthful,
+		})
+	}
 
 	po.Status = v1.PodStatus{
 		Phase: opts.phase,
