@@ -51,9 +51,16 @@ func NewNode(co *issues.Collector, lister NodeLister) *Node {
 func (n *Node) Sanitize(ctx context.Context) error {
 	nmx := client.NodesMetrics{}
 	nodesMetrics(n.ListNodes(), n.ListNodesMetrics(), nmx)
+
+	numMasters := 0
+
 	for fqn, no := range n.ListNodes() {
 		n.InitOutcome(fqn)
 		ctx = internal.WithFQN(ctx, fqn)
+
+		if n.checkMasterRole(ctx, no) {
+			numMasters++
+		}
 
 		ready := n.checkConditions(ctx, no)
 		if ready {
@@ -64,6 +71,10 @@ func (n *Node) Sanitize(ctx context.Context) error {
 		if n.NoConcerns(fqn) && n.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			n.ClearOutcome(fqn)
 		}
+	}
+
+	if numMasters == 1 {
+		n.AddCode(ctx, 712)
 	}
 
 	return nil
@@ -114,6 +125,19 @@ func (n *Node) checkConditions(ctx context.Context, no *v1.Node) bool {
 	}
 
 	return ready
+}
+
+// checkMasterRole checks whether the node is a master node.
+func (n *Node) checkMasterRole(ctx context.Context, no *v1.Node) bool {
+	var isMaster bool = false
+
+	if role, ok := no.Labels["role"]; ok {
+		if role == "master" {
+			isMaster = true
+		}
+	}
+
+	return isMaster
 }
 
 func (n *Node) statusReport(ctx context.Context, cond v1.NodeConditionType, status v1.ConditionStatus) bool {
