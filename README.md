@@ -282,17 +282,17 @@ popeye:
 
   # Excludes excludes certain resources from Popeye scans
   excludes:
-      v1/pods:
-      # In the monitoring namespace excludes all probes check on pod's containers.
-      - name: rx:monitoring
-        codes:
-        - 102
-      # Excludes all istio-proxy container scans for pods in the icx namespace.
-      - name: rx:icx/.*
-        containers:
-          # Excludes istio init/sidecar container from scan!
-          - istio-proxy
-          - istio-init
+    v1/pods:
+    # In the monitoring namespace excludes all probes check on pod's containers.
+    - name: rx:monitoring
+      codes:
+      - 102
+    # Excludes all istio-proxy container scans for pods in the icx namespace.
+    - name: rx:icx/.*
+      containers:
+        # Excludes istio init/sidecar container from scan!
+        - istio-proxy
+        - istio-init
     # ConfigMap sanitizer exclusions...
     v1/configmaps:
       # Excludes key must match the singular form of the resource.
