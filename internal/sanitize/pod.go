@@ -8,6 +8,7 @@ import (
 	"github.com/derailed/popeye/internal/issues"
 	v1 "k8s.io/api/core/v1"
 	pv1beta1 "k8s.io/api/policy/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
@@ -78,6 +79,8 @@ func (p *Pod) Sanitize(ctx context.Context) error {
 		p.checkContainerStatus(ctx, po)
 		p.checkContainers(ctx, fqn, po)
 
+		p.checkOwnedByAnything(ctx, po.OwnerReferences)
+
 		if !ownedByDaemonSet(po) {
 			p.checkPdb(ctx, po.ObjectMeta.Labels)
 		}
@@ -100,6 +103,25 @@ func ownedByDaemonSet(po *v1.Pod) bool {
 		}
 	}
 	return false
+}
+
+func (p *Pod) checkOwnedByAnything(ctx context.Context, ownerRefs []metav1.OwnerReference) {
+	if len(ownerRefs) == 0 {
+		p.AddCode(ctx, 208)
+		return
+	}
+
+	controlled := false
+	for _, or := range ownerRefs {
+		if *or.Controller {
+			controlled = true
+			break
+		}
+	}
+
+	if !controlled {
+		p.AddCode(ctx, 208)
+	}
 }
 
 func (p *Pod) checkPdb(ctx context.Context, labels map[string]string) {
