@@ -306,6 +306,9 @@ popeye:
           - 404
       # Exclude all istio* namespaces from being scanned.
       - name: rx:istio
+    # Completely exclude horizontal pod autoscalers.
+    autoscaling/v1/horizontalpodautoscalers:
+      - name: rx:.*
 
   # Configure node resources.
   node:
