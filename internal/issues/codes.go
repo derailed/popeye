@@ -305,6 +305,9 @@ codes:
   1108:
     message:  NodePort detected but service sets externalTrafficPolicy to "Local"
     severity: 1
+  1109:
+    message: Only one associated endpoint
+    severity: 2
 
   # -------------------------------------------------------------------------
   # ReplicaSet
