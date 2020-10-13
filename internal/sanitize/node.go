@@ -10,6 +10,15 @@ import (
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
+const (
+	// Label for master nodes since v1.6
+	labelNodeRoleMaster = "node-role.kubernetes.io/master"
+
+	// Future label for master nodes as of v1.20,
+	// according to https://github.com/kubernetes/kubeadm/issues/2200
+	labelNodeRoleControlPlane = "node-role.kubernetes.io/control-plane"
+)
+
 type (
 	tolerations map[string]struct{}
 
@@ -129,15 +138,14 @@ func (n *Node) checkConditions(ctx context.Context, no *v1.Node) bool {
 
 // checkMasterRole checks whether the node is a master node.
 func (n *Node) checkMasterRole(ctx context.Context, no *v1.Node) bool {
-	var isMaster bool = false
-
-	if role, ok := no.Labels["role"]; ok {
-		if role == "master" {
-			isMaster = true
-		}
+	if _, ok := no.Labels[labelNodeRoleMaster]; ok {
+		return true
+	}
+	if _, ok := no.Labels[labelNodeRoleControlPlane]; ok {
+		return true
 	}
 
-	return isMaster
+	return false
 }
 
 func (n *Node) statusReport(ctx context.Context, cond v1.NodeConditionType, status v1.ConditionStatus) bool {
