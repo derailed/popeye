@@ -61,7 +61,7 @@ func (n *Node) Sanitize(ctx context.Context) error {
 	nmx := client.NodesMetrics{}
 	nodesMetrics(n.ListNodes(), n.ListNodesMetrics(), nmx)
 
-	numMasters := 0
+	var numMasters int
 
 	for fqn, no := range n.ListNodes() {
 		n.InitOutcome(fqn)
