@@ -111,6 +111,9 @@ codes:
   207:
     message:  Pod is in an unhappy phase (%s)
     severity: 3
+  208:
+    message:  Pod is not controlled by any resource (ReplicaSet etc.)
+    severity: 2
 
   # -------------------------------------------------------------------------
   # Security
