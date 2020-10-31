@@ -243,6 +243,9 @@ codes:
   711:
     message: Scheduling disabled
     severity: 2
+  712:
+    message: Found only one master node
+    severity: 1
 
   # -------------------------------------------------------------------------
   # Namespace

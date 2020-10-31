@@ -37,7 +37,7 @@ func (c *Collector) ClearOutcome(fqn string) {
 	delete(c.outcomes, fqn)
 }
 
-// NoConcerns returns true is scan is successful.
+// NoConcerns returns true if scan is successful.
 func (c *Collector) NoConcerns(fqn string) bool {
 	return len(c.outcomes[fqn]) == 0
 }
