@@ -123,17 +123,16 @@ func (s *Service) checkEndpoints(ctx context.Context, sel map[string]string, kin
 	ep := s.GetEndpoints(internal.MustExtractFQN(ctx))
 	if ep == nil || len(ep.Subsets) == 0 {
 		s.AddCode(ctx, 1105)
-	} else {
-		numEndpointAddresses := 0
-		for _, s := range ep.Subsets {
-			for range s.Addresses {
-				numEndpointAddresses++
-			}
-		}
-		if numEndpointAddresses < 2 {
-			s.AddCode(ctx, 1109)
+		return
+	}
+	numEndpointAddresses := 0
+	for _, s := range ep.Subsets {
+		numEndpointAddresses += len(s.Addresses)
+		if numEndpointAddresses > 1 {
+			return
 		}
 	}
+	s.AddCode(ctx, 1109)
 }
 
 // ----------------------------------------------------------------------------

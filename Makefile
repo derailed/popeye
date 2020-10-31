@@ -1,6 +1,6 @@
 NAME     := popeye
 PACKAGE  := github.com/derailed/$(NAME)
-VERSION  := v0.8.9
+VERSION  := v0.9.0
 GIT      := $(shell git rev-parse --short HEAD)
 DATE     := $(shell date +%FT%T%Z)
 IMG_NAME := derailed/popeye

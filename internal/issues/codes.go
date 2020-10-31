@@ -112,7 +112,7 @@ codes:
     message:  Pod is in an unhappy phase (%s)
     severity: 3
   208:
-    message:  Pod is not controlled by any resource (ReplicaSet etc.)
+    message: Unmanaged pod detected. Best to use a controller
     severity: 2
 
   # -------------------------------------------------------------------------
