@@ -1,6 +1,7 @@
 /k8s/*
 !/k8s/popeye/
 /k8s1
+krew
 *.out
 /execs
 *.test

@@ -4,7 +4,7 @@ metadata:
   name: popeye
 spec:
   homepage: https://popeyecli.io
-  shortDescription: Scans your clusters for potential resource issues.
+  shortDescription: Scans your clusters for potential resource issues
   version: {{ .TagName }}
   description: |
     Popeye is a utility that scans live Kubernetes clusters and reports
@@ -20,14 +20,13 @@ spec:
 
     Popeye is a readonly tool, it does not alter any of your Kubernetes
     resources in any way!
-
   platforms:
     - selector:
         matchLabels:
           os: darwin
           arch: amd64
-      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_darwin_amd64.tar.gz" .TagName }}
-          files:
+      {{addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Darwin_x86_64.tar.gz" .TagName | indent 6 }}
+      files:
         - from: popeye
           to: kubectl-popeye
         - from: LICENSE
@@ -37,7 +36,7 @@ spec:
         matchLabels:
           os: linux
           arch: amd64
-      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Linux_x86_64.tar.gz" .TagName }}
+      {{addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Linux_x86_64.tar.gz" .TagName | indent 6 }}
       files:
         - from: popeye
           to: kubectl-popeye
@@ -48,7 +47,7 @@ spec:
         matchLabels:
           os: windows
           arch: amd64
-      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Windows_x86_64.tar.gz" .TagName }}
+      {{addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Windows_x86_64.tar.gz" .TagName | indent 6 }}
       files:
         - from: popeye.exe
           to: kubectl-popeye.exe
