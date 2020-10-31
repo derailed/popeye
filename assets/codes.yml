@@ -225,6 +225,9 @@ codes:
   1105:
     message: No associated endpoints
     severity: 3
+  1109:
+    message: Only one associated endpoint
+    severity: 2
   # NetworkPolicies
   1200:
     message: No pods matches %s pod selector
