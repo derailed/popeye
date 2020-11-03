@@ -1,6 +1,9 @@
 popeye:
   excludes:
     v1/serviceaccounts:
+      # Those are managed by SysEleven
+      - name: rx:^syseleven
+
       # We don’t check the kube* service accounts - this is part of the platform
       - name: rx:^kube
       - name: default/default
@@ -9,6 +12,9 @@ popeye:
 
     # Exclude some codes for default services
     v1/services:
+      # Those are managed by SysEleven
+      - name: rx:^syseleven
+
       # This service is of type NodePort, which is intentional (1104)
       - name: default/kubernetes
         codes:
@@ -32,7 +38,13 @@ popeye:
 
     # Exclude Secrets in the system namespaces
     v1/secrets:
+      # Don’t check helm release secrets
+      - name: rx:sh.helm.release
+
       - name: rx:^kube
+
+      # Those are managed by SysEleven
+      - name: rx:^syseleven
 
       # The default token may be unused
       - name: rx:default/default-token
@@ -45,27 +57,43 @@ popeye:
       - name: rx:^default/system
       - name: default/machine-controller
 
+      # Those are managed by SysEleven
+      - name: rx:^syseleven
+
     # Roles for platform services can be excluded
     rbac.authorization.k8s.io/v1/roles:
       - name: rx:^kube
       - name: rx:^default/system
       - name: default/machine-controller
 
+      # Those are managed by SysEleven
+      - name: rx:^syseleven
+
     # ReplicaSets for platform services can be excluded
     v1/replicasets:
       - name: rx:^kube
 
+      # Those are managed by SysEleven
+      - name: rx:^syseleven
+
     # MetaKube provides you with some SysEleven PodSecurityPolicies that we don’t want to scan here
     policy/v1beta1/podsecuritypolicies:
+      # Those are managed by SysEleven
       - name: rx:^syseleven
 
     # PodDisruptionBudgets for platform services can be excluded
     policy/v1beta1/poddisruptionbudgets:
       - name: kube-system/coredns
 
+      # Those are managed by SysEleven
+      - name: rx:^syseleven
+
     # Pods for platform services can be excluded
     v1/pods:
       - name: rx:^kube-system/
+
+      # Those are managed by SysEleven
+      - name: rx:^syseleven
 
     # Nodes are platform services and can be excluded
     v1/nodes:
@@ -78,20 +106,35 @@ popeye:
       - name: kube-public
       - name: kube-system
 
+      # Those are managed by SysEleven
+      - name: rx:^syseleven
+
     # Deployments for platform services can be excluded
     apps/v1/deployments:
       - name: rx:^kube-system
 
+      # Those are managed by SysEleven
+      - name: rx:^syseleven
+
     # Daemonsets for platform services can be excluded
     apps/v1/daemonsets:
       - name: rx:^kube-system
+
+      # Those are managed by SysEleven
+      - name: rx:^syseleven
 
     # ConfigMaps for platform services can be excluded
     v1/configmaps:
       - name: rx:^kube-system
       - name: kube-public/cluster-info
 
+      # Those are managed by SysEleven
+      - name: rx:^syseleven
+
     rbac.authorization.k8s.io/v1/clusterroles:
       - name: rx:.*
         codes:
           - 400
+
+      # Those are managed by SysEleven
+      - name: rx:^syseleven
