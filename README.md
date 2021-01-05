@@ -205,8 +205,8 @@ NOTE: You can override the default output directory location by setting `POPEYE_
 
 ```shell
   docker run --rm -it \
-    -v $HOME/.kube:/root/.kube
-    -e POPEYE_REPORT_DIR=/tmp/popeye
+    -v $HOME/.kube:/root/.kube \
+    -e POPEYE_REPORT_DIR=/tmp/popeye \
     -v /tmp:/tmp \
     quay.io/derailed/popeye --context foo -n bar --save --output-file my_report.txt
 
