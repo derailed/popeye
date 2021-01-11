@@ -124,6 +124,9 @@ codes:
   506:
     message: "At current load, Memory over allocated. Current:%s vs Requested:%s (%s)"
     severity: 2
+  507:
+    message: Deployment references ServiceAccount %q which does not exist
+    severity: 3
   508:
     message: All %d replicas on the same node. Consider inter-pod anti-affinity
     severity: 2
