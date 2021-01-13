@@ -365,11 +365,17 @@ spec:
               args:
                 - -o
                 - yaml
+                - --force-exit-zero
+                - true
               resources:
                 limits:
                   cpu:    500m
                   memory: 100Mi
 ```
+
+The `--force-exit-zero` should be set to `true`. Otherwise, the pods will end up in an error state. Note that popeye
+exits with a non-zero error code if the report has any errors.
+
 
 ## Popeye got your RBAC!
 
