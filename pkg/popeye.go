@@ -362,7 +362,7 @@ func (p *Popeye) dumpStd(mode, header bool) error {
 		p.builder.PrintHeader(s)
 	}
 	mx := p.factory.Client().HasMetrics()
-	p.builder.PrintClusterInfo(s, p.factory.Client().ActiveCluster(), mx)
+	p.builder.PrintClusterInfo(s, p.getClusterName(), mx)
 	p.builder.PrintReport(config.Level(p.config.LinterLevel()), s)
 	p.builder.PrintSummary(s)
 
@@ -377,13 +377,21 @@ func (p *Popeye) dumpPrometheus() error {
 	return pusher.Add()
 }
 
+func (p *Popeye) getClusterName() string {
+	if *p.flags.InClusterName != "" {
+		return *p.flags.InClusterName
+	}
+
+	return p.factory.Client().ActiveCluster()
+}
+
 // Dump prints out sanitizer report.
 func (p *Popeye) dump(printHeader bool) error {
 	if !p.builder.HasContent() {
 		return errors.New("Nothing to report, check section name or permissions")
 	}
 
-	p.builder.SetClusterName(p.factory.Client().ActiveCluster())
+	p.builder.SetClusterName(p.getClusterName())
 	var err error
 	switch p.flags.OutputFormat() {
 	case report.JunitFormat:
@@ -437,7 +445,7 @@ func (p *Popeye) ensureOutput() error {
 
 func (p *Popeye) fileName() string {
 	if *p.flags.OutputFile == "" {
-		return fmt.Sprintf(outFmt, p.factory.Client().ActiveCluster(), time.Now().UnixNano(), p.fileExt())
+		return fmt.Sprintf(outFmt, p.getClusterName(), time.Now().UnixNano(), p.fileExt())
 	}
 	return fmt.Sprintf(*p.flags.OutputFile)
 }
