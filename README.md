@@ -147,6 +147,8 @@ Here is a list of some of the available sanitizers:
 | 🛀 | PodSecurityPolicy       |                                                                         |            |
 |    |                         | Valid                                                                   | psp        |
 
+You can also see the [full list of codes](docs/codes.md)
+
 ### Save the report
 
 To save the Popeye report to a file pass the `--save` flag to the command.
