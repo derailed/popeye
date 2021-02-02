@@ -379,13 +379,13 @@ func (p *Popeye) Do(req *http.Request) (*http.Response, error) {
 		Body: ioutil.NopCloser(bytes.NewBufferString("Dummy response from file writer")),
 	}
 
-	res, err := ioutil.ReadAll(req.Body)
+	out, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		resp.StatusCode =  http.StatusInternalServerError
 		return &resp, err
 	}
 
-	fmt.Fprintf(p.outputTarget, "%s\n", res)
+	fmt.Fprintf(p.outputTarget, "%s\n", out)
 
 	resp.StatusCode = http.StatusOK
 	return &resp, nil
