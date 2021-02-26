@@ -59,6 +59,7 @@ func (s *StatefulSet) Sanitize(ctx context.Context) error {
 
 		s.checkDeprecation(ctx, st)
 		s.checkStatefulSet(ctx, st)
+		s.checkSameNode(ctx, st)
 		s.checkContainers(ctx, st)
 		s.checkUtilization(ctx, over, st, pmx)
 
@@ -117,6 +118,26 @@ func (s *StatefulSet) checkContainers(ctx context.Context, st *appsv1.StatefulSe
 
 	for _, co := range spec.Containers {
 		l.sanitize(ctx, co, false)
+	}
+}
+
+// checkSameNode verifies if all replicas of the StatefulSet are running on
+// the same node.
+func (s *StatefulSet) checkSameNode(ctx context.Context, st *appsv1.StatefulSet) {
+	if *st.Spec.Replicas <= 1 {
+		return
+	}
+
+	nodeMap := make(map[string]int)
+	for _, pod := range s.ListPodsBySelector(st.Namespace, st.Spec.Selector) {
+		if _, exists := nodeMap[pod.Spec.NodeName]; !exists {
+			nodeMap[pod.Spec.NodeName] = 0
+		}
+		nodeMap[pod.Spec.NodeName]++
+	}
+
+	if len(nodeMap) < 2 {
+		s.AddCode(ctx, 508, *st.Spec.Replicas)
 	}
 }
 
