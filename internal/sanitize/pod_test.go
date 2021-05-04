@@ -67,7 +67,7 @@ func TestPodCheckSecure(t *testing.T) {
 		t.Run(k, func(t *testing.T) {
 			p := NewPod(issues.NewCollector(loadCodes(t), makeConfig(t)), nil)
 
-			p.checkSecure(ctx, u.pod.Spec)
+			p.checkSecure(ctx, "default/p1", u.pod.Spec)
 			assert.Equal(t, u.issues, len(p.Outcome()["default/p1"]))
 		})
 	}

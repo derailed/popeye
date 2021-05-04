@@ -84,7 +84,7 @@ func (p *Pod) Sanitize(ctx context.Context) error {
 		if !ownedByDaemonSet(po) {
 			p.checkPdb(ctx, po.ObjectMeta.Labels)
 		}
-		p.checkSecure(ctx, po.Spec)
+		p.checkSecure(ctx, fqn, po.Spec)
 		pmx, cmx := mx[fqn], client.ContainerMetrics{}
 		containerMetrics(pmx, cmx)
 		p.checkUtilization(ctx, po, cmx)
@@ -144,7 +144,7 @@ func (p *Pod) checkUtilization(ctx context.Context, po *v1.Pod, cmx client.Conta
 	}
 }
 
-func (p *Pod) checkSecure(ctx context.Context, spec v1.PodSpec) {
+func (p *Pod) checkSecure(ctx context.Context, fqn string, spec v1.PodSpec) {
 	if spec.ServiceAccountName == "default" {
 		p.AddCode(ctx, 300)
 	}
@@ -159,15 +159,16 @@ func (p *Pod) checkSecure(ctx context.Context, spec v1.PodSpec) {
 
 	// If pod security ctx is present and we have
 	podSec := hasPodNonRootUser(spec.SecurityContext)
+	gvr := internal.MustExtractSectionGVR(ctx)
 	var victims int
 	for _, co := range spec.InitContainers {
-		if !checkCOSecurityContext(co) && !podSec {
+		if !p.Config.ExcludeContainer(gvr, fqn, co.Name) && !checkCOSecurityContext(co) && !podSec {
 			victims++
 			p.AddSubCode(internal.WithGroup(ctx, client.NewGVR("containers"), co.Name), 306)
 		}
 	}
 	for _, co := range spec.Containers {
-		if !checkCOSecurityContext(co) && !podSec {
+		if !p.Config.ExcludeContainer(gvr, fqn, co.Name) && !checkCOSecurityContext(co) && !podSec {
 			victims++
 			p.AddSubCode(internal.WithGroup(ctx, client.NewGVR("containers"), co.Name), 306)
 		}
