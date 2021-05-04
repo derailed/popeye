@@ -22,6 +22,7 @@ type Flags struct {
 	InClusterName      *string
 	StandAlone         bool
 	ActiveNamespace    *string
+	ForceExitZero      *bool
 }
 
 // NewFlags returns new configuration flags.
@@ -40,6 +41,7 @@ func NewFlags() *Flags {
 		Sections:           &[]string{},
 		ConfigFlags:        genericclioptions.NewConfigFlags(false),
 		PushGatewayAddress: strPtr(""),
+		ForceExitZero:		boolPtr(false),
 	}
 }
 
