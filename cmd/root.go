@@ -81,6 +81,10 @@ func doIt(cmd *cobra.Command, args []string) {
 		bomb(err.Error())
 	}
 
+	if flags.ForceExitZero != nil && *flags.ForceExitZero {
+		os.Exit(0)
+	}
+
 	if errCount > 0 {
 		os.Exit(1)
 	}
@@ -250,6 +254,14 @@ func initFlags() {
 		"pushgateway-address",
 		"",
 		"Address of pushgateway e.g. http://localhost:9091",
+	)
+
+	rootCmd.Flags().BoolVarP(
+		flags.ForceExitZero,
+		"force-exit-zero",
+		"",
+		false,
+		"Force zero exit status when report errors are present",
 	)
 }
 
