@@ -10,11 +10,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
       - name: Setup Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
-          go-version: 1.15
+          go-version: 1.15.3
+      - name: Git
+        run: apt-get update && apt-get install git -y
+      - name: Path
+        run: printenv PATH && ls -al /usr/local/bin/go
       - name: GoReleaser
-        uses: goreleaser/goreleaser-action@v1
+        uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
           args: release --rm-dist

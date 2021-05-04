@@ -1,6 +1,8 @@
 package types
 
 import (
+	"time"
+
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/version"
@@ -59,6 +61,7 @@ type Config interface {
 	CurrentClusterName() (string, error)
 	Flags() *genericclioptions.ConfigFlags
 	RESTConfig() (*restclient.Config, error)
+	CallTimeout() time.Duration
 }
 
 // Connection represents a Kubenetes apiserver connection.

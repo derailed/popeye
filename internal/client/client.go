@@ -1,6 +1,7 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -26,7 +27,6 @@ import (
 const (
 	cacheSize     = 100
 	cacheExpiry   = 5 * time.Minute
-	cacheMXKey    = "metrics"
 	cacheMXAPIKey = "metricsAPI"
 	// CallTimeout represents api call timeout limit.
 	CallTimeout = 5 * time.Second
@@ -44,7 +44,6 @@ type APIClient struct {
 	config         types.Config
 	mx             sync.Mutex
 	cache          *cache.LRUExpireCache
-	metricsAPI     bool
 }
 
 // NewTestClient for testing ONLY!!
@@ -57,14 +56,16 @@ func NewTestClient() *APIClient {
 
 // InitConnectionOrDie initialize connection from command line args.
 // Checks for connectivity with the api server.
-func InitConnectionOrDie(config types.Config) *APIClient {
+func InitConnectionOrDie(config types.Config) (*APIClient, error) {
 	a := APIClient{
 		config: config,
 		cache:  cache.NewLRUExpireCache(cacheSize),
 	}
-	a.metricsAPI = a.supportsMetricsResources()
+	if err := a.supportsMetricsResources(); err != nil {
+		return nil, err
+	}
 
-	return &a
+	return &a, nil
 }
 
 func makeSAR(ns, gvr string) *authorizationv1.SelfSubjectAccessReview {
@@ -207,7 +208,7 @@ func (a *APIClient) CheckConnectivity() (status bool) {
 		if err != nil {
 			return
 		}
-		cfg.Timeout = defaultTimeout
+		cfg.Timeout = defaultCallTimeoutDuration
 
 		if a.checkClientSet, err = kubernetes.NewForConfig(cfg); err != nil {
 			log.Error().Err(err).Msgf("Unable to connect to api server")
@@ -229,31 +230,9 @@ func (a *APIClient) Config() types.Config {
 	return a.config
 }
 
-// HasMetrics returns true if the cluster supports metrics.
+// HasMetrics checks if the cluster supports metrics and user is authorized to use metrics.
 func (a *APIClient) HasMetrics() bool {
-	if !a.supportsMetricsResources() {
-		return false
-	}
-	v, ok := a.cache.Get(cacheMXKey)
-	if ok {
-		flag, k := v.(bool)
-		return k && flag
-	}
-
-	var flag bool
-	dial, err := a.MXDial()
-	if err != nil {
-		a.cache.Add(cacheMXKey, flag, cacheExpiry)
-		return flag
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), CallTimeout)
-	defer cancel()
-	if _, err := dial.MetricsV1beta1().NodeMetricses().List(ctx, metav1.ListOptions{Limit: 1}); err == nil {
-		flag = true
-	}
-	a.cache.Add(cacheMXKey, flag, cacheExpiry)
-
-	return flag
+	return a.supportsMetricsResources() == nil
 }
 
 // Dial returns a handle to api server or an error
@@ -342,28 +321,37 @@ func (a *APIClient) MXDial() (*versioned.Clientset, error) {
 	return a.mxsClient, err
 }
 
-func (a *APIClient) supportsMetricsResources() (supported bool) {
+func (a *APIClient) checkCacheBool(key string) (state bool, ok bool) {
+	v, found := a.cache.Get(key)
+	if !found {
+		return
+	}
+	state, ok = v.(bool)
+	return
+}
+
+func (a *APIClient) supportsMetricsResources() error {
+	supported, ok := a.checkCacheBool(cacheMXAPIKey)
+	if ok {
+		if supported {
+			return nil
+		}
+		return errors.New("No metrics-server detected")
+	}
+
 	defer func() {
 		a.cache.Add(cacheMXAPIKey, supported, cacheExpiry)
 	}()
 
-	if v, ok := a.cache.Get(cacheMXAPIKey); ok {
-		flag, k := v.(bool)
-		supported = k && flag
-		return
-	}
-	if a.config == nil || a.config.Flags() == nil {
-		return
-	}
-
 	dial, err := a.CachedDiscovery()
 	if err != nil {
-		log.Error().Err(err).Msg("Dial failed!")
-		return false
+		log.Warn().Err(err).Msgf("Unable to dial discovery API")
+		return err
 	}
 	apiGroups, err := dial.ServerGroups()
 	if err != nil {
-		return
+		log.Warn().Err(err).Msgf("Unable to retrieve server groups")
+		return err
 	}
 	for _, grp := range apiGroups.Groups {
 		if grp.Name != metricsapi.GroupName {
@@ -371,13 +359,12 @@ func (a *APIClient) supportsMetricsResources() (supported bool) {
 		}
 		if checkMetricsVersion(grp) {
 			supported = true
-			return
+			return nil
 		}
 	}
 
-	return
+	return errors.New("No metrics-server detected")
 }
-
 func checkMetricsVersion(grp metav1.APIGroup) bool {
 	for _, version := range grp.Versions {
 		for _, supportedVersion := range supportedMetricsAPIVersions {

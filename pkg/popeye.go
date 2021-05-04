@@ -131,7 +131,10 @@ func (p *Popeye) scannedGVRs() []string {
 }
 
 func (p *Popeye) initFactory() error {
-	clt := client.InitConnectionOrDie(client.NewConfig(p.flags.ConfigFlags))
+	clt, err := client.InitConnectionOrDie(client.NewConfig(p.flags.ConfigFlags))
+	if err != nil {
+		return err
+	}
 	f := client.NewFactory(clt)
 	p.factory = f
 
@@ -286,7 +289,7 @@ func (p *Popeye) sanitize() (int, error) {
 func (p *Popeye) sanitizer(ctx context.Context, gvr client.GVR, f scrubFn, c chan run, cache *scrub.Cache, codes *issues.Codes) {
 	defer func() {
 		if e := recover(); e != nil {
-			log.Error().Msgf("Popeye CHOCKED! %#v", e)
+			log.Error().Msgf("Popeye CHOKED! %#v", e)
 			log.Error().Msgf("%v", string(debug.Stack()))
 		}
 	}()
@@ -361,8 +364,7 @@ func (p *Popeye) dumpStd(mode, header bool) error {
 	if header {
 		p.builder.PrintHeader(s)
 	}
-	mx := p.factory.Client().HasMetrics()
-	p.builder.PrintClusterInfo(s, p.factory.Client().ActiveCluster(), mx)
+	p.builder.PrintClusterInfo(s, p.factory.Client().ActiveCluster(), p.factory.Client().HasMetrics())
 	p.builder.PrintReport(config.Level(p.config.LinterLevel()), s)
 	p.builder.PrintSummary(s)
 

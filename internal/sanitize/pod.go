@@ -113,7 +113,7 @@ func (p *Pod) checkOwnedByAnything(ctx context.Context, ownerRefs []metav1.Owner
 
 	controlled := false
 	for _, or := range ownerRefs {
-		if *or.Controller {
+		if or.Controller != nil && *or.Controller {
 			controlled = true
 			break
 		}

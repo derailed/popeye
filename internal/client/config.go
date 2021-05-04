@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	defaultQPS     = 100
-	defaultBurst   = 100
-	defaultTimeout = 5 * time.Second
+	defaultQPS                               = 100
+	defaultBurst                             = 100
+	defaultCallTimeoutDuration time.Duration = 5 * time.Second
 )
 
 // Config tracks a kubernetes configuration.
@@ -40,6 +40,19 @@ func NewConfig(f *genericclioptions.ConfigFlags) *Config {
 		flags: f,
 		mutex: &sync.RWMutex{},
 	}
+}
+
+// CallTimeout returns the call timeout if set or the default if not set.
+func (c *Config) CallTimeout() time.Duration {
+	if c.flags.Timeout == nil {
+		return defaultCallTimeoutDuration
+	}
+	dur, err := time.ParseDuration(*c.flags.Timeout)
+	if err != nil {
+		return defaultCallTimeoutDuration
+	}
+
+	return dur
 }
 
 // Flags returns configuration flags.
@@ -297,7 +310,7 @@ func (c *Config) RESTConfig() (*restclient.Config, error) {
 	}
 	c.restConfig.QPS = defaultQPS
 	c.restConfig.Burst = defaultBurst
-	c.restConfig.Timeout = defaultTimeout
+	c.restConfig.Timeout = defaultCallTimeoutDuration
 
 	log.Debug().Msgf("Connecting to API Server %s", c.restConfig.Host)
 

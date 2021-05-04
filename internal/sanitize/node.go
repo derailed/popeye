@@ -67,7 +67,7 @@ func (n *Node) Sanitize(ctx context.Context) error {
 		n.InitOutcome(fqn)
 		ctx = internal.WithFQN(ctx, fqn)
 
-		if n.checkMasterRole(ctx, no) {
+		if n.checkMasterRole(no) {
 			numMasters++
 		}
 
@@ -137,7 +137,7 @@ func (n *Node) checkConditions(ctx context.Context, no *v1.Node) bool {
 }
 
 // checkMasterRole checks whether the node is a master node.
-func (n *Node) checkMasterRole(ctx context.Context, no *v1.Node) bool {
+func (n *Node) checkMasterRole(no *v1.Node) bool {
 	if _, ok := no.Labels[labelNodeRoleMaster]; ok {
 		return true
 	}
