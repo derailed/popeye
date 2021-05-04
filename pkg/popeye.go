@@ -7,7 +7,10 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/prometheus/common/expfmt"
 	"io"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -371,11 +374,37 @@ func (p *Popeye) dumpStd(mode, header bool) error {
 	return w.Flush()
 }
 
+// Do implements the HTTPDoer interface to replace the standard http client push request and write to the outputTarget
+func (p *Popeye) Do(req *http.Request) (*http.Response, error) {
+	resp := http.Response{
+		// Avoid panic when the pusher tries to close the body
+		Body: ioutil.NopCloser(bytes.NewBufferString("Dummy response from file writer")),
+	}
+
+	out, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		resp.StatusCode =  http.StatusInternalServerError
+		return &resp, err
+	}
+
+	fmt.Fprintf(p.outputTarget, "%s\n", out)
+
+	resp.StatusCode = http.StatusOK
+	return &resp, nil
+}
+
 func (p *Popeye) dumpPrometheus() error {
 	pusher := p.builder.ToPrometheus(
 		p.flags.PushGatewayAddress,
 		p.factory.Client().ActiveNamespace(),
 	)
+
+	// Enable saving to file
+	if isSet(p.flags.Save) || isSetStr(p.flags.S3Bucket) {
+		pusher.Client(p)
+		pusher.Format(expfmt.FmtText)
+	}
+
 	return pusher.Add()
 }
 

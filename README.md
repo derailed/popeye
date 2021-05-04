@@ -147,6 +147,8 @@ Here is a list of some of the available sanitizers:
 | 🛀 | PodSecurityPolicy       |                                                                         |            |
 |    |                         | Valid                                                                   | psp        |
 
+You can also see the [full list of codes](docs/codes.md)
+
 ### Save the report
 
 To save the Popeye report to a file pass the `--save` flag to the command.
@@ -205,8 +207,8 @@ NOTE: You can override the default output directory location by setting `POPEYE_
 
 ```shell
   docker run --rm -it \
-    -v $HOME/.kube:/root/.kube
-    -e POPEYE_REPORT_DIR=/tmp/popeye
+    -v $HOME/.kube:/root/.kube \
+    -e POPEYE_REPORT_DIR=/tmp/popeye \
     -v /tmp:/tmp \
     quay.io/derailed/popeye --context foo -n bar --save --output-file my_report.txt
 

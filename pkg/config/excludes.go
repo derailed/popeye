@@ -91,7 +91,7 @@ func (e Excludes) ShouldExclude(section, fqn string, code ID) bool {
 // Match checks if a given named should be excluded.
 func (e Exclusions) Match(resource string, code ID) bool {
 	for _, exclude := range e {
-		if exclude.Match(resource) && hasCode(exclude.Codes, code) {
+		if len(exclude.Containers) == 0 && exclude.Match(resource) && hasCode(exclude.Codes, code) {
 			return true
 		}
 	}
