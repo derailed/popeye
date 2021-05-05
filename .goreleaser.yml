@@ -30,7 +30,6 @@ archives:
       bit: Arm
       bitv6: Arm6
       bitv7: Arm7
-      386: i386
       amd64: x86_64
 checksum:
   name_template: "checksums.txt"
@@ -46,7 +45,7 @@ changelog:
 # Homebrew
 brews:
   - name: popeye
-    github:
+    tap:
       owner: derailed
       name: popeye-homebrew-tap
     commit_author:
