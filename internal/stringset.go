@@ -15,6 +15,12 @@ type StringSet map[string]Empty
 // AllKeys indicates all keys are present.
 var AllKeys = StringSet{All: Blank}
 
+func (ss StringSet) AddAll(s StringSet) {
+	for k := range s {
+		ss[k] = Blank
+	}
+}
+
 // Add a collection of elements to the set.
 func (ss StringSet) Add(strs ...string) {
 	for _, s := range strs {

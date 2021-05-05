@@ -86,18 +86,31 @@ func (n *NetworkPolicy) checkNSSelector(ctx context.Context, sel *metav1.LabelSe
 }
 
 func (n *NetworkPolicy) checkRefs(ctx context.Context, np *nv1.NetworkPolicy) {
+	const (
+		ingress = "Ingress"
+		egress  = "Egress"
+	)
+
 	for _, ing := range np.Spec.Ingress {
-		for _, f := range ing.From {
-			if nss := n.checkNSSelector(ctx, f.NamespaceSelector, "Ingress"); len(nss) > 0 {
-				n.checkPodSelector(ctx, nss, f.PodSelector, "Ingress")
+		for _, from := range ing.From {
+			if from.NamespaceSelector != nil {
+				if nss := n.checkNSSelector(ctx, from.NamespaceSelector, ingress); len(nss) > 0 {
+					n.checkPodSelector(ctx, nss, from.PodSelector, ingress)
+				}
+			} else {
+				n.checkPodSelector(ctx, map[string]*v1.Namespace{np.Namespace: nil}, from.PodSelector, ingress)
 			}
 		}
 	}
 
 	for _, eg := range np.Spec.Egress {
-		for _, f := range eg.To {
-			if nss := n.checkNSSelector(ctx, f.NamespaceSelector, "Egress"); len(nss) > 0 {
-				n.checkPodSelector(ctx, nss, f.PodSelector, "Egress")
+		for _, to := range eg.To {
+			if to.NamespaceSelector != nil {
+				if nss := n.checkNSSelector(ctx, to.NamespaceSelector, egress); len(nss) > 0 {
+					n.checkPodSelector(ctx, nss, to.PodSelector, egress)
+				}
+			} else {
+				n.checkPodSelector(ctx, map[string]*v1.Namespace{np.Namespace: nil}, to.PodSelector, egress)
 			}
 		}
 	}

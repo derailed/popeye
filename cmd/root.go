@@ -250,10 +250,22 @@ func initFlags() {
 	)
 
 	rootCmd.Flags().StringVar(
-		flags.PushGatewayAddress,
+		flags.PushGateway.Address,
 		"pushgateway-address",
 		"",
 		"Address of pushgateway e.g. http://localhost:9091",
+	)
+	rootCmd.Flags().StringVar(
+		flags.PushGateway.BasicAuth.User,
+		"pushgateway-user",
+		"",
+		"BasicAuth username for pushgateway",
+	)
+	rootCmd.Flags().StringVar(
+		flags.PushGateway.BasicAuth.Password,
+		"pushgateway-password",
+		"",
+		"BasicAuth password for pushgateway",
 	)
 
 	rootCmd.Flags().BoolVarP(
@@ -266,8 +278,8 @@ func initFlags() {
 }
 
 func checkFlags() error {
-	if flags.OutputFormat() == report.PrometheusFormat && *flags.PushGatewayAddress == "" {
-		return errors.New("Please set pushgateway-address.")
+	if flags.OutputFormat() == report.PrometheusFormat && *flags.PushGateway.Address == "" {
+		return errors.New("Please set pushgateway-address and auth if necessary")
 	}
 	if !*flags.Save && *flags.OutputFile != "" {
 		return errors.New("Please set '--save' flag to use 'output-file'.")

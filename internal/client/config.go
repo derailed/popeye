@@ -19,7 +19,7 @@ import (
 const (
 	defaultQPS                               = 100
 	defaultBurst                             = 100
-	defaultCallTimeoutDuration time.Duration = 5 * time.Second
+	defaultCallTimeoutDuration time.Duration = 30 * time.Second
 )
 
 // Config tracks a kubernetes configuration.

@@ -6,7 +6,7 @@ import (
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
-	nv1beta1 "k8s.io/api/extensions/v1beta1"
+	netv1b1 "k8s.io/api/networking/v1beta1"
 )
 
 type (
@@ -18,7 +18,7 @@ type (
 
 	// IngLister list ingresses.
 	IngLister interface {
-		ListIngresses() map[string]*nv1beta1.Ingress
+		ListIngresses() map[string]*netv1b1.Ingress
 	}
 
 	// IngressLister list available Ingresss on a cluster.
@@ -51,7 +51,7 @@ func (i *Ingress) Sanitize(ctx context.Context) error {
 	return nil
 }
 
-func (i *Ingress) checkDeprecation(ctx context.Context, ing *nv1beta1.Ingress) {
+func (i *Ingress) checkDeprecation(ctx context.Context, ing *netv1b1.Ingress) {
 	const current = "networking.k8s.io/v1"
 
 	rev, err := resourceRev(internal.MustExtractFQN(ctx), "Ingress", ing.Annotations)

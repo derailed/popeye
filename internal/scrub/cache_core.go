@@ -8,7 +8,6 @@ import (
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dag"
-	"github.com/rs/zerolog/log"
 )
 
 type core struct {
@@ -32,8 +31,6 @@ func newCore(d *dial) *core {
 }
 
 func (c *core) services() (*cache.Service, error) {
-	log.Debug().Msgf("CACHE-SVC")
-	defer log.Debug().Msgf("  SVC-DONE")
 	c.mx.Lock()
 	defer c.mx.Unlock()
 
@@ -49,9 +46,6 @@ func (c *core) services() (*cache.Service, error) {
 }
 
 func (c *core) endpoints() (*cache.Endpoints, error) {
-	log.Debug().Msgf("CACHE-EP")
-	defer log.Debug().Msgf("  EP-DONE")
-
 	c.mx.Lock()
 	defer c.mx.Unlock()
 
@@ -67,9 +61,6 @@ func (c *core) endpoints() (*cache.Endpoints, error) {
 }
 
 func (c *core) secrets() (*cache.Secret, error) {
-	log.Debug().Msgf("CACHE-SEC")
-	defer log.Debug().Msgf("  SEC-DONE")
-
 	c.mx.Lock()
 	defer c.mx.Unlock()
 
@@ -85,9 +76,6 @@ func (c *core) secrets() (*cache.Secret, error) {
 }
 
 func (c *core) persistentvolumes() (*cache.PersistentVolume, error) {
-	log.Debug().Msgf("CACHE-PV")
-	defer log.Debug().Msgf("  PV-DONE")
-
 	c.mx.Lock()
 	defer c.mx.Unlock()
 
@@ -103,9 +91,6 @@ func (c *core) persistentvolumes() (*cache.PersistentVolume, error) {
 }
 
 func (c *core) persistentvolumeclaims() (*cache.PersistentVolumeClaim, error) {
-	log.Debug().Msgf("CACHE-PVC")
-	defer log.Debug().Msgf("  PVC-DONE")
-
 	c.mx.Lock()
 	defer c.mx.Unlock()
 
@@ -121,8 +106,6 @@ func (c *core) persistentvolumeclaims() (*cache.PersistentVolumeClaim, error) {
 }
 
 func (c *core) configmaps() (*cache.ConfigMap, error) {
-	log.Debug().Msgf("CACHE-CM")
-	defer log.Debug().Msgf("  CM-DONE")
 	c.mx.Lock()
 	defer c.mx.Unlock()
 
@@ -138,9 +121,6 @@ func (c *core) configmaps() (*cache.ConfigMap, error) {
 }
 
 func (c *core) namespaces() (*cache.Namespace, error) {
-	log.Debug().Msgf("CACHE-NS")
-	defer log.Debug().Msgf("  NS-DONE")
-
 	c.mx.Lock()
 	defer c.mx.Unlock()
 
@@ -156,9 +136,6 @@ func (c *core) namespaces() (*cache.Namespace, error) {
 }
 
 func (c *core) nodes() (*cache.Node, error) {
-	log.Debug().Msgf("CACHE-NO")
-	defer log.Debug().Msgf("  NO-DONE")
-
 	c.mx.Lock()
 	defer c.mx.Unlock()
 
@@ -174,9 +151,6 @@ func (c *core) nodes() (*cache.Node, error) {
 }
 
 func (c *core) pods() (*cache.Pod, error) {
-	log.Debug().Msgf("CACHE-POD")
-	defer log.Debug().Msgf("  POD-DONE")
-
 	c.mx.Lock()
 	defer c.mx.Unlock()
 
@@ -192,9 +166,6 @@ func (c *core) pods() (*cache.Pod, error) {
 }
 
 func (c *core) serviceaccounts() (*cache.ServiceAccount, error) {
-	log.Debug().Msgf("CACHE-SA")
-	defer log.Debug().Msgf("  SA-DONE")
-
 	c.mx.Lock()
 	defer c.mx.Unlock()
 

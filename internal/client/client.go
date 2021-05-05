@@ -29,7 +29,7 @@ const (
 	cacheExpiry   = 5 * time.Minute
 	cacheMXAPIKey = "metricsAPI"
 	// CallTimeout represents api call timeout limit.
-	CallTimeout = 5 * time.Second
+	CallTimeout = 30 * time.Second
 )
 
 var supportedMetricsAPIVersions = []string{"v1beta1"}

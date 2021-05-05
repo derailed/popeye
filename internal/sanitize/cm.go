@@ -3,12 +3,10 @@ package sanitize
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/rs/zerolog/log"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -41,11 +39,6 @@ func NewConfigMap(c *issues.Collector, lister ConfigMapLister) *ConfigMap {
 
 // Sanitize cleanse the resource.
 func (c *ConfigMap) Sanitize(ctx context.Context) error {
-	log.Debug().Msgf("SAN-CM")
-	defer func(t time.Time) {
-		log.Debug().Msgf("  SAN-CM %v", time.Since(t))
-	}(time.Now())
-
 	var cmRefs sync.Map
 	c.PodRefs(&cmRefs)
 	c.checkInUse(ctx, &cmRefs)

@@ -352,6 +352,7 @@ func makeCS(n string, opts csOpts) v1.ContainerStatus {
 func makeSecCO(name string, level NonRootUser) v1.Container {
 	t, f := true, false
 	secCtx := v1.SecurityContext{}
+	// nolint:exhaustive
 	switch level {
 	case SecNonRootUnset:
 		secCtx.RunAsNonRoot = &f
@@ -366,6 +367,7 @@ func makeSecPod(pod, init, co1, co2 NonRootUser) v1.Pod {
 	t, f := true, false
 
 	secCtx := v1.PodSecurityContext{}
+	// nolint:exhaustive
 	switch pod {
 	case SecNonRootUnset:
 		secCtx.RunAsNonRoot = &f

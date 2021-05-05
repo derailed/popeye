@@ -237,6 +237,7 @@ func (p *Pod) checkContainerStatus(ctx context.Context, po *v1.Pod) {
 }
 
 func (p *Pod) checkStatus(ctx context.Context, po *v1.Pod) {
+	// nolint:exhaustive
 	switch po.Status.Phase {
 	case v1.PodRunning:
 	case v1.PodSucceeded:

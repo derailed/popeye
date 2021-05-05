@@ -42,6 +42,7 @@ func (i Issue) IsSubIssue() bool {
 
 // LevelToStr returns a severity level as a string.
 func LevelToStr(l config.Level) string {
+	// nolint:exhaustive
 	switch l {
 	case config.ErrorLevel:
 		return "error"

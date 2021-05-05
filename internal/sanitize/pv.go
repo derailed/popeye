@@ -46,6 +46,7 @@ func (p *PersistentVolume) Sanitize(ctx context.Context) error {
 }
 
 func (p *PersistentVolume) checkBound(ctx context.Context, phase v1.PersistentVolumePhase) {
+	// nolint:exhaustive
 	switch phase {
 	case v1.VolumeAvailable:
 		p.AddCode(ctx, 1000)

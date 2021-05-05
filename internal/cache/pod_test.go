@@ -23,20 +23,18 @@ func TestGetPod(t *testing.T) {
 		e   string
 	}{
 		"noSelector": {
-			map[string]string{},
-			"",
+			sel: map[string]string{},
 		},
 		"p1": {
-			map[string]string{"a": "a", "b": "b", "c": "c"},
-			"default/p1",
+			sel: map[string]string{"a": "a", "b": "b", "c": "c"},
+			e:   "default/p1",
 		},
 		"p3": {
-			map[string]string{"a": "c"},
-			"default/p3",
+			sel: map[string]string{"a": "c"},
+			e:   "default/p3",
 		},
 		"none": {
-			map[string]string{"a": "x"},
-			"",
+			sel: map[string]string{"a": "x"},
 		},
 	}
 

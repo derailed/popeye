@@ -1,8 +1,10 @@
 package report
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/derailed/popeye/pkg/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 )
@@ -53,8 +55,8 @@ var (
 		})
 )
 
-func prometheusMarshal(b *Builder, address *string, cluster, namespace string) *push.Pusher {
-	pusher := newPusher(address)
+func prometheusMarshal(b *Builder, gtwy *config.PushGateway, cluster, namespace string) *push.Pusher {
+	pusher := newPusher(gtwy)
 
 	score.WithLabelValues(cluster, namespace, b.Report.Grade).Set(float64(b.Report.Score))
 	errs.WithLabelValues(cluster, namespace).Set(float64(len(b.Report.Errors)))
@@ -69,8 +71,18 @@ func prometheusMarshal(b *Builder, address *string, cluster, namespace string) *
 	return pusher
 }
 
-func newPusher(address *string) *push.Pusher {
+func newPusher(gtwy *config.PushGateway) *push.Pusher {
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(score, errs, sanitizers, sanitizersScore)
-	return push.New(*address, "popeye").Gatherer(registry)
+	p := push.New(*gtwy.Address, "popeye").Gatherer(registry)
+	if isSet(gtwy.BasicAuth.User) && isSet(gtwy.BasicAuth.Password) {
+		fmt.Println("Using auth! ", *gtwy.BasicAuth.User, *gtwy.BasicAuth.Password)
+		p = p.BasicAuth(*gtwy.BasicAuth.User, *gtwy.BasicAuth.Password)
+	}
+
+	return p
+}
+
+func isSet(s *string) bool {
+	return s != nil && *s != ""
 }

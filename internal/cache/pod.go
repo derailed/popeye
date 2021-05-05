@@ -6,6 +6,7 @@ import (
 	"github.com/derailed/popeye/internal"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 // Pod represents a Pod cache.
@@ -26,11 +27,14 @@ func (p *Pod) ListPods() map[string]*v1.Pod {
 // ListPodsBySelector list all pods matching the given selector.
 func (p *Pod) ListPodsBySelector(ns string, sel *metav1.LabelSelector) map[string]*v1.Pod {
 	res := map[string]*v1.Pod{}
-	if sel == nil {
+	if sel == nil || sel.Size() == 0 {
 		return res
 	}
 	for fqn, po := range p.pods {
-		if po.Namespace == ns && matchLabels(po.ObjectMeta.Labels, sel.MatchLabels) {
+		if po.Namespace != ns {
+			continue
+		}
+		if s, err := metav1.LabelSelectorAsSelector(sel); err == nil && s.Matches(labels.Set(po.Labels)) {
 			res[fqn] = po
 		}
 	}
@@ -151,5 +155,13 @@ func addKeys(kind, rfqn string, items []v1.KeyToPath, refs *sync.Map) {
 	for _, path := range items {
 		set.Add(path.Key)
 	}
-	refs.Store(ResFqn(kind, rfqn), set)
+
+	key := ResFqn(kind, rfqn)
+	if s, ok := refs.LoadOrStore(ResFqn(kind, rfqn), set); ok {
+		if ss, ok := s.(internal.StringSet); ok {
+			cp := ss.Clone()
+			cp.AddAll(set)
+			refs.Store(key, cp)
+		}
+	}
 }

@@ -189,12 +189,13 @@ func (b *Builder) ToHTML() (string, error) {
 }
 
 // ToPrometheus returns prometheus pusher.
-func (b *Builder) ToPrometheus(address *string, namespace string) *push.Pusher {
+func (b *Builder) ToPrometheus(gtwy *config.PushGateway, namespace string) *push.Pusher {
 	b.finalize()
 	if namespace == "" {
 		namespace = "all"
 	}
-	return prometheusMarshal(b, address, b.clusterName, namespace)
+
+	return prometheusMarshal(b, gtwy, b.clusterName, namespace)
 }
 
 // ToScore dumps sanitizer to only the score value.

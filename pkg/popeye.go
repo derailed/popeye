@@ -7,7 +7,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/prometheus/common/expfmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -17,6 +16,8 @@ import (
 	"runtime/debug"
 	"strings"
 	"time"
+
+	"github.com/prometheus/common/expfmt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -123,7 +124,7 @@ func (p *Popeye) scannedGVRs() []string {
 		"apps/v1/statefulsets",
 		"policy/v1beta1/poddisruptionbudgets",
 		"policy/v1beta1/podsecuritypolicies",
-		"extensions/v1beta1/ingresses",
+		"networking.k8s.io/v1beta1/ingresses",
 		"networking.k8s.io/v1/networkpolicies",
 		"autoscaling/v1/horizontalpodautoscalers",
 		"rbac.authorization.k8s.io/v1/clusterroles",
@@ -153,7 +154,7 @@ func (p *Popeye) initFactory() error {
 	for _, gvr := range p.scannedGVRs() {
 		ok, err := clt.CanI(client.AllNamespaces, gvr, types.ReadAllAccess)
 		if !ok || err != nil {
-			return fmt.Errorf("Current user does not have read access for resource %q -- %v", gvr, err)
+			return fmt.Errorf("Current user does not have read access for resource %q -- %w", gvr, err)
 		}
 		if _, err := f.ForResource(client.AllNamespaces, gvr); err != nil {
 			return err
@@ -181,7 +182,7 @@ func (p *Popeye) sanitizers() map[string]scrubFn {
 		"apps/v1/replicasets":       scrub.NewReplicaSet,
 		"apps/v1/statefulsets":      scrub.NewStatefulSet,
 		"autoscaling/v1/horizontalpodautoscalers":          scrub.NewHorizontalPodAutoscaler,
-		"extensions/v1beta1/ingresses":                     scrub.NewIngress,
+		"networking.k8s.io/v1beta1/ingresses":              scrub.NewIngress,
 		"networking.k8s.io/v1/networkpolicies":             scrub.NewNetworkPolicy,
 		"policy/v1beta1/poddisruptionbudgets":              scrub.NewPodDisruptionBudget,
 		"policy/v1beta1/podsecuritypolicies":               scrub.NewPodSecurityPolicy,
@@ -383,7 +384,7 @@ func (p *Popeye) Do(req *http.Request) (*http.Response, error) {
 
 	out, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		resp.StatusCode =  http.StatusInternalServerError
+		resp.StatusCode = http.StatusInternalServerError
 		return &resp, err
 	}
 
@@ -395,7 +396,7 @@ func (p *Popeye) Do(req *http.Request) (*http.Response, error) {
 
 func (p *Popeye) dumpPrometheus() error {
 	pusher := p.builder.ToPrometheus(
-		p.flags.PushGatewayAddress,
+		p.flags.PushGateway,
 		p.factory.Client().ActiveNamespace(),
 	)
 
@@ -408,13 +409,24 @@ func (p *Popeye) dumpPrometheus() error {
 	return pusher.Add()
 }
 
+func (p *Popeye) fetchClusterName() string {
+	switch {
+	case p.factory.Client().ActiveCluster() != "":
+		return p.factory.Client().ActiveCluster()
+	case p.flags.InClusterName != nil && *p.flags.InClusterName != "":
+		return *p.flags.InClusterName
+	default:
+		return "n/a"
+	}
+}
+
 // Dump prints out sanitizer report.
 func (p *Popeye) dump(printHeader bool) error {
 	if !p.builder.HasContent() {
 		return errors.New("Nothing to report, check section name or permissions")
 	}
 
-	p.builder.SetClusterName(p.factory.Client().ActiveCluster())
+	p.builder.SetClusterName(p.fetchClusterName())
 	var err error
 	switch p.flags.OutputFormat() {
 	case report.JunitFormat:
@@ -511,7 +523,7 @@ func ensurePath(path string, mod os.FileMode) error {
 	}
 
 	if err = os.MkdirAll(dir, mod); err != nil {
-		return fmt.Errorf("Fail to create popeye sanitizers dump dir: %v", err)
+		return fmt.Errorf("Fail to create popeye sanitizers dump dir: %w", err)
 	}
 	return nil
 }

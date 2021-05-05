@@ -66,6 +66,10 @@ func (s *Secret) checkInUse(ctx context.Context, refs *sync.Map) {
 			}
 		}(fqn, ctx)
 
+		refs.Range(func(k, v interface{}) bool {
+			return true
+		})
+
 		keys, ok := refs.Load(cache.ResFqn(cache.SecretKey, fqn))
 		if !ok {
 			s.AddCode(ctx, 400)

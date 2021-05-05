@@ -98,6 +98,7 @@ func newTestCase(res string, ii issues.Issues) TestCase {
 	}
 
 	for _, i := range ii {
+		// nolint:exhaustive
 		switch i.Level {
 		case config.WarnLevel:
 			tc.Failures = append(tc.Failures, newFailure(i))

@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,7 +43,7 @@ func TestParseBucket(t *testing.T) {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			b, k, err := parseBucket(u.uri)
-			if err != u.err {
+			if !errors.Is(err, u.err) {
 				t.Fatalf("error got %v, want none", err)
 				return
 			}

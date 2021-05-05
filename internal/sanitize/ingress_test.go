@@ -6,7 +6,7 @@ import (
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
-	nv1beta1 "k8s.io/api/extensions/v1beta1"
+	netv1b1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -23,7 +23,7 @@ func TestIngressSanitize(t *testing.T) {
 			rev: "extensions/v1beta1",
 			e: issues.Issues{
 				{
-					GVR:     "extensions/v1/ingresses",
+					GVR:     "networking.k8s.io/v1",
 					Group:   issues.Root,
 					Message: `[POP-403] Deprecated Ingress API group "extensions/v1beta1". Use "networking.k8s.io/v1" instead`,
 					Level:   config.WarnLevel,
@@ -32,7 +32,7 @@ func TestIngressSanitize(t *testing.T) {
 		},
 	}
 
-	ctx := makeContext("extensions/v1/ingresses", "ing")
+	ctx := makeContext("networking.k8s.io/v1", "ing")
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
@@ -54,14 +54,14 @@ func newIngress(rev string) ingress {
 	return ingress{rev: rev}
 }
 
-func (i ingress) ListIngresses() map[string]*nv1beta1.Ingress {
-	return map[string]*nv1beta1.Ingress{
+func (i ingress) ListIngresses() map[string]*netv1b1.Ingress {
+	return map[string]*netv1b1.Ingress{
 		"default/ing1": makeIngress(i.rev),
 	}
 }
 
-func makeIngress(url string) *nv1beta1.Ingress {
-	return &nv1beta1.Ingress{
+func makeIngress(url string) *netv1b1.Ingress {
+	return &netv1b1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			SelfLink: "/api/" + url,
 		},

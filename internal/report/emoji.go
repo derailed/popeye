@@ -27,6 +27,7 @@ var emojisUgry = map[string]string{
 // EmojiForLevel maps lint levels to emojis.
 func EmojiForLevel(l config.Level, jurassic bool) string {
 	var key string
+	// nolint:exhaustive
 	switch l {
 	case containerLevel:
 		key = "container"

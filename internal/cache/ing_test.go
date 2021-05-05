@@ -5,18 +5,18 @@ import (
 	"testing"
 
 	"github.com/magiconair/properties/assert"
-	nv1beta1 "k8s.io/api/extensions/v1beta1"
+	netv1b1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestIngressRefs(t *testing.T) {
-	ing := NewIngress(map[string]*nv1beta1.Ingress{
+	ing := NewIngress(map[string]*netv1b1.Ingress{
 		"default/ing1": {
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 			},
-			Spec: nv1beta1.IngressSpec{
-				TLS: []nv1beta1.IngressTLS{
+			Spec: netv1b1.IngressSpec{
+				TLS: []netv1b1.IngressTLS{
 					{
 						SecretName: "foo",
 					},
