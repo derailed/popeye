@@ -62,7 +62,7 @@ func InitConnectionOrDie(config types.Config) (*APIClient, error) {
 		cache:  cache.NewLRUExpireCache(cacheSize),
 	}
 	if err := a.supportsMetricsResources(); err != nil {
-		return nil, err
+		log.Warn().Msgf("no metrics server detected %s", err.Error())
 	}
 
 	return &a, nil

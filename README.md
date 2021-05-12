@@ -258,7 +258,7 @@ the container utilization threshold and specific sanitizer configurations as wel
 
 NOTE: This file will change as Popeye matures!
 
-Under the `excludes` key you can configure to skip certain resources, or certain checks by code. Here, resource types are indicated in a group/version/resource notation. Example: to exclude pod disruptions budgets, use the notation `policy/v1beta1/poddisruptionbudgets`. Note that the resource name is written in the plural form and everything is spelled in lowercase. For resources without an API group, the group part is omitted (Examples: `v1/pods`, `v1/services`, `v1/configmaps`).
+Under the `excludes` key you can configure to skip certain resources, or certain checks by code. Here, resource types are indicated in a group/version/resource notation. Example: to exclude PodDisruptionBugdets, use the notation `policy/v1/poddisruptionbudgets`. Note that the resource name is written in the plural form and everything is spelled in lowercase. For resources without an API group, the group part is omitted (Examples: `v1/pods`, `v1/services`, `v1/configmaps`).
 
 A resource is identified by a resource kind and a fully qualified resource name, i.e. `namespace/resource_name`.
 

@@ -40,6 +40,7 @@ type Flags struct {
 	StandAlone      bool
 	ActiveNamespace *string
 	ForceExitZero   *bool
+	MinScore        *int
 }
 
 // NewFlags returns new configuration flags.
@@ -59,6 +60,7 @@ func NewFlags() *Flags {
 		ConfigFlags:     genericclioptions.NewConfigFlags(false),
 		PushGateway:     newPushGateway(),
 		ForceExitZero:   boolPtr(false),
+		MinScore:        intPtr(0),
 	}
 }
 
@@ -80,4 +82,8 @@ func boolPtr(b bool) *bool {
 
 func strPtr(s string) *string {
 	return &s
+}
+
+func intPtr(i int) *int {
+	return &i
 }

@@ -16,6 +16,7 @@ type Pod struct {
 	*cache.PodsMetrics
 	*config.Config
 	*cache.PodDisruptionBudget
+	*cache.ServiceAccount
 }
 
 // NewPod return a new Pod scruber.
@@ -34,6 +35,11 @@ func NewPod(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	p.PodsMetrics, _ = c.podsMx()
 
 	p.PodDisruptionBudget, err = c.podDisruptionBudgets()
+	if err != nil {
+		p.AddErr(ctx, err)
+	}
+
+	p.ServiceAccount, err = c.serviceaccounts()
 	if err != nil {
 		p.AddErr(ctx, err)
 	}

@@ -38,9 +38,7 @@ func (a *Aliases) Init(f types.Factory, gvrs []string) error {
 		gvr := client.NewGVR(k)
 		res, ok := a.metas[gvr]
 		if !ok {
-			log.Warn().Msgf("No resource meta found for %s", gvr)
-			continue
-			// panic(fmt.Sprintf("No resource meta found for %s", gvr))
+			panic(fmt.Sprintf("No resource meta found for %s", gvr))
 		}
 		a.aliases[res.Name] = gvr
 		a.aliases[res.SingularName] = gvr

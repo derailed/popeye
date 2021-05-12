@@ -169,7 +169,7 @@ func TestFormatLine(t *testing.T) {
 			msg:    "fred bleeduhblablabla blee",
 			indent: 1,
 			width:  10,
-			e:      "fred \n    bleeduhblablabla\n    blee",
+			e:      "fred \n     bleeduhblablabla \n     blee ",
 		},
 	}
 

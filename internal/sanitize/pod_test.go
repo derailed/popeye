@@ -191,6 +191,10 @@ func (p *pod) ListPods() map[string]*v1.Pod {
 	return p.opts.pods
 }
 
+func (p *pod) ListServiceAccounts() map[string]*v1.ServiceAccount {
+	return make(map[string]*v1.ServiceAccount)
+}
+
 func (p *pod) GetPod(string, map[string]string) *v1.Pod {
 	return nil
 }

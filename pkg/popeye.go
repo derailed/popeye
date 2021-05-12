@@ -124,7 +124,7 @@ func (p *Popeye) scannedGVRs() []string {
 		"apps/v1/statefulsets",
 		"policy/v1beta1/poddisruptionbudgets",
 		"policy/v1beta1/podsecuritypolicies",
-		"networking.k8s.io/v1beta1/ingresses",
+		"networking.k8s.io/v1/ingresses",
 		"networking.k8s.io/v1/networkpolicies",
 		"autoscaling/v1/horizontalpodautoscalers",
 		"rbac.authorization.k8s.io/v1/clusterroles",
@@ -182,7 +182,7 @@ func (p *Popeye) sanitizers() map[string]scrubFn {
 		"apps/v1/replicasets":       scrub.NewReplicaSet,
 		"apps/v1/statefulsets":      scrub.NewStatefulSet,
 		"autoscaling/v1/horizontalpodautoscalers":          scrub.NewHorizontalPodAutoscaler,
-		"networking.k8s.io/v1beta1/ingresses":              scrub.NewIngress,
+		"networking.k8s.io/v1/ingresses":                   scrub.NewIngress,
 		"networking.k8s.io/v1/networkpolicies":             scrub.NewNetworkPolicy,
 		"policy/v1beta1/poddisruptionbudgets":              scrub.NewPodDisruptionBudget,
 		"policy/v1beta1/podsecuritypolicies":               scrub.NewPodSecurityPolicy,
@@ -199,7 +199,7 @@ func (p *Popeye) SetOutputTarget(s io.ReadWriteCloser) {
 }
 
 // Sanitize scans a cluster for potential issues.
-func (p *Popeye) Sanitize() (int, error) {
+func (p *Popeye) Sanitize() (int, int, error) {
 	defer func() {
 		switch {
 		case isSet(p.flags.Save):
@@ -233,23 +233,30 @@ func (p *Popeye) Sanitize() (int, error) {
 		}
 	}()
 
-	errCount, err := p.sanitize()
-	if err != nil {
-		return 0, err
+	if err := client.Load(p.factory); err != nil {
+		return 0, 0, err
 	}
 
-	return errCount, p.dump(true)
+	errCount, score, err := p.sanitize()
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return errCount, score, p.dump(true)
 }
 
-func (p *Popeye) sanitize() (int, error) {
+func (p *Popeye) sanitize() (int, int, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	ctx = context.WithValue(ctx, internal.KeyOverAllocs, *p.flags.CheckOverAllocs)
 	ctx = context.WithValue(ctx, internal.KeyFactory, p.factory)
+	if version, err := p.factory.Client().ServerVersion(); err == nil {
+		ctx = context.WithValue(ctx, internal.KeyVersion, version)
+	}
 
 	codes, err := issues.LoadCodes()
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 	codes.Refine(p.config.Codes)
 
@@ -273,13 +280,15 @@ func (p *Popeye) sanitize() (int, error) {
 	}
 
 	if total == 0 {
-		return 0, nil
+		return 0, 0, nil
 	}
 
+	var score, count int
 	for run := range c {
+		count++
 		tally := report.NewTally()
 		tally.Rollup(run.outcome)
-		errCount += tally.ErrCount()
+		score, errCount = score+tally.Score(), errCount+tally.ErrCount()
 		p.builder.AddSection(run.gvr, p.aliases.Singular(run.gvr), run.outcome, tally)
 		total--
 		if total == 0 {
@@ -287,7 +296,10 @@ func (p *Popeye) sanitize() (int, error) {
 		}
 	}
 
-	return errCount, nil
+	if count == 0 {
+		return errCount, 0, nil
+	}
+	return errCount, score / count, nil
 }
 
 func (p *Popeye) sanitizer(ctx context.Context, gvr client.GVR, f scrubFn, c chan run, cache *scrub.Cache, codes *issues.Codes) {

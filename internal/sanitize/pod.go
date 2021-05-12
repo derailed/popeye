@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
 	v1 "k8s.io/api/core/v1"
-	pv1beta1 "k8s.io/api/policy/v1beta1"
+	polv1beta1 "k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
@@ -33,8 +34,8 @@ type (
 
 	// PdbLister list pdb matching a given selector
 	PdbLister interface {
-		ListPodDisruptionBudgets() map[string]*pv1beta1.PodDisruptionBudget
-		ForLabels(labels map[string]string) *pv1beta1.PodDisruptionBudget
+		ListPodDisruptionBudgets() map[string]*polv1beta1.PodDisruptionBudget
+		ForLabels(labels map[string]string) *polv1beta1.PodDisruptionBudget
 	}
 
 	// PodLister lists available pods.
@@ -50,6 +51,7 @@ type (
 		PodLister
 		PdbLister
 		ConfigLister
+		ListServiceAccounts() map[string]*v1.ServiceAccount
 	}
 
 	// PodMetric tracks node metrics available and current range.
@@ -145,12 +147,23 @@ func (p *Pod) checkUtilization(ctx context.Context, po *v1.Pod, cmx client.Conta
 }
 
 func (p *Pod) checkSecure(ctx context.Context, fqn string, spec v1.PodSpec) {
+	ns, _ := namespaced(fqn)
 	if spec.ServiceAccountName == "default" {
 		p.AddCode(ctx, 300)
 	}
 
-	if spec.AutomountServiceAccountToken == nil || *spec.AutomountServiceAccountToken {
-		p.AddCode(ctx, 301)
+	if p.PodMXLister != nil {
+		if sa, ok := p.ListServiceAccounts()[cache.FQN(ns, spec.ServiceAccountName)]; ok {
+			if spec.AutomountServiceAccountToken == nil {
+				if sa.AutomountServiceAccountToken == nil || *sa.AutomountServiceAccountToken {
+					p.AddCode(ctx, 301)
+				}
+			} else if *spec.AutomountServiceAccountToken {
+				p.AddCode(ctx, 301)
+			}
+		} else if spec.AutomountServiceAccountToken == nil || *spec.AutomountServiceAccountToken {
+			p.AddCode(ctx, 301)
+		}
 	}
 
 	if spec.SecurityContext == nil {

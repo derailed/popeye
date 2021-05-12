@@ -2,12 +2,14 @@ package sanitize
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/rs/zerolog/log"
-	pv1beta1 "k8s.io/api/policy/v1beta1"
+	polv1beta1 "k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/deprecation"
 )
 
 type (
@@ -20,7 +22,7 @@ type (
 	// PodDisruptionBudgetLister list available PodDisruptionBudgets on a cluster.
 	PodDisruptionBudgetLister interface {
 		PodLister
-		ListPodDisruptionBudgets() map[string]*pv1beta1.PodDisruptionBudget
+		ListPodDisruptionBudgets() map[string]*polv1beta1.PodDisruptionBudget
 	}
 )
 
@@ -39,6 +41,7 @@ func (p *PodDisruptionBudget) Sanitize(ctx context.Context) error {
 		ctx = internal.WithFQN(ctx, fqn)
 
 		p.checkInUse(ctx, pdb)
+		p.checkDeprecation(ctx, pdb)
 
 		if p.NoConcerns(fqn) && p.Config.ExcludeFQN(internal.MustExtractSectionGVR(ctx), fqn) {
 			p.ClearOutcome(fqn)
@@ -48,7 +51,26 @@ func (p *PodDisruptionBudget) Sanitize(ctx context.Context) error {
 	return nil
 }
 
-func (p *PodDisruptionBudget) checkInUse(ctx context.Context, pdb *pv1beta1.PodDisruptionBudget) {
+func (p *PodDisruptionBudget) checkDeprecation(ctx context.Context, pdb *polv1beta1.PodDisruptionBudget) {
+	const current = "policy/v1beta1"
+
+	fmt.Println("VERSION", pdb.GetObjectKind().GroupVersionKind())
+	fmt.Printf("WARNING %q", deprecation.WarningMessage(pdb))
+
+	fqn := internal.MustExtractFQN(ctx)
+	rev, err := resourceRev(fqn, "PodDisruptionBudget", pdb.Annotations)
+	if err != nil {
+		rev = revFromLink(pdb.SelfLink)
+		if rev == "" {
+			return
+		}
+	}
+	if rev != current {
+		p.AddCode(ctx, 403, "PodDisruptionBudget", rev, current)
+	}
+}
+
+func (p *PodDisruptionBudget) checkInUse(ctx context.Context, pdb *polv1beta1.PodDisruptionBudget) {
 	m, err := metav1.LabelSelectorAsMap(pdb.Spec.Selector)
 	if err != nil {
 		log.Error().Err(err).Msg("No selectors found")

@@ -76,7 +76,7 @@ func doIt(cmd *cobra.Command, args []string) {
 	if e := popeye.Init(); e != nil {
 		bomb(e.Error())
 	}
-	errCount, err := popeye.Sanitize()
+	errCount, score, err := popeye.Sanitize()
 	if err != nil {
 		bomb(err.Error())
 	}
@@ -85,7 +85,7 @@ func doIt(cmd *cobra.Command, args []string) {
 		os.Exit(0)
 	}
 
-	if errCount > 0 {
+	if errCount > 0 || (flags.MinScore != nil && score < *flags.MinScore) {
 		os.Exit(1)
 	}
 }
@@ -95,6 +95,22 @@ func bomb(msg string) {
 }
 
 func initPopeyeFlags() {
+	rootCmd.Flags().BoolVarP(
+		flags.ForceExitZero,
+		"force-exit-zero",
+		"",
+		false,
+		"Force zero exit status when report errors are present",
+	)
+
+	rootCmd.Flags().IntVarP(
+		flags.MinScore,
+		"min-score",
+		"",
+		50,
+		"Force non-zero exit if the cluster score is below that threshold",
+	)
+
 	rootCmd.Flags().StringVarP(flags.Output, "out", "o",
 		"standard",
 		"Specify the output type (standard, jurassic, yaml, json, html, junit, prometheus, score)",
@@ -266,14 +282,6 @@ func initFlags() {
 		"pushgateway-password",
 		"",
 		"BasicAuth password for pushgateway",
-	)
-
-	rootCmd.Flags().BoolVarP(
-		flags.ForceExitZero,
-		"force-exit-zero",
-		"",
-		false,
-		"Force zero exit status when report errors are present",
 	)
 }
 

@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+var IngressGVR = client.NewGVR("networking.k8s.io/v1/ingresses")
+
 // ListIngresses list all included Ingresses.
 func ListIngresses(ctx context.Context) (map[string]*netv1b1.Ingress, error) {
 	return listAllIngresses(ctx)
@@ -44,7 +46,7 @@ func fetchIngresses(ctx context.Context) (*netv1b1.IngressList, error) {
 	}
 
 	var res dao.Resource
-	res.Init(f, client.NewGVR("networking.k8s.io/v1beta1/ingresses"))
+	res.Init(f, IngressGVR)
 	oo, err := res.List(ctx)
 	if err != nil {
 		return nil, err

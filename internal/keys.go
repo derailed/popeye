@@ -12,4 +12,5 @@ const (
 	KeyRunInfo    ContextKey = "runInfo"
 	KeyConfig     ContextKey = "config"
 	KeyNamespace  ContextKey = "namespace"
+	KeyVersion    ContextKey = "version"
 )

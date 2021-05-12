@@ -193,8 +193,8 @@ func formatLine(str string, indent, width int) string {
 			l := len(t) + 1
 			if length+l > width {
 				lines = append(lines, line)
-				spacer := strings.Repeat("  ", tabSize*indent)
-				line = spacer + t
+				spacer := strings.Repeat(" ", tabSize*indent+3)
+				line = spacer + t + " "
 				length = len(spacer) + l
 			} else {
 				line += t + " "
