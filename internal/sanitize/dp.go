@@ -55,6 +55,7 @@ func (d *Deployment) Sanitize(ctx context.Context) error {
 
 		d.checkDeprecation(ctx, dp)
 		d.checkDeployment(ctx, dp)
+		d.checkSameNode(ctx, dp)
 		d.checkContainers(ctx, dp.Spec.Template.Spec)
 		pmx := client.PodsMetrics{}
 		podsMetrics(d, pmx)
@@ -102,6 +103,26 @@ func (d *Deployment) checkDeployment(ctx context.Context, dp *appsv1.Deployment)
 
 	if _, ok := d.ListServiceAccounts()[client.FQN(dp.Namespace, dp.Spec.Template.Spec.ServiceAccountName)]; !ok {
 		d.AddCode(ctx, 507, dp.Spec.Template.Spec.ServiceAccountName)
+	}
+}
+
+// checkSameNode verifies if all replicas of the deployment are running on
+// the same node.
+func (d *Deployment) checkSameNode(ctx context.Context, dp *appsv1.Deployment) {
+	if *dp.Spec.Replicas <= 1 {
+		return
+	}
+
+	nodeMap := make(map[string]int)
+	for _, pod := range d.ListPodsBySelector(dp.Namespace, dp.Spec.Selector) {
+		if _, exists := nodeMap[pod.Spec.NodeName]; !exists {
+			nodeMap[pod.Spec.NodeName] = 0
+		}
+		nodeMap[pod.Spec.NodeName]++
+	}
+
+	if len(nodeMap) < 2 {
+		d.AddCode(ctx, 508, *dp.Spec.Replicas)
 	}
 }
 

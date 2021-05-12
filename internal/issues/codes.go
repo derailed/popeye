@@ -186,6 +186,9 @@ codes:
   507:
     message: Deployment references ServiceAccount %q which does not exist
     severity: 3
+  508:
+    message: All %d replicas on the same node. Consider inter-pod anti-affinity
+    severity: 2
 
   # -------------------------------------------------------------------------
   # HPA
