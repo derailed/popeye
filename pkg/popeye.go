@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/prometheus/common/expfmt"
+	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -85,8 +86,13 @@ func (p *Popeye) Init() error {
 			return err
 		}
 	}
+	rev, err := p.factory.Client().ServerVersion()
+	if err != nil {
+		return err
+	}
+
 	p.aliases = internal.NewAliases()
-	if err := p.aliases.Init(p.factory, p.scannedGVRs()); err != nil {
+	if err := p.aliases.Init(p.factory, p.scannedGVRs(rev)); err != nil {
 		return err
 	}
 
@@ -105,8 +111,8 @@ func (p *Popeye) SetFactory(f types.Factory) {
 	p.factory = f
 }
 
-func (p *Popeye) scannedGVRs() []string {
-	return []string{
+func (p *Popeye) scannedGVRs(rev *version.Info) []string {
+	mm := []string{
 		"v1/limitranges",
 		"v1/services",
 		"v1/endpoints",
@@ -124,7 +130,6 @@ func (p *Popeye) scannedGVRs() []string {
 		"apps/v1/statefulsets",
 		"policy/v1beta1/poddisruptionbudgets",
 		"policy/v1beta1/podsecuritypolicies",
-		"networking.k8s.io/v1/ingresses",
 		"networking.k8s.io/v1/networkpolicies",
 		"autoscaling/v1/horizontalpodautoscalers",
 		"rbac.authorization.k8s.io/v1/clusterroles",
@@ -132,6 +137,14 @@ func (p *Popeye) scannedGVRs() []string {
 		"rbac.authorization.k8s.io/v1/roles",
 		"rbac.authorization.k8s.io/v1/rolebindings",
 	}
+
+	if rev.Minor == "18+" || rev.Minor == "17+" {
+		mm = append(mm, "networking.k8s.io/v1beta1/ingresses")
+	} else {
+		mm = append(mm, "networking.k8s.io/v1/ingresses")
+	}
+
+	return mm
 }
 
 func (p *Popeye) initFactory() error {
@@ -149,9 +162,13 @@ func (p *Popeye) initFactory() error {
 	if p.flags.ConfigFlags.Namespace != nil {
 		ns = *p.flags.ConfigFlags.Namespace
 	}
+	rev, err := p.factory.Client().ServerVersion()
+	if err != nil {
+		return err
+	}
 
 	f.Start(ns)
-	for _, gvr := range p.scannedGVRs() {
+	for _, gvr := range p.scannedGVRs(rev) {
 		ok, err := clt.CanI(client.AllNamespaces, gvr, types.ReadAllAccess)
 		if !ok || err != nil {
 			return fmt.Errorf("Current user does not have read access for resource %q -- %w", gvr, err)
@@ -165,8 +182,8 @@ func (p *Popeye) initFactory() error {
 	return nil
 }
 
-func (p *Popeye) sanitizers() map[string]scrubFn {
-	return map[string]scrubFn{
+func (p *Popeye) sanitizers(rev *version.Info) map[string]scrubFn {
+	mm := map[string]scrubFn{
 		"cluster":                   scrub.NewCluster,
 		"v1/configmaps":             scrub.NewConfigMap,
 		"v1/namespaces":             scrub.NewNamespace,
@@ -191,6 +208,12 @@ func (p *Popeye) sanitizers() map[string]scrubFn {
 		"rbac.authorization.k8s.io/v1/roles":               scrub.NewRole,
 		"rbac.authorization.k8s.io/v1/rolebindings":        scrub.NewRoleBinding,
 	}
+
+	if rev.Minor == "18+" || rev.Minor == "17+" {
+		mm["networking.k8s.io/v1beta1/ingresses"] = scrub.NewIngress
+	}
+
+	return mm
 }
 
 // SetOutputTarget sets up a new output stream writer.
@@ -264,7 +287,12 @@ func (p *Popeye) sanitize() (int, int, error) {
 	var total, errCount int
 	var nodeGVR = client.NewGVR("v1/nodes")
 	cache := scrub.NewCache(p.factory, p.config)
-	for k, fn := range p.sanitizers() {
+	rev, err := p.factory.Client().ServerVersion()
+	if err != nil {
+		return 0, 0, err
+	}
+
+	for k, fn := range p.sanitizers(rev) {
 		gvr := client.NewGVR(k)
 		if p.aliases.Exclude(gvr, p.config.Sections()) {
 			continue
