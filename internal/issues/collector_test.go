@@ -156,6 +156,13 @@ func TestAddCode(t *testing.T) {
 			args:  []interface{}{80},
 			e:     "[POP-108] Unnamed port 80",
 		},
+		"Issue 169": {
+			code:  1102,
+			fqn:   Root,
+			level: config.InfoLevel,
+			args:  []interface{}{"123", "test-port"},
+			e:     "[POP-1102] Use of target port #123 for service port test-port. Prefer named port",
+		},
 	}
 
 	for k := range uu {
