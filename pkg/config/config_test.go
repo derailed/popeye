@@ -21,6 +21,7 @@ func TestNewConfig(t *testing.T) {
 	assert.Equal(t, Allocations{UnderPerc: 200, OverPerc: 50}, cfg.CPUResourceLimits())
 	assert.Equal(t, Allocations{UnderPerc: 200, OverPerc: 50}, cfg.MEMResourceLimits())
 	assert.Equal(t, 0, cfg.LinterLevel())
+	assert.Equal(t, []string{}, cfg.Registries)
 }
 
 func TestNewConfigWithFile(t *testing.T) {
@@ -49,6 +50,7 @@ func TestNewConfigWithFile(t *testing.T) {
 	assert.Equal(t, ss, cfg.Sections())
 	f.Sections = nil
 	assert.Equal(t, []string{}, cfg.Sections())
+	assert.Equal(t, []string{"docker.io"}, cfg.Registries)
 }
 
 func TestNewConfigNoResourceSpec(t *testing.T) {

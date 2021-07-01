@@ -18,6 +18,7 @@ type (
 	LimitCollector interface {
 		Collector
 		PodLimiter
+		PodRestrictor
 	}
 
 	// Container represents a Container linter.
@@ -36,6 +37,7 @@ func (c *Container) sanitize(ctx context.Context, co v1.Container, checkProbes b
 	ctx = internal.WithFQN(ctx, c.fqn)
 	ctx = internal.WithGroup(ctx, client.NewGVR("containers"), co.Name)
 	c.checkImageTags(ctx, co.Image)
+	c.checkImageRegistry(ctx, co.Image)
 	c.checkResources(ctx, co)
 	if checkProbes {
 		c.checkProbes(ctx, co)
@@ -53,6 +55,27 @@ func (c *Container) checkImageTags(ctx context.Context, image string) {
 	if tokens[1] == imageTagLatest {
 		c.AddSubCode(ctx, 101)
 	}
+}
+
+func (c *Container) checkImageRegistry(ctx context.Context, image string) {
+	tokens := strings.Split(image, "/")
+	registries := c.LimitCollector.AllowedRegistries()
+
+	if len(registries) == 0 {
+		return
+	}
+
+	if len(tokens) == 1 {
+		tokens[0] = "docker.io"
+	}
+
+	for i := 0; i < len(registries); i++ {
+		if tokens[0] == registries[i] {
+			return
+		}
+	}
+
+	c.AddSubCode(ctx, 113, image)
 }
 
 func (c *Container) checkProbes(ctx context.Context, co v1.Container) {
