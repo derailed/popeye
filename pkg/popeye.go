@@ -14,11 +14,11 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/prometheus/common/expfmt"
-	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -90,9 +90,13 @@ func (p *Popeye) Init() error {
 	if err != nil {
 		return err
 	}
+	betaIngress, err := regexp.MatchString(`^1[78]\+?$`, rev.Minor)
+	if err != nil {
+		return err
+	}
 
 	p.aliases = internal.NewAliases()
-	if err := p.aliases.Init(p.factory, p.scannedGVRs(rev)); err != nil {
+	if err := p.aliases.Init(p.factory, p.scannedGVRs(betaIngress)); err != nil {
 		return err
 	}
 
@@ -111,7 +115,7 @@ func (p *Popeye) SetFactory(f types.Factory) {
 	p.factory = f
 }
 
-func (p *Popeye) scannedGVRs(rev *version.Info) []string {
+func (p *Popeye) scannedGVRs(betaIngress bool) []string {
 	mm := []string{
 		"v1/limitranges",
 		"v1/services",
@@ -138,7 +142,7 @@ func (p *Popeye) scannedGVRs(rev *version.Info) []string {
 		"rbac.authorization.k8s.io/v1/rolebindings",
 	}
 
-	if rev.Minor == "18+" || rev.Minor == "17+" {
+	if betaIngress {
 		mm = append(mm, "networking.k8s.io/v1beta1/ingresses")
 	} else {
 		mm = append(mm, "networking.k8s.io/v1/ingresses")
@@ -166,9 +170,13 @@ func (p *Popeye) initFactory() error {
 	if err != nil {
 		return err
 	}
+	betaIngress, err := regexp.MatchString(`^1[78]\+?$`, rev.Minor)
+	if err != nil {
+		return err
+	}
 
 	f.Start(ns)
-	for _, gvr := range p.scannedGVRs(rev) {
+	for _, gvr := range p.scannedGVRs(betaIngress) {
 		ok, err := clt.CanI(client.AllNamespaces, gvr, types.ReadAllAccess)
 		if !ok || err != nil {
 			return fmt.Errorf("Current user does not have read access for resource %q -- %w", gvr, err)
@@ -182,7 +190,7 @@ func (p *Popeye) initFactory() error {
 	return nil
 }
 
-func (p *Popeye) sanitizers(rev *version.Info) map[string]scrubFn {
+func (p *Popeye) sanitizers(betaIngress bool) map[string]scrubFn {
 	mm := map[string]scrubFn{
 		"cluster":                   scrub.NewCluster,
 		"v1/configmaps":             scrub.NewConfigMap,
@@ -209,7 +217,7 @@ func (p *Popeye) sanitizers(rev *version.Info) map[string]scrubFn {
 		"rbac.authorization.k8s.io/v1/rolebindings":        scrub.NewRoleBinding,
 	}
 
-	if rev.Minor == "18+" || rev.Minor == "17+" {
+	if betaIngress {
 		mm["networking.k8s.io/v1beta1/ingresses"] = scrub.NewIngress
 	}
 
@@ -291,8 +299,12 @@ func (p *Popeye) sanitize() (int, int, error) {
 	if err != nil {
 		return 0, 0, err
 	}
+	betaIngress, err := regexp.MatchString(`^1[78]\+?$`, rev.Minor)
+	if err != nil {
+		return 0, 0, err
+	}
 
-	for k, fn := range p.sanitizers(rev) {
+	for k, fn := range p.sanitizers(betaIngress) {
 		gvr := client.NewGVR(k)
 		if p.aliases.Exclude(gvr, p.config.Sections()) {
 			continue
