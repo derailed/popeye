@@ -10,19 +10,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v1
         with:
           go-version: 1.16.3
-      - name: Git
-        run: sudo apt-get update && sudo apt-get install git -y
-      - name: Path
-        run: printenv PATH && ls -al /usr/local/bin/go
       - name: GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v1
         with:
           version: latest
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Update new version in krew-index
-        uses: rajatjindal/krew-release-bot@v0.0.38
+        uses: rajatjindal/krew-release-bot@v0.0.40
