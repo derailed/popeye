@@ -1,7 +1,7 @@
 package cache
 
 import (
-	polv1beta1 "k8s.io/api/policy/v1beta1"
+	polv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -10,21 +10,21 @@ const PodDisruptionBudgetKey = "pdb"
 
 // PodDisruptionBudget represents PodDisruptionBudget cache.
 type PodDisruptionBudget struct {
-	cms map[string]*polv1beta1.PodDisruptionBudget
+	cms map[string]*polv1.PodDisruptionBudget
 }
 
 // NewPodDisruptionBudget returns a new PodDisruptionBudget cache.
-func NewPodDisruptionBudget(cms map[string]*polv1beta1.PodDisruptionBudget) *PodDisruptionBudget {
+func NewPodDisruptionBudget(cms map[string]*polv1.PodDisruptionBudget) *PodDisruptionBudget {
 	return &PodDisruptionBudget{cms: cms}
 }
 
 // ListPodDisruptionBudgets returns all available PodDisruptionBudgets on the cluster.
-func (c *PodDisruptionBudget) ListPodDisruptionBudgets() map[string]*polv1beta1.PodDisruptionBudget {
+func (c *PodDisruptionBudget) ListPodDisruptionBudgets() map[string]*polv1.PodDisruptionBudget {
 	return c.cms
 }
 
 // ForLabels returns a pdb whose selector match the given labels. Returns nil if no match.
-func (c *PodDisruptionBudget) ForLabels(labels map[string]string) *polv1beta1.PodDisruptionBudget {
+func (c *PodDisruptionBudget) ForLabels(labels map[string]string) *polv1.PodDisruptionBudget {
 	for _, pdb := range c.ListPodDisruptionBudgets() {
 		m, err := metav1.LabelSelectorAsMap(pdb.Spec.Selector)
 		if err != nil {

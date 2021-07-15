@@ -6,24 +6,24 @@ import (
 
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	polv1beta1 "k8s.io/api/policy/v1beta1"
+	polv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ListPodDisruptionBudgets list all included PodDisruptionBudgets.
-func ListPodDisruptionBudgets(ctx context.Context) (map[string]*polv1beta1.PodDisruptionBudget, error) {
+func ListPodDisruptionBudgets(ctx context.Context) (map[string]*polv1.PodDisruptionBudget, error) {
 	return listAllPodDisruptionBudgets(ctx)
 }
 
 // ListAllPodDisruptionBudgets fetch all PodDisruptionBudgets on the cluster.
-func listAllPodDisruptionBudgets(ctx context.Context) (map[string]*polv1beta1.PodDisruptionBudget, error) {
+func listAllPodDisruptionBudgets(ctx context.Context) (map[string]*polv1.PodDisruptionBudget, error) {
 	ll, err := fetchPodDisruptionBudgets(ctx)
 	if err != nil {
 		return nil, err
 	}
-	pdbs := make(map[string]*polv1beta1.PodDisruptionBudget, len(ll.Items))
+	pdbs := make(map[string]*polv1.PodDisruptionBudget, len(ll.Items))
 	for i := range ll.Items {
 		pdbs[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
@@ -32,14 +32,14 @@ func listAllPodDisruptionBudgets(ctx context.Context) (map[string]*polv1beta1.Po
 }
 
 // fetchPodDisruptionBudgets retrieves all PodDisruptionBudgets on the cluster.
-func fetchPodDisruptionBudgets(ctx context.Context) (*polv1beta1.PodDisruptionBudgetList, error) {
+func fetchPodDisruptionBudgets(ctx context.Context) (*polv1.PodDisruptionBudgetList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
 	if cfg.Flags.StandAlone {
 		dial, err := f.Client().Dial()
 		if err != nil {
 			return nil, err
 		}
-		return dial.PolicyV1beta1().PodDisruptionBudgets(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+		return dial.PolicyV1().PodDisruptionBudgets(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
@@ -48,9 +48,9 @@ func fetchPodDisruptionBudgets(ctx context.Context) (*polv1beta1.PodDisruptionBu
 	if err != nil {
 		return nil, err
 	}
-	var ll polv1beta1.PodDisruptionBudgetList
+	var ll polv1.PodDisruptionBudgetList
 	for _, o := range oo {
-		var pdb polv1beta1.PodDisruptionBudget
+		var pdb polv1.PodDisruptionBudget
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(o.(*unstructured.Unstructured).Object, &pdb)
 		if err != nil {
 			return nil, errors.New("expecting pdb resource")

@@ -18,9 +18,9 @@ Also if you dig this tool, please make some noise on social! [@kitesurfer](https
 
 ## Resolved Bugs/PRs
 
-* [Issue #184](https://github.com/derailed/popeye/pull/184) [POP-712] Found only one master node not flag on the right node
-* [Issue #181](https://github.com/derailed/popeye/pull/181) [POP-404] Deprecation check failed
 * [Issue #163](https://github.com/derailed/popeye/issues/163) popeye 0.9.0 with K8S 1.21.0 bug on PodDisruptionBudget - Wrong default API
+* [Issue #712](https://github.com/derailed/popeye/pull/712) [POP-712] Found only one master node not flag on the right node
+* [Issue #181](https://github.com/derailed/popeye/pull/181) [POP-404] Deprecation check failed
 
 ---
 

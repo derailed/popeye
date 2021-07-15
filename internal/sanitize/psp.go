@@ -2,11 +2,10 @@ package sanitize
 
 import (
 	"context"
-	"errors"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
-	pv1beta1 "k8s.io/api/policy/v1beta1"
+	polv1beta1 "k8s.io/api/policy/v1beta1"
 )
 
 type (
@@ -18,7 +17,7 @@ type (
 
 	// PodSecurityPolicyLister list available PodSecurityPolicys on a cluster.
 	PodSecurityPolicyLister interface {
-		ListPodSecurityPolicies() map[string]*pv1beta1.PodSecurityPolicy
+		ListPodSecurityPolicies() map[string]*polv1beta1.PodSecurityPolicy
 	}
 )
 
@@ -46,14 +45,12 @@ func (p *PodSecurityPolicy) Sanitize(ctx context.Context) error {
 	return nil
 }
 
-func (p *PodSecurityPolicy) checkDeprecation(ctx context.Context, psp *pv1beta1.PodSecurityPolicy) {
+func (p *PodSecurityPolicy) checkDeprecation(ctx context.Context, psp *polv1beta1.PodSecurityPolicy) {
 	const current = "policy/v1beta1"
 
 	rev, err := resourceRev(internal.MustExtractFQN(ctx), "PodSecurityPolicy", psp.Annotations)
 	if err != nil {
-		rev = revFromLink(psp.SelfLink)
-		if rev == "" {
-			p.AddCode(ctx, 404, errors.New("Unable to assert resource version"))
+		if rev = revFromLink(psp.SelfLink); rev == "" {
 			return
 		}
 	}

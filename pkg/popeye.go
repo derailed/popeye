@@ -128,7 +128,6 @@ func (p *Popeye) scannedGVRs(rev *version.Info) []string {
 		"apps/v1/replicasets",
 		"apps/v1/daemonsets",
 		"apps/v1/statefulsets",
-		"policy/v1beta1/poddisruptionbudgets",
 		"policy/v1beta1/podsecuritypolicies",
 		"networking.k8s.io/v1/networkpolicies",
 		"autoscaling/v1/horizontalpodautoscalers",
@@ -140,8 +139,10 @@ func (p *Popeye) scannedGVRs(rev *version.Info) []string {
 
 	if rev.Minor == "18+" || rev.Minor == "17+" {
 		mm = append(mm, "networking.k8s.io/v1beta1/ingresses")
+		mm = append(mm, "policy/v1beta1/poddisruptionbudgets")
 	} else {
 		mm = append(mm, "networking.k8s.io/v1/ingresses")
+		mm = append(mm, "policy/v1/poddisruptionbudgets")
 	}
 
 	return mm
@@ -211,6 +212,10 @@ func (p *Popeye) sanitizers(rev *version.Info) map[string]scrubFn {
 
 	if rev.Minor == "18+" || rev.Minor == "17+" {
 		mm["networking.k8s.io/v1beta1/ingresses"] = scrub.NewIngress
+	}
+
+	if rev.Minor == "21" {
+		mm["policy/v1/poddisruptionbudgets"] = scrub.NewPodDisruptionBudget
 	}
 
 	return mm
