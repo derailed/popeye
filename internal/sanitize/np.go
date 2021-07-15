@@ -2,7 +2,6 @@ package sanitize
 
 import (
 	"context"
-	"errors"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
@@ -121,9 +120,7 @@ func (n *NetworkPolicy) checkDeprecation(ctx context.Context, np *nv1.NetworkPol
 
 	rev, err := resourceRev(internal.MustExtractFQN(ctx), "NetworkPolicy", np.Annotations)
 	if err != nil {
-		rev = revFromLink(np.SelfLink)
-		if rev == "" {
-			n.AddCode(ctx, 404, errors.New("Unable to assert resource version"))
+		if rev = revFromLink(np.SelfLink); rev == "" {
 			return
 		}
 	}

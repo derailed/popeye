@@ -2,7 +2,7 @@ package sanitize
 
 import (
 	"context"
-	"errors"
+
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	netv1b1 "k8s.io/api/networking/v1beta1"
@@ -54,9 +54,7 @@ func (i *Ingress) checkDeprecation(ctx context.Context, ing *netv1b1.Ingress) {
 	const current = "networking.k8s.io/v1"
 	rev, err := resourceRev(internal.MustExtractFQN(ctx), "Ingress", ing.Annotations)
 	if err != nil {
-		rev = revFromLink(ing.SelfLink)
-		if rev == "" {
-			i.AddCode(ctx, 404, errors.New("Unable to assert resource version"))
+		if rev = revFromLink(ing.SelfLink); rev == "" {
 			return
 		}
 	}
