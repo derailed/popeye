@@ -6,7 +6,7 @@ import (
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/stretchr/testify/assert"
-	pv1beta1 "k8s.io/api/policy/v1beta1"
+	polv1beta1 "k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -67,19 +67,19 @@ func makePSPLister(n string, opts pspOpts) *psp {
 	}
 }
 
-func (r *psp) ListPodSecurityPolicies() map[string]*pv1beta1.PodSecurityPolicy {
-	return map[string]*pv1beta1.PodSecurityPolicy{
+func (r *psp) ListPodSecurityPolicies() map[string]*polv1beta1.PodSecurityPolicy {
+	return map[string]*polv1beta1.PodSecurityPolicy{
 		cache.FQN("default", r.name): makePSP(r.name, r.opts),
 	}
 }
 
-func makePSP(n string, o pspOpts) *pv1beta1.PodSecurityPolicy {
-	return &pv1beta1.PodSecurityPolicy{
+func makePSP(n string, o pspOpts) *polv1beta1.PodSecurityPolicy {
+	return &polv1beta1.PodSecurityPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      n,
 			Namespace: "default",
 			SelfLink:  "/api/" + o.rev,
 		},
-		Spec: pv1beta1.PodSecurityPolicySpec{},
+		Spec: polv1beta1.PodSecurityPolicySpec{},
 	}
 }

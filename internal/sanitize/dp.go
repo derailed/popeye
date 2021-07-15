@@ -74,9 +74,7 @@ func (d *Deployment) checkDeprecation(ctx context.Context, dp *appsv1.Deployment
 	fqn := internal.MustExtractFQN(ctx)
 	rev, err := resourceRev(fqn, "Deployment", dp.Annotations)
 	if err != nil {
-		rev = revFromLink(dp.SelfLink)
-		if rev == "" {
-			d.AddCode(ctx, 404, errors.New("Unable to assert resource version"))
+		if rev = revFromLink(dp.SelfLink); rev == "" {
 			return
 		}
 	}

@@ -2,7 +2,6 @@ package sanitize
 
 import (
 	"context"
-	"errors"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
@@ -75,9 +74,7 @@ func (s *StatefulSet) checkDeprecation(ctx context.Context, st *appsv1.StatefulS
 
 	rev, err := resourceRev(internal.MustExtractFQN(ctx), "StatefulSet", st.Annotations)
 	if err != nil {
-		rev = revFromLink(st.SelfLink)
-		if rev == "" {
-			s.AddCode(ctx, 404, errors.New("Unable to assert resource version"))
+		if rev = revFromLink(st.SelfLink); rev == "" {
 			return
 		}
 	}

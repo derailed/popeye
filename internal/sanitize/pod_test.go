@@ -8,7 +8,7 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	pv1beta1 "k8s.io/api/policy/v1beta1"
+	polv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
@@ -231,11 +231,11 @@ func (p *pod) ListPodsMetrics() map[string]*v1beta1.PodMetrics {
 	}
 }
 
-func (p *pod) ForLabels(l map[string]string) *pv1beta1.PodDisruptionBudget {
-	return &pv1beta1.PodDisruptionBudget{}
+func (p *pod) ForLabels(l map[string]string) *polv1.PodDisruptionBudget {
+	return &polv1.PodDisruptionBudget{}
 }
 
-func (p *pod) ListPodDisruptionBudgets() map[string]*pv1beta1.PodDisruptionBudget {
+func (p *pod) ListPodDisruptionBudgets() map[string]*polv1.PodDisruptionBudget {
 	return nil
 }
 

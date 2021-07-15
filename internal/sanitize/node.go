@@ -62,12 +62,13 @@ func (n *Node) Sanitize(ctx context.Context) error {
 	nodesMetrics(n.ListNodes(), n.ListNodesMetrics(), nmx)
 
 	var numMasters int
-
+	var masterCtx context.Context
 	for fqn, no := range n.ListNodes() {
 		n.InitOutcome(fqn)
 		ctx = internal.WithFQN(ctx, fqn)
 
 		if n.checkMasterRole(no) {
+			masterCtx = ctx
 			numMasters++
 		}
 
@@ -83,7 +84,7 @@ func (n *Node) Sanitize(ctx context.Context) error {
 	}
 
 	if numMasters == 1 {
-		n.AddCode(ctx, 712)
+		n.AddCode(masterCtx, 712)
 	}
 
 	return nil
