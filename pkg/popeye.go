@@ -137,12 +137,15 @@ func (p *Popeye) scannedGVRs(rev *version.Info) []string {
 		"rbac.authorization.k8s.io/v1/rolebindings",
 	}
 
-	if rev.Minor == "18+" || rev.Minor == "17+" {
+	if rev.Minor == "18" || rev.Minor == "17" {
 		mm = append(mm, "networking.k8s.io/v1beta1/ingresses")
-		mm = append(mm, "policy/v1beta1/poddisruptionbudgets")
 	} else {
 		mm = append(mm, "networking.k8s.io/v1/ingresses")
+	}
+	if rev.Minor == "21" {
 		mm = append(mm, "policy/v1/poddisruptionbudgets")
+	} else {
+		mm = append(mm, "policy/v1beta1/poddisruptionbudgets")
 	}
 
 	return mm
@@ -210,10 +213,9 @@ func (p *Popeye) sanitizers(rev *version.Info) map[string]scrubFn {
 		"rbac.authorization.k8s.io/v1/rolebindings":        scrub.NewRoleBinding,
 	}
 
-	if rev.Minor == "18+" || rev.Minor == "17+" {
+	if rev.Minor == "18" || rev.Minor == "17" {
 		mm["networking.k8s.io/v1beta1/ingresses"] = scrub.NewIngress
 	}
-
 	if rev.Minor == "21" {
 		mm["policy/v1/poddisruptionbudgets"] = scrub.NewPodDisruptionBudget
 	}
