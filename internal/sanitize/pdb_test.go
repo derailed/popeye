@@ -7,7 +7,7 @@ import (
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	polv1 "k8s.io/api/policy/v1"
+	polv1beta1 "k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -65,8 +65,8 @@ func makePDBLister(opts pdbOpts) *pdb {
 	}
 }
 
-func (r *pdb) ListPodDisruptionBudgets() map[string]*polv1.PodDisruptionBudget {
-	return map[string]*polv1.PodDisruptionBudget{
+func (r *pdb) ListPodDisruptionBudgets() map[string]*polv1beta1.PodDisruptionBudget {
+	return map[string]*polv1beta1.PodDisruptionBudget{
 		cache.FQN("default", r.name): makePDB(r.name),
 	}
 }
@@ -84,14 +84,14 @@ func (r *pdb) GetPod(ns string, sel map[string]string) *v1.Pod {
 	return makePod("p1")
 }
 
-func makePDB(n string) *polv1.PodDisruptionBudget {
+func makePDB(n string) *polv1beta1.PodDisruptionBudget {
 	min, max := intstr.FromInt(1), intstr.FromInt(1)
-	return &polv1.PodDisruptionBudget{
+	return &polv1beta1.PodDisruptionBudget{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      n,
 			Namespace: "default",
 		},
-		Spec: polv1.PodDisruptionBudgetSpec{
+		Spec: polv1beta1.PodDisruptionBudgetSpec{
 			Selector:       &metav1.LabelSelector{},
 			MinAvailable:   &min,
 			MaxUnavailable: &max,
