@@ -17,9 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/common/expfmt"
-	"k8s.io/apimachinery/pkg/version"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -30,6 +27,7 @@ import (
 	"github.com/derailed/popeye/internal/scrub"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/derailed/popeye/types"
+	"github.com/prometheus/common/expfmt"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -86,7 +84,7 @@ func (p *Popeye) Init() error {
 			return err
 		}
 	}
-	rev, err := p.factory.Client().ServerVersion()
+	rev, err := p.revision()
 	if err != nil {
 		return err
 	}
@@ -111,7 +109,7 @@ func (p *Popeye) SetFactory(f types.Factory) {
 	p.factory = f
 }
 
-func (p *Popeye) scannedGVRs(rev *version.Info) []string {
+func (p *Popeye) scannedGVRs(rev *client.Revision) []string {
 	mm := []string{
 		"v1/limitranges",
 		"v1/services",
@@ -137,12 +135,12 @@ func (p *Popeye) scannedGVRs(rev *version.Info) []string {
 		"rbac.authorization.k8s.io/v1/rolebindings",
 	}
 
-	if rev.Minor == "18" || rev.Minor == "17" {
+	if rev.Minor <= 18 {
 		mm = append(mm, "networking.k8s.io/v1beta1/ingresses")
 	} else {
 		mm = append(mm, "networking.k8s.io/v1/ingresses")
 	}
-	if rev.Minor == "21" {
+	if rev.Minor >= 21 {
 		mm = append(mm, "policy/v1/poddisruptionbudgets")
 	} else {
 		mm = append(mm, "policy/v1beta1/poddisruptionbudgets")
@@ -162,13 +160,19 @@ func (p *Popeye) initFactory() error {
 	if p.flags.StandAlone {
 		return nil
 	}
+
+	info, err := p.factory.Client().ServerVersion()
+	if err != nil {
+		return err
+	}
+	rev, err := client.NewRevision(info)
+	if err != nil {
+		return err
+	}
+
 	ns := client.AllNamespaces
 	if p.flags.ConfigFlags.Namespace != nil {
 		ns = *p.flags.ConfigFlags.Namespace
-	}
-	rev, err := p.factory.Client().ServerVersion()
-	if err != nil {
-		return err
 	}
 
 	f.Start(ns)
@@ -186,7 +190,16 @@ func (p *Popeye) initFactory() error {
 	return nil
 }
 
-func (p *Popeye) sanitizers(rev *version.Info) map[string]scrubFn {
+func (p *Popeye) revision() (*client.Revision, error) {
+	info, err := p.factory.Client().ServerVersion()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.NewRevision(info)
+}
+
+func (p *Popeye) sanitizers(rev *client.Revision) map[string]scrubFn {
 	mm := map[string]scrubFn{
 		"cluster":                   scrub.NewCluster,
 		"v1/configmaps":             scrub.NewConfigMap,
@@ -213,10 +226,10 @@ func (p *Popeye) sanitizers(rev *version.Info) map[string]scrubFn {
 		"rbac.authorization.k8s.io/v1/rolebindings":        scrub.NewRoleBinding,
 	}
 
-	if rev.Minor == "18" || rev.Minor == "17" {
+	if rev.Minor <= 18 {
 		mm["networking.k8s.io/v1beta1/ingresses"] = scrub.NewIngress
 	}
-	if rev.Minor == "21" {
+	if rev.Minor >= 21 {
 		mm["policy/v1/poddisruptionbudgets"] = scrub.NewPodDisruptionBudget
 	}
 
@@ -294,17 +307,16 @@ func (p *Popeye) sanitize() (int, int, error) {
 	var total, errCount int
 	var nodeGVR = client.NewGVR("v1/nodes")
 	cache := scrub.NewCache(p.factory, p.config)
-	rev, err := p.factory.Client().ServerVersion()
+
+	rev, err := p.revision()
 	if err != nil {
 		return 0, 0, err
 	}
-
 	for k, fn := range p.sanitizers(rev) {
 		gvr := client.NewGVR(k)
 		if p.aliases.Exclude(gvr, p.config.Sections()) {
 			continue
 		}
-
 		// Skip node sanitizer if active namespace is set.
 		if gvr == nodeGVR && p.factory.Client().ActiveNamespace() != client.AllNamespaces {
 			continue
@@ -330,10 +342,10 @@ func (p *Popeye) sanitize() (int, int, error) {
 			close(c)
 		}
 	}
-
 	if count == 0 {
 		return errCount, 0, nil
 	}
+
 	return errCount, score / count, nil
 }
 
