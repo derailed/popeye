@@ -283,17 +283,16 @@ func (c *Config) RawConfig() (clientcmdapi.Config, error) {
 		log.Debug().Msgf("Context switch detected... %s vs %s", c.rawConfig.CurrentContext, c.currentContext)
 		c.currentContext = c.rawConfig.CurrentContext
 		c.reset()
+		return *c.rawConfig, nil
 	}
 
-	if c.rawConfig == nil {
-		c.ensureConfig()
-		cfg, err := c.clientConfig.RawConfig()
-		if err != nil {
-			return cfg, err
-		}
-		c.rawConfig = &cfg
-		c.currentContext = cfg.CurrentContext
+	c.ensureConfig()
+	cfg, err := c.clientConfig.RawConfig()
+	if err != nil {
+		return cfg, err
 	}
+	c.rawConfig = &cfg
+	c.currentContext = cfg.CurrentContext
 
 	return *c.rawConfig, nil
 }
@@ -311,10 +310,20 @@ func (c *Config) RESTConfig() (*restclient.Config, error) {
 	c.restConfig.QPS = defaultQPS
 	c.restConfig.Burst = defaultBurst
 	c.restConfig.Timeout = defaultCallTimeoutDuration
-
+	restclient.SetDefaultWarningHandler(newLoggerHandler())
 	log.Debug().Msgf("Connecting to API Server %s", c.restConfig.Host)
 
 	return c.restConfig, nil
+}
+
+type loggerHandler struct{}
+
+func newLoggerHandler() loggerHandler {
+	return loggerHandler{}
+}
+
+func (l loggerHandler) HandleWarningHeader(code int, agent string, text string) {
+	log.Warn().Msgf("[%d] (%q) -- %s", code, agent, text)
 }
 
 func (c *Config) ensureConfig() {
