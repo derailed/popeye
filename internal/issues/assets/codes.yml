@@ -39,6 +39,9 @@ codes:
   112:
     message: Memory Current/Limit (%s/%s) reached user %d%% threshold (%d%%)
     severity: 3
+  113:
+    message:  Container image %s is not hosted on an allowed docker registry
+    severity: 3
 
   # Pod
   200:

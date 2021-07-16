@@ -113,6 +113,10 @@ func (c *Config) NodeMEMLimit() float64 {
 	return l
 }
 
+func (c *Config) AllowedRegistries() []string {
+	return c.Registries
+}
+
 // ----------------------------------------------------------------------------
 // Helpers...
 
