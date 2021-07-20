@@ -2,14 +2,12 @@ package sanitize
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/rs/zerolog/log"
 	polv1beta1 "k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/endpoints/deprecation"
 )
 
 type (
@@ -52,10 +50,7 @@ func (p *PodDisruptionBudget) Sanitize(ctx context.Context) error {
 }
 
 func (p *PodDisruptionBudget) checkDeprecation(ctx context.Context, pdb *polv1beta1.PodDisruptionBudget) {
-	const current = "policy/v1beta1"
-
-	fmt.Println("VERSION", pdb.GetObjectKind().GroupVersionKind())
-	fmt.Printf("WARNING %q", deprecation.WarningMessage(pdb))
+	const current = "policy/v1"
 
 	fqn := internal.MustExtractFQN(ctx)
 	rev, err := resourceRev(fqn, "PodDisruptionBudget", pdb.Annotations)

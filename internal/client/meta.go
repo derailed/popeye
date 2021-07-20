@@ -4,19 +4,23 @@ import (
 	"github.com/derailed/popeye/types"
 )
 
+// Schema tracks resource schema.
 type Schema struct {
 	GVR       GVR
 	Preferred bool
 }
 
+// Meta tracks a collection of resources.
 type Meta map[string][]Schema
 
 func newMeta() Meta {
 	return make(map[string][]Schema)
 }
 
+// Resources tracks dictionary of resources.
 var Resources = newMeta()
 
+// Load loads resource meta from server.
 func Load(f types.Factory) error {
 	dial, err := f.Client().CachedDiscovery()
 	if err != nil {

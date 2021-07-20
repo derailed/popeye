@@ -4,11 +4,13 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
+// BasicAuth tracks basic authentication.
 type BasicAuth struct {
 	User     *string
 	Password *string
 }
 
+// PushGateway tracks gateway representations.
 type PushGateway struct {
 	Address   *string
 	BasicAuth BasicAuth

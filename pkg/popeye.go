@@ -216,9 +216,7 @@ func (p *Popeye) sanitizers(rev *client.Revision) map[string]scrubFn {
 		"apps/v1/replicasets":       scrub.NewReplicaSet,
 		"apps/v1/statefulsets":      scrub.NewStatefulSet,
 		"autoscaling/v1/horizontalpodautoscalers":          scrub.NewHorizontalPodAutoscaler,
-		"networking.k8s.io/v1/ingresses":                   scrub.NewIngress,
 		"networking.k8s.io/v1/networkpolicies":             scrub.NewNetworkPolicy,
-		"policy/v1beta1/poddisruptionbudgets":              scrub.NewPodDisruptionBudget,
 		"policy/v1beta1/podsecuritypolicies":               scrub.NewPodSecurityPolicy,
 		"rbac.authorization.k8s.io/v1/clusterroles":        scrub.NewClusterRole,
 		"rbac.authorization.k8s.io/v1/clusterrolebindings": scrub.NewClusterRoleBinding,
@@ -228,9 +226,13 @@ func (p *Popeye) sanitizers(rev *client.Revision) map[string]scrubFn {
 
 	if rev.Minor <= 18 {
 		mm["networking.k8s.io/v1beta1/ingresses"] = scrub.NewIngress
+	} else {
+		mm["networking.k8s.io/v1/ingresses"] = scrub.NewIngress
 	}
 	if rev.Minor >= 21 {
 		mm["policy/v1/poddisruptionbudgets"] = scrub.NewPodDisruptionBudget
+	} else {
+		mm["policy/v1beta1/poddisruptionbudgets"] = scrub.NewPodDisruptionBudget
 	}
 
 	return mm

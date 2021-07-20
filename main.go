@@ -6,7 +6,6 @@ import (
 
 	"github.com/derailed/popeye/cmd"
 	"github.com/derailed/popeye/pkg"
-
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"

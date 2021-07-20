@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+// IngressGVR tracks ingress specification
 var IngressGVR = client.NewGVR("networking.k8s.io/v1/ingresses")
 
 // ListIngresses list all included Ingresses.

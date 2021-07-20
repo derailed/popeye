@@ -15,6 +15,7 @@ type StringSet map[string]Empty
 // AllKeys indicates all keys are present.
 var AllKeys = StringSet{All: Blank}
 
+// AddAll merges two sets.
 func (ss StringSet) AddAll(s StringSet) {
 	for k := range s {
 		ss[k] = Blank

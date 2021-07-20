@@ -1,6 +1,7 @@
 package issues
 
 import (
+	// Pull in asset codes.
 	_ "embed"
 
 	"github.com/derailed/popeye/pkg/config"

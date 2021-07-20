@@ -21,36 +21,36 @@ spec:
     Popeye is a readonly tool, it does not alter any of your Kubernetes
     resources in any way!
   platforms:
-    - selector:
+    - bin: kubectl-popeye
+      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Darwin_x86_64.tar.gz" .TagName }}
+      files:
+        - from: popeye
+          to: kubectl-popeye
+        - from: LICENSE
+          to: .
+      selector:
         matchLabels:
           os: darwin
           arch: amd64
-      {{addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Darwin_x86_64.tar.gz" .TagName | indent 6 }}
+    - bin: kubectl-popeye
+      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Linux_x86_64.tar.gz" .TagName }}
       files:
         - from: popeye
           to: kubectl-popeye
         - from: LICENSE
-          to: "."
-      bin: kubectl-popeye
-    - selector:
+          to: .
+      selector:
         matchLabels:
           os: linux
           arch: amd64
-      {{addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Linux_x86_64.tar.gz" .TagName | indent 6 }}
-      files:
-        - from: popeye
-          to: kubectl-popeye
-        - from: LICENSE
-          to: "."
-      bin: kubectl-popeye
-    - selector:
-        matchLabels:
-          os: windows
-          arch: amd64
-      {{addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Windows_x86_64.tar.gz" .TagName | indent 6 }}
+    - bin: kubectl-popeye.exe
+      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Windows_x86_64.tar.gz" .TagName }}
       files:
         - from: popeye.exe
           to: kubectl-popeye.exe
         - from: LICENSE
-          to: "."
-      bin: kubectl-popeye.exe
+          to: .
+      selector:
+        matchLabels:
+          os: windows
+          arch: amd64

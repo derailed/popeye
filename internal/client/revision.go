@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 )
 
+// Revision tracks server version.
 type Revision struct {
 	Info         *version.Info
 	Major, Minor int
@@ -15,6 +16,7 @@ type Revision struct {
 
 var minorRX = regexp.MustCompile(`(\d+)\+?`)
 
+// NewRevision returns a new instance.
 func NewRevision(info *version.Info) (*Revision, error) {
 	major, err := strconv.Atoi(info.Major)
 	if err != nil {
