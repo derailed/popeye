@@ -1,4 +1,4 @@
-name: Popeye Tests
+name: Tests
 
 on:
   workflow_dispatch:
