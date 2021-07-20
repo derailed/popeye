@@ -14,7 +14,7 @@ Also if you dig this tool, please make some noise on social! [@kitesurfer](https
 
 ## Maintenance Release!
 
----
+NOTE: On this drop Popeye's docker image has been relocated to DockerHub!
 
 ## Resolved Bugs/PRs
 

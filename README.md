@@ -1,4 +1,4 @@
-<img src="assets/popeye_logo.png" align="right" width="250" height="auto">
+<img src="https://github.com/derailed/popeye/blob/master/assets/popeye_logo.png" align="right" width="250" height="auto">
 
 # Popeye - A Kubernetes Cluster Sanitizer
 
@@ -500,5 +500,5 @@ to make this project a reality!
 
 ---
 
-<img src="assets/imhotep_logo.png" width="32" height="auto"/>  &nbsp;© 2020 Imhotep Software LLC.
+<img src="https://github.com/derailed/popeye/blob/master/assets/imhotep_logo.png" width="32" height="auto"/>  &nbsp;© 2020 Imhotep Software LLC.
 All materials licensed under [Apache v2.0](http://www.apache.org/licenses/LICENSE-2.0)
