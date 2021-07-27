@@ -34,7 +34,7 @@ type PodLimiter interface {
 	RestartsLimit() int
 }
 
-type PodRestrictor interface {
+type ContainerRestrictor interface {
 	AllowedRegistries() []string
 }
 

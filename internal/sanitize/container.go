@@ -13,12 +13,14 @@ import (
 // Docker image latest tag.
 const imageTagLatest = "latest"
 
+const defaultRegistry = "docker.io"
+
 type (
 	// LimitCollector represents a collector with resource limits.
 	LimitCollector interface {
 		Collector
 		PodLimiter
-		PodRestrictor
+		ContainerRestrictor
 	}
 
 	// Container represents a Container linter.
@@ -37,7 +39,9 @@ func (c *Container) sanitize(ctx context.Context, co v1.Container, checkProbes b
 	ctx = internal.WithFQN(ctx, c.fqn)
 	ctx = internal.WithGroup(ctx, client.NewGVR("containers"), co.Name)
 	c.checkImageTags(ctx, co.Image)
-	c.checkImageRegistry(ctx, co.Image)
+	if c.allowedRegistryListExists() {
+		c.checkImageRegistry(ctx, co.Image)
+	}
 	c.checkResources(ctx, co)
 	if checkProbes {
 		c.checkProbes(ctx, co)
@@ -58,15 +62,11 @@ func (c *Container) checkImageTags(ctx context.Context, image string) {
 }
 
 func (c *Container) checkImageRegistry(ctx context.Context, image string) {
-	tokens := strings.Split(image, "/")
 	registries := c.LimitCollector.AllowedRegistries()
-
-	if len(registries) == 0 {
-		return
-	}
+	tokens := strings.Split(image, "/")
 
 	if len(tokens) == 1 {
-		tokens[0] = "docker.io"
+		tokens[0] = defaultRegistry
 	}
 
 	for i := 0; i < len(registries); i++ {
@@ -159,4 +159,8 @@ func (c *Container) checkMetrics(ctx context.Context, qos qos, list, clist v1.Re
 			c.AddSubCode(ctx, 112, asMB(*cmem), asMB(*mem), memLimit, percMEM)
 		}
 	}
+}
+
+func (c *Container) allowedRegistryListExists() bool {
+	return len(c.LimitCollector.AllowedRegistries()) > 0
 }
