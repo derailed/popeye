@@ -16,25 +16,25 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: popeye
-              image: quay.io/derailed/popeye:latest
+              image: derailed/popeye:latest
               imagePullPolicy: IfNotPresent
               command: ["/bin/popeye"]
               args:
-              - -f
-              - /etc/config/popeye/spinach.yml
-              - -o
-              - yaml
+                - -f
+                - /etc/config/popeye/spinach.yml
+                - -o
+                - yaml
               resources:
                 limits:
-                  cpu:    500m
+                  cpu: 500m
                   memory: 100Mi
               volumeMounts:
                 - name: spinach
                   mountPath: /etc/config/popeye
           volumes:
-          - name: spinach
-            configMap:
-              name: popeye
-              items:
-              - key: spinach
-                path: spinach.yml
+            - name: spinach
+              configMap:
+                name: popeye
+                items:
+                  - key: spinach
+                    path: spinach.yml
