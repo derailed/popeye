@@ -258,7 +258,7 @@ codes:
     message: NodePort detected but service sets externalTrafficPolicy to "Local"
     severity: 1
   1109:
-    message: Only one associated endpoint
+    message: Only one Pod associated with this endpoint
     severity: 2
 
   # ReplicaSet
