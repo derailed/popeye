@@ -128,7 +128,6 @@ func (p *Popeye) scannedGVRs(rev *client.Revision) []string {
 		"apps/v1/statefulsets",
 		"policy/v1beta1/podsecuritypolicies",
 		"networking.k8s.io/v1/networkpolicies",
-		"autoscaling/v1/horizontalpodautoscalers",
 		"rbac.authorization.k8s.io/v1/clusterroles",
 		"rbac.authorization.k8s.io/v1/clusterrolebindings",
 		"rbac.authorization.k8s.io/v1/roles",
@@ -144,6 +143,11 @@ func (p *Popeye) scannedGVRs(rev *client.Revision) []string {
 		mm = append(mm, "policy/v1/poddisruptionbudgets")
 	} else {
 		mm = append(mm, "policy/v1beta1/poddisruptionbudgets")
+	}
+	if rev.Minor >= 23 {
+		mm = append(mm, "autoscaling/v2/horizontalpodautoscalers")
+	} else {
+		mm = append(mm, "autoscaling/v1/horizontalpodautoscalers")
 	}
 
 	return mm
@@ -215,7 +219,6 @@ func (p *Popeye) sanitizers(rev *client.Revision) map[string]scrubFn {
 		"apps/v1/deployments":       scrub.NewDeployment,
 		"apps/v1/replicasets":       scrub.NewReplicaSet,
 		"apps/v1/statefulsets":      scrub.NewStatefulSet,
-		"autoscaling/v1/horizontalpodautoscalers":          scrub.NewHorizontalPodAutoscaler,
 		"networking.k8s.io/v1/networkpolicies":             scrub.NewNetworkPolicy,
 		"policy/v1beta1/podsecuritypolicies":               scrub.NewPodSecurityPolicy,
 		"rbac.authorization.k8s.io/v1/clusterroles":        scrub.NewClusterRole,
@@ -233,6 +236,11 @@ func (p *Popeye) sanitizers(rev *client.Revision) map[string]scrubFn {
 		mm["policy/v1/poddisruptionbudgets"] = scrub.NewPodDisruptionBudget
 	} else {
 		mm["policy/v1beta1/poddisruptionbudgets"] = scrub.NewPodDisruptionBudget
+	}
+	if rev.Minor >= 23 {
+		mm["autoscaling/v2/horizontalpodautoscalers"] = scrub.NewHorizontalPodAutoscaler
+	} else {
+		mm["autoscaling/v1/horizontalpodautoscalers"] = scrub.NewHorizontalPodAutoscaler
 	}
 
 	return mm
