@@ -6,7 +6,7 @@ import (
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
-	netv1b1 "k8s.io/api/networking/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -54,14 +54,14 @@ func newIngress(rev string) ingress {
 	return ingress{rev: rev}
 }
 
-func (i ingress) ListIngresses() map[string]*netv1b1.Ingress {
-	return map[string]*netv1b1.Ingress{
+func (i ingress) ListIngresses() map[string]*netv1.Ingress {
+	return map[string]*netv1.Ingress{
 		"default/ing1": makeIngress(i.rev),
 	}
 }
 
-func makeIngress(url string) *netv1b1.Ingress {
-	return &netv1b1.Ingress{
+func makeIngress(url string) *netv1.Ingress {
+	return &netv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			SelfLink: "/api/" + url,
 		},
