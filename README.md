@@ -22,6 +22,8 @@ Popeye is a readonly tool, it does not alter any of your Kubernetes resources in
 
 ---
 
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/derailed/popeye)
+
 ## Installation
 
 Popeye is available on Linux, OSX and Windows platforms.
