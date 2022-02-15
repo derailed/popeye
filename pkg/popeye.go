@@ -256,9 +256,34 @@ func (p *Popeye) Sanitize() (int, int, error) {
 			if err != nil {
 				log.Fatal().Err(err).Msg("Parse S3 bucket URI")
 			}
+
+			// Initialize the AWS session
+			var config *aws.Config
+
+			if isSetStr(p.flags.S3Region) && isSetStr(p.flags.S3Endpoint) {
+				config = &aws.Config{
+					LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors),
+					Region:   aws.String(*p.flags.S3Region),
+					Endpoint: aws.String(*p.flags.S3Endpoint),
+				}
+			} else if isSetStr(p.flags.S3Endpoint) {
+				config = &aws.Config{
+					LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors),
+					Endpoint: aws.String(*p.flags.S3Endpoint),
+				}
+			} else if isSetStr(p.flags.S3Region) {
+				config = &aws.Config{
+					LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors),
+					Endpoint: aws.String(*p.flags.S3Region),
+				}
+			} else {
+				config = &aws.Config{
+					LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors),
+				}
+			}
+
 			// Create a single AWS session (we can re use this if we're uploading many files)
-			s, err := session.NewSession(&aws.Config{
-				LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors)})
+			s, err := session.NewSession(config)
 			if err != nil {
 				log.Fatal().Err(err).Msg("Create S3 Session")
 			}
