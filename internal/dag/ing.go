@@ -3,10 +3,10 @@ package dag
 import (
 	"context"
 	"errors"
+	netv1 "k8s.io/api/networking/v1"
 
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/dao"
-	netv1b1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,17 +16,17 @@ import (
 var IngressGVR = client.NewGVR("networking.k8s.io/v1/ingresses")
 
 // ListIngresses list all included Ingresses.
-func ListIngresses(ctx context.Context) (map[string]*netv1b1.Ingress, error) {
+func ListIngresses(ctx context.Context) (map[string]*netv1.Ingress, error) {
 	return listAllIngresses(ctx)
 }
 
 // ListAllIngresses fetch all Ingresses on the cluster.
-func listAllIngresses(ctx context.Context) (map[string]*netv1b1.Ingress, error) {
+func listAllIngresses(ctx context.Context) (map[string]*netv1.Ingress, error) {
 	ll, err := fetchIngresses(ctx)
 	if err != nil {
 		return nil, err
 	}
-	ings := make(map[string]*netv1b1.Ingress, len(ll.Items))
+	ings := make(map[string]*netv1.Ingress, len(ll.Items))
 	for i := range ll.Items {
 		ings[metaFQN(ll.Items[i].ObjectMeta)] = &ll.Items[i]
 	}
@@ -35,7 +35,7 @@ func listAllIngresses(ctx context.Context) (map[string]*netv1b1.Ingress, error) 
 }
 
 // FetchIngresses retrieves all Ingresses on the cluster.
-func fetchIngresses(ctx context.Context) (*netv1b1.IngressList, error) {
+func fetchIngresses(ctx context.Context) (*netv1.IngressList, error) {
 	f, cfg := mustExtractFactory(ctx), mustExtractConfig(ctx)
 	if cfg.Flags.StandAlone {
 		dial, err := f.Client().Dial()
@@ -43,7 +43,7 @@ func fetchIngresses(ctx context.Context) (*netv1b1.IngressList, error) {
 			return nil, err
 		}
 
-		return dial.NetworkingV1beta1().Ingresses(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
+		return dial.NetworkingV1().Ingresses(f.Client().ActiveNamespace()).List(ctx, metav1.ListOptions{})
 	}
 
 	var res dao.Resource
@@ -52,9 +52,9 @@ func fetchIngresses(ctx context.Context) (*netv1b1.IngressList, error) {
 	if err != nil {
 		return nil, err
 	}
-	var ll netv1b1.IngressList
+	var ll netv1.IngressList
 	for _, o := range oo {
-		var ing netv1b1.Ingress
+		var ing netv1.Ingress
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(o.(*unstructured.Unstructured).Object, &ing)
 		if err != nil {
 			return nil, errors.New("expecting ingress resource")
