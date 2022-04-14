@@ -141,7 +141,7 @@
 | 1106       | No target ports match service port %s                                     | 3        |                  |
 | 1107       | LoadBalancer detected but service sets externalTrafficPolicy to "Cluster" | 1        |                  |
 | 1108       | NodePort detected but service sets externalTrafficPolicy to "Local"       | 1        |                  |
-| 1109       | Only one associated endpoint                                              | 2        |                  |
+| 1109       | Only one Pod associated with this endpoint                                | 2        |                  |
 
 ## ReplicaSet
 
