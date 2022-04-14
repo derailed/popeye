@@ -34,6 +34,10 @@ type PodLimiter interface {
 	RestartsLimit() int
 }
 
+type ContainerRestrictor interface {
+	AllowedRegistries() []string
+}
+
 // PodSelectorLister list a collection of pod matching a selector.
 type PodSelectorLister interface {
 	ListPodsBySelector(ns string, sel *metav1.LabelSelector) map[string]*v1.Pod

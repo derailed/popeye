@@ -333,6 +333,11 @@ popeye:
     limits:
       cpu:    80
       memory: 75
+
+  # Configure a list of allowed registries to pull images from
+  registries:
+    - quay.io
+    - docker.io
 ```
 
 ## Popeye In Your Clusters!
