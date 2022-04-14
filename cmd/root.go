@@ -138,7 +138,7 @@ func initPopeyeFlags() {
 
 	rootCmd.Flags().StringVarP(flags.S3Endpoint, "s3-endpoint", "",
 		"",
-		"Specify to which S3 endpoint you want to save the output file",
+		"Specify the storage region if needed when the s3-bucket option is enabled",
 	)
 
 	rootCmd.Flags().StringVarP(flags.InClusterName, "cluster-name", "",
