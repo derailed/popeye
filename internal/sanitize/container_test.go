@@ -146,7 +146,7 @@ func TestContainerCheckProbes(t *testing.T) {
 		co := makeContainer("c1", coOpts{})
 		probe := &v1.Probe{}
 		if u.namedPort {
-			probe.Handler = v1.Handler{HTTPGet: &v1.HTTPGetAction{Port: intstr.Parse("80")}}
+			probe.ProbeHandler = v1.ProbeHandler{HTTPGet: &v1.HTTPGetAction{Port: intstr.Parse("80")}}
 		}
 		if u.liveness {
 			co.LivenessProbe = probe

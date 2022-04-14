@@ -205,42 +205,39 @@ func (p *Popeye) revision() (*client.Revision, error) {
 
 func (p *Popeye) sanitizers(rev *client.Revision) map[string]scrubFn {
 	mm := map[string]scrubFn{
-		"cluster":                   scrub.NewCluster,
-		"v1/configmaps":             scrub.NewConfigMap,
-		"v1/namespaces":             scrub.NewNamespace,
-		"v1/nodes":                  scrub.NewNode,
-		"v1/pods":                   scrub.NewPod,
-		"v1/persistentvolumes":      scrub.NewPersistentVolume,
-		"v1/persistentvolumeclaims": scrub.NewPersistentVolumeClaim,
-		"v1/secrets":                scrub.NewSecret,
-		"v1/services":               scrub.NewService,
-		"v1/serviceaccounts":        scrub.NewServiceAccount,
-		"apps/v1/daemonsets":        scrub.NewDaemonSet,
-		"apps/v1/deployments":       scrub.NewDeployment,
-		"apps/v1/replicasets":       scrub.NewReplicaSet,
-		"apps/v1/statefulsets":      scrub.NewStatefulSet,
-		"networking.k8s.io/v1/networkpolicies":             scrub.NewNetworkPolicy,
-		"policy/v1beta1/podsecuritypolicies":               scrub.NewPodSecurityPolicy,
-		"rbac.authorization.k8s.io/v1/clusterroles":        scrub.NewClusterRole,
+		"cluster":                                   scrub.NewCluster,
+		"v1/configmaps":                             scrub.NewConfigMap,
+		"v1/namespaces":                             scrub.NewNamespace,
+		"v1/nodes":                                  scrub.NewNode,
+		"v1/pods":                                   scrub.NewPod,
+		"v1/persistentvolumes":                      scrub.NewPersistentVolume,
+		"v1/persistentvolumeclaims":                 scrub.NewPersistentVolumeClaim,
+		"v1/secrets":                                scrub.NewSecret,
+		"v1/services":                               scrub.NewService,
+		"v1/serviceaccounts":                        scrub.NewServiceAccount,
+		"apps/v1/daemonsets":                        scrub.NewDaemonSet,
+		"apps/v1/deployments":                       scrub.NewDeployment,
+		"apps/v1/replicasets":                       scrub.NewReplicaSet,
+		"apps/v1/statefulsets":                      scrub.NewStatefulSet,
+		"networking.k8s.io/v1/networkpolicies":      scrub.NewNetworkPolicy,
+		"networking.k8s.io/v1/ingresses":            scrub.NewIngress,
+		"policy/v1beta1/podsecuritypolicies":        scrub.NewPodSecurityPolicy,
+		"policy/v1beta1/poddisruptionbudgets":       scrub.NewPodDisruptionBudget,
+		"rbac.authorization.k8s.io/v1/clusterroles": scrub.NewClusterRole,
 		"rbac.authorization.k8s.io/v1/clusterrolebindings": scrub.NewClusterRoleBinding,
 		"rbac.authorization.k8s.io/v1/roles":               scrub.NewRole,
 		"rbac.authorization.k8s.io/v1/rolebindings":        scrub.NewRoleBinding,
+		"autoscaling/v1/horizontalpodautoscalers":          scrub.NewHorizontalPodAutoscaler,
 	}
 
 	if rev.Minor <= 18 {
 		mm["networking.k8s.io/v1beta1/ingresses"] = scrub.NewIngress
-	} else {
-		mm["networking.k8s.io/v1/ingresses"] = scrub.NewIngress
 	}
 	if rev.Minor >= 21 {
 		mm["policy/v1/poddisruptionbudgets"] = scrub.NewPodDisruptionBudget
-	} else {
-		mm["policy/v1beta1/poddisruptionbudgets"] = scrub.NewPodDisruptionBudget
 	}
 	if rev.Minor >= 23 {
 		mm["autoscaling/v2/horizontalpodautoscalers"] = scrub.NewHorizontalPodAutoscaler
-	} else {
-		mm["autoscaling/v1/horizontalpodautoscalers"] = scrub.NewHorizontalPodAutoscaler
 	}
 
 	return mm
@@ -266,7 +263,8 @@ func (p *Popeye) Sanitize() (int, int, error) {
 			}
 			// Create a single AWS session (we can re use this if we're uploading many files)
 			s, err := session.NewSession(&aws.Config{
-				LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors)})
+				LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors),
+			})
 			if err != nil {
 				log.Fatal().Err(err).Msg("Create S3 Session")
 			}

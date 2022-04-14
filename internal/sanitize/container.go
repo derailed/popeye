@@ -73,14 +73,14 @@ func (c *Container) checkProbes(ctx context.Context, co v1.Container) {
 }
 
 func (c *Container) checkNamedProbe(ctx context.Context, p *v1.Probe, liveness bool) {
-	if p == nil || p.Handler.HTTPGet == nil {
+	if p == nil || p.ProbeHandler.HTTPGet == nil {
 		return
 	}
 	kind := "Readiness"
 	if liveness {
 		kind = "Liveness"
 	}
-	if p.Handler.HTTPGet != nil && p.Handler.HTTPGet.Port.Type == intstr.Int {
+	if p.ProbeHandler.HTTPGet != nil && p.ProbeHandler.HTTPGet.Port.Type == intstr.Int {
 		c.AddSubCode(ctx, 105, kind)
 	}
 }
