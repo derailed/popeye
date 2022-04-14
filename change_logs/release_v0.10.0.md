@@ -1,6 +1,6 @@
 <img src="https://raw.githubusercontent.com/derailed/popeye/master/assets/popeye_logo.png" align="right" width="200" height="auto"/>
 
-# Release v0.9.9
+# Release v0.10.0
 
 ## Notes
 
@@ -23,12 +23,19 @@ Please make sure to give a big `Thanks!` and `ATTA Girl/Boy!` to the following g
 * [Anthony DeChiaro](https://github.com/taintedkernel)
 * [Aurelie Vache](https://github.com/taintedkernel)
 * [Dirk Jablonski](https://github.com/djablonski-moia)
+* [Stuart Fyfe](https://github.com/fyfey)
+* [Noah Nordrum](https://github.com/nnordrum)
+* [Dani Baeyens](https://github.com/danibaeyens)
 
 ## Resolved Bugs/PRs
 
 * [PR #220](https://github.com/derailed/popeye/pull/220) Fix HPA API version
+* [PR #219](https://github.com/derailed/popeye/pull/219) Add S3 compatible storage
 * [PR #218](https://github.com/derailed/popeye/pull/218) Add gitpod integration
-* [PR #217](https://github.com/derailed/popeye/pull/217) Fix #211 deprecated ingress version
+* [PR #217](https://github.com/derailed/popeye/pull/217) Fix #211. Deprecated ingress version
+* [PR #215](https://github.com/derailed/popeye/pull/215) Update autoscaling resource version
+* [PR #205](https://github.com/derailed/popeye/pull/205) Documentation clarification
+* [PR #179](https://github.com/derailed/popeye/pull/179) Rule to check a list of allowed registries
 
 ---
 
