@@ -200,6 +200,39 @@ func TestContainerCheckImageTags(t *testing.T) {
 	}
 }
 
+func TestContainerCheckImageRegistry(t *testing.T) {
+	uu := map[string]struct {
+		image    string
+		pissues  int
+		issues   int
+		severity config.Level
+	}{
+		"dockerDefault": {image: "dockerhub:1.2.3", issues: 0},
+		"cool":          {image: "docker.io/cool:1.2.3", issues: 0},
+		"wrongRegistry": {pissues: 1, image: "wrong-registry.io/fred", issues: 1, severity: config.ErrorLevel},
+	}
+
+	ctx := makeContext("containers", "container")
+	ctx = internal.WithFQN(ctx, "default/p1")
+	ctx = internal.WithGroup(ctx, client.NewGVR("containers"), "c1")
+	for k := range uu {
+		u := uu[k]
+		co := makeContainer("c1", coOpts{})
+		co.Image = u.image
+
+		l := NewContainer("default/p1", newRangeCollectorWithRegistry(t))
+		t.Run(k, func(t *testing.T) {
+			l.checkImageTags(ctx, co.Image)
+
+			assert.Equal(t, u.pissues, len(l.Outcome()["default/p1"]))
+			if len(l.Outcome()["default/p1"]) != 0 {
+				assert.Equal(t, u.issues, len(l.Outcome().For("default/p1", "c1")))
+				assert.Equal(t, u.severity, l.Outcome().For("default/p1", "c1").MaxSeverity())
+			}
+		})
+	}
+}
+
 func TestContainerCheckNamedPorts(t *testing.T) {
 	uu := map[string]struct {
 		port     string
@@ -260,6 +293,12 @@ type rangeCollector struct {
 
 func newRangeCollector(t *testing.T) *rangeCollector {
 	return &rangeCollector{issues.NewCollector(loadCodes(t), makeConfig(t))}
+}
+
+func newRangeCollectorWithRegistry(t *testing.T) *rangeCollector {
+	cfg := makeConfig(t)
+	cfg.Registries = append(cfg.Registries, "docker.io")
+	return &rangeCollector{issues.NewCollector(loadCodes(t), cfg)}
 }
 
 func (*rangeCollector) RestartsLimit() int {

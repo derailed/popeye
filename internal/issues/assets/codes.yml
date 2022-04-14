@@ -39,6 +39,9 @@ codes:
   112:
     message: Memory Current/Limit (%s/%s) reached user %d%% threshold (%d%%)
     severity: 3
+  113:
+    message:  Container image %s is not hosted on an allowed docker registry
+    severity: 3
 
   # Pod
   200:
@@ -258,7 +261,7 @@ codes:
     message: NodePort detected but service sets externalTrafficPolicy to "Local"
     severity: 1
   1109:
-    message: Only one associated endpoint
+    message: Only one Pod associated with this endpoint
     severity: 2
 
   # ReplicaSet

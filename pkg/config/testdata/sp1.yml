@@ -35,3 +35,6 @@ popeye:
       cpu: 80
       memory: 75
     restarts: 3
+
+  registries:
+    - docker.io

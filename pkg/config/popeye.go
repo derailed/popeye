@@ -42,9 +42,10 @@ type (
 		AllocationLimits `yaml:"allocations"`
 		Excludes         `yaml:"excludes"`
 
-		Node  Node     `yaml:"node"`
-		Pod   Pod      `yaml:"pod"`
-		Codes Glossary `yaml:"codes"`
+		Node       Node     `yaml:"node"`
+		Pod        Pod      `yaml:"pod"`
+		Codes      Glossary `yaml:"codes"`
+		Registries []string `yaml:"registries"`
 	}
 )
 
@@ -55,9 +56,10 @@ func NewPopeye() Popeye {
 			CPU: Allocations{UnderPerc: defaultUnderPerc, OverPerc: defaultOverPerc},
 			MEM: Allocations{UnderPerc: defaultUnderPerc, OverPerc: defaultOverPerc},
 		},
-		Excludes: newExcludes(),
-		Node:     newNode(),
-		Pod:      newPod(),
+		Excludes:   newExcludes(),
+		Node:       newNode(),
+		Pod:        newPod(),
+		Registries: []string{},
 	}
 }
 

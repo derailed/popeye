@@ -261,13 +261,17 @@ func (p *Popeye) Sanitize() (int, int, error) {
 			if err != nil {
 				log.Fatal().Err(err).Msg("Parse S3 bucket URI")
 			}
+
 			// Create a single AWS session (we can re use this if we're uploading many files)
 			s, err := session.NewSession(&aws.Config{
 				LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors),
+				Region:   p.flags.S3Region,
+				Endpoint: p.flags.S3Endpoint,
 			})
 			if err != nil {
 				log.Fatal().Err(err).Msg("Create S3 Session")
 			}
+
 			// Create an uploader with the session and default options
 			uploader := s3manager.NewUploader(s)
 			// Upload input parameters

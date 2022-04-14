@@ -176,7 +176,7 @@ Example to save report in working directory in HTML format under the name "repor
 
 ### Save the report to S3
 
-You can also save the generated report to an AWS S3 bucket with providing the flag `--s3-bucket`. As parameter you need to provide the name of the S3 bucket where you want to store the report.
+You can also save the generated report to an AWS S3 bucket (or another S3 compatible Object Storage) with providing the flag `--s3-bucket`. As parameter you need to provide the name of the S3 bucket where you want to store the report.
 To save the report in a bucket subdirectory provide the bucket parameter as `bucket/path/to/report`.
 
 Underlying the AWS Go lib is used which is handling the credential loading. For more information check out the official [documentation](https://docs.aws.amazon.com/sdk-for-go/api/aws/session/).
@@ -187,7 +187,13 @@ Example to save report to S3:
 popeye --s3-bucket=NAME-OF-YOUR-S3-BUCKET/OPTIONAL/SUBDIRECTORY --out=json
 ```
 
-### Run public docker image locally
+You can also further define a specific region and endpoint for S3 compatible storage (OVHcloud Object Storage, Minio, Google cloud storage, etc...)
+
+```shell
+popeye --s3-bucket=NAME-OF-YOUR-S3-BUCKET/OPTIONAL/SUBDIRECTORY --s3-region YOUR-REGION --s3-endpoint URL-OF-THE-ENDPOINT
+```
+
+### Run public Docker image locally
 
 You don't have to build and/or install the binary to run popeye: you can just
 run it directly from the official docker repo on DockerHub. The default command
@@ -333,6 +339,11 @@ popeye:
     limits:
       cpu:    80
       memory: 75
+
+  # Configure a list of allowed registries to pull images from
+  registries:
+    - quay.io
+    - docker.io
 ```
 
 ## Popeye In Your Clusters!
