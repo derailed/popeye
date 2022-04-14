@@ -187,7 +187,7 @@ Example to save report to S3:
 popeye --s3-bucket=NAME-OF-YOUR-S3-BUCKET/OPTIONAL/SUBDIRECTORY --out=json
 ```
 
-You can also further define a specific region and endpoint for S3 compatible storage (OVHcloud Object Storage, Minio, Google cloud storage, etc...)
+If AWS sS3 is not your bag, you can further define an S3 compatible storage (OVHcloud Object Storage, Minio, Google cloud storage, etc...) using s3-endpoint and s3-region as so:
 
 ```shell
 popeye --s3-bucket=NAME-OF-YOUR-S3-BUCKET/OPTIONAL/SUBDIRECTORY --s3-region YOUR-REGION --s3-endpoint URL-OF-THE-ENDPOINT
