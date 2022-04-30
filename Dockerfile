@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------
 # Build...
-FROM golang:1.16.6-alpine3.14 AS build
+FROM golang:1.18.1-alpine3.14 AS build
 
 WORKDIR /popeye
 
