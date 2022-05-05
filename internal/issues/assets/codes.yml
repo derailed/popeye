@@ -71,6 +71,9 @@ codes:
   208:
     message: Unmanaged pod detected. Best to use a controller
     severity: 2
+  209:
+    message: Pod is managed by multiple PodDisruptionBudgets (%s)
+    severity: 2
 
   # Security
   300:
