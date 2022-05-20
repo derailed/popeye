@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go v1.35.21
 	github.com/fvbommel/sortorder v1.0.1
 	github.com/magiconair/properties v1.8.5
-	github.com/prometheus/client_golang v1.12.2
+	github.com/prometheus/client_golang v1.12.1
 	github.com/prometheus/common v0.34.0
 	github.com/rs/zerolog v1.18.0
 	github.com/spf13/cobra v1.2.1
