@@ -17,9 +17,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
@@ -264,27 +265,40 @@ func (p *Popeye) Sanitize() (int, int, error) {
 				log.Fatal().Err(err).Msg("Parse S3 bucket URI")
 			}
 
-			// Create a single AWS session (we can re use this if we're uploading many files)
-			s, err := session.NewSession(&aws.Config{
-				LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors),
-				Region:   p.flags.S3Region,
-				Endpoint: p.flags.S3Endpoint,
+			ctx := context.Background()
+
+			// Create a single AWS config (we can re use this if we're uploading many files)
+			customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+				if *p.flags.S3Endpoint != "" {
+					return aws.Endpoint{
+						URL: *p.flags.S3Endpoint,
+					}, nil
+				}
+				return aws.Endpoint{}, &aws.EndpointNotFoundError{}
 			})
+			cfg, err := awsconfig.LoadDefaultConfig(
+				ctx,
+				awsconfig.WithRegion(*p.flags.S3Region),
+				awsconfig.WithEndpointResolverWithOptions(customResolver),
+			)
 			if err != nil {
 				log.Fatal().Err(err).Msg("Create S3 Session")
 			}
 
+			// Create an S3 Client with the config
+			client := s3.NewFromConfig(cfg)
+
 			// Create an uploader with the session and default options
-			uploader := s3manager.NewUploader(s)
+			uploader := s3manager.NewUploader(client)
 			// Upload input parameters
-			upParams := &s3manager.UploadInput{
+			upParams := s3.PutObjectInput{
 				Bucket: aws.String(bucket),
 				Key:    aws.String(key + "/" + p.fileName()),
 				Body:   p.outputTarget,
 			}
 
 			// Perform an upload.
-			if _, err = uploader.Upload(upParams); err != nil {
+			if _, err = uploader.Upload(ctx, &upParams); err != nil {
 				log.Fatal().Err(err).Msg("S3 Upload")
 			}
 		}
