@@ -29,6 +29,12 @@ spec:
       bin: kubectl-popeye
     - selector:
         matchLabels:
+          os: darwin
+          arch: arm64
+      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Darwin_arm64.tar.gz" .TagName | indent 6 }}
+      bin: kubectl-popeye
+    - selector:
+        matchLabels:
           os: linux
           arch: amd64
       {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Linux_x86_64.tar.gz" .TagName }}
