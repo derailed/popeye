@@ -123,9 +123,9 @@ Here is a list of some of the available sanitizers:
 | 🛀 | Deployment              |                                                                         | dp, deploy |
 |    |                         | Unused, pod template validation, resource utilization                   |            |
 | 🛀 | StatefulSet             |                                                                         | sts        |
-|    |                         | Unsed, pod template validation, resource utilization                    |            |
+|    |                         | Unused, pod template validation, resource utilization                    |            |
 | 🛀 | DaemonSet               |                                                                         | ds         |
-|    |                         | Unsed, pod template validation, resource utilization                    |            |
+|    |                         | Unused, pod template validation, resource utilization                    |            |
 | 🛀 | PersistentVolume        |                                                                         | pv         |
 |    |                         | Unused, check volume bound or volume error                              |            |
 | 🛀 | PersistentVolumeClaim   |                                                                         | pvc        |
