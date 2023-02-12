@@ -38,9 +38,9 @@ Popeye is available on Linux, OSX and Windows platforms.
    ```
 * Using `go install`
  
- ```shell
- go install github.com/derailed/popeye@latest
- ```
+    ```shell
+    go install github.com/derailed/popeye@latest
+    ```
 
 * Building from source
    Popeye was built using go 1.12+. In order to build Popeye from source you must:
