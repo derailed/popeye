@@ -41,6 +41,8 @@ var (
 	DumpDir = dumpDir()
 	// ErrUnknownS3BucketProtocol defines the error if we can't parse the S3 URI
 	ErrUnknownS3BucketProtocol = errors.New("invalid S3 URI: hostname not valid")
+
+	gvrs internal.GVRs
 )
 
 type scrubFn func(context.Context, *scrub.Cache, *issues.Codes) scrub.Sanitizer
@@ -68,13 +70,12 @@ func NewPopeye(flags *config.Flags, log *zerolog.Logger) (*Popeye, error) {
 		return nil, err
 	}
 
-	p := Popeye{
+	return &Popeye{
 		config:  cfg,
 		log:     log,
 		flags:   flags,
 		builder: report.NewBuilder(),
-	}
-	return &p, nil
+	}, nil
 }
 
 // Init configures popeye prior to sanitization.
@@ -88,9 +89,10 @@ func (p *Popeye) Init() error {
 	if err != nil {
 		return err
 	}
+	gvrs = p.scannedGVRs(rev)
 
 	p.aliases = internal.NewAliases()
-	if err := p.aliases.Init(p.factory, p.scannedGVRs(rev)); err != nil {
+	if err := p.aliases.Init(p.factory, gvrs); err != nil {
 		return err
 	}
 
@@ -109,45 +111,45 @@ func (p *Popeye) SetFactory(f types.Factory) {
 	p.factory = f
 }
 
-func (p *Popeye) scannedGVRs(rev *client.Revision) []string {
-	mm := []string{
-		"v1/limitranges",
-		"v1/services",
-		"v1/endpoints",
-		"v1/nodes",
-		"v1/namespaces",
-		"v1/pods",
-		"v1/configmaps",
-		"v1/secrets",
-		"v1/serviceaccounts",
-		"v1/persistentvolumes",
-		"v1/persistentvolumeclaims",
-		"apps/v1/deployments",
-		"apps/v1/replicasets",
-		"apps/v1/daemonsets",
-		"apps/v1/statefulsets",
-		"policy/v1beta1/podsecuritypolicies",
-		"networking.k8s.io/v1/networkpolicies",
-		"rbac.authorization.k8s.io/v1/clusterroles",
-		"rbac.authorization.k8s.io/v1/clusterrolebindings",
-		"rbac.authorization.k8s.io/v1/roles",
-		"rbac.authorization.k8s.io/v1/rolebindings",
+func (p *Popeye) scannedGVRs(rev *client.Revision) internal.GVRs {
+	mm := internal.GVRs{
+		internal.LrGVR:  "v1/limitranges",
+		internal.SvcGVR: "v1/services",
+		internal.EpGVR:  "v1/endpoints",
+		internal.NoGVR:  "v1/nodes",
+		internal.NsGVR:  "v1/namespaces",
+		internal.PoGVR:  "v1/pods",
+		internal.CmGVR:  "v1/configmaps",
+		internal.SecGVR: "v1/secrets",
+		internal.SaGVR:  "v1/serviceaccounts",
+		internal.PvGVR:  "v1/persistentvolumes",
+		internal.PvcGVR: "v1/persistentvolumeclaims",
+		internal.DpGVR:  "apps/v1/deployments",
+		internal.RsGVR:  "apps/v1/replicasets",
+		internal.DsGVR:  "apps/v1/daemonsets",
+		internal.StsGVR: "apps/v1/statefulsets",
+		internal.NpGVR:  "networking.k8s.io/v1/networkpolicies",
+		internal.CrGVR:  "rbac.authorization.k8s.io/v1/clusterroles",
+		internal.CrbGVR: "rbac.authorization.k8s.io/v1/clusterrolebindings",
+		internal.RoGVR:  "rbac.authorization.k8s.io/v1/roles",
+		internal.RobGVR: "rbac.authorization.k8s.io/v1/rolebindings",
+		internal.IngGVR: "networking.k8s.io/v1/ingresses",
+		internal.PspGVR: "policy/v1/podsecuritypolicies",
+		internal.PdbGVR: "policy/v1/poddisruptionbudgets",
+		internal.HpaGVR: "autoscaling/v2/horizontalpodautoscalers",
 	}
 
-	if rev.Minor <= 18 {
-		mm = append(mm, "networking.k8s.io/v1beta1/ingresses")
-	} else {
-		mm = append(mm, "networking.k8s.io/v1/ingresses")
+	if rev.Minor < 18 {
+		mm[internal.IngGVR] = "networking.k8s.io/v1beta1/ingresses"
 	}
-	if rev.Minor >= 21 {
-		mm = append(mm, "policy/v1/poddisruptionbudgets")
-	} else {
-		mm = append(mm, "policy/v1beta1/poddisruptionbudgets")
+	if rev.Minor <= 21 {
+		mm[internal.PspGVR] = "policy/v1beta1/podsecuritypolicies"
 	}
-	if rev.Minor >= 23 {
-		mm = append(mm, "autoscaling/v2/horizontalpodautoscalers")
-	} else {
-		mm = append(mm, "autoscaling/v1/horizontalpodautoscalers")
+	if rev.Minor < 21 {
+		mm[internal.PdbGVR] = "policy/v1beta1/poddisruptionbudgets"
+	}
+	if rev.Minor < 23 {
+		mm[internal.HpaGVR] = "autoscaling/v1/horizontalpodautoscalers"
 	}
 
 	return mm
@@ -205,41 +207,29 @@ func (p *Popeye) revision() (*client.Revision, error) {
 
 func (p *Popeye) sanitizers(rev *client.Revision) map[string]scrubFn {
 	mm := map[string]scrubFn{
-		"cluster":                                   scrub.NewCluster,
-		"v1/configmaps":                             scrub.NewConfigMap,
-		"v1/namespaces":                             scrub.NewNamespace,
-		"v1/nodes":                                  scrub.NewNode,
-		"v1/pods":                                   scrub.NewPod,
-		"v1/persistentvolumes":                      scrub.NewPersistentVolume,
-		"v1/persistentvolumeclaims":                 scrub.NewPersistentVolumeClaim,
-		"v1/secrets":                                scrub.NewSecret,
-		"v1/services":                               scrub.NewService,
-		"v1/serviceaccounts":                        scrub.NewServiceAccount,
-		"apps/v1/daemonsets":                        scrub.NewDaemonSet,
-		"apps/v1/deployments":                       scrub.NewDeployment,
-		"apps/v1/replicasets":                       scrub.NewReplicaSet,
-		"apps/v1/statefulsets":                      scrub.NewStatefulSet,
-		"networking.k8s.io/v1/networkpolicies":      scrub.NewNetworkPolicy,
-		"networking.k8s.io/v1/ingresses":            scrub.NewIngress,
-		"policy/v1beta1/podsecuritypolicies":        scrub.NewPodSecurityPolicy,
-		"rbac.authorization.k8s.io/v1/clusterroles": scrub.NewClusterRole,
-		"rbac.authorization.k8s.io/v1/clusterrolebindings": scrub.NewClusterRoleBinding,
-		"rbac.authorization.k8s.io/v1/roles":               scrub.NewRole,
-		"rbac.authorization.k8s.io/v1/rolebindings":        scrub.NewRoleBinding,
-	}
-
-	if rev.Minor <= 18 {
-		mm["networking.k8s.io/v1beta1/ingresses"] = scrub.NewIngress
-	}
-	if rev.Minor >= 21 {
-		mm["policy/v1/poddisruptionbudgets"] = scrub.NewPodDisruptionBudget
-	} else {
-		mm["policy/v1beta1/poddisruptionbudgets"] = scrub.NewPodDisruptionBudget
-	}
-	if rev.Minor >= 23 {
-		mm["autoscaling/v2/horizontalpodautoscalers"] = scrub.NewHorizontalPodAutoscaler
-	} else {
-		mm["autoscaling/v1/horizontalpodautoscalers"] = scrub.NewHorizontalPodAutoscaler
+		"cluster":             scrub.NewCluster,
+		gvrs[internal.CmGVR]:  scrub.NewConfigMap,
+		gvrs[internal.NsGVR]:  scrub.NewNamespace,
+		gvrs[internal.NoGVR]:  scrub.NewNode,
+		gvrs[internal.PoGVR]:  scrub.NewPod,
+		gvrs[internal.PvGVR]:  scrub.NewPersistentVolume,
+		gvrs[internal.PvcGVR]: scrub.NewPersistentVolumeClaim,
+		gvrs[internal.SecGVR]: scrub.NewSecret,
+		gvrs[internal.SvcGVR]: scrub.NewService,
+		gvrs[internal.SaGVR]:  scrub.NewServiceAccount,
+		gvrs[internal.DsGVR]:  scrub.NewDaemonSet,
+		gvrs[internal.DpGVR]:  scrub.NewDeployment,
+		gvrs[internal.RsGVR]:  scrub.NewReplicaSet,
+		gvrs[internal.StsGVR]: scrub.NewStatefulSet,
+		gvrs[internal.NpGVR]:  scrub.NewNetworkPolicy,
+		gvrs[internal.IngGVR]: scrub.NewIngress,
+		gvrs[internal.CrGVR]:  scrub.NewClusterRole,
+		gvrs[internal.CrbGVR]: scrub.NewClusterRoleBinding,
+		gvrs[internal.RoGVR]:  scrub.NewRole,
+		gvrs[internal.RobGVR]: scrub.NewRoleBinding,
+		gvrs[internal.PspGVR]: scrub.NewPodSecurityPolicy,
+		gvrs[internal.PdbGVR]: scrub.NewPodDisruptionBudget,
+		gvrs[internal.HpaGVR]: scrub.NewHorizontalPodAutoscaler,
 	}
 
 	return mm
