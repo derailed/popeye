@@ -142,7 +142,7 @@ func (p *Popeye) scannedGVRs(rev *client.Revision) internal.GVRs {
 	if rev.Minor < 18 {
 		mm[internal.IngGVR] = "networking.k8s.io/v1beta1/ingresses"
 	}
-	if rev.Minor <= 21 {
+	if rev.Minor <= 24 {
 		mm[internal.PspGVR] = "policy/v1beta1/podsecuritypolicies"
 	}
 	if rev.Minor < 21 {
