@@ -134,7 +134,7 @@ func (p *Popeye) scannedGVRs(rev *client.Revision) internal.GVRs {
 		internal.RoGVR:  "rbac.authorization.k8s.io/v1/roles",
 		internal.RobGVR: "rbac.authorization.k8s.io/v1/rolebindings",
 		internal.IngGVR: "networking.k8s.io/v1/ingresses",
-		internal.PspGVR: "policy/v1/podsecuritypolicies",
+		internal.PspGVR: "policy/v1beta1/podsecuritypolicies",
 		internal.PdbGVR: "policy/v1/poddisruptionbudgets",
 		internal.HpaGVR: "autoscaling/v2/horizontalpodautoscalers",
 	}
@@ -142,8 +142,8 @@ func (p *Popeye) scannedGVRs(rev *client.Revision) internal.GVRs {
 	if rev.Minor < 18 {
 		mm[internal.IngGVR] = "networking.k8s.io/v1beta1/ingresses"
 	}
-	if rev.Minor <= 24 {
-		mm[internal.PspGVR] = "policy/v1beta1/podsecuritypolicies"
+	if rev.Minor >= 25 {
+		delete(mm, internal.PspGVR)
 	}
 	if rev.Minor < 21 {
 		mm[internal.PdbGVR] = "policy/v1beta1/poddisruptionbudgets"
