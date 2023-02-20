@@ -1,6 +1,6 @@
 <img src="https://raw.githubusercontent.com/derailed/popeye/master/assets/popeye_logo.png" align="right" width="200" height="auto"/>
 
-# Release v0.11.0
+# Release v0.11.1
 
 ## Notes
 
@@ -16,18 +16,17 @@ Also if you dig this tool, please make some noise on social! [@kitesurfer](https
 
 ---
 
-## Contributed PRs
+## Resolved Issues
+
+* [Issue #245](https://github.com/derailed/popeye/issues/245) Checking Kubernetes clusters fails because v1/PodSecurityPolicy is checked
+
+---
+
+## Contributed Issues
 
 Please give `Big Thanks!` and `ATTA Girls/Boys!` to all the fine contributors for making Popeye better for all of us!!
 
-* [PR #243](https://github.com/derailed/popeye/pull/243) Invalid value for --force-exit-zero
-* [PR #241](https://github.com/derailed/popeye/pull/241) Add a non-root user in docker image
-* [PR #240](https://github.com/derailed/popeye/pull/240) Optimize README documents
-* [PR #238](https://github.com/derailed/popeye/pull/238) Add arm64 Darwin releases to krew-index
-* [PR #233](https://github.com/derailed/popeye/pull/233) Add go install option to readme
-* [PR #226](https://github.com/derailed/popeye/pull/226) Fixing CVE issue for client_golang 1.11.0 to 1.12.2
-* [PR #224](https://github.com/derailed/popeye/pull/224) Add check for pods that are managed by multiple pdbs
-* [PR #222](https://github.com/derailed/popeye/pull/222) Fix RBAC rules in README.md
+* [PR #247](https://github.com/derailed/popeye/pull/247) Fix deprecated cronjob api
 
 ---
 
