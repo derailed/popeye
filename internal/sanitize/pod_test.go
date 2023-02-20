@@ -9,7 +9,7 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	polv1beta1 "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
@@ -232,11 +232,11 @@ func (p *pod) ListPodsMetrics() map[string]*v1beta1.PodMetrics {
 	}
 }
 
-func (p *pod) ForLabels(l map[string]string) *polv1beta1.PodDisruptionBudget {
-	return &polv1beta1.PodDisruptionBudget{}
+func (p *pod) ForLabels(l map[string]string) *policyv1.PodDisruptionBudget {
+	return &policyv1.PodDisruptionBudget{}
 }
 
-func (p *pod) ListPodDisruptionBudgets() map[string]*polv1beta1.PodDisruptionBudget {
+func (p *pod) ListPodDisruptionBudgets() map[string]*policyv1.PodDisruptionBudget {
 	return nil
 }
 
@@ -406,7 +406,7 @@ func TestPodCheckForMultiplePdbMatches(t *testing.T) {
 		ctx          context.Context
 		podLabels    map[string]string
 		podNamespace string
-		pdbs         map[string]*polv1beta1.PodDisruptionBudget
+		pdbs         map[string]*policyv1.PodDisruptionBudget
 	}
 	tests := []struct {
 		name   string
@@ -419,9 +419,9 @@ func TestPodCheckForMultiplePdbMatches(t *testing.T) {
 			args: args{
 				podNamespace: "namespace-1",
 				podLabels:    map[string]string{"app": "test"},
-				pdbs: map[string]*polv1beta1.PodDisruptionBudget{
+				pdbs: map[string]*policyv1.PodDisruptionBudget{
 					"pdb": {
-						Spec: polv1beta1.PodDisruptionBudgetSpec{
+						Spec: policyv1.PodDisruptionBudgetSpec{
 							Selector: &metav1.LabelSelector{
 								MatchLabels: map[string]string{"app": "test"},
 							},
@@ -432,7 +432,7 @@ func TestPodCheckForMultiplePdbMatches(t *testing.T) {
 						},
 					},
 					"pdb2": {
-						Spec: polv1beta1.PodDisruptionBudgetSpec{
+						Spec: policyv1.PodDisruptionBudgetSpec{
 							Selector: &metav1.LabelSelector{
 								MatchLabels: map[string]string{"app": "test"},
 							},
@@ -457,9 +457,9 @@ func TestPodCheckForMultiplePdbMatches(t *testing.T) {
 			args: args{
 				podNamespace: "namespace-1",
 				podLabels:    map[string]string{"app": "test"},
-				pdbs: map[string]*polv1beta1.PodDisruptionBudget{
+				pdbs: map[string]*policyv1.PodDisruptionBudget{
 					"pdb": {
-						Spec: polv1beta1.PodDisruptionBudgetSpec{
+						Spec: policyv1.PodDisruptionBudgetSpec{
 							Selector: &metav1.LabelSelector{
 								MatchLabels: map[string]string{"app": "test"},
 							},
@@ -470,7 +470,7 @@ func TestPodCheckForMultiplePdbMatches(t *testing.T) {
 						},
 					},
 					"pdb2": {
-						Spec: polv1beta1.PodDisruptionBudgetSpec{
+						Spec: policyv1.PodDisruptionBudgetSpec{
 							Selector: &metav1.LabelSelector{
 								MatchLabels: map[string]string{"app": "test"},
 							},
@@ -481,7 +481,7 @@ func TestPodCheckForMultiplePdbMatches(t *testing.T) {
 						},
 					},
 					"pdb3": {
-						Spec: polv1beta1.PodDisruptionBudgetSpec{
+						Spec: policyv1.PodDisruptionBudgetSpec{
 							Selector: &metav1.LabelSelector{
 								MatchLabels: map[string]string{"app": "test"},
 							},
@@ -506,9 +506,9 @@ func TestPodCheckForMultiplePdbMatches(t *testing.T) {
 			args: args{
 				podNamespace: "namespace-1",
 				podLabels:    map[string]string{"app": "test", "app2": "test2"},
-				pdbs: map[string]*polv1beta1.PodDisruptionBudget{
+				pdbs: map[string]*policyv1.PodDisruptionBudget{
 					"pdb": {
-						Spec: polv1beta1.PodDisruptionBudgetSpec{
+						Spec: policyv1.PodDisruptionBudgetSpec{
 							Selector: &metav1.LabelSelector{
 								MatchLabels: map[string]string{"app": "test", "app2": "test2"},
 							},
@@ -519,7 +519,7 @@ func TestPodCheckForMultiplePdbMatches(t *testing.T) {
 						},
 					},
 					"pdb2": {
-						Spec: polv1beta1.PodDisruptionBudgetSpec{
+						Spec: policyv1.PodDisruptionBudgetSpec{
 							Selector: &metav1.LabelSelector{
 								MatchLabels: map[string]string{"app3": "test3"},
 							},
@@ -537,9 +537,9 @@ func TestPodCheckForMultiplePdbMatches(t *testing.T) {
 			name: "pod with no label - no issue expected",
 			args: args{
 				podLabels: map[string]string{},
-				pdbs: map[string]*polv1beta1.PodDisruptionBudget{
+				pdbs: map[string]*policyv1.PodDisruptionBudget{
 					"pdb": {
-						Spec: polv1beta1.PodDisruptionBudgetSpec{
+						Spec: policyv1.PodDisruptionBudgetSpec{
 							Selector: &metav1.LabelSelector{
 								MatchLabels: map[string]string{"app": "test"},
 							},
@@ -548,7 +548,7 @@ func TestPodCheckForMultiplePdbMatches(t *testing.T) {
 							Name: "pdb-1"},
 					},
 					"pdb2": {
-						Spec: polv1beta1.PodDisruptionBudgetSpec{
+						Spec: policyv1.PodDisruptionBudgetSpec{
 							Selector: &metav1.LabelSelector{
 								MatchLabels: map[string]string{"app": "test"},
 							},

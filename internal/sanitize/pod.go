@@ -13,7 +13,7 @@ import (
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
 	v1 "k8s.io/api/core/v1"
-	polv1beta1 "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
@@ -39,8 +39,8 @@ type (
 
 	// PdbLister list pdb matching a given selector
 	PdbLister interface {
-		ListPodDisruptionBudgets() map[string]*polv1beta1.PodDisruptionBudget
-		ForLabels(labels map[string]string) *polv1beta1.PodDisruptionBudget
+		ListPodDisruptionBudgets() map[string]*policyv1.PodDisruptionBudget
+		ForLabels(labels map[string]string) *policyv1.PodDisruptionBudget
 	}
 
 	// PodLister lists available pods.
@@ -293,7 +293,7 @@ func isPartOfJob(po *v1.Pod) bool {
 	return false
 }
 
-func (p *Pod) checkForMultiplePdbMatches(ctx context.Context, podNamespace string, podLabels map[string]string, pdbs map[string]*polv1beta1.PodDisruptionBudget) {
+func (p *Pod) checkForMultiplePdbMatches(ctx context.Context, podNamespace string, podLabels map[string]string, pdbs map[string]*policyv1.PodDisruptionBudget) {
 	var matchedPdbs []string
 	for _, pdb := range pdbs {
 		if podNamespace != pdb.Namespace {

@@ -134,7 +134,6 @@ func (p *Popeye) scannedGVRs(rev *client.Revision) internal.GVRs {
 		internal.RoGVR:  "rbac.authorization.k8s.io/v1/roles",
 		internal.RobGVR: "rbac.authorization.k8s.io/v1/rolebindings",
 		internal.IngGVR: "networking.k8s.io/v1/ingresses",
-		internal.PspGVR: "policy/v1/podsecuritypolicies",
 		internal.PdbGVR: "policy/v1/poddisruptionbudgets",
 		internal.HpaGVR: "autoscaling/v2/horizontalpodautoscalers",
 	}
@@ -142,14 +141,14 @@ func (p *Popeye) scannedGVRs(rev *client.Revision) internal.GVRs {
 	if rev.Minor < 18 {
 		mm[internal.IngGVR] = "networking.k8s.io/v1beta1/ingresses"
 	}
-	if rev.Minor <= 21 {
-		mm[internal.PspGVR] = "policy/v1beta1/podsecuritypolicies"
-	}
 	if rev.Minor < 21 {
 		mm[internal.PdbGVR] = "policy/v1beta1/poddisruptionbudgets"
 	}
 	if rev.Minor < 23 {
 		mm[internal.HpaGVR] = "autoscaling/v1/horizontalpodautoscalers"
+	}
+	if rev.Minor < 25 {
+		mm[internal.PspGVR] = "policy/v1beta1/podsecuritypolicies"
 	}
 
 	return mm
@@ -227,9 +226,12 @@ func (p *Popeye) sanitizers(rev *client.Revision) map[string]scrubFn {
 		gvrs[internal.CrbGVR]: scrub.NewClusterRoleBinding,
 		gvrs[internal.RoGVR]:  scrub.NewRole,
 		gvrs[internal.RobGVR]: scrub.NewRoleBinding,
-		gvrs[internal.PspGVR]: scrub.NewPodSecurityPolicy,
 		gvrs[internal.PdbGVR]: scrub.NewPodDisruptionBudget,
 		gvrs[internal.HpaGVR]: scrub.NewHorizontalPodAutoscaler,
+	}
+
+	if rev.Minor < 25 {
+		mm[gvrs[internal.PspGVR]] = scrub.NewPodSecurityPolicy
 	}
 
 	return mm
