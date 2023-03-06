@@ -316,7 +316,7 @@ popeye:
     # Namespace sanitizer exclusions...
     v1/namespaces:
       # Exclude all fred* namespaces if the namespaces are not found (404), other error codes will be reported!
-      - name: rx:kube
+      - name: rx:fred
         codes:
           - 404
       # Exclude all istio* namespaces from being scanned.
