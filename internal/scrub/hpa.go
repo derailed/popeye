@@ -67,7 +67,7 @@ func NewHorizontalPodAutoscaler(ctx context.Context, c *Cache, codes *issues.Cod
 
 	h.Node, err = c.nodes()
 	if err != nil {
-		h.AddCode(ctx, 402, err)
+		h.AddErr(ctx, err)
 	}
 
 	h.NodesMetrics, _ = c.nodesMx()
