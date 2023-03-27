@@ -37,7 +37,7 @@ func NewNetworkPolicy(ctx context.Context, c *Cache, codes *issues.Codes) Saniti
 
 	n.Namespace, err = c.namespaces()
 	if err != nil {
-		n.AddCode(ctx, 402, err)
+		n.AddErr(ctx, err)
 	}
 
 	n.Pod, err = c.pods()
