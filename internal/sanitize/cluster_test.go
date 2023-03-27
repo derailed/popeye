@@ -4,37 +4,53 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/pkg/config"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestClusterSanitize(t *testing.T) {
 	uu := map[string]struct {
 		major, minor string
-		e            issues.Issues
+		metrics      bool
+		e            issues.Outcome
 	}{
 		"good": {
 			major: "1", minor: "15",
-			e: issues.Issues{
-				{
-					GVR:     "clusters",
-					Group:   issues.Root,
-					Message: "[POP-406] K8s version OK",
-					Level:   config.OkLevel,
+			metrics: true,
+			e: map[string]issues.Issues{
+				"Version": {
+					{
+						GVR:     "clusters",
+						Group:   issues.Root,
+						Message: "[POP-406] K8s version OK",
+						Level:   config.OkLevel,
+					},
 				},
 			},
 		},
 		"guizard": {
 			major: "1", minor: "11",
-			e: issues.Issues{
-				{
-					GVR:     "clusters",
-					Group:   issues.Root,
-					Message: "[POP-405] Is this a jurassic cluster? Might want to upgrade K8s a bit",
-					Level:   config.WarnLevel,
+			metrics: false,
+			e: map[string]issues.Issues{
+				"Version": {
+					{
+						GVR:     "clusters",
+						Group:   issues.Root,
+						Message: "[POP-405] Is this a jurassic cluster? Might want to upgrade K8s a bit",
+						Level:   config.WarnLevel,
+					},
+				},
+				"Metrics": {
+					{
+						GVR:     "clusters",
+						Group:   issues.Root,
+						Message: "[POP-402] No metrics-server detected",
+						Level:   config.InfoLevel,
+					},
 				},
 			},
 		},
@@ -44,10 +60,10 @@ func TestClusterSanitize(t *testing.T) {
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			cl := NewCluster(issues.NewCollector(loadCodes(t), makeConfig(t)), newCluster(u.major, u.minor))
+			cl := NewCluster(issues.NewCollector(loadCodes(t), makeConfig(t)), newCluster(u.major, u.minor, u.metrics))
 
 			assert.Nil(t, cl.Sanitize(ctx))
-			assert.Equal(t, u.e, cl.Outcome()["Version"])
+			assert.Equal(t, u.e, cl.Outcome())
 		})
 	}
 }
@@ -69,12 +85,17 @@ func makeContext(gvr, section string) context.Context {
 
 type cluster struct {
 	major, minor string
+	metrics      bool
 }
 
-func newCluster(major, minor string) cluster {
-	return cluster{major: major, minor: minor}
+func newCluster(major, minor string, metrics bool) cluster {
+	return cluster{major: major, minor: minor, metrics: metrics}
 }
 
 func (c cluster) ListVersion() (string, string) {
 	return c.major, c.minor
+}
+
+func (c cluster) HasMetrics() bool {
+	return c.metrics
 }
