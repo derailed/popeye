@@ -37,10 +37,10 @@ func NewCluster(co *issues.Collector, lister ClusterLister) *Cluster {
 
 // Sanitize cleanse the resource.
 func (c *Cluster) Sanitize(ctx context.Context) error {
+	c.checkMetricsServer(ctx)
 	if err := c.checkVersion(ctx); err != nil {
 		return err
 	}
-	c.checkMetricsServer(ctx)
 	return nil
 }
 
