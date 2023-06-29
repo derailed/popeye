@@ -37,7 +37,7 @@ func NewClusterRoleBinding(ctx context.Context, c *Cache, codes *issues.Codes) S
 
 	crb.ClusterRole, err = c.clusterroles()
 	if err != nil {
-		crb.AddCode(ctx, 402, err)
+		crb.AddErr(ctx, err)
 	}
 
 	crb.Role, err = c.roles()
