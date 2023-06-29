@@ -1,5 +1,5 @@
 <img src="https://github.com/derailed/popeye/blob/master/assets/popeye_logo.png" align="right" width="250" height="auto">
-
+ 
 # Popeye - A Kubernetes Cluster Sanitizer
 
 Popeye is a utility that scans live Kubernetes cluster and reports potential issues with deployed resources and configurations. It sanitizes your cluster based on what's deployed and not what's sitting on disk. By scanning your cluster, it detects misconfigurations and helps you to ensure that best practices are in place, thus preventing future headaches. It aims at reducing the cognitive *over*load one faces when operating a Kubernetes cluster in the wild. Furthermore, if your cluster employs a metric-server, it reports potential resources over/under allocations and attempts to warn you should your cluster run out of capacity.
@@ -36,6 +36,11 @@ Popeye is available on Linux, OSX and Windows platforms.
    ```shell
    brew install derailed/popeye/popeye
    ```
+* Using `go install`
+ 
+    ```shell
+    go install github.com/derailed/popeye@latest
+    ```
 
 * Building from source
    Popeye was built using go 1.12+. In order to build Popeye from source you must:
@@ -123,9 +128,9 @@ Here is a list of some of the available sanitizers:
 | 🛀 | Deployment              |                                                                         | dp, deploy |
 |    |                         | Unused, pod template validation, resource utilization                   |            |
 | 🛀 | StatefulSet             |                                                                         | sts        |
-|    |                         | Unsed, pod template validation, resource utilization                    |            |
+|    |                         | Unused, pod template validation, resource utilization                    |            |
 | 🛀 | DaemonSet               |                                                                         | ds         |
-|    |                         | Unsed, pod template validation, resource utilization                    |            |
+|    |                         | Unused, pod template validation, resource utilization                    |            |
 | 🛀 | PersistentVolume        |                                                                         | pv         |
 |    |                         | Unused, check volume bound or volume error                              |            |
 | 🛀 | PersistentVolumeClaim   |                                                                         | pvc        |
@@ -311,7 +316,7 @@ popeye:
     # Namespace sanitizer exclusions...
     v1/namespaces:
       # Exclude all fred* namespaces if the namespaces are not found (404), other error codes will be reported!
-      - name: rx:kube
+      - name: rx:fred
         codes:
           - 404
       # Exclude all istio* namespaces from being scanned.
@@ -381,14 +386,13 @@ spec:
                 - -o
                 - yaml
                 - --force-exit-zero
-                - true
               resources:
                 limits:
                   cpu:    500m
                   memory: 100Mi
 ```
 
-The `--force-exit-zero` should be set to `true`. Otherwise, the pods will end up in an error state. Note that popeye
+The `--force-exit-zero` should be set. Otherwise, the pods will end up in an error state. Note that popeye
 exits with a non-zero error code if the report has any errors.
 
 
@@ -418,9 +422,8 @@ rules:
 - apiGroups: [""]
   resources:
    - configmaps
-   - deployments
    - endpoints
-   - horizontalpodautoscalers
+   - limitranges
    - namespaces
    - nodes
    - persistentvolumes
@@ -429,7 +432,27 @@ rules:
    - secrets
    - serviceaccounts
    - services
-   - statefulsets
+  verbs:     ["get", "list"]
+- apiGroups: ["apps"]
+  resources:
+  - daemonsets
+  - deployments
+  - statefulsets
+  - replicasets
+  verbs:     ["get", "list"]
+- apiGroups: ["networking.k8s.io"]
+  resources:
+  - ingresses
+  - networkpolicies
+  verbs:     ["get", "list"]
+- apiGroups: ["autoscaling"]
+  resources:
+  - horizontalpodautoscalers
+  verbs:     ["get", "list"]
+- apiGroups: ["policy"]
+  resources:
+  - poddisruptionbudgets
+  - podsecuritypolicies
   verbs:     ["get", "list"]
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources:

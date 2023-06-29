@@ -23,6 +23,7 @@ type (
 	// ClusterLister list available Clusters on a cluster.
 	ClusterLister interface {
 		ListVersion() (string, string)
+		HasMetrics() bool
 	}
 )
 
@@ -36,6 +37,21 @@ func NewCluster(co *issues.Collector, lister ClusterLister) *Cluster {
 
 // Sanitize cleanse the resource.
 func (c *Cluster) Sanitize(ctx context.Context) error {
+	c.checkMetricsServer(ctx)
+	if err := c.checkVersion(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Cluster) checkMetricsServer(ctx context.Context) {
+	ctx = internal.WithFQN(ctx, "Metrics")
+	if !c.HasMetrics() {
+		c.AddCode(ctx, 402)
+	}
+}
+
+func (c *Cluster) checkVersion(ctx context.Context) error {
 	major, minor := c.ListVersion()
 
 	m, err := strconv.Atoi(major)

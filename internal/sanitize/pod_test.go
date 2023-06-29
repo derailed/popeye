@@ -1,6 +1,7 @@
 package sanitize
 
 import (
+	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal"
@@ -8,7 +9,7 @@ import (
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	polv1beta1 "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
@@ -231,11 +232,11 @@ func (p *pod) ListPodsMetrics() map[string]*v1beta1.PodMetrics {
 	}
 }
 
-func (p *pod) ForLabels(l map[string]string) *polv1beta1.PodDisruptionBudget {
-	return &polv1beta1.PodDisruptionBudget{}
+func (p *pod) ForLabels(l map[string]string) *policyv1.PodDisruptionBudget {
+	return &policyv1.PodDisruptionBudget{}
 }
 
-func (p *pod) ListPodDisruptionBudgets() map[string]*polv1beta1.PodDisruptionBudget {
+func (p *pod) ListPodDisruptionBudgets() map[string]*policyv1.PodDisruptionBudget {
 	return nil
 }
 
@@ -393,5 +394,180 @@ func makeSecPod(pod, init, co1, co2 NonRootUser) v1.Pod {
 			},
 			SecurityContext: &secCtx,
 		},
+	}
+}
+
+func TestPodCheckForMultiplePdbMatches(t *testing.T) {
+	type fields struct {
+		Collector   *issues.Collector
+		PodMXLister PodMXLister
+	}
+	type args struct {
+		ctx          context.Context
+		podLabels    map[string]string
+		podNamespace string
+		pdbs         map[string]*policyv1.PodDisruptionBudget
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   issues.Issues
+	}{
+		{
+			name: "pod with one label - two pdb matches",
+			args: args{
+				podNamespace: "namespace-1",
+				podLabels:    map[string]string{"app": "test"},
+				pdbs: map[string]*policyv1.PodDisruptionBudget{
+					"pdb": {
+						Spec: policyv1.PodDisruptionBudgetSpec{
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"app": "test"},
+							},
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "pdb-1",
+							Namespace: "namespace-1",
+						},
+					},
+					"pdb2": {
+						Spec: policyv1.PodDisruptionBudgetSpec{
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"app": "test"},
+							},
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "pdb-2",
+							Namespace: "namespace-1",
+						},
+					},
+				},
+			},
+			want: issues.Issues{
+				issues.Issue{
+					GVR:     "v1/pods",
+					Group:   "__root__",
+					Level:   2,
+					Message: "[POP-209] Pod is managed by multiple PodDisruptionBudgets (pdb-1, pdb-2)"},
+			},
+		},
+		{
+			name: "pod with one label - three pdbs - only two in pod namespace - expecting two matches",
+			args: args{
+				podNamespace: "namespace-1",
+				podLabels:    map[string]string{"app": "test"},
+				pdbs: map[string]*policyv1.PodDisruptionBudget{
+					"pdb": {
+						Spec: policyv1.PodDisruptionBudgetSpec{
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"app": "test"},
+							},
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "pdb-1",
+							Namespace: "namespace-1",
+						},
+					},
+					"pdb2": {
+						Spec: policyv1.PodDisruptionBudgetSpec{
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"app": "test"},
+							},
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "pdb-2",
+							Namespace: "namespace-1",
+						},
+					},
+					"pdb3": {
+						Spec: policyv1.PodDisruptionBudgetSpec{
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"app": "test"},
+							},
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "pdb-3",
+							Namespace: "namespace-2",
+						},
+					},
+				},
+			},
+			want: issues.Issues{
+				issues.Issue{
+					GVR:     "v1/pods",
+					Group:   "__root__",
+					Level:   2,
+					Message: "[POP-209] Pod is managed by multiple PodDisruptionBudgets (pdb-1, pdb-2)"},
+			},
+		},
+		{
+			name: "one pdb match, no issue expected",
+			args: args{
+				podNamespace: "namespace-1",
+				podLabels:    map[string]string{"app": "test", "app2": "test2"},
+				pdbs: map[string]*policyv1.PodDisruptionBudget{
+					"pdb": {
+						Spec: policyv1.PodDisruptionBudgetSpec{
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"app": "test", "app2": "test2"},
+							},
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "pdb-1",
+							Namespace: "namespace-1",
+						},
+					},
+					"pdb2": {
+						Spec: policyv1.PodDisruptionBudgetSpec{
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"app3": "test3"},
+							},
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "pdb-2",
+							Namespace: "namespace-1",
+						},
+					},
+				},
+			},
+			want: issues.Issues(nil),
+		},
+		{
+			name: "pod with no label - no issue expected",
+			args: args{
+				podLabels: map[string]string{},
+				pdbs: map[string]*policyv1.PodDisruptionBudget{
+					"pdb": {
+						Spec: policyv1.PodDisruptionBudgetSpec{
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"app": "test"},
+							},
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "pdb-1"},
+					},
+					"pdb2": {
+						Spec: policyv1.PodDisruptionBudgetSpec{
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"app": "test"},
+							},
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "pdb-2"},
+					},
+				},
+			},
+			want: issues.Issues(nil),
+		},
+	}
+	ctx := makeContext("v1/pods", "po")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := NewPod(issues.NewCollector(loadCodes(t), makeConfig(t)), tt.fields.PodMXLister)
+
+			p.checkForMultiplePdbMatches(ctx, tt.args.podNamespace, tt.args.podLabels, tt.args.pdbs)
+			assert.Equal(t, tt.want, p.Outcome()[""])
+		})
 	}
 }

@@ -18,4 +18,7 @@ FROM alpine:3.14.0
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=build /popeye/execs/popeye /bin/popeye
 
+RUN adduser -u 5000 -D nonroot
+USER 5000
+
 ENTRYPOINT [ "/bin/popeye" ]

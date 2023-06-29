@@ -30,7 +30,7 @@ func NewAliases() *Aliases {
 }
 
 // Init loads the aliases glossary.
-func (a *Aliases) Init(f types.Factory, gvrs []string) error {
+func (a *Aliases) Init(f types.Factory, gvrs GVRs) error {
 	if err := a.loadPreferred(f); err != nil {
 		return err
 	}

@@ -57,7 +57,7 @@
 | ---------- | ----------------------------------------------------------- | -------- | ---------------- |
 | 400        | Used? Unable to locate resource reference                   | 1        |                  |
 | 401        | Key "%s" used? Unable to locate key reference               | 1        |                  |
-| 402        | No metric-server detected %v                                | 1        |                  |
+| 402        | No metrics-server detected                                  | 1        |                  |
 | 403        | Deprecated %s API group "%s". Use "%s" instead              | 2        |                  |
 | 404        | Deprecation check failed. %v                                | 1        |                  |
 | 405        | Is this a jurassic cluster? Might want to upgrade K8s a bit | 2        |                  |

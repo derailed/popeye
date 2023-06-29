@@ -64,8 +64,7 @@ func doIt(cmd *cobra.Command, args []string) {
 	}()
 
 	clearScreen()
-	err := checkFlags()
-	if err != nil {
+	if err := checkFlags(); err != nil {
 		bomb(fmt.Sprintf("%v", err))
 	}
 	flags.StandAlone = true

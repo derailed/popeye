@@ -23,29 +23,29 @@ type RoleBinding struct {
 
 // NewRoleBinding return a new RoleBinding scruber.
 func NewRoleBinding(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
-	crb := RoleBinding{
+	rb := RoleBinding{
 		client:    c.factory.Client(),
 		Config:    c.config,
 		Collector: issues.NewCollector(codes, c.config),
 	}
 
 	var err error
-	crb.RoleBinding, err = c.rolebindings()
+	rb.RoleBinding, err = c.rolebindings()
 	if err != nil {
-		crb.AddErr(ctx, err)
+		rb.AddErr(ctx, err)
 	}
 
-	crb.ClusterRole, err = c.clusterroles()
+	rb.ClusterRole, err = c.clusterroles()
 	if err != nil {
-		crb.AddCode(ctx, 402, err)
+		rb.AddErr(ctx, err)
 	}
 
-	crb.Role, err = c.roles()
+	rb.Role, err = c.roles()
 	if err != nil {
-		crb.AddErr(ctx, err)
+		rb.AddErr(ctx, err)
 	}
 
-	return &crb
+	return &rb
 }
 
 // Sanitize all available RoleBindings.

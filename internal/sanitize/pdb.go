@@ -6,7 +6,7 @@ import (
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/rs/zerolog/log"
-	polv1beta1 "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -20,7 +20,7 @@ type (
 	// PodDisruptionBudgetLister list available PodDisruptionBudgets on a cluster.
 	PodDisruptionBudgetLister interface {
 		PodLister
-		ListPodDisruptionBudgets() map[string]*polv1beta1.PodDisruptionBudget
+		ListPodDisruptionBudgets() map[string]*policyv1.PodDisruptionBudget
 	}
 )
 
@@ -49,7 +49,7 @@ func (p *PodDisruptionBudget) Sanitize(ctx context.Context) error {
 	return nil
 }
 
-func (p *PodDisruptionBudget) checkDeprecation(ctx context.Context, pdb *polv1beta1.PodDisruptionBudget) {
+func (p *PodDisruptionBudget) checkDeprecation(ctx context.Context, pdb *policyv1.PodDisruptionBudget) {
 	const current = "policy/v1"
 
 	fqn := internal.MustExtractFQN(ctx)
@@ -65,7 +65,7 @@ func (p *PodDisruptionBudget) checkDeprecation(ctx context.Context, pdb *polv1be
 	}
 }
 
-func (p *PodDisruptionBudget) checkInUse(ctx context.Context, pdb *polv1beta1.PodDisruptionBudget) {
+func (p *PodDisruptionBudget) checkInUse(ctx context.Context, pdb *policyv1.PodDisruptionBudget) {
 	m, err := metav1.LabelSelectorAsMap(pdb.Spec.Selector)
 	if err != nil {
 		log.Error().Err(err).Msg("No selectors found")

@@ -23,29 +23,29 @@ type ClusterRole struct {
 
 // NewClusterRole return a new ClusterRole scruber.
 func NewClusterRole(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
-	crb := ClusterRole{
+	cr := ClusterRole{
 		client:    c.factory.Client(),
 		Config:    c.config,
 		Collector: issues.NewCollector(codes, c.config),
 	}
 
 	var err error
-	crb.ClusterRole, err = c.clusterroles()
+	cr.ClusterRole, err = c.clusterroles()
 	if err != nil {
-		crb.AddErr(ctx, err)
+		cr.AddErr(ctx, err)
 	}
 
-	crb.ClusterRoleBinding, err = c.clusterrolebindings()
+	cr.ClusterRoleBinding, err = c.clusterrolebindings()
 	if err != nil {
-		crb.AddCode(ctx, 402, err)
+		cr.AddErr(ctx, err)
 	}
 
-	crb.RoleBinding, err = c.rolebindings()
+	cr.RoleBinding, err = c.rolebindings()
 	if err != nil {
-		crb.AddErr(ctx, err)
+		cr.AddErr(ctx, err)
 	}
 
-	return &crb
+	return &cr
 }
 
 // Sanitize all available ClusterRoles.

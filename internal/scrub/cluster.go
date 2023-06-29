@@ -40,3 +40,7 @@ func NewCluster(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 func (d *Cluster) Sanitize(ctx context.Context) error {
 	return sanitize.NewCluster(d.Collector, d).Sanitize(ctx)
 }
+
+func (d *Cluster) HasMetrics() bool {
+	return d.client.HasMetrics()
+}

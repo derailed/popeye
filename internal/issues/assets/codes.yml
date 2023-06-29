@@ -71,6 +71,9 @@ codes:
   208:
     message: Unmanaged pod detected. Best to use a controller
     severity: 2
+  209:
+    message: Pod is managed by multiple PodDisruptionBudgets (%s)
+    severity: 2
 
   # Security
   300:
@@ -103,7 +106,7 @@ codes:
     message: Key "%s" used? Unable to locate key reference
     severity: 1
   402:
-    message: No metric-server detected %v
+    message: No metrics-server detected
     severity: 1
   403:
     message: Deprecated %s API group "%s". Use "%s" instead

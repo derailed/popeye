@@ -2,13 +2,18 @@ package sanitize
 
 import (
 	"context"
+	"sort"
+	"strings"
+
+	"github.com/rs/zerolog/log"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
 	v1 "k8s.io/api/core/v1"
-	polv1beta1 "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
@@ -34,8 +39,8 @@ type (
 
 	// PdbLister list pdb matching a given selector
 	PdbLister interface {
-		ListPodDisruptionBudgets() map[string]*polv1beta1.PodDisruptionBudget
-		ForLabels(labels map[string]string) *polv1beta1.PodDisruptionBudget
+		ListPodDisruptionBudgets() map[string]*policyv1.PodDisruptionBudget
+		ForLabels(labels map[string]string) *policyv1.PodDisruptionBudget
 	}
 
 	// PodLister lists available pods.
@@ -73,6 +78,7 @@ func NewPod(co *issues.Collector, lister PodMXLister) *Pod {
 // Sanitize cleanse the resource..
 func (p *Pod) Sanitize(ctx context.Context) error {
 	mx := p.ListPodsMetrics()
+	pdbs := p.ListPodDisruptionBudgets()
 	for fqn, po := range p.ListPods() {
 		p.InitOutcome(fqn)
 		ctx = internal.WithFQN(ctx, fqn)
@@ -86,6 +92,7 @@ func (p *Pod) Sanitize(ctx context.Context) error {
 		if !ownedByDaemonSet(po) {
 			p.checkPdb(ctx, po.ObjectMeta.Labels)
 		}
+		p.checkForMultiplePdbMatches(ctx, po.Namespace, po.ObjectMeta.Labels, pdbs)
 		p.checkSecure(ctx, fqn, po.Spec)
 		pmx, cmx := mx[fqn], client.ContainerMetrics{}
 		containerMetrics(pmx, cmx)
@@ -284,4 +291,26 @@ func isPartOfJob(po *v1.Pod) bool {
 	}
 
 	return false
+}
+
+func (p *Pod) checkForMultiplePdbMatches(ctx context.Context, podNamespace string, podLabels map[string]string, pdbs map[string]*policyv1.PodDisruptionBudget) {
+	var matchedPdbs []string
+	for _, pdb := range pdbs {
+		if podNamespace != pdb.Namespace {
+			continue
+		}
+		selector, err := metav1.LabelSelectorAsSelector(pdb.Spec.Selector)
+		if err != nil {
+			log.Error().Err(err).Msg("No selectors found")
+			return
+		}
+		if selector.Empty() || !selector.Matches(labels.Set(podLabels)) {
+			continue
+		}
+		matchedPdbs = append(matchedPdbs, pdb.Name)
+	}
+	if len(matchedPdbs) > 1 {
+		sort.Strings(matchedPdbs)
+		p.AddCode(ctx, 209, strings.Join(matchedPdbs, ", "))
+	}
 }
