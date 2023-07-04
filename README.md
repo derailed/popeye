@@ -261,7 +261,7 @@ Popeye can generate sanitizer reports in a variety of formats. You can use the -
 | html       | As HTML                                                |         |                                              |
 | json       | As JSON                                                |         |                                              |
 | junit      | For the Java melancholic                               |         |                                              |
-| prometheus | Dumps report a prometheus scrappable metrics           |         | [dardanel](https://github.com/eminugurkenar) |
+| prometheus | Dumps report a prometheus scrapable metrics           |         | [dardanel](https://github.com/eminugurkenar) |
 | score      | Returns a single cluster sanitizer score value (0-100) |         | [kabute](https://github.com/kabute)          |
 
 ## The SpinachYAML Configuration
