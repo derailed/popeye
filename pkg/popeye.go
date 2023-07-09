@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -444,10 +443,10 @@ func (p *Popeye) dumpStd(mode, header bool) error {
 func (p *Popeye) Do(req *http.Request) (*http.Response, error) {
 	resp := http.Response{
 		// Avoid panic when the pusher tries to close the body
-		Body: ioutil.NopCloser(bytes.NewBufferString("Dummy response from file writer")),
+		Body: io.NopCloser(bytes.NewBufferString("Dummy response from file writer")),
 	}
 
-	out, err := ioutil.ReadAll(req.Body)
+	out, err := io.ReadAll(req.Body)
 	if err != nil {
 		resp.StatusCode = http.StatusInternalServerError
 		return &resp, err
