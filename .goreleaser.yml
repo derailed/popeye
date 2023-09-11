@@ -23,14 +23,14 @@ builds:
       - -s -w -X github.com/derailed/popeye/cmd.version={{.Version}} -X github.com/derailed/popeye/cmd.commit={{.Commit}} -X github.com/derailed/popeye/cmd.date={{.Date}}
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
-    replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      bit: Arm
-      bitv6: Arm6
-      bitv7: Arm7
-      amd64: x86_64
+    # replacements:
+    #   darwin: Darwin
+    #   linux: Linux
+    #   windows: Windows
+    #   bit: Arm
+    #   bitv6: Arm6
+    #   bitv7: Arm7
+    #   amd64: x86_64
 checksum:
   name_template: "checksums.txt"
 snapshot:
@@ -43,16 +43,27 @@ changelog:
       - "^test:"
 
 # Homebrew
-brews:
-  - name: popeye
-    tap:
-      owner: derailed
-      name: popeye-homebrew-tap
-    commit_author:
-      name: derailed
-      email: fernand@imhotep.io
-    folder: Formula
-    homepage: https://imhotep.io/popeye
-    description: A Kubernetes Cluster sanitizer and linter.
-    test: |
-      system "popeye version"
+# brews:
+#   - name: popeye
+#     tap:
+#       owner: derailed
+#       name: popeye-homebrew-tap
+#     commit_author:
+#       name: derailed
+#       email: fernand@imhotep.io
+#     folder: Formula
+#     homepage: https://imhotep.io/popeye
+#     description: A Kubernetes Cluster sanitizer and linter.
+#     test: |
+#       system "popeye version"
+
+dockers:
+  - image_templates:
+      - "ghcr.io/macmiranda/popeye:{{.Tag}}"
+      - "ghcr.io/macmiranda/popeye:latest"
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
