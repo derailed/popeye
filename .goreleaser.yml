@@ -1,9 +1,12 @@
 project_name: popeye
+
 before:
   hooks:
     - go mod download
+
 release:
-  prerelease: false
+  prerelease: "false"
+
 builds:
   - env:
       - CGO_ENABLED=0
@@ -16,11 +19,12 @@ builds:
       - arm
       - arm64
     goarm:
-      - 7
+      - "7"
     flags:
       - -trimpath
     ldflags:
       - -s -w -X github.com/derailed/popeye/cmd.version={{.Version}} -X github.com/derailed/popeye/cmd.commit={{.Commit}} -X github.com/derailed/popeye/cmd.date={{.Date}}
+
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
     # replacements:
@@ -31,10 +35,13 @@ archives:
     #   bitv6: Arm6
     #   bitv7: Arm7
     #   amd64: x86_64
+
 checksum:
   name_template: "checksums.txt"
+
 snapshot:
   name_template: "{{ .Tag }}-next"
+
 changelog:
   sort: asc
   filters:
@@ -59,11 +66,33 @@ changelog:
 
 dockers:
   - image_templates:
-      - "ghcr.io/macmiranda/popeye:{{.Tag}}"
-      - "ghcr.io/macmiranda/popeye:latest"
+      - "ghcr.io/macmiranda/popeye:{{.Version}}-amd64"
     build_flag_templates:
       - "--pull"
       - "--label=org.opencontainers.image.created={{.Date}}"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.description=A Kubernetes cluster resource sanitizer"
+      - "--platform=linux/amd64"
+    use: buildx
+    dockerfile: Dockerfile
+
+  - image_templates:
+      - "ghcr.io/macmiranda/popeye:{{.Version}}-arm64v8"
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.description=A Kubernetes cluster resource sanitizer"
+      - "--platform=linux/arm64/v8"
+    use: buildx
+    dockerfile: Dockerfile
+
+docker_manifests:
+- name_template: "ghcr.io/macmiranda/popeye:{{ .Version }}"
+  image_templates:
+  - "ghcr.io/macmiranda/popeye:{{ .Version }}-amd64"
+  - "ghcr.io/macmiranda/popeye:{{ .Version }}-arm64v8"
