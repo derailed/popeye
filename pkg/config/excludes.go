@@ -54,6 +54,9 @@ func (e Excludes) ExcludeContainer(gvr, fqn, container string) bool {
 
 func in(ss []string, victim string) bool {
 	for _, s := range ss {
+		if isRegex(s) {
+			return rxMatch(s, victim)
+		}
 		if s == victim {
 			return true
 		}

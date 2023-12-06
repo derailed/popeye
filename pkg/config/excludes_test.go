@@ -160,12 +160,90 @@ func TestExcludes(t *testing.T) {
 			res:     "bleeblah",
 			code:    101,
 		},
+		"no_exclude_if_containers": {
+			excludes: config.Excludes{
+				"fred": {
+					config.Exclusion{Name: "rx:bird", Codes: []config.ID{100, 200, 300}, Containers: []string{"mike"}},
+					config.Exclusion{Name: "bb", Codes: []config.ID{100, 200, 300}},
+					config.Exclusion{Name: "cc", Codes: []config.ID{100, 200, 300}},
+				},
+			},
+			section: "fred",
+			res:     "birds",
+			code:    101,
+			e:       false,
+		},
 	}
 
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			assert.Equal(t, u.e, u.excludes.ShouldExclude(u.section, u.res, u.code))
+		})
+	}
+}
+
+func TestExcludeContainer(t *testing.T) {
+	tests := []struct {
+		name      string
+		gvr       string
+		fqn       string
+		container string
+		excludes  config.Excludes
+		want      bool
+	}{
+		{
+			name:      "no excludes, no match",
+			gvr:       "v1/pods",
+			fqn:       "pod-1",
+			container: "container-1",
+			excludes:  nil,
+			want:      false,
+		},
+		{
+			name:      "match",
+			gvr:       "v1/pods",
+			fqn:       "aa",
+			container: "container-1",
+			excludes: config.Excludes{
+				"v1/pods": {
+					config.Exclusion{Name: "aa", Codes: []config.ID{100, 200, 300}, Containers: []string{"container-1"}},
+				},
+			},
+			want: true,
+		},
+		{
+			name:      "match regex",
+			gvr:       "v1/pods",
+			fqn:       "aa",
+			container: "container-1",
+			excludes: config.Excludes{
+				"v1/pods": {
+					config.Exclusion{Name: "aa", Codes: []config.ID{100, 200, 300}, Containers: []string{"rx:cont"}},
+				},
+			},
+			want: true,
+		},
+		{
+			name:      "no match regex",
+			gvr:       "v1/pods",
+			fqn:       "aa",
+			container: "cron-tainer-1",
+			excludes: config.Excludes{
+				"v1/pods": {
+					config.Exclusion{Name: "aa", Codes: []config.ID{100, 200, 300}, Containers: []string{"rx:cont"}},
+				},
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.excludes.ExcludeContainer(tt.gvr, tt.fqn, tt.container)
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

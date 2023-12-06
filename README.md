@@ -1,5 +1,5 @@
 <img src="https://github.com/derailed/popeye/blob/master/assets/popeye_logo.png" align="right" width="250" height="auto">
- 
+
 # Popeye - A Kubernetes Cluster Sanitizer
 
 Popeye is a utility that scans live Kubernetes cluster and reports potential issues with deployed resources and configurations. It sanitizes your cluster based on what's deployed and not what's sitting on disk. By scanning your cluster, it detects misconfigurations and helps you to ensure that best practices are in place, thus preventing future headaches. It aims at reducing the cognitive *over*load one faces when operating a Kubernetes cluster in the wild. Furthermore, if your cluster employs a metric-server, it reports potential resources over/under allocations and attempts to warn you should your cluster run out of capacity.
@@ -37,7 +37,7 @@ Popeye is available on Linux, OSX and Windows platforms.
    brew install derailed/popeye/popeye
    ```
 * Using `go install`
- 
+
     ```shell
     go install github.com/derailed/popeye@latest
     ```
@@ -298,16 +298,18 @@ popeye:
   # Excludes excludes certain resources from Popeye scans
   excludes:
     v1/pods:
-    # In the monitoring namespace excludes all probes check on pod's containers.
-    - name: rx:monitoring
-      codes:
-      - 102
-    # Excludes all istio-proxy container scans for pods in the icx namespace.
-    - name: rx:icx/.*
-      containers:
-        # Excludes istio init/sidecar container from scan!
-        - istio-proxy
-        - istio-init
+      # In the monitoring namespace excludes all probes check on pod's containers.
+      - name: rx:monitoring
+        codes:
+        - 102
+      # Excludes all istio-proxy container scans for pods in the icx namespace.
+      - name: rx:icx/.*
+        containers:
+          # Excludes istio init/sidecar container from scan!
+          - istio-proxy
+          - istio-init
+          # Excludes the same containers, but with a regex
+          - rx:^istio
     # ConfigMap sanitizer exclusions...
     v1/configmaps:
       # Excludes key must match the singular form of the resource.
