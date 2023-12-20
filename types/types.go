@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
 package types
 
 import (
@@ -58,7 +61,7 @@ type Authorizer interface {
 // Config represents an api server configuration.
 type Config interface {
 	CurrentNamespaceName() (string, error)
-	CurrentClusterName() (string, error)
+	CurrentContextName() (string, error)
 	Flags() *genericclioptions.ConfigFlags
 	RESTConfig() (*restclient.Config, error)
 	CallTimeout() time.Duration
@@ -92,8 +95,8 @@ type Connection interface {
 	// ServerVersion returns current server version.
 	ServerVersion() (*version.Info, error)
 
-	// ActiveCluster returns the current cluster name.
-	ActiveCluster() string
+	// ActiveContext returns the current context name.
+	ActiveContext() string
 
 	// ActiveNamespace returns the current namespace.
 	ActiveNamespace() string

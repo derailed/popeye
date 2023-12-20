@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
 package report
 
 import (
@@ -12,12 +15,13 @@ import (
 
 // TestSuites a collection of junit test suites.
 type TestSuites struct {
-	XMLName  xml.Name `xml:"testsuites"`
-	Name     string   `xml:"name,attr"`
-	Tests    int      `xml:"tests,attr"`
-	Failures int      `xml:"failures,attr"`
-	Errors   int      `xml:"errors,attr"`
-	Suites   []TestSuite
+	XMLName   xml.Name `xml:"testsuites"`
+	Name      string   `xml:"name,attr"`
+	Timestamp string   `xml:"report_time,attr"`
+	Tests     int      `xml:"tests,attr"`
+	Failures  int      `xml:"failures,attr"`
+	Errors    int      `xml:"errors,attr"`
+	Suites    []TestSuite
 }
 
 // TestSuite represents a collection of tests
@@ -62,9 +66,10 @@ type Error struct {
 
 func junitMarshal(b *Builder, level config.Level) ([]byte, error) {
 	s := TestSuites{
-		Name:   "Popeye",
-		Tests:  len(b.Report.Sections),
-		Errors: len(b.Report.Errors),
+		Name:      "Popeye",
+		Timestamp: b.Report.Timestamp,
+		Tests:     len(b.Report.Sections),
+		Errors:    len(b.Report.Errors),
 	}
 
 	for _, section := range b.Report.Sections {

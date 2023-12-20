@@ -1,7 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
 package sanitize
 
 import (
-	"context"
 	"testing"
 
 	"github.com/derailed/popeye/internal"
@@ -403,7 +405,6 @@ func TestPodCheckForMultiplePdbMatches(t *testing.T) {
 		PodMXLister PodMXLister
 	}
 	type args struct {
-		ctx          context.Context
 		podLabels    map[string]string
 		podNamespace string
 		pdbs         map[string]*policyv1.PodDisruptionBudget

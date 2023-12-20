@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
 package sanitize
 
 import (
@@ -294,7 +297,7 @@ func isPartOfJob(po *v1.Pod) bool {
 }
 
 func (p *Pod) checkForMultiplePdbMatches(ctx context.Context, podNamespace string, podLabels map[string]string, pdbs map[string]*policyv1.PodDisruptionBudget) {
-	var matchedPdbs []string
+	matchedPdbs := make([]string, 0, len(pdbs))
 	for _, pdb := range pdbs {
 		if podNamespace != pdb.Namespace {
 			continue
