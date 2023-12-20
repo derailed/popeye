@@ -1,5 +1,5 @@
-<img src="https://github.com/derailed/popeye/blob/master/assets/popeye_logo.png" align="right" width="250" height="auto">
- 
+<img src="https://github.com/derailed/popeye/raw/master/assets/popeye_logo.png" align="right" width="250" height="auto">
+
 # Popeye - A Kubernetes Cluster Sanitizer
 
 Popeye is a utility that scans live Kubernetes cluster and reports potential issues with deployed resources and configurations. It sanitizes your cluster based on what's deployed and not what's sitting on disk. By scanning your cluster, it detects misconfigurations and helps you to ensure that best practices are in place, thus preventing future headaches. It aims at reducing the cognitive *over*load one faces when operating a Kubernetes cluster in the wild. Furthermore, if your cluster employs a metric-server, it reports potential resources over/under allocations and attempts to warn you should your cluster run out of capacity.
@@ -36,8 +36,9 @@ Popeye is available on Linux, OSX and Windows platforms.
    ```shell
    brew install derailed/popeye/popeye
    ```
+
 * Using `go install`
- 
+
     ```shell
     go install github.com/derailed/popeye@latest
     ```
@@ -392,8 +393,9 @@ spec:
                   memory: 100Mi
 ```
 
-The `--force-exit-zero` should be set. Otherwise, the pods will end up in an error state. Note that popeye
-exits with a non-zero error code if the report has any errors.
+The `--force-exit-zero` should be set. Otherwise, the pods will end up in an error state.
+
+> Note: Popeye exits with a non-zero error code if the report has any errors.
 
 
 ## Popeye got your RBAC!

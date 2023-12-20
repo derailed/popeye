@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
 package report
 
 import (
@@ -48,7 +51,7 @@ func (t *Tally) IsValid() bool {
 
 // Rollup tallies up the report scores.
 func (t *Tally) Rollup(o issues.Outcome) *Tally {
-	if o == nil || len(o) == 0 {
+	if len(o) == 0 {
 		t.valid, t.score = true, 100
 		return t
 	}

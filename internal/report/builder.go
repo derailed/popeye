@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
 package report
 
 import (
@@ -7,6 +10,7 @@ import (
 	"sort"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
@@ -50,6 +54,7 @@ type Builder struct {
 
 // Report represents the output of a sanitization pass.
 type Report struct {
+	Timestamp     string   `json:"report_time" yaml:"report_time"`
 	Score         int      `json:"score" yaml:"score"`
 	Grade         string   `json:"grade" yaml:"grade"`
 	Sections      Sections `json:"sanitizers,omitempty" yaml:"sanitizers,omitempty"`
@@ -94,12 +99,18 @@ func NewBuilder() *Builder {
 func (b *Builder) SetClusterName(s string) {
 	sort.Sort(b.Report.Sections)
 	b.clusterName = s
+	b.Report.Timestamp = time.Now().Format(time.RFC3339)
 }
 
 // ClusterName returns the cluster name.
 func (b *Builder) ClusterName() string {
 	return b.clusterName
 }
+
+// // Timestamp returns the report time.
+// func (b *Builder) Timestamp() string {
+// 	return b.timeStamp
+// }
 
 // HasContent checks if we actually have anything to report.
 func (b *Builder) HasContent() bool {
@@ -213,6 +224,7 @@ func (b *Builder) PrintSummary(s *Sanitizer) {
 	b.finalize()
 	s.Open("SUMMARY", nil)
 	{
+		fmt.Fprintf(s, "Generated on: %s\n", b.Report.Timestamp)
 		fmt.Fprintf(s, "Your cluster score: %d -- %s\n", b.Report.Score, b.Report.Grade)
 		for _, l := range s.Badge(b.Report.Score) {
 			fmt.Fprintf(s, "%s%s\n", strings.Repeat(" ", Width-20), l)
@@ -221,12 +233,12 @@ func (b *Builder) PrintSummary(s *Sanitizer) {
 	s.Close()
 }
 
-// PrintClusterInfo displays cluster information.
-func (b *Builder) PrintClusterInfo(s *Sanitizer, clusterName string, metrics bool) {
-	if clusterName == "" {
-		clusterName = "n/a"
+// PrintContextInfo displays cluster information.
+func (b *Builder) PrintContextInfo(s *Sanitizer, contextName string, metrics bool) {
+	if contextName == "" {
+		contextName = "n/a"
 	}
-	s.Open(Titleize(fmt.Sprintf("General [%s]", clusterName), -1), nil)
+	s.Open(Titleize(fmt.Sprintf("General [%s]", contextName), -1), nil)
 	{
 		s.Print(config.OkLevel, 1, "Connectivity")
 		if metrics {
@@ -260,6 +272,9 @@ func (b *Builder) PrintHeader(s *Sanitizer) {
 // PrintReport prints out sanitizer report to screen
 func (b *Builder) PrintReport(level config.Level, s *Sanitizer) {
 	for _, section := range b.Report.Sections {
+		if section.Tally.counts[level] == 0 {
+			continue
+		}
 		var any bool
 		s.Open(Titleize(section.Title, len(section.Outcome)), section.Tally)
 		{

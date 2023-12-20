@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
 package internal
 
 // All indicates all data keys are being used when referencing a cm or secret.

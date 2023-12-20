@@ -1,8 +1,12 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
 package dag
 
 import (
 	"context"
 	"errors"
+
 	netv1 "k8s.io/api/networking/v1"
 
 	"github.com/derailed/popeye/internal/client"

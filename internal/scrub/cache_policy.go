@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
 package scrub
 
 import (
@@ -13,28 +16,12 @@ import (
 type policy struct {
 	*dial
 
-	mx  sync.Mutex
-	np  *cache.NetworkPolicy
-	psp *cache.PodSecurityPolicy
+	mx sync.Mutex
+	np *cache.NetworkPolicy
 }
 
 func newPolicy(d *dial) *policy {
 	return &policy{dial: d}
-}
-
-func (p *policy) podsecuritypolicies() (*cache.PodSecurityPolicy, error) {
-	p.mx.Lock()
-	defer p.mx.Unlock()
-
-	if p.psp != nil {
-		return p.psp, nil
-	}
-	ctx, cancel := p.context()
-	defer cancel()
-	psps, err := dag.ListPodSecurityPolicies(ctx)
-	p.psp = cache.NewPodSecurityPolicy(psps)
-
-	return p.psp, err
 }
 
 func (p *policy) networkpolicies() (*cache.NetworkPolicy, error) {

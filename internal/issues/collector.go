@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
 package issues
 
 import (
@@ -42,7 +45,7 @@ func (c *Collector) NoConcerns(fqn string) bool {
 	return len(c.outcomes[fqn]) == 0
 }
 
-// MaxSeverity return the highest severity level foe the given section.
+// MaxSeverity return the highest severity level for the given section.
 func (c *Collector) MaxSeverity(fqn string) config.Level {
 	return c.outcomes.MaxSeverity(fqn)
 }
@@ -54,6 +57,10 @@ func (c *Collector) AddSubCode(ctx context.Context, code config.ID, args ...inte
 	if !ok {
 		log.Error().Err(fmt.Errorf("No code with ID %d", code)).Msg("AddSubCode failed")
 	}
+	if co.Severity < config.Level(c.Config.LintLevel) {
+		return
+	}
+
 	if !c.ShouldExclude(run.SectionGVR.String(), run.FQN, code) {
 		c.addIssue(run.FQN, New(run.GroupGVR, run.Group, co.Severity, co.Format(code, args...)))
 	}
@@ -65,7 +72,10 @@ func (c *Collector) AddCode(ctx context.Context, code config.ID, args ...interfa
 	co, ok := c.codes.Glossary[code]
 	if !ok {
 		// BOZO!! refact once codes are in!!
-		panic(fmt.Errorf("No code with ID %d", code))
+		panic(fmt.Errorf("no codes found with id %d", code))
+	}
+	if co.Severity < config.Level(c.Config.LintLevel) {
+		return
 	}
 	if !c.ShouldExclude(run.SectionGVR.String(), run.FQN, code) {
 		c.addIssue(run.FQN, New(run.SectionGVR, Root, co.Severity, co.Format(code, args...)))

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
 package pkg
 
 import (
@@ -229,10 +232,6 @@ func (p *Popeye) sanitizers(rev *client.Revision) map[string]scrubFn {
 		gvrs[internal.HpaGVR]: scrub.NewHorizontalPodAutoscaler,
 	}
 
-	if rev.Minor < 25 {
-		mm[gvrs[internal.PspGVR]] = scrub.NewPodSecurityPolicy
-	}
-
 	return mm
 }
 
@@ -432,7 +431,7 @@ func (p *Popeye) dumpStd(mode, header bool) error {
 	if header {
 		p.builder.PrintHeader(s)
 	}
-	p.builder.PrintClusterInfo(s, p.factory.Client().ActiveCluster(), p.factory.Client().HasMetrics())
+	p.builder.PrintContextInfo(s, p.factory.Client().ActiveContext(), p.factory.Client().HasMetrics())
 	p.builder.PrintReport(config.Level(p.config.LinterLevel()), s)
 	p.builder.PrintSummary(s)
 
@@ -473,10 +472,10 @@ func (p *Popeye) dumpPrometheus() error {
 	return pusher.Add()
 }
 
-func (p *Popeye) fetchClusterName() string {
+func (p *Popeye) fetchContextName() string {
 	switch {
-	case p.factory.Client().ActiveCluster() != "":
-		return p.factory.Client().ActiveCluster()
+	case p.factory.Client().ActiveContext() != "":
+		return p.factory.Client().ActiveContext()
 	case p.flags.InClusterName != nil && *p.flags.InClusterName != "":
 		return *p.flags.InClusterName
 	default:
@@ -490,7 +489,7 @@ func (p *Popeye) dump(printHeader bool) error {
 		return errors.New("Nothing to report, check section name or permissions")
 	}
 
-	p.builder.SetClusterName(p.fetchClusterName())
+	p.builder.SetClusterName(p.fetchContextName())
 	var err error
 	switch p.flags.OutputFormat() {
 	case report.JunitFormat:
@@ -544,7 +543,7 @@ func (p *Popeye) ensureOutput() error {
 
 func (p *Popeye) fileName() string {
 	if *p.flags.OutputFile == "" {
-		return fmt.Sprintf(outFmt, p.factory.Client().ActiveCluster(), time.Now().UnixNano(), p.fileExt())
+		return fmt.Sprintf(outFmt, p.factory.Client().ActiveContext(), time.Now().UnixNano(), p.fileExt())
 	}
 	return fmt.Sprintf(*p.flags.OutputFile)
 }
