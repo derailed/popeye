@@ -14,7 +14,7 @@ import (
 var Blank = Issue{}
 
 type (
-	// Issue tracks a sanitizer issui.
+	// Issue tracks a sanitizer issue.
 	Issue struct {
 		Group   string       `yaml:"group" json:"group"`
 		GVR     string       `yaml:"gvr" json:"gvr"`
