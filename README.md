@@ -1,4 +1,4 @@
-<img src="https://github.com/derailed/popeye/blob/master/assets/popeye_logo.png" align="right" width="250" height="auto">
+<img src="https://github.com/derailed/popeye/raw/master/assets/popeye_logo.png" align="right" width="250" height="auto">
 
 # Popeye - A Kubernetes Cluster Sanitizer
 
@@ -36,6 +36,7 @@ Popeye is available on Linux, OSX and Windows platforms.
    ```shell
    brew install derailed/popeye/popeye
    ```
+
 * Using `go install`
 
     ```shell
@@ -261,7 +262,7 @@ Popeye can generate sanitizer reports in a variety of formats. You can use the -
 | html       | As HTML                                                |         |                                              |
 | json       | As JSON                                                |         |                                              |
 | junit      | For the Java melancholic                               |         |                                              |
-| prometheus | Dumps report a prometheus scrappable metrics           |         | [dardanel](https://github.com/eminugurkenar) |
+| prometheus | Dumps report a prometheus scrapable metrics           |         | [dardanel](https://github.com/eminugurkenar) |
 | score      | Returns a single cluster sanitizer score value (0-100) |         | [kabute](https://github.com/kabute)          |
 
 ## The SpinachYAML Configuration
@@ -394,8 +395,9 @@ spec:
                   memory: 100Mi
 ```
 
-The `--force-exit-zero` should be set. Otherwise, the pods will end up in an error state. Note that popeye
-exits with a non-zero error code if the report has any errors.
+The `--force-exit-zero` should be set. Otherwise, the pods will end up in an error state.
+
+> Note: Popeye exits with a non-zero error code if the report has any errors.
 
 
 ## Popeye got your RBAC!

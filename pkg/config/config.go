@@ -1,8 +1,14 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
 package config
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/derailed/popeye/internal/client"
 	"gopkg.in/yaml.v2"
@@ -22,7 +28,7 @@ func NewConfig(flags *Flags) (*Config, error) {
 	cfg := Config{Popeye: NewPopeye()}
 
 	if isSet(flags.Spinach) {
-		f, err := ioutil.ReadFile(*flags.Spinach)
+		f, err := os.ReadFile(*flags.Spinach)
 		if err != nil {
 			return nil, err
 		}

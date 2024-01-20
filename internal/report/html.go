@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
 package report
 
 var htmlTemplate = `
@@ -121,6 +124,12 @@ var htmlTemplate = `
     color: #38ABCC;
   }
 
+  div.time {
+    font-style: italic;
+    text-transform: uppercase;
+    font-size: .8em;
+    color: gray;
+  }
 
   span.cluster {
     font-style: italic;
@@ -138,9 +147,9 @@ var htmlTemplate = `
   }
 
   div.score-summary {
+    flex: 3 1 auto;
     font-size: 2em;
-    text-align: center;
-    float: left;
+    text-align: left;
   }
 
   div.title {
@@ -154,6 +163,7 @@ var htmlTemplate = `
 
   div.summary {
     display: flex;
+    flex-flow: row wrap;
     align-items: center;
     font-weight: 2em;
   }
@@ -172,14 +182,13 @@ var htmlTemplate = `
   }
 
   div.scorer {
-    width: 90%;
     text-align: right;
   }
 </style>
 
 <body>
   <div class="sanitizer">
-    <div class="title">Popeye K8s Sanitizer Report</div>
+    <div class="title">Popeye Sanitizer Report</div>
     <div class="summary">
       <a class="popeye-logo" href="https://github.com/derailed/popeye">
         <img class="logo" src="https://github.com/derailed/popeye/raw/master/assets/popeye_logo.png" />
@@ -187,6 +196,7 @@ var htmlTemplate = `
       <div class="score-summary">
         Scanned
         <span class="cluster">{{ .ClusterName }}</span>
+        <div class="time">{{ .Report.Timestamp }}</div>
       </div>
       <div class="scorer">
         <span class="grade grade-{{ .Report.Grade }}">{{ .Report.Grade }}</span>

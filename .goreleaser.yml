@@ -1,9 +1,12 @@
 project_name: popeye
+
 before:
   hooks:
     - go mod download
+
 release:
   prerelease: false
+
 builds:
   - env:
       - CGO_ENABLED=0
@@ -20,21 +23,25 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - -s -w -X github.com/derailed/popeye/cmd.version={{.Version}} -X github.com/derailed/popeye/cmd.commit={{.Commit}} -X github.com/derailed/popeye/cmd.date={{.Date}}
+      - -s -w -X github.com/derailed/popeye/cmd.version={{.Version}}
+      - -s -w -X github.com/derailed/popeye/cmd.commit={{.Commit}}
+      - -s -w -X github.com/derailed/popeye/cmd.date={{.Date}}
+
 archives:
-  - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
-    replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      bit: Arm
-      bitv6: Arm6
-      bitv7: Arm7
-      amd64: x86_64
+  - name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}amd64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+
 checksum:
   name_template: "checksums.txt"
+
 snapshot:
   name_template: "{{ .Tag }}-next"
+
 changelog:
   sort: asc
   filters:
@@ -42,10 +49,9 @@ changelog:
       - "^docs:"
       - "^test:"
 
-# Homebrew
 brews:
   - name: popeye
-    tap:
+    repository:
       owner: derailed
       name: popeye-homebrew-tap
     commit_author:

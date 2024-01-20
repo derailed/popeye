@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
 package sanitize
 
 import (
@@ -56,7 +59,7 @@ func (n *NetworkPolicy) Sanitize(ctx context.Context) error {
 }
 
 func (n *NetworkPolicy) checkPodSelector(ctx context.Context, nss map[string]*v1.Namespace, sel *metav1.LabelSelector, kind string) {
-	if sel == nil {
+	if sel == nil || sel.Size() == 0 {
 		return
 	}
 
@@ -72,7 +75,7 @@ func (n *NetworkPolicy) checkPodSelector(ctx context.Context, nss map[string]*v1
 }
 
 func (n *NetworkPolicy) checkNSSelector(ctx context.Context, sel *metav1.LabelSelector, kind string) map[string]*v1.Namespace {
-	if sel == nil {
+	if sel == nil || sel.Size() == 0 {
 		return nil
 	}
 

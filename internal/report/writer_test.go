@@ -1,9 +1,12 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Popeye
+
 package report
 
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"strings"
 	"testing"
 
@@ -110,7 +113,7 @@ func TestDump(t *testing.T) {
 }
 
 func BenchmarkPrint(b *testing.B) {
-	s := NewSanitizer(ioutil.Discard, false)
+	s := NewSanitizer(io.Discard, false)
 
 	b.ResetTimer()
 	b.ReportAllocs()
