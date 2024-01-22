@@ -24,6 +24,7 @@
 | 110        | Memory Current/Request (%s/%s) reached user %d%% threshold (%d%%) | 2        |                  |
 | 111        | CPU Current/Limit (%s/%s) reached user %d%% threshold (%d%%)      | 3        |                  |
 | 112        | Memory Current/Limit (%s/%s) reached user %d%% threshold (%d%%)   | 3        |                  |
+| 113        | Container image %s is not hosted on an allowed docker registry    | 3        |                  |
 
 ## Pod
 
