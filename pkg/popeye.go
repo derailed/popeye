@@ -140,7 +140,7 @@ func (p *Popeye) scannedGVRs(rev *client.Revision) internal.GVRs {
 		internal.HpaGVR: "autoscaling/v2/horizontalpodautoscalers",
 	}
 
-	if rev.Minor < 18 {
+	if rev.Minor <= 18 {
 		mm[internal.IngGVR] = "networking.k8s.io/v1beta1/ingresses"
 	}
 	if rev.Minor < 21 {
