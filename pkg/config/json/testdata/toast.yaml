@@ -1,0 +1,60 @@
+# A Sample AKS Popeye configuration.
+popeye:
+  allocations:
+    cpu:
+      # Checks if cpu is under allocated by more than 200% at current load.
+      underPercUtilization: 200
+      # Checks if cpu is over allocated by more than 50% at current load.
+      overPercUtilization: 50
+    memory:
+      # Checks if mem is under allocated by more than 200% at current load.
+      underPercUtilization: 200
+      # Checks if mem is over allocated by more than 50% at current load.
+      overPercUtilization: 50
+  # Excludes define rules to exampt resources from sanitization
+  excludes:
+      rbac.authorization.k8s.io/v1/clusterroles:
+        - name: omsagent-reader
+          codes:
+            - 400
+        - name: rx:system
+          codes:
+            - 400
+        - name: admin
+          codes:
+            - 400
+        - name: edit
+          codes:
+            - 400
+        - name: view
+          codes:
+            - 400
+        - name: cluster-admin
+          codes:
+            - 400
+
+  resources:
+    # Nodes specific sanitization
+    node:
+      limits:
+        cpu: 90
+        memory: 80
+
+    # Pods specific sanitization
+    pod:
+      limits:
+        # Fail if cpu is over 80%
+        cpu: 80
+        # Fail if pod mem is over 75%
+        memory: 75
+      # Fail if more than 3 restarts on any pods
+      restarts: 3
+
+  # Code specifies a custom severity level ie critical=3, warn=2, info=1
+  overrides:
+    - code: 206
+      message: blee
+      severity: 1
+    - code: 210
+      message: fred
+      severity: 2

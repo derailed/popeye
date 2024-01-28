@@ -1,0 +1,234 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: Node
+  metadata:
+    labels:
+      node-role.kubernetes.io/control-plane: ""
+      node-role.kubernetes.io/master: ""
+      node.kubernetes.io/exclude-from-external-load-balancers: ""
+    name: n1
+  spec:
+    podCIDR: 10.244.0.0/24
+    podCIDRs:
+    - 10.244.0.0/24
+  status:
+    addresses:
+    - address: 192.168.228.3
+      type: InternalIP
+    - address: dashb-control-plane
+      type: Hostname
+    allocatable:
+      cpu: "10"
+      ephemeral-storage: 816748224Ki
+      memory: 8124744Ki
+      pods: "110"
+    capacity:
+      cpu: "10"
+      ephemeral-storage: 816748224Ki
+      memory: 8124744Ki
+      pods: "110"
+    conditions:
+    - lastHeartbeatTime: "2024-01-27T15:31:39Z"
+      lastTransitionTime: "2024-01-03T20:35:11Z"
+      message: kubelet has sufficient memory available
+      reason: KubeletHasSufficientMemory
+      status: "False"
+      type: MemoryPressure
+    - lastHeartbeatTime: "2024-01-27T15:31:39Z"
+      lastTransitionTime: "2024-01-03T20:35:11Z"
+      message: kubelet has no disk pressure
+      reason: KubeletHasNoDiskPressure
+      status: "False"
+      type: DiskPressure
+    - lastHeartbeatTime: "2024-01-27T15:31:39Z"
+      lastTransitionTime: "2024-01-03T20:35:11Z"
+      message: kubelet has sufficient PID available
+      reason: KubeletHasSufficientPID
+      status: "False"
+      type: PIDPressure
+    - lastHeartbeatTime: "2024-01-27T15:31:39Z"
+      lastTransitionTime: "2024-01-03T20:35:38Z"
+      message: kubelet is posting ready status
+      reason: KubeletReady
+      status: "True"
+      type: Ready
+    daemonEndpoints:
+      kubeletEndpoint:
+        Port: 10250
+    images:
+    nodeInfo:
+      architecture: arm64
+      bootID: 0836e65d-3091-4cb5-8ad4-8f65425f87e3
+      containerRuntimeVersion: containerd://1.5.1
+      kernelVersion: 6.5.10-orbstack-00110-gbcfe04c86d2f
+      kubeProxyVersion: v1.21.1
+      kubeletVersion: v1.21.1
+      machineID: 6bbc44bb821d48b995092021d706d8e6
+      operatingSystem: linux
+      osImage: Ubuntu 20.10
+      systemUUID: 6bbc44bb821d48b995092021d706d8e6
+- apiVersion: v1
+  kind: Node
+  metadata:
+    annotations:
+      kubeadm.alpha.kubernetes.io/cri-socket: unix:///run/containerd/containerd.sock
+      node.alpha.kubernetes.io/ttl: "0"
+      volumes.kubernetes.io/controller-managed-attach-detach: "true"
+    labels:
+      beta.kubernetes.io/arch: arm64
+      beta.kubernetes.io/os: linux
+      kubernetes.io/arch: arm64
+      kubernetes.io/hostname: n2
+      kubernetes.io/os: linux
+    name: n2
+  spec:
+    podCIDR: 10.244.1.0/24
+    podCIDRs:
+    - 10.244.1.0/24
+    taints:
+      - effect: NoSchedule
+        key: t2
+  status:
+    addresses:
+    - address: 192.168.228.2
+      type: InternalIP
+    - address: dashb-worker
+      type: Hostname
+    allocatable:
+      cpu: "10"
+      ephemeral-storage: 816748224Ki
+      memory: 8124744Ki
+      pods: "110"
+    capacity:
+      cpu: "10"
+      ephemeral-storage: 816748224Ki
+      memory: 8124744Ki
+      pods: "110"
+    conditions:
+    - lastHeartbeatTime: "2024-01-27T15:30:29Z"
+      lastTransitionTime: "2024-01-03T20:35:48Z"
+      message: kubelet has sufficient memory available
+      reason: KubeletHasSufficientMemory
+      status: "False"
+      type: MemoryPressure
+    - lastHeartbeatTime: "2024-01-27T15:30:29Z"
+      lastTransitionTime: "2024-01-03T20:35:48Z"
+      message: kubelet has no disk pressure
+      reason: KubeletHasNoDiskPressure
+      status: "False"
+      type: DiskPressure
+    - lastHeartbeatTime: "2024-01-27T15:30:29Z"
+      lastTransitionTime: "2024-01-03T20:35:48Z"
+      message: kubelet has sufficient PID available
+      reason: KubeletHasSufficientPID
+      status: "False"
+      type: PIDPressure
+    - lastHeartbeatTime: "2024-01-27T15:30:29Z"
+      lastTransitionTime: "2024-01-03T20:35:58Z"
+      message: kubelet is posting ready status
+      reason: KubeletReady
+      status: "True"
+      type: Ready
+    - lastHeartbeatTime: "2024-01-27T15:30:29Z"
+      lastTransitionTime: "2024-01-03T20:35:58Z"
+      message: blee
+      reason: blah
+      status: "True"
+      type: NetworkUnavailable
+    daemonEndpoints:
+      kubeletEndpoint:
+        Port: 10250
+    images:
+    nodeInfo:
+      architecture: arm64
+      containerRuntimeVersion: containerd://1.5.1
+      kernelVersion: 6.5.10-orbstack-00110-gbcfe04c86d2f
+      kubeProxyVersion: v1.21.1
+      kubeletVersion: v1.21.1
+      operatingSystem: linux
+      osImage: Ubuntu 20.10
+- apiVersion: v1
+  kind: Node
+  metadata:
+    labels:
+      beta.kubernetes.io/arch: arm64
+      beta.kubernetes.io/os: linux
+      kubernetes.io/arch: arm64
+      kubernetes.io/hostname: n3
+      kubernetes.io/os: linux
+    name: n3
+  spec:
+  status:
+    conditions:
+    - message: kubelet has sufficient memory available
+      reason: KubeletHasSufficientMemory
+      status: "True"
+      type: MemoryPressure
+    - message: kubelet has no disk pressure
+      reason: KubeletHasNoDiskPressure
+      status: "True"
+      type: DiskPressure
+    - message: kubelet has sufficient PID available
+      reason: KubeletHasSufficientPID
+      status: "True"
+      type: PIDPressure
+    - message: kubelet is posting ready status
+      reason: KubeletReady
+      status: "True"
+      type: Ready
+    - message: blee
+      reason: blah
+      status: "True"
+      type: NetworkUnavailable
+    images:
+    nodeInfo:
+- apiVersion: v1
+  kind: Node
+  metadata:
+    labels:
+      beta.kubernetes.io/arch: arm64
+      beta.kubernetes.io/os: linux
+      kubernetes.io/arch: arm64
+      kubernetes.io/hostname: n4
+      kubernetes.io/os: linux
+    name: n4
+  spec:
+    unschedulable: true
+  status:
+    conditions:
+    - message: bla
+      reason: blee
+      status: Unknown
+      type: ""
+    - message: bla
+      reason: blee
+      status: "False"
+      type: Ready
+    images:
+    nodeInfo:
+- apiVersion: v1
+  kind: Node
+  metadata:
+    labels:
+      beta.kubernetes.io/arch: arm64
+      beta.kubernetes.io/os: linux
+      kubernetes.io/arch: arm64
+      kubernetes.io/hostname: n5
+      kubernetes.io/os: linux
+    name: n5
+  spec:
+  status:
+    images:
+    nodeInfo:
+    allocatable:
+      cpu: "100m"
+      ephemeral-storage: 816748224Ki
+      memory: 10Mi
+      pods: "110"
+    capacity:
+      cpu: "1"
+      ephemeral-storage: 816748224Ki
+      memory: 10Mi
+      pods: "110"

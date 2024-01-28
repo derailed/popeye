@@ -5,32 +5,47 @@ package issues
 
 import (
 	"fmt"
+	"regexp"
 
-	"github.com/derailed/popeye/internal/client"
-	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/internal/rules"
+	"github.com/derailed/popeye/types"
 )
+
+var codeRX = regexp.MustCompile(`\A\[POP-(\d+)\]`)
 
 // Blank issue
 var Blank = Issue{}
 
-type (
-	// Issue tracks a sanitizer issue.
-	Issue struct {
-		Group   string       `yaml:"group" json:"group"`
-		GVR     string       `yaml:"gvr" json:"gvr"`
-		Level   config.Level `yaml:"level" json:"level"`
-		Message string       `yaml:"message" json:"message"`
-	}
-)
+// Issue tracks a linter issue.
+type Issue struct {
+	Group   string      `yaml:"group" json:"group"`
+	GVR     string      `yaml:"gvr" json:"gvr"`
+	Level   rules.Level `yaml:"level" json:"level"`
+	Message string      `yaml:"message" json:"message"`
+}
 
 // New returns a new lint issue.
-func New(gvr client.GVR, group string, level config.Level, description string) Issue {
+func New(gvr types.GVR, group string, level rules.Level, description string) Issue {
 	return Issue{GVR: gvr.String(), Group: group, Level: level, Message: description}
 }
 
 // Newf returns a new lint issue using a formatter.
-func Newf(gvr client.GVR, group string, level config.Level, format string, args ...interface{}) Issue {
+func Newf(gvr types.GVR, group string, level rules.Level, format string, args ...interface{}) Issue {
 	return New(gvr, group, level, fmt.Sprintf(format, args...))
+}
+
+func (i Issue) Code() (string, bool) {
+	mm := codeRX.FindStringSubmatch(i.Message)
+	if len(mm) < 2 {
+		return "", false
+	}
+
+	return mm[1], true
+}
+
+// Dump for debugging.
+func (i Issue) Dump() {
+	fmt.Printf("  %s (%d) %s\n", i.GVR, i.Level, i.Message)
 }
 
 // Blank checks if an issue is blank.
@@ -44,14 +59,14 @@ func (i Issue) IsSubIssue() bool {
 }
 
 // LevelToStr returns a severity level as a string.
-func LevelToStr(l config.Level) string {
+func LevelToStr(l rules.Level) string {
 	// nolint:exhaustive
 	switch l {
-	case config.ErrorLevel:
+	case rules.ErrorLevel:
 		return "error"
-	case config.WarnLevel:
+	case rules.WarnLevel:
 		return "warn"
-	case config.InfoLevel:
+	case rules.InfoLevel:
 		return "info"
 	default:
 		return "ok"

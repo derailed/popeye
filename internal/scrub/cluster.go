@@ -8,7 +8,7 @@ import (
 
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/sanitize"
+	"github.com/derailed/popeye/internal/lint"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/derailed/popeye/types"
 )
@@ -22,16 +22,16 @@ type Cluster struct {
 	client types.Connection
 }
 
-// NewCluster return a new Cluster scruber.
-func NewCluster(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
+// NewCluster returns a new instance.
+func NewCluster(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
 	cl := Cluster{
 		client:    c.factory.Client(),
-		Config:    c.config,
-		Collector: issues.NewCollector(codes, c.config),
+		Config:    c.Config,
+		Collector: issues.NewCollector(codes, c.Config),
 	}
 
 	var err error
-	cl.Cluster, err = c.cluster()
+	cl.Cluster, err = c.cluster(ctx)
 	if err != nil {
 		cl.AddErr(ctx, err)
 	}
@@ -39,9 +39,13 @@ func NewCluster(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
 	return &cl
 }
 
-// Sanitize all available Clusters.
-func (d *Cluster) Sanitize(ctx context.Context) error {
-	return sanitize.NewCluster(d.Collector, d).Sanitize(ctx)
+func (d *Cluster) Preloads() Preloads {
+	return nil
+}
+
+// Lint all available Clusters.
+func (d *Cluster) Lint(ctx context.Context) error {
+	return lint.NewCluster(d.Collector, d).Lint(ctx)
 }
 
 func (d *Cluster) HasMetrics() bool {

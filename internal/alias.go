@@ -5,60 +5,108 @@ package internal
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
-	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/types"
 	"github.com/rs/zerolog/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+)
+
+var (
+	ClusterGVR = types.NewGVR("cluster")
 )
 
 // ResourceMetas represents a collection of resource metadata.
-type ResourceMetas map[client.GVR]metav1.APIResource
+type ResourceMetas map[types.GVR]metav1.APIResource
 
 // Aliases represents a collection of resource aliases.
 type Aliases struct {
-	aliases map[string]client.GVR
+	aliases map[string]types.GVR
 	metas   ResourceMetas
 }
 
 // NewAliases returns a new instance.
 func NewAliases() *Aliases {
 	a := Aliases{
-		aliases: make(map[string]client.GVR),
+		aliases: make(map[string]types.GVR),
 		metas:   make(ResourceMetas),
 	}
 
 	return &a
 }
 
+func (a *Aliases) Dump() {
+	log.Debug().Msgf("\nAliases...")
+	kk := make([]string, 0, len(a.aliases))
+	for k := range a.aliases {
+		kk = append(kk, k)
+	}
+	slices.Sort(kk)
+	for _, k := range kk {
+		log.Debug().Msgf("%-25s: %s", k, a.aliases[k])
+	}
+}
+
+var customShortNames = map[string][]string{
+	"cluster":             {"cl"},
+	"secrets":             {"sec"},
+	"deployments":         {"dp"},
+	"clusterroles":        {"cr"},
+	"clusterrolebindings": {"crb"},
+	"roles":               {"ro"},
+	"rolebindings":        {"rb"},
+	"networkpolicies":     {"np"},
+	"httproutes":          {"gwr"},
+	"gatewayclassess":     {"gwc"},
+	"gateways":            {"gw"},
+}
+
 // Init loads the aliases glossary.
-func (a *Aliases) Init(f types.Factory, gvrs GVRs) error {
-	if err := a.loadPreferred(f); err != nil {
+func (a *Aliases) Init(c types.Connection) error {
+	if err := a.loadPreferred(c); err != nil {
 		return err
 	}
-	for _, k := range gvrs {
-		gvr := client.NewGVR(k)
-		res, ok := a.metas[gvr]
-		if !ok {
-			panic(fmt.Sprintf("No resource meta found for %s", gvr))
-		}
+	for gvr, res := range a.metas {
 		a.aliases[res.Name] = gvr
-		a.aliases[res.SingularName] = gvr
+		if res.SingularName != "" {
+			a.aliases[res.SingularName] = gvr
+		}
 		for _, n := range res.ShortNames {
 			a.aliases[n] = gvr
 		}
+		if kk, ok := customShortNames[res.Name]; ok {
+			for _, k := range kk {
+				a.aliases[k] = gvr
+			}
+		}
+		if lgvr, ok := Glossary[R(res.SingularName)]; ok {
+			if greaterV(gvr.V(), lgvr.V()) {
+				Glossary[R(res.SingularName)] = gvr
+			}
+		} else if lgvr, ok := Glossary[R(res.Name)]; ok {
+			if greaterV(gvr.V(), lgvr.V()) {
+				Glossary[R(res.Name)] = gvr
+			}
+		}
 	}
-	a.aliases["cl"] = client.NewGVR("cluster")
-	a.aliases["sec"] = client.NewGVR("v1/secrets")
-	a.aliases["dp"] = client.NewGVR("apps/v1/deployments")
-	a.aliases["cr"] = client.NewGVR("rbac.authorization.k8s.io/v1/clusterroles")
-	a.aliases["crb"] = client.NewGVR("rbac.authorization.k8s.io/v1/clusterrolebindings")
-	a.aliases["ro"] = client.NewGVR("rbac.authorization.k8s.io/v1/roles")
-	a.aliases["rb"] = client.NewGVR("rbac.authorization.k8s.io/v1/rolebindings")
-	a.aliases["np"] = client.NewGVR("networking.k8s.io/v1/networkpolicies")
 
 	return nil
+}
+
+func greaterV(v1, v2 string) bool {
+	if v1 == "" && v2 == "" {
+		return true
+	}
+	if v2 == "" {
+		return true
+	}
+	if v1 == "v1" || v1 == "v2" {
+		return true
+	}
+
+	return false
 }
 
 // TitleFor produces a section title from an alias.
@@ -77,28 +125,31 @@ func (a *Aliases) TitleFor(s string, plural bool) string {
 	return m.SingularName
 }
 
-func (a *Aliases) loadPreferred(f types.Factory) error {
-	dial, err := f.Client().CachedDiscovery()
+func (a *Aliases) loadPreferred(c types.Connection) error {
+	dial, err := c.CachedDiscovery()
 	if err != nil {
 		return err
 	}
-	rr, err := dial.ServerPreferredResources()
+	ll, err := dial.ServerPreferredResources()
 	if err != nil {
 		return err
 	}
-	for _, r := range rr {
-		for _, res := range r.APIResources {
-			gvr := client.FromGVAndR(r.GroupVersion, res.Name)
-			res.Group, res.Version = gvr.G(), gvr.V()
-			if res.SingularName == "" {
-				res.SingularName = strings.ToLower(res.Kind)
+	for _, l := range ll {
+		gv, err := schema.ParseGroupVersion(l.GroupVersion)
+		if err != nil {
+			continue
+		}
+		for _, r := range l.APIResources {
+			gvr := types.NewGVRFromAPIRes(gv, r)
+			r.Group, r.Version = gvr.G(), gvr.V()
+			if r.SingularName == "" {
+				r.SingularName = strings.ToLower(r.Kind)
 			}
-			a.metas[gvr] = res
+			a.metas[gvr] = r
 		}
 	}
-
-	a.metas[client.NewGVR("cluster")] = metav1.APIResource{
-		Name: "cluster",
+	a.metas[ClusterGVR] = metav1.APIResource{
+		Name: ClusterGVR.String(),
 	}
 
 	return nil
@@ -118,17 +169,18 @@ func (a *Aliases) ToResources(nn []string) []string {
 }
 
 // Singular returns a singular resource name.
-func (a *Aliases) Singular(gvr client.GVR) string {
+func (a *Aliases) Singular(gvr types.GVR) string {
 	m, ok := a.metas[gvr]
 	if !ok {
 		log.Error().Msgf("Missing meta for gvr %q", gvr)
 		return gvr.R()
 	}
+
 	return m.SingularName
 }
 
 // Exclude checks if section should be excluded from the report.
-func (a *Aliases) Exclude(gvr client.GVR, sections []string) bool {
+func (a *Aliases) Exclude(gvr types.GVR, sections []string) bool {
 	if len(sections) == 0 {
 		return false
 	}

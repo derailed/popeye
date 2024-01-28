@@ -6,55 +6,45 @@ package scrub
 import (
 	"context"
 
-	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/sanitize"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
+	"github.com/derailed/popeye/internal/lint"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
 // Deployment represents a Deployment scruber.
 type Deployment struct {
 	*issues.Collector
-	*cache.Deployment
-	*cache.PodsMetrics
-	*cache.Pod
-	*cache.ServiceAccount
-	*config.Config
-
-	client types.Connection
+	*Cache
 }
 
-// NewDeployment return a new Deployment scruber.
-func NewDeployment(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
-	d := Deployment{
-		client:    c.factory.Client(),
-		Config:    c.config,
-		Collector: issues.NewCollector(codes, c.config),
+// NewDeployment returns a new instance.
+func NewDeployment(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+	return &Deployment{
+		Collector: issues.NewCollector(codes, c.Config),
+		Cache:     c,
 	}
-
-	var err error
-	d.Deployment, err = c.deployments()
-	if err != nil {
-		d.AddErr(ctx, err)
-	}
-
-	d.PodsMetrics, _ = c.podsMx()
-
-	d.Pod, err = c.pods()
-	if err != nil {
-		d.AddErr(ctx, err)
-	}
-
-	d.ServiceAccount, err = c.serviceaccounts()
-	if err != nil {
-		d.AddErr(ctx, err)
-	}
-
-	return &d
 }
 
-// Sanitize all available Deployments.
-func (d *Deployment) Sanitize(ctx context.Context) error {
-	return sanitize.NewDeployment(d.Collector, d).Sanitize(ctx)
+func (s *Deployment) Preloads() Preloads {
+	return Preloads{
+		internal.DP:  db.LoadResource[*appsv1.Deployment],
+		internal.PO:  db.LoadResource[*v1.Pod],
+		internal.SA:  db.LoadResource[*v1.ServiceAccount],
+		internal.PMX: db.LoadResource[*mv1beta1.PodMetrics],
+	}
+}
+
+// Lint all available Deployments.
+func (s *Deployment) Lint(ctx context.Context) error {
+	for k, f := range s.Preloads() {
+		if err := f(ctx, s.Loader, internal.Glossary[k]); err != nil {
+			return err
+		}
+	}
+
+	return lint.NewDeployment(s.Collector, s.DB).Lint(ctx)
 }

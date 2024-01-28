@@ -16,4 +16,5 @@ const (
 	KeyConfig     ContextKey = "config"
 	KeyNamespace  ContextKey = "namespace"
 	KeyVersion    ContextKey = "version"
+	KeyDB         ContextKey = "db"
 )

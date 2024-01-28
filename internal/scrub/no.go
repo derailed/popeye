@@ -6,45 +6,43 @@ package scrub
 import (
 	"context"
 
-	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/sanitize"
-	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/internal/lint"
+	v1 "k8s.io/api/core/v1"
+	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
 // Node represents a Node scruber.
 type Node struct {
 	*issues.Collector
-	*cache.Node
-	*cache.Pod
-	*cache.NodesMetrics
-	*config.Config
+	*Cache
 }
 
-// NewNode return a new Node scruber.
-func NewNode(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
-	n := Node{
-		Collector: issues.NewCollector(codes, c.config),
-		Config:    c.config,
+// NewNode return a new instance.
+func NewNode(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+	return &Node{
+		Collector: issues.NewCollector(codes, c.Config),
+		Cache:     c,
 	}
-
-	var err error
-	n.Node, err = c.nodes()
-	if err != nil {
-		n.AddErr(ctx, err)
-	}
-
-	n.Pod, err = c.pods()
-	if err != nil {
-		n.AddErr(ctx, err)
-	}
-
-	n.NodesMetrics, _ = c.nodesMx()
-
-	return &n
 }
 
-// Sanitize all available Nodes.
-func (n *Node) Sanitize(ctx context.Context) error {
-	return sanitize.NewNode(n.Collector, n).Sanitize(ctx)
+func (s *Node) Preloads() Preloads {
+	return Preloads{
+		internal.NO:  db.LoadResource[*v1.Node],
+		internal.PO:  db.LoadResource[*v1.Pod],
+		internal.NMX: db.LoadResource[*mv1beta1.NodeMetrics],
+	}
+}
+
+// Lint all available Nodes.
+func (s *Node) Lint(ctx context.Context) error {
+	for k, f := range s.Preloads() {
+		if err := f(ctx, s.Loader, internal.Glossary[k]); err != nil {
+			return err
+		}
+	}
+
+	return lint.NewNode(s.Collector, s.DB).Lint(ctx)
 }

@@ -1,0 +1,61 @@
+# A Sample AKS Popeye configuration.
+popeye:
+  allocations:
+    cpu:
+      underPercUtilization: 200
+      overPercUtilization: 50
+    memory:
+      underPercUtilization: 200
+      overPercUtilization: 50
+
+  excludes:
+    # all linters
+    global:
+      fqns: [ns1, ns2, rx:bozo]
+      labels:
+        l1: [lv1, lv2]
+        l2: [lv1, lv2]
+      annotations:
+        a1: [av1, av2]
+        a2: [bv1, bv2]
+      containers: [c1, c2, rx:c3]
+      codes: ["100", "200", "rx:^3"]
+
+    # Specific linters
+    linters:
+      pods:
+        - labels:
+            l1: [v1,v2]
+          containers: [c1, c2]
+          codes: ["101", "200"]
+        - fqns: [n1, n2, n3]
+
+      configmaps:
+        - labels:
+            l1: [v1,v2]
+          containers: [c1, c2]
+          codes: ["101", "200"]
+
+  resources:
+    node:
+      limits:
+        cpu: 90
+        memory: 80
+
+    pod:
+      restarts: 3
+      limits:
+        cpu: 80
+        memory: 75
+
+  overrides:
+    - code: 206
+      message: blee
+      severity: 1
+    - code: 210
+      message: fred
+      severity: 2
+
+  registries:
+    - docker.io
+    - pocker.io

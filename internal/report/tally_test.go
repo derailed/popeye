@@ -7,9 +7,9 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/internal/rules"
+	"github.com/derailed/popeye/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +25,7 @@ func TestTallyWrite(t *testing.T) {
 	for _, u := range uu {
 		ta := NewTally()
 		b := bytes.NewBuffer([]byte(""))
-		s := NewSanitizer(b, u.jurassic)
+		s := New(b, u.jurassic)
 		ta.write(b, s)
 
 		assert.Equal(t, u.e, b.String())
@@ -33,54 +33,59 @@ func TestTallyWrite(t *testing.T) {
 }
 
 func TestTallyRollup(t *testing.T) {
-	uu := []struct {
+	uu := map[string]struct {
 		o issues.Outcome
+		s int
 		e *Tally
 	}{
-		{
-			issues.Outcome{},
-			&Tally{counts: []int{0, 0, 0, 0}, score: 100, valid: true},
+		"no-issues": {
+			o: issues.Outcome{},
+			e: &Tally{counts: []int{0, 0, 0, 0}, score: 100, valid: true},
 		},
-		{
-			issues.Outcome{
+		"plain": {
+			o: issues.Outcome{
 				"a": {
-					issues.New(client.NewGVR("fred"), issues.Root, config.InfoLevel, ""),
-					issues.New(client.NewGVR("fred"), issues.Root, config.WarnLevel, ""),
+					issues.New(types.NewGVR("fred"), issues.Root, rules.InfoLevel, ""),
+					issues.New(types.NewGVR("fred"), issues.Root, rules.WarnLevel, ""),
 				},
 				"b": {
-					issues.New(client.NewGVR("fred"), issues.Root, config.ErrorLevel, ""),
+					issues.New(types.NewGVR("fred"), issues.Root, rules.ErrorLevel, ""),
 				},
 				"c": {},
 			},
-			&Tally{counts: []int{1, 0, 1, 1}, score: 33, valid: true},
+			e: &Tally{counts: []int{1, 0, 1, 1}, score: 33, valid: true},
 		},
 	}
 
-	for _, u := range uu {
-		ta := NewTally()
-		ta.Rollup(u.o)
+	for k := range uu {
+		u := uu[k]
+		t.Run(k, func(t *testing.T) {
+			ta := NewTally()
+			ta.Rollup(u.o)
 
-		assert.Equal(t, u.e, ta)
+			assert.Equal(t, u.e, ta)
+		})
 	}
 }
 
 func TestTallyScore(t *testing.T) {
 	uu := []struct {
 		o issues.Outcome
+		s int
 		e int
 	}{
 		{
-			issues.Outcome{
+			o: issues.Outcome{
 				"a": {
-					issues.New(client.NewGVR("fred"), issues.Root, config.InfoLevel, ""),
-					issues.New(client.NewGVR("fred"), issues.Root, config.WarnLevel, ""),
+					issues.New(types.NewGVR("fred"), issues.Root, rules.InfoLevel, ""),
+					issues.New(types.NewGVR("fred"), issues.Root, rules.WarnLevel, ""),
 				},
 				"b": {
-					issues.New(client.NewGVR("fred"), issues.Root, config.ErrorLevel, ""),
+					issues.New(types.NewGVR("fred"), issues.Root, rules.ErrorLevel, ""),
 				},
 				"c": {},
 			},
-			33,
+			e: 33,
 		},
 	}
 
@@ -95,24 +100,25 @@ func TestTallyScore(t *testing.T) {
 func TestTallyWidth(t *testing.T) {
 	uu := []struct {
 		o issues.Outcome
+		s int
 		e string
 	}{
 		{
-			issues.Outcome{
+			o: issues.Outcome{
 				"a": {
-					issues.New(client.NewGVR("fred"), issues.Root, config.InfoLevel, ""),
-					issues.New(client.NewGVR("fred"), issues.Root, config.WarnLevel, ""),
+					issues.New(types.NewGVR("fred"), issues.Root, rules.InfoLevel, ""),
+					issues.New(types.NewGVR("fred"), issues.Root, rules.WarnLevel, ""),
 				},
 				"b": {
-					issues.New(client.NewGVR("fred"), issues.Root, config.ErrorLevel, ""),
+					issues.New(types.NewGVR("fred"), issues.Root, rules.ErrorLevel, ""),
 				},
 				"c": {},
 			},
-			"💥 1 😱 1 🔊 0 ✅ 1 \x1b[38;5;196m33\x1b[0m٪",
+			e: "💥 1 😱 1 🔊 0 ✅ 1 \x1b[38;5;196m33\x1b[0m٪",
 		},
 	}
 
-	s := new(Sanitizer)
+	s := new(ScanReport)
 	for _, u := range uu {
 		ta := NewTally()
 		ta.Rollup(u.o)

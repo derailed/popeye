@@ -4,45 +4,39 @@
 package config
 
 import (
+	"errors"
+	"fmt"
+	"strings"
+
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-// BasicAuth tracks basic authentication.
-type BasicAuth struct {
-	User     *string
-	Password *string
-}
-
-// PushGateway tracks gateway representations.
-type PushGateway struct {
-	Address   *string
-	BasicAuth BasicAuth
-}
-
-func newPushGateway() *PushGateway {
-	return &PushGateway{
-		Address:   strPtr(""),
-		BasicAuth: BasicAuth{User: strPtr(""), Password: strPtr("")},
-	}
+var outputs = []string{
+	"standard",
+	"jurassic",
+	"yaml",
+	"json",
+	"html",
+	"junit",
+	"score",
+	"prometheus",
 }
 
 // Flags represents Popeye CLI flags.
 type Flags struct {
 	*genericclioptions.ConfigFlags
 
+	PushGateway     *PushGateway
+	S3              *S3Info
 	LintLevel       *string
 	Output          *string
 	ClearScreen     *bool
 	Save            *bool
 	OutputFile      *string
-	S3Bucket        *string
-	S3Region        *string
-	S3Endpoint      *string
 	CheckOverAllocs *bool
 	AllNamespaces   *bool
 	Spinach         *string
 	Sections        *[]string
-	PushGateway     *PushGateway
 	InClusterName   *string
 	StandAlone      bool
 	ActiveNamespace *string
@@ -58,9 +52,7 @@ func NewFlags() *Flags {
 		AllNamespaces:   boolPtr(false),
 		Save:            boolPtr(false),
 		OutputFile:      strPtr(""),
-		S3Bucket:        strPtr(""),
-		S3Region:        strPtr(""),
-		S3Endpoint:      strPtr(""),
+		S3:              newS3Info(),
 		InClusterName:   strPtr(""),
 		ClearScreen:     boolPtr(false),
 		CheckOverAllocs: boolPtr(false),
@@ -73,6 +65,31 @@ func NewFlags() *Flags {
 	}
 }
 
+func (f *Flags) Validate() error {
+	if !IsBoolSet(f.Save) && IsStrSet(f.OutputFile) {
+		return errors.New("'--save' must be used in conjunction with 'output-file'.")
+	}
+	if IsBoolSet(f.Save) && IsStrSet(f.S3.Bucket) {
+		return errors.New("'--save' cannot be used in conjunction with 's3-bucket'.")
+	}
+
+	if !in(outputs, f.Output) {
+		return fmt.Errorf("invalid output format. [%s]", strings.Join(outputs, ","))
+	}
+
+	if IsStrSet(f.Output) && *f.Output == "prometheus" {
+		if f.PushGateway == nil || !IsStrSet(f.PushGateway.URL) {
+			return errors.New("you must set --push-gtwy-url when prometheus report is enabled")
+		}
+	}
+
+	return nil
+}
+
+func (f *Flags) IsPersistent() bool {
+	return IsBoolSet(f.Save) || IsStrSet(f.OutputFile) || (f.S3 != nil && IsStrSet(f.S3.Bucket))
+}
+
 // OutputFormat returns the report output format.
 func (f *Flags) OutputFormat() string {
 	if f.Output != nil && *f.Output != "" {
@@ -82,17 +99,13 @@ func (f *Flags) OutputFormat() string {
 	return "cool"
 }
 
-// ----------------------------------------------------------------------------
-// Helpers...
+func (f *Flags) Exhaust() string {
+	if f.S3 != nil && IsStrSet(f.S3.Bucket) {
+		return *f.S3.Bucket
+	}
+	if IsStrSet(f.OutputFile) {
+		return *f.OutputFile
+	}
 
-func boolPtr(b bool) *bool {
-	return &b
-}
-
-func strPtr(s string) *string {
-	return &s
-}
-
-func intPtr(i int) *int {
-	return &i
+	return ""
 }

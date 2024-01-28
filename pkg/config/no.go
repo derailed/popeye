@@ -16,8 +16,6 @@ type Limits struct {
 
 // Node tracks node configurations.
 type Node struct {
-	Excludes `yaml:"exclude"`
-
 	Limits Limits `yaml:"limits"`
 }
 

@@ -3,9 +3,7 @@
 
 package report
 
-import (
-	"github.com/derailed/popeye/pkg/config"
-)
+import "github.com/derailed/popeye/internal/rules"
 
 const (
 	noChange = "not changed"
@@ -15,13 +13,13 @@ const (
 
 // DeltaScore tracks delta between 2 tally scores.
 type DeltaScore struct {
-	level   config.Level
+	level   rules.Level
 	s1, s2  int
 	inverse bool
 }
 
 // NewDeltaScore returns a new delta score.
-func NewDeltaScore(level config.Level, s1, s2 int, inverse bool) DeltaScore {
+func NewDeltaScore(level rules.Level, s1, s2 int, inverse bool) DeltaScore {
 	return DeltaScore{
 		s1:      s1,
 		s2:      s2,

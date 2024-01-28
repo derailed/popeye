@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: sa1
+      namespace: ns1
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: sa2
+      namespace: ns2
+    automountServiceAccountToken: false

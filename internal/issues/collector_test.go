@@ -9,8 +9,9 @@ import (
 	"testing"
 
 	"github.com/derailed/popeye/internal"
-	"github.com/derailed/popeye/internal/client"
+	"github.com/derailed/popeye/internal/rules"
 	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,8 +25,8 @@ func TestNoConcerns(t *testing.T) {
 		},
 		"issues": {
 			issues: []Issue{
-				New(client.NewGVR("blee"), Root, config.InfoLevel, "blee"),
-				New(client.NewGVR("blee"), Root, config.WarnLevel, "blee"),
+				New(types.NewGVR("blee"), Root, rules.InfoLevel, "blee"),
+				New(types.NewGVR("blee"), Root, rules.WarnLevel, "blee"),
 			},
 		},
 	}
@@ -45,40 +46,40 @@ func TestMaxSeverity(t *testing.T) {
 	uu := map[string]struct {
 		issues   []Issue
 		section  string
-		severity config.Level
+		severity rules.Level
 		count    int
 	}{
 		"noIssue": {
 			section:  Root,
-			severity: config.OkLevel,
+			severity: rules.OkLevel,
 			count:    0,
 		},
 		"mix": {
 			issues: []Issue{
-				New(client.NewGVR("fred"), Root, config.InfoLevel, "blee"),
-				New(client.NewGVR("fred"), Root, config.WarnLevel, "blee"),
+				New(types.NewGVR("fred"), Root, rules.InfoLevel, "blee"),
+				New(types.NewGVR("fred"), Root, rules.WarnLevel, "blee"),
 			},
 			section:  Root,
-			severity: config.WarnLevel,
+			severity: rules.WarnLevel,
 			count:    2,
 		},
 		"same": {
 			issues: []Issue{
-				New(client.NewGVR("fred"), Root, config.InfoLevel, "blee"),
-				New(client.NewGVR("fred"), Root, config.InfoLevel, "blee"),
+				New(types.NewGVR("fred"), Root, rules.InfoLevel, "blee"),
+				New(types.NewGVR("fred"), Root, rules.InfoLevel, "blee"),
 			},
 			section:  Root,
-			severity: config.InfoLevel,
+			severity: rules.InfoLevel,
 			count:    2,
 		},
 		"error": {
 			issues: []Issue{
-				New(client.NewGVR("fred"), Root, config.ErrorLevel, "blee"),
-				New(client.NewGVR("fred"), Root, config.InfoLevel, "blee"),
-				New(client.NewGVR("fred"), Root, config.InfoLevel, "blee"),
+				New(types.NewGVR("fred"), Root, rules.ErrorLevel, "blee"),
+				New(types.NewGVR("fred"), Root, rules.InfoLevel, "blee"),
+				New(types.NewGVR("fred"), Root, rules.InfoLevel, "blee"),
 			},
 			section:  Root,
-			severity: config.ErrorLevel,
+			severity: rules.ErrorLevel,
 			count:    3,
 		},
 	}
@@ -126,43 +127,43 @@ func TestAddErr(t *testing.T) {
 			c.AddErr(ctx, u.errors...)
 
 			assert.Equal(t, u.count, len(c.outcomes[u.fqn]))
-			assert.Equal(t, config.ErrorLevel, c.MaxSeverity(u.fqn))
+			assert.Equal(t, rules.ErrorLevel, c.MaxSeverity(u.fqn))
 		})
 	}
 }
 
 func TestAddCode(t *testing.T) {
 	uu := map[string]struct {
-		code  config.ID
+		code  rules.ID
 		fqn   string
 		args  []interface{}
-		level config.Level
+		level rules.Level
 		e     string
 	}{
 		"No params": {
 			code:  100,
 			fqn:   Root,
-			level: config.ErrorLevel,
+			level: rules.ErrorLevel,
 			e:     "[POP-100] Untagged docker image in use",
 		},
 		"Params": {
 			code:  108,
 			fqn:   Root,
-			level: config.InfoLevel,
+			level: rules.InfoLevel,
 			args:  []interface{}{80},
 			e:     "[POP-108] Unnamed port 80",
 		},
 		"Dud!": {
 			code:  0,
 			fqn:   Root,
-			level: config.InfoLevel,
+			level: rules.InfoLevel,
 			args:  []interface{}{80},
 			e:     "[POP-108] Unnamed port 80",
 		},
 		"Issue 169": {
 			code:  1102,
 			fqn:   Root,
-			level: config.InfoLevel,
+			level: rules.InfoLevel,
 			args:  []interface{}{"123", "test-port"},
 			e:     "[POP-1102] Use of target port #123 for service port test-port. Prefer named port",
 		},
@@ -180,7 +181,6 @@ func TestAddCode(t *testing.T) {
 				assert.Panics(t, subCode, "blee")
 			} else {
 				c.AddCode(ctx, u.code, u.args...)
-
 				assert.Equal(t, u.e, c.outcomes[u.fqn][0].Message)
 				assert.Equal(t, u.level, c.outcomes[u.fqn][0].Level)
 			}
@@ -190,24 +190,24 @@ func TestAddCode(t *testing.T) {
 
 func TestAddSubCode(t *testing.T) {
 	uu := map[string]struct {
-		code           config.ID
+		code           rules.ID
 		section, group string
 		args           []interface{}
-		level          config.Level
+		level          rules.Level
 		e              string
 	}{
 		"No params": {
 			code:    100,
 			section: Root,
 			group:   "blee",
-			level:   config.ErrorLevel,
+			level:   rules.ErrorLevel,
 			e:       "[POP-100] Untagged docker image in use",
 		},
 		"Params": {
 			code:    108,
 			section: Root,
 			group:   "blee",
-			level:   config.InfoLevel,
+			level:   rules.InfoLevel,
 			args:    []interface{}{80},
 			e:       "[POP-108] Unnamed port 80",
 		},
@@ -215,7 +215,7 @@ func TestAddSubCode(t *testing.T) {
 			code:    0,
 			section: Root,
 			group:   "blee",
-			level:   config.InfoLevel,
+			level:   rules.InfoLevel,
 			args:    []interface{}{80},
 			e:       "[POP-108] Unnamed port 80",
 		},
@@ -245,11 +245,12 @@ func TestAddSubCode(t *testing.T) {
 
 // Helpers...
 
-func loadCodes(t *testing.T) *Codes {
-	codes, err := LoadCodes()
-	assert.Nil(t, err)
-
-	return codes
+func makeContext(section, fqn, group string) context.Context {
+	return context.WithValue(context.Background(), internal.KeyRunInfo, internal.RunInfo{
+		Section: section,
+		Group:   group,
+		Spec:    rules.Spec{FQN: fqn},
+	})
 }
 
 func makeConfig(t *testing.T) *config.Config {
@@ -258,10 +259,9 @@ func makeConfig(t *testing.T) *config.Config {
 	return c
 }
 
-func makeContext(section, fqn, group string) context.Context {
-	return context.WithValue(context.Background(), internal.KeyRunInfo, internal.RunInfo{
-		Section: section,
-		Group:   group,
-		FQN:     fqn,
-	})
+func loadCodes(t *testing.T) *Codes {
+	codes, err := LoadCodes()
+	assert.Nil(t, err)
+
+	return codes
 }

@@ -1,8 +1,8 @@
 <img src="https://github.com/derailed/popeye/raw/master/assets/popeye_logo.png" align="right" width="250" height="auto">
 
-# Popeye - A Kubernetes Cluster Sanitizer
+# Popeye - A Kubernetes Cluster Live Resource Linter
 
-Popeye is a utility that scans live Kubernetes cluster and reports potential issues with deployed resources and configurations. It sanitizes your cluster based on what's deployed and not what's sitting on disk. By scanning your cluster, it detects misconfigurations and helps you to ensure that best practices are in place, thus preventing future headaches. It aims at reducing the cognitive *over*load one faces when operating a Kubernetes cluster in the wild. Furthermore, if your cluster employs a metric-server, it reports potential resources over/under allocations and attempts to warn you should your cluster run out of capacity.
+Popeye is a utility that scans live Kubernetes cluster and reports potential issues with deployed resources and configurations. As Kubernetes landscapes grows, it is becoming a challenge for a human to track the slew of manifests and policies that orchestrate a cluster. Popeye scans your cluster based on what's deployed and not what's sitting on disk. By linting your cluster, it detects misconfigurations, stale resources and assists you to ensure that best practices are in place, thus preventing future headaches. It aims at reducing the cognitive *over*load one faces when operating a Kubernetes cluster in the wild. Furthermore, if your cluster employs a metric-server, it reports potential resources over/under allocations and attempts to warn you should your cluster run out of capacity.
 
 Popeye is a readonly tool, it does not alter any of your Kubernetes resources in any way!
 
@@ -21,8 +21,6 @@ Popeye is a readonly tool, it does not alter any of your Kubernetes resources in
 [![Releases](https://img.shields.io/github/downloads/derailed/popeye/total.svg)]()
 
 ---
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/derailed/popeye)
 
 ## Installation
 
@@ -80,24 +78,24 @@ Popeye is available on Linux, OSX and Windows platforms.
     export TERM=xterm-256color
     ```
 
-## Sanitizers
+## Linters
 
 Popeye scans your cluster for best practices and potential issues.
 Currently, Popeye only looks at nodes, namespaces, pods and services.
 More will come soon! We are hoping Kubernetes friends will pitch'in
 to make Popeye even better.
 
-The aim of the sanitizers is to pick up on misconfigurations, i.e. things
+The aim of the linters is to pick up on misconfigurations, i.e. things
 like port mismatches, dead or unused resources, metrics utilization,
 probes, container images, RBAC rules, naked resources, etc...
 
 Popeye is not another static analysis tool. It runs and inspect Kubernetes resources on
-live clusters and sanitize resources as they are in the wild!
+live clusters and lint resources as they are in the wild!
 
-Here is a list of some of the available sanitizers:
+Here is a list of some of the available linters:
 
 
-|    | Resource                | Sanitizers                                                              | Aliases    |
+|    | Resource                | Linters                                                                 | Aliases    |
 |----|-------------------------|-------------------------------------------------------------------------|------------|
 | 🛀 | Node                    |                                                                         | no         |
 |    |                         | Conditions ie not ready, out of mem/disk, network, pids, etc            |            |
@@ -164,7 +162,7 @@ By default it will create a temp directory and will store the report there,
 the path of the temp directory will be printed out on STDOUT.
 If you have the need to specify the output directory for the report,
 you can use the environment variable `POPEYE_REPORT_DIR`.
-By default, the name of the output file follow the following format : `sanitizer_<cluster-name>_<time-UnixNano>.<output-extension>` (e.g. : "sanitizer-mycluster-1594019782530851873.html").
+By default, the name of the output file follow the following format : `lint_<cluster-name>_<time-UnixNano>.<output-extension>` (e.g. : "lint-mycluster-1594019782530851873.html").
 If you have the need to specify the output file name for the report,
 you can pass the `--output-file` flag with the filename you want as parameter.
 
@@ -235,7 +233,7 @@ NOTE: You can override the default output directory location by setting `POPEYE_
 ## The Command Line
 
 You can use Popeye standalone or using a spinach yaml config to
-tune the sanitizer. Details about the Popeye configuration file are below.
+tune the linter. Details about the Popeye configuration file are below.
 
 ```shell
 # Dump version info
@@ -243,7 +241,7 @@ popeye version
 # Popeye a cluster using your current kubeconfig environment.
 popeye
 # Popeye uses a spinach config file of course! aka spinachyaml!
-popeye -f spinach.yml
+popeye -f spinach.yaml
 # Popeye a cluster using a kubeconfig context.
 popeye --context olive
 # Stuck?
@@ -252,7 +250,7 @@ popeye help
 
 ## Output Formats
 
-Popeye can generate sanitizer reports in a variety of formats. You can use the -o cli option and pick your poison from there.
+Popeye can generate linter reports in a variety of formats. You can use the -o cli option and pick your poison from there.
 
 | Format     | Description                                            | Default | Credits                                      |
 |------------|--------------------------------------------------------|---------|----------------------------------------------|
@@ -262,13 +260,13 @@ Popeye can generate sanitizer reports in a variety of formats. You can use the -
 | html       | As HTML                                                |         |                                              |
 | json       | As JSON                                                |         |                                              |
 | junit      | For the Java melancholic                               |         |                                              |
-| prometheus | Dumps report a prometheus scrapable metrics           |         | [dardanel](https://github.com/eminugurkenar) |
-| score      | Returns a single cluster sanitizer score value (0-100) |         | [kabute](https://github.com/kabute)          |
+| prometheus | Dumps report a prometheus scrapable metrics            |         | [dardanel](https://github.com/eminugurkenar) |
+| score      | Returns a single cluster linter score value (0-100)    |         | [kabute](https://github.com/kabute)          |
 
 ## The SpinachYAML Configuration
 
-A spinach.yml configuration file can be specified via the `-f` option to further configure the sanitizers. This file may specify
-the container utilization threshold and specific sanitizer configurations as well as resources that will be excluded from the sanitization.
+A spinach YAML configuration file can be specified via the `-f` option to further configure the linters. This file may specify
+the container utilization threshold and specific linter configurations as well as resources that will be excluded from the linter.
 
 NOTE: This file will change as Popeye matures!
 
@@ -278,7 +276,7 @@ A resource is identified by a resource kind and a fully qualified resource name,
 
 For example, the FQN of a pod named `fred-1234` in the namespace `blee` will be `blee/fred-1234`. This provides for differentiating `fred/p1` and `blee/p1`. For cluster wide resources, the FQN is equivalent to the name. Exclude rules can have either a straight string match or a regular expression. In the latter case the regular expression must be indicated using the `rx:` prefix.
 
-NOTE! Please be careful with your regex as more resources than expected may get excluded from the report with a *loose* regex rule. When your cluster resources change, this could lead to a sub-optimal sanitization. Once in a while it might be a good idea to run Popeye „configless“ to make sure you will recognize any new issues that may have arisen in your clusters…
+NOTE! Please be careful with your regex as more resources than expected may get excluded from the report with a *loose* regex rule. When your cluster resources change, this could lead to a sub-optimal lint. Once in a while it might be a good idea to run Popeye „configless“ to make sure you will recognize any new issues that may have arisen in your clusters…
 
 Here is an example spinach file as it stands in this release. There is a fuller eks and aks based spinach file in this repo under `spinach`. (BTW: for new comers into the project, might be a great way to contribute by adding cluster specific spinach file PRs...)
 
@@ -286,7 +284,7 @@ Here is an example spinach file as it stands in this release. There is a fuller 
 # A Popeye sample configuration file
 popeye:
   # Checks resources against reported metrics usage.
-  # If over/under these thresholds a sanitization warning will be issued.
+  # If over/under these thresholds a linter warning will be issued.
   # Your cluster must run a metrics-server for these to take place!
   allocations:
     cpu:
@@ -298,53 +296,64 @@ popeye:
 
   # Excludes excludes certain resources from Popeye scans
   excludes:
-    v1/pods:
-    # In the monitoring namespace excludes all probes check on pod's containers.
-    - name: rx:monitoring
-      codes:
-      - 102
-    # Excludes all istio-proxy container scans for pods in the icx namespace.
-    - name: rx:icx/.*
-      containers:
-        # Excludes istio init/sidecar container from scan!
-        - istio-proxy
-        - istio-init
-    # ConfigMap sanitizer exclusions...
-    v1/configmaps:
-      # Excludes key must match the singular form of the resource.
-      # For instance this rule will exclude all configmaps named fred.v2.3 and fred.v2.4
-      - name: rx:fred.+\.v\d+
-    # Namespace sanitizer exclusions...
-    v1/namespaces:
-      # Exclude all fred* namespaces if the namespaces are not found (404), other error codes will be reported!
-      - name: rx:fred
+    namespaces:
+      - kube-public
+      - kube-system
+    gvrs:
+      v1/pods:
+      # In the monitoring namespace excludes all probes check on pod's containers.
+      - name: rx:monitoring
         codes:
-          - 404
-      # Exclude all istio* namespaces from being scanned.
-      - name: rx:istio
-    # Completely exclude horizontal pod autoscalers.
-    autoscaling/v1/horizontalpodautoscalers:
-      - name: rx:.*
+        - 102
+      # Excludes all istio-proxy container scans for pods in the icx namespace.
+      - name: rx:icx/.*
+        containers:
+          # Excludes istio init/sidecar container from scan!
+          - istio-proxy
+          - istio-init
+      # ConfigMap linter exclusions...
+      v1/configmaps:
+        # Excludes key must match the singular form of the resource.
+        # For instance this rule will exclude all configmaps named fred.v2.3 and fred.v2.4
+        - name: rx:fred.+\.v\d+
+      # Namespace linter exclusions...
+      v1/namespaces:
+        # Exclude all fred* namespaces if the namespaces are not found (404), other error codes will be reported!
+        - name: rx:fred
+          codes:
+            - 404
+        # Exclude all istio* namespaces from being scanned.
+        - name: rx:istio
+      # Completely exclude horizontal pod autoscalers.
+      autoscaling/v1/horizontalpodautoscalers:
+        - name: rx:.*
 
-  # Configure node resources.
-  node:
-    # Limits set a cpu/mem threshold in % ie if cpu|mem > limit a lint warning is triggered.
-    limits:
-      # CPU checks if current CPU utilization on a node is greater than 90%.
-      cpu:    90
-      # Memory checks if current Memory utilization on a node is greater than 80%.
-      memory: 80
+  resources:
+    # Configure node resources.
+    node:
+      # Limits set a cpu/mem threshold in % ie if cpu|mem > limit a lint warning is triggered.
+      limits:
+        # CPU checks if current CPU utilization on a node is greater than 90%.
+        cpu:    90
+        # Memory checks if current Memory utilization on a node is greater than 80%.
+        memory: 80
 
-  # Configure pod resources
-  pod:
-    # Restarts check the restarts count and triggers a lint warning if above threshold.
-    restarts:
-      3
-    # Check container resource utilization in percent.
-    # Issues a lint warning if about these threshold.
-    limits:
-      cpu:    80
-      memory: 75
+    # Configure pod resources
+    pod:
+      # Restarts check the restarts count and triggers a lint warning if above threshold.
+      restarts:
+        3
+      # Check container resource utilization in percent.
+      # Issues a lint warning if about these threshold.
+      limits:
+        cpu:    80
+        memory: 75
+
+
+  # Code specifies a custom severity level ie critical=3, warn=2, info=1
+  codes:
+    206:
+      severity: 1
 
   # Configure a list of allowed registries to pull images from
   registries:
@@ -497,12 +506,12 @@ roleRef:
 
 ## Report Morphology
 
-The sanitizer report outputs each resource group scanned and their potential issues.
-The report is color/emoji coded in term of Sanitizer severity levels:
+The lint report outputs each resource group scanned and their potential issues.
+The report is color/emoji coded in term of linter severity levels:
 
 | Level | Icon | Jurassic | Color     | Description     |
 |-------|------|----------|-----------|-----------------|
-| Ok    | ✅    | OK       | Green     | Happy!          |
+| Ok    | ✅   | OK       | Green     | Happy!          |
 | Info  | 🔊   | I        | BlueGreen | FYI             |
 | Warn  | 😱   | W        | Yellow    | Potential Issue |
 | Error | 💥   | E        | Red       | Action required |
@@ -510,7 +519,7 @@ The report is color/emoji coded in term of Sanitizer severity levels:
 The heading section for each scanned Kubernetes resource provides a summary count
 for each of the categories above.
 
-The Summary section provides a **Popeye Score** based on the sanitization pass on the given cluster.
+The Summary section provides a **Popeye Score** based on the linter pass on the given cluster.
 
 ## Known Issues
 

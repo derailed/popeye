@@ -5,51 +5,43 @@ package scrub
 
 import (
 	"context"
-	"sync"
 
 	"github.com/derailed/popeye/internal"
-	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/sanitize"
+	"github.com/derailed/popeye/internal/lint"
+	v1 "k8s.io/api/core/v1"
 )
 
 // Namespace represents a Namespace scruber.
 type Namespace struct {
 	*issues.Collector
-	*cache.Namespace
-	*cache.Pod
+	*Cache
 }
 
-// NewNamespace return a new Namespace scruber.
-func NewNamespace(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
-	n := Namespace{Collector: issues.NewCollector(codes, c.config)}
-
-	var err error
-	n.Namespace, err = c.namespaces()
-	if err != nil {
-		n.AddErr(ctx, err)
+// NewNamespace returns a new instance.
+func NewNamespace(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+	return &Namespace{
+		Collector: issues.NewCollector(codes, c.Config),
+		Cache:     c,
 	}
-
-	n.Pod, err = c.pods()
-	if err != nil {
-		n.AddErr(ctx, err)
-	}
-
-	return &n
 }
 
-// ReferencedNamespaces fetch all namespaces referenced by pods.
-func (n *Namespace) ReferencedNamespaces(res map[string]struct{}) {
-	var refs sync.Map
-	n.Pod.PodRefs(&refs)
-	if ss, ok := refs.Load("ns"); ok {
-		for ns := range ss.(internal.StringSet) {
-			res[ns] = struct{}{}
+func (s *Namespace) Preloads() Preloads {
+	return Preloads{
+		internal.NS: db.LoadResource[*v1.Namespace],
+		internal.PO: db.LoadResource[*v1.Pod],
+		internal.SA: db.LoadResource[*v1.ServiceAccount],
+	}
+}
+
+// Lint all available Namespaces.
+func (s *Namespace) Lint(ctx context.Context) error {
+	for k, f := range s.Preloads() {
+		if err := f(ctx, s.Loader, internal.Glossary[k]); err != nil {
+			return err
 		}
 	}
-}
 
-// Sanitize all available Namespaces.
-func (n *Namespace) Sanitize(ctx context.Context) error {
-	return sanitize.NewNamespace(n.Collector, n).Sanitize(ctx)
+	return lint.NewNamespace(s.Collector, s.DB).Lint(ctx)
 }

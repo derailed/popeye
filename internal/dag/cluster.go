@@ -3,19 +3,28 @@
 
 package dag
 
-import "context"
+import (
+	"context"
+
+	"github.com/Masterminds/semver"
+)
 
 // ListVersion return server api version.
-func ListVersion(ctx context.Context) (string, string, error) {
+func ListVersion(ctx context.Context) (*semver.Version, error) {
 	f := mustExtractFactory(ctx)
 	dial, err := f.Client().Dial()
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
-	v, err := dial.Discovery().ServerVersion()
+	info, err := dial.Discovery().ServerVersion()
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
-	return v.Major, v.Minor, nil
+	rev, err := semver.NewVersion(info.Major + "." + info.Minor)
+	if err != nil {
+		return nil, err
+	}
+
+	return rev, nil
 }

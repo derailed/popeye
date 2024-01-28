@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: gateway.networking.k8s.io/v1
+  kind: Gateway
+  metadata:
+    name: gw1
+    namespace: default
+  spec:
+    gatewayClassName: gwc1
+    listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+- apiVersion: gateway.networking.k8s.io/v1
+  kind: Gateway
+  metadata:
+    name: gw2
+    namespace: default
+  spec:
+    gatewayClassName: gwc-bozo
+    listeners:
+    - name: http
+      protocol: HTTP
+      port: 80

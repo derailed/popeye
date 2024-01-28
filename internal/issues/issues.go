@@ -4,9 +4,15 @@
 package issues
 
 import (
-	"sort"
+	"encoding/json"
+	"fmt"
+	"slices"
+	"strconv"
+	"strings"
 
-	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/internal/client"
+	"github.com/derailed/popeye/internal/issues/tally"
+	"github.com/derailed/popeye/internal/rules"
 )
 
 // Root denotes a root issue group.
@@ -20,9 +26,24 @@ type (
 	Outcome map[string]Issues
 )
 
+func (i Issues) CodeTally() tally.Code {
+	ss := make(tally.Code)
+	for _, issue := range i {
+		if c, ok := issue.Code(); ok {
+			if v, ok := ss[c]; ok {
+				ss[c] = v + 1
+			} else {
+				ss[c] = 1
+			}
+		}
+	}
+
+	return ss
+}
+
 // MaxSeverity gather the max severity in a collection of issues.
-func (i Issues) MaxSeverity() config.Level {
-	max := config.OkLevel
+func (i Issues) MaxSeverity() rules.Level {
+	max := rules.OkLevel
 	for _, is := range i {
 		if is.Level > max {
 			max = is.Level
@@ -32,30 +53,39 @@ func (i Issues) MaxSeverity() config.Level {
 	return max
 }
 
+func (i Issues) HasIssues() bool {
+	return len(i) > 0
+}
+
+func SortKeys(k1, k2 string) int {
+	v1, err := strconv.Atoi(k1)
+	if err == nil {
+		v2, _ := strconv.Atoi(k2)
+		switch {
+		case v1 == v2:
+			return 0
+		case v1 < v2:
+			return -1
+		default:
+			return 1
+		}
+	}
+
+	return strings.Compare(k1, k2)
+}
+
 // Sort sorts issues.
-func (i Issues) Sort(l config.Level) Issues {
+func (i Issues) Sort(l rules.Level) Issues {
 	ii := make(Issues, 0, len(i))
 	gg := i.Group()
-	keys := make(sort.StringSlice, 0, len(gg))
+	kk := make([]string, 0, len(gg))
 	for k := range gg {
-		keys = append(keys, k)
+		kk = append(kk, k)
 	}
-	keys.Sort()
-	for _, group := range keys {
-		sev := gg[group].MaxSeverity()
-		if sev < l {
-			continue
-		}
-		for _, i := range gg[group] {
-			if i.Level < l {
-				continue
-			}
-			if i.Group == Root {
-				ii = append(ii, i)
-				continue
-			}
-			ii = append(ii, i)
-		}
+	slices.SortFunc(kk, SortKeys)
+
+	for _, k := range kk {
+		ii = append(ii, gg[k]...)
 	}
 	return ii
 }
@@ -70,13 +100,69 @@ func (i Issues) Group() map[string]Issues {
 	return res
 }
 
+// NSTally collects Namespace code tally for a given linter.
+func (o Outcome) NSTally() tally.Namespace {
+	nn := make(tally.Namespace, len(o))
+	for fqn, v := range o {
+		ns, _ := client.Namespaced(fqn)
+		if ns == "" {
+			ns = "-"
+		}
+		tt := v.CodeTally()
+		if v1, ok := nn[ns]; ok {
+			v1.Merge(tt)
+		} else {
+			nn[ns] = tt
+		}
+	}
+
+	return nn
+}
+
 // MaxSeverity scans the issues and reports the highest severity.
-func (o Outcome) MaxSeverity(section string) config.Level {
+func (o Outcome) MaxSeverity(section string) rules.Level {
 	return o[section].MaxSeverity()
 }
 
+func (o Outcome) MarshalJSON() ([]byte, error) {
+	out := make([]string, 0, len(o))
+	for k, v := range o {
+		if len(v) == 0 {
+			continue
+		}
+		raw, err := json.Marshal(v)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, fmt.Sprintf("%q: %s", k, raw))
+	}
+
+	return []byte("{" + strings.Join(out, ",") + "}"), nil
+}
+
+func (o Outcome) MarshalYAML() (interface{}, error) {
+	out := make(Outcome, len(o))
+	for k, v := range o {
+		if len(v) == 0 {
+			continue
+		}
+		out[k] = v
+	}
+
+	return out, nil
+}
+
+func (o Outcome) HasIssues() bool {
+	var count int
+	for _, ii := range o {
+		count += len(ii)
+	}
+
+	return count > 0
+}
+
 // MaxGroupSeverity scans the issues and reports the highest severity.
-func (o Outcome) MaxGroupSeverity(section, group string) config.Level {
+func (o Outcome) MaxGroupSeverity(section, group string) rules.Level {
 	return o.For(section, group).MaxSeverity()
 }
 
@@ -93,8 +179,8 @@ func (o Outcome) For(section, group string) Issues {
 	return ii
 }
 
-// Filter filters outcomes based on sanitizer level.
-func (o Outcome) Filter(level config.Level) Outcome {
+// Filter filters outcomes based on lint level.
+func (o Outcome) Filter(level rules.Level) Outcome {
 	for k, issues := range o {
 		vv := make(Issues, 0, len(issues))
 		for _, issue := range issues {
@@ -105,4 +191,16 @@ func (o Outcome) Filter(level config.Level) Outcome {
 		o[k] = vv
 	}
 	return o
+}
+
+func (o Outcome) Dump() {
+	if len(o) == 0 {
+		fmt.Println("No ISSUES!")
+	}
+	for k, ii := range o {
+		fmt.Println(k)
+		for _, i := range ii {
+			i.Dump()
+		}
+	}
 }

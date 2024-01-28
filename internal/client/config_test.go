@@ -5,20 +5,14 @@ package client_test
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/derailed/popeye/internal/client"
-	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
-
-func init() {
-	zerolog.SetGlobalLevel(zerolog.FatalLevel)
-}
 
 func TestConfigCurrentContext(t *testing.T) {
 	name, kubeConfig := "blee", "./testdata/config"
@@ -75,21 +69,35 @@ func TestConfigCurrentUser(t *testing.T) {
 }
 
 func TestConfigCurrentNamespace(t *testing.T) {
-	name, kubeConfig := "blee", "./testdata/config"
-	uu := []struct {
-		flags     *genericclioptions.ConfigFlags
-		namespace string
-		err       error
+	ns, kubeConfig := "ns1", "./testdata/config"
+	uu := map[string]struct {
+		flags *genericclioptions.ConfigFlags
+		ns    string
+		err   error
 	}{
-		{&genericclioptions.ConfigFlags{KubeConfig: &kubeConfig}, "", fmt.Errorf("No active namespace specified")},
-		{&genericclioptions.ConfigFlags{KubeConfig: &kubeConfig, Namespace: &name}, "blee", nil},
+		"open": {
+			flags: &genericclioptions.ConfigFlags{
+				KubeConfig: &kubeConfig,
+			},
+			ns: client.DefaultNamespace,
+		},
+		"manual": {
+			flags: &genericclioptions.ConfigFlags{
+				KubeConfig: &kubeConfig,
+				Namespace:  &ns,
+			},
+			ns: ns,
+		},
 	}
 
-	for _, u := range uu {
-		cfg := client.NewConfig(u.flags)
-		ns, err := cfg.CurrentNamespaceName()
-		assert.Equal(t, u.err, err)
-		assert.Equal(t, u.namespace, ns)
+	for k := range uu {
+		u := uu[k]
+		t.Run(k, func(t *testing.T) {
+			cfg := client.NewConfig(u.flags)
+			ns, err := cfg.CurrentNamespaceName()
+			assert.Equal(t, u.err, err)
+			assert.Equal(t, u.ns, ns)
+		})
 	}
 }
 

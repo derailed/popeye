@@ -6,40 +6,42 @@ package scrub
 import (
 	"context"
 
-	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/sanitize"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
+	"github.com/derailed/popeye/internal/lint"
+	v1 "k8s.io/api/core/v1"
+	netv1 "k8s.io/api/networking/v1"
 )
 
 // Ingress represents a Ingress scruber.
 type Ingress struct {
 	*issues.Collector
-	*cache.Ingress
-	*config.Config
-
-	client types.Connection
+	*Cache
 }
 
-// NewIngress return a new Ingress scruber.
-func NewIngress(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
-	d := Ingress{
-		client:    c.factory.Client(),
-		Config:    c.config,
-		Collector: issues.NewCollector(codes, c.config),
+// NewIngress return a new instance.
+func NewIngress(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+	return &Ingress{
+		Collector: issues.NewCollector(codes, c.Config),
+		Cache:     c,
 	}
-
-	var err error
-	d.Ingress, err = c.ingresses()
-	if err != nil {
-		d.AddErr(ctx, err)
-	}
-
-	return &d
 }
 
-// Sanitize all available Ingresss.
-func (i *Ingress) Sanitize(ctx context.Context) error {
-	return sanitize.NewIngress(i.Collector, i).Sanitize(ctx)
+func (s *Ingress) Preloads() Preloads {
+	return Preloads{
+		internal.ING: db.LoadResource[*netv1.Ingress],
+		internal.SVC: db.LoadResource[*v1.Service],
+	}
+}
+
+// Lint all available Ingress.
+func (s *Ingress) Lint(ctx context.Context) error {
+	for k, f := range s.Preloads() {
+		if err := f(ctx, s.Loader, internal.Glossary[k]); err != nil {
+			return err
+		}
+	}
+
+	return lint.NewIngress(s.Collector, s.DB).Lint(ctx)
 }

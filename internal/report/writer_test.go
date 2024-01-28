@@ -10,15 +10,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/internal/rules"
+	"github.com/derailed/popeye/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestComment(t *testing.T) {
 	w := bytes.NewBufferString("")
-	s := NewSanitizer(w, false)
+	s := New(w, false)
 
 	s.Comment("blee")
 
@@ -42,7 +42,7 @@ func TestError(t *testing.T) {
 
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
-		s := NewSanitizer(w, false)
+		s := New(w, false)
 		s.Error("blee", u.err)
 
 		assert.Equal(t, u.e, w.String())
@@ -74,8 +74,8 @@ func TestPrint(t *testing.T) {
 
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
-		s := NewSanitizer(w, false)
-		s.Print(config.OkLevel, u.indent, u.m)
+		s := New(w, false)
+		s.Print(rules.OkLevel, u.indent, u.m)
 
 		assert.Equal(t, u.e, w.String())
 	}
@@ -88,15 +88,15 @@ func TestDump(t *testing.T) {
 	}{
 		{
 			issues.Outcome{
-				"fred": issues.Issues{issues.New(client.NewGVR("fred"), issues.Root, config.WarnLevel, "Yo Mama!")},
+				"fred": issues.Issues{issues.New(types.NewGVR("fred"), issues.Root, rules.WarnLevel, "Yo Mama!")},
 			},
 			"    😱 \x1b[38;5;220mYo Mama!.\x1b[0m\n",
 		},
 		{
 			issues.Outcome{
 				"fred": issues.Issues{
-					issues.New(client.NewGVR("fred"), "c1", config.ErrorLevel, "Yo Mama!"),
-					issues.New(client.NewGVR("fred"), "c1", config.ErrorLevel, "Yo!"),
+					issues.New(types.NewGVR("fred"), "c1", rules.ErrorLevel, "Yo Mama!"),
+					issues.New(types.NewGVR("fred"), "c1", rules.ErrorLevel, "Yo!"),
 				},
 			},
 			"    🐳 \x1b[38;5;75mc1\x1b[0m\n      💥 \x1b[38;5;196mYo Mama!.\x1b[0m\n      💥 \x1b[38;5;196mYo!.\x1b[0m\n",
@@ -105,15 +105,15 @@ func TestDump(t *testing.T) {
 
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
-		s := NewSanitizer(w, false)
-		s.Dump(config.OkLevel, u.o["fred"])
+		s := New(w, false)
+		s.Dump(rules.OkLevel, u.o["fred"])
 
 		assert.Equal(t, u.e, w.String())
 	}
 }
 
 func BenchmarkPrint(b *testing.B) {
-	s := NewSanitizer(io.Discard, false)
+	s := New(io.Discard, false)
 
 	b.ResetTimer()
 	b.ReportAllocs()
@@ -125,19 +125,20 @@ func BenchmarkPrint(b *testing.B) {
 func TestOpen(t *testing.T) {
 	uu := []struct {
 		o issues.Outcome
+		s int
 		e string
 	}{
 		{
-			issues.Outcome{
-				"fred": issues.Issues{issues.New(client.NewGVR("fred"), issues.Root, config.WarnLevel, "Yo Mama!")},
+			o: issues.Outcome{
+				"fred": issues.Issues{issues.New(types.NewGVR("fred"), issues.Root, rules.WarnLevel, "Yo Mama!")},
 			},
-			"\n\x1b[38;5;75mblee\x1b[0m" + strings.Repeat(" ", 75) + "💥 0 😱 1 🔊 0 ✅ 0 \x1b[38;5;196m0\x1b[0m٪\n\x1b[38;5;75m" + strings.Repeat("┅", Width+1) + "\x1b[0m\n",
+			e: "\n\x1b[38;5;75mblee\x1b[0m" + strings.Repeat(" ", 75) + "💥 0 😱 1 🔊 0 ✅ 0 \x1b[38;5;196m0\x1b[0m٪\n\x1b[38;5;75m" + strings.Repeat("┅", Width+1) + "\x1b[0m\n",
 		},
 	}
 
 	for _, u := range uu {
 		w := bytes.NewBufferString("")
-		s := NewSanitizer(w, false)
+		s := New(w, false)
 
 		ta := NewTally().Rollup(u.o)
 		s.Open("blee", ta)
@@ -148,7 +149,7 @@ func TestOpen(t *testing.T) {
 
 func TestOpenClose(t *testing.T) {
 	w := bytes.NewBufferString("")
-	s := NewSanitizer(w, false)
+	s := New(w, false)
 
 	s.Open("fred", nil)
 	s.Close()

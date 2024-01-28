@@ -24,7 +24,7 @@ func Grade(score int) string {
 }
 
 // Badge returns a popeye grade.
-func (s *Sanitizer) Badge(score int) []string {
+func (s *ScanReport) Badge(score int) []string {
 	ic := make([]string, len(GraderLogo))
 	for i, l := range GraderLogo {
 		switch i {

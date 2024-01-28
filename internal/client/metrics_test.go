@@ -38,7 +38,6 @@ func TestMetricsEmpty(t *testing.T) {
 	}
 }
 
-// ----------------------------------------------------------------------------
 // Helpers...
 
 func toQty(s string) resource.Quantity {

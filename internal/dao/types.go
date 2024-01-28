@@ -6,14 +6,13 @@ package dao
 import (
 	"context"
 
-	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ResourceMetas represents a collection of resource metadata.
-type ResourceMetas map[client.GVR]metav1.APIResource
+type ResourceMetas map[types.GVR]metav1.APIResource
 
 // Getter represents a resource getter.
 type Getter interface {
@@ -33,7 +32,7 @@ type Accessor interface {
 	Getter
 
 	// Init the resource with a factory object.
-	Init(types.Factory, client.GVR)
+	Init(types.Factory, types.GVR)
 
 	// GVR returns a gvr a string.
 	GVR() string

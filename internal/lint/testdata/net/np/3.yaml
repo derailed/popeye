@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    name: deny-all-ing
+    namespace: ns1
+  spec:
+    podSelector: {}
+    policyTypes:
+    - Ingress
+- apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    name: allow-all-egress
+    namespace: ns2
+  spec:
+    # podSelector:
+    # matchLabels:
+    #   app: p2
+    ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              app: ns2
+          podSelector:
+            matchLabels:
+              app: p2
+        - podSelector:
+            matchLabels:
+              app: p2
+    egress:
+    - {}
+    policyTypes:
+    - Ingress
+    - Egress

@@ -1,0 +1,54 @@
+---
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: pdb1
+      namespace: default
+    spec:
+      minAvailable: 2
+      selector:
+        matchLabels:
+          app: p1
+  - apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: pdb2
+      namespace: default
+    spec:
+      minAvailable: 1
+      selector:
+        matchLabels:
+          app: p2
+  - apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: pdb3
+      namespace: default
+    spec:
+      minAvailable: 1
+      selector:
+        matchLabels:
+          app: test4
+  - apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: pdb4
+      namespace: default
+    spec:
+      minAvailable: 1
+      selector:
+        matchLabels:
+          app: test5
+  - apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: pdb4-1
+      namespace: default
+    spec:
+      minAvailable: 1
+      selector:
+        matchLabels:
+          app: test5

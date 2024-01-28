@@ -8,6 +8,9 @@ import (
 	"os"
 
 	"github.com/derailed/popeye/internal/client"
+	"github.com/derailed/popeye/internal/rules"
+	"github.com/derailed/popeye/pkg/config/json"
+	"github.com/derailed/popeye/types"
 	"gopkg.in/yaml.v2"
 )
 
@@ -22,14 +25,19 @@ type Config struct {
 
 // NewConfig create a new Popeye configuration.
 func NewConfig(flags *Flags) (*Config, error) {
-	cfg := Config{Popeye: NewPopeye()}
+	cfg := Config{
+		Popeye: NewPopeye(),
+	}
 
 	if isSet(flags.Spinach) {
-		f, err := os.ReadFile(*flags.Spinach)
+		bb, err := os.ReadFile(*flags.Spinach)
 		if err != nil {
 			return nil, err
 		}
-		if err := yaml.Unmarshal(f, &cfg); err != nil {
+		if err := json.NewValidator().Validate(json.SpinachSchema, bb); err != nil {
+			return nil, fmt.Errorf("validation failed for %q: %w", *flags.Spinach, err)
+		}
+		if err := yaml.Unmarshal(bb, &cfg); err != nil {
 			return nil, fmt.Errorf("Invalid spinach config file -- %w", err)
 		}
 	}
@@ -42,17 +50,32 @@ func NewConfig(flags *Flags) (*Config, error) {
 		all := client.AllNamespaces
 		flags.Namespace = &all
 	}
-	cfg.LintLevel = int(ToIssueLevel(flags.LintLevel))
+	cfg.LintLevel = int(rules.ToIssueLevel(flags.LintLevel))
 
 	return &cfg, nil
 }
 
-// LinterLevel returns the current lint level.
-func (c *Config) LinterLevel() int {
-	return c.LintLevel
+func (c *Config) Match(s rules.Spec) bool {
+	return c.Popeye.Match(s)
 }
 
-// Sections returns a collection of sanitizers categories.
+func (c *Config) ExcludeFQN(gvr types.GVR, fqn string, cos []string) bool {
+	return c.Popeye.Match(rules.Spec{
+		GVR:        gvr,
+		FQN:        fqn,
+		Containers: cos,
+	})
+}
+
+func (c *Config) ExcludeContainer(gvr types.GVR, fqn, co string) bool {
+	return c.Popeye.Match(rules.Spec{
+		GVR:        gvr,
+		FQN:        fqn,
+		Containers: []string{co},
+	})
+}
+
+// Sections tracks a collection of internal.
 func (c *Config) Sections() []string {
 	if c.Flags.Sections != nil {
 		return *c.Flags.Sections
@@ -73,7 +96,7 @@ func (c *Config) MEMResourceLimits() Allocations {
 
 // NodeCPULimit returns the node cpu threshold if set otherwise the default.
 func (c *Config) NodeCPULimit() float64 {
-	l := c.Node.Limits.CPU
+	l := c.Resources.Node.Limits.CPU
 	if l == 0 {
 		return defaultCPULimit
 	}
@@ -82,7 +105,7 @@ func (c *Config) NodeCPULimit() float64 {
 
 // PodCPULimit returns the pod cpu threshold if set otherwise the default.
 func (c *Config) PodCPULimit() float64 {
-	l := c.Pod.Limits.CPU
+	l := c.Resources.Pod.Limits.CPU
 	if l == 0 {
 		return defaultCPULimit
 	}
@@ -91,7 +114,7 @@ func (c *Config) PodCPULimit() float64 {
 
 // RestartsLimit returns pod restarts limit.
 func (c *Config) RestartsLimit() int {
-	l := c.Pod.Restarts
+	l := c.Resources.Pod.Restarts
 	if l == 0 {
 		return defaultRestarts
 	}
@@ -100,7 +123,7 @@ func (c *Config) RestartsLimit() int {
 
 // PodMEMLimit returns the pod mem threshold if set otherwise the default.
 func (c *Config) PodMEMLimit() float64 {
-	l := c.Pod.Limits.Memory
+	l := c.Resources.Pod.Limits.Memory
 	if l == 0 {
 		return defaultMEMLimit
 	}
@@ -109,13 +132,14 @@ func (c *Config) PodMEMLimit() float64 {
 
 // NodeMEMLimit returns the pod mem threshold if set otherwise the default.
 func (c *Config) NodeMEMLimit() float64 {
-	l := c.Node.Limits.Memory
+	l := c.Resources.Node.Limits.Memory
 	if l == 0 {
 		return defaultMEMLimit
 	}
 	return l
 }
 
+// AllowedRegistries tracks allowed docker registries.
 func (c *Config) AllowedRegistries() []string {
 	return c.Registries
 }
@@ -123,7 +147,6 @@ func (c *Config) AllowedRegistries() []string {
 // ----------------------------------------------------------------------------
 // Helpers...
 
-// IsSet checks if a string flag is set.
 func isSet(s *string) bool {
 	return s != nil && *s != ""
 }

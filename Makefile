@@ -9,6 +9,7 @@ IMAGE    := ${IMG_NAME}:${VERSION}
 default: help
 
 test:      ## Run all tests
+	@go clean --testcache
 	@go test ./...
 
 cover:     ## Run test coverage suite

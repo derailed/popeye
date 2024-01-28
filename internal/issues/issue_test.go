@@ -6,8 +6,8 @@ package issues
 import (
 	"testing"
 
-	"github.com/derailed/popeye/internal/client"
-	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/internal/rules"
+	"github.com/derailed/popeye/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,10 +16,10 @@ func TestIsSubIssues(t *testing.T) {
 		i Issue
 		e bool
 	}{
-		"root":  {New(client.NewGVR("fred"), Root, config.WarnLevel, "blah"), false},
-		"rootf": {Newf(client.NewGVR("fred"), Root, config.WarnLevel, "blah %s", "blee"), false},
-		"sub":   {New(client.NewGVR("fred"), "sub1", config.WarnLevel, "blah"), true},
-		"subf":  {Newf(client.NewGVR("fred"), "sub1", config.WarnLevel, "blah %s", "blee"), true},
+		"root":  {New(types.NewGVR("fred"), Root, rules.WarnLevel, "blah"), false},
+		"rootf": {Newf(types.NewGVR("fred"), Root, rules.WarnLevel, "blah %s", "blee"), false},
+		"sub":   {New(types.NewGVR("fred"), "sub1", rules.WarnLevel, "blah"), true},
+		"subf":  {Newf(types.NewGVR("fred"), "sub1", rules.WarnLevel, "blah %s", "blee"), true},
 	}
 
 	for k := range uu {
@@ -36,7 +36,7 @@ func TestBlank(t *testing.T) {
 		e bool
 	}{
 		"blank":    {Issue{}, true},
-		"notBlank": {New(client.NewGVR("fred"), Root, config.WarnLevel, "blah"), false},
+		"notBlank": {New(types.NewGVR("fred"), Root, rules.WarnLevel, "blah"), false},
 	}
 
 	for k := range uu {

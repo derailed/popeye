@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -30,11 +31,14 @@ func (r *Resource) List(ctx context.Context) ([]runtime.Object, error) {
 	if !ok {
 		panic(fmt.Sprintf("BOOM no namespace in context %s", r.gvr))
 	}
+	if r.gvr == internal.Glossary[internal.NS] {
+		ns = client.AllNamespaces
+	}
 
-	return r.Factory.List(r.gvr.String(), ns, true, lsel)
+	return r.Factory.List(r.gvr, ns, true, lsel)
 }
 
 // Get returns a resource instance if found, else an error.
 func (r *Resource) Get(_ context.Context, path string) (runtime.Object, error) {
-	return r.Factory.Get(r.gvr.String(), path, true, labels.Everything())
+	return r.Factory.Get(r.gvr, path, true, labels.Everything())
 }

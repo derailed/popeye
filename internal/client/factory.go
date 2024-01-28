@@ -65,8 +65,8 @@ func (f *Factory) Terminate() {
 }
 
 // List returns a resource collection.
-func (f *Factory) List(gvr, ns string, wait bool, labels labels.Selector) ([]runtime.Object, error) {
-	inf, err := f.CanForResource(ns, gvr, types.MonitorAccess)
+func (f *Factory) List(gvr types.GVR, ns string, wait bool, labels labels.Selector) ([]runtime.Object, error) {
+	inf, err := f.CanForResource(ns, gvr, types.MonitorAccess...)
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +84,9 @@ func (f *Factory) List(gvr, ns string, wait bool, labels labels.Selector) ([]run
 }
 
 // Get retrieves a given resource.
-func (f *Factory) Get(gvr, path string, wait bool, sel labels.Selector) (runtime.Object, error) {
+func (f *Factory) Get(gvr types.GVR, path string, wait bool, sel labels.Selector) (runtime.Object, error) {
 	ns, n := Namespaced(path)
-	inf, err := f.CanForResource(ns, gvr, []string{types.GetVerb})
+	inf, err := f.CanForResource(ns, gvr, types.GetVerb)
 	if err != nil {
 		return nil, err
 	}
@@ -166,15 +166,15 @@ func (f *Factory) isClusterWide() bool {
 }
 
 // CanForResource return an informer is user has access.
-func (f *Factory) CanForResource(ns, gvr string, verbs []string) (informers.GenericInformer, error) {
+func (f *Factory) CanForResource(ns string, gvr types.GVR, verbs ...string) (informers.GenericInformer, error) {
 	// If user can access resource cluster wide, prefer cluster wide factory.
 	if !IsClusterWide(ns) {
-		auth, err := f.Client().CanI(AllNamespaces, gvr, verbs)
+		auth, err := f.Client().CanI(AllNamespaces, gvr, verbs...)
 		if auth && err == nil {
 			return f.ForResource(AllNamespaces, gvr)
 		}
 	}
-	auth, err := f.Client().CanI(ns, gvr, verbs)
+	auth, err := f.Client().CanI(ns, gvr, verbs...)
 	if err != nil {
 		return nil, err
 	}
@@ -186,12 +186,12 @@ func (f *Factory) CanForResource(ns, gvr string, verbs []string) (informers.Gene
 }
 
 // ForResource returns an informer for a given resource.
-func (f *Factory) ForResource(ns, gvr string) (informers.GenericInformer, error) {
+func (f *Factory) ForResource(ns string, gvr types.GVR) (informers.GenericInformer, error) {
 	fact, err := f.ensureFactory(ns)
 	if err != nil {
 		return nil, err
 	}
-	inf := fact.ForResource(NewGVR(gvr).GVR())
+	inf := fact.ForResource(gvr.GVR())
 	if inf == nil {
 		log.Error().Err(fmt.Errorf("MEOW! No informer for %q:%q", ns, gvr))
 		return inf, nil
