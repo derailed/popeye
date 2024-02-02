@@ -272,9 +272,6 @@ func (b *Builder) PrintHeader(s *Sanitizer) {
 // PrintReport prints out sanitizer report to screen
 func (b *Builder) PrintReport(level config.Level, s *Sanitizer) {
 	for _, section := range b.Report.Sections {
-		if section.Tally.counts[level] == 0 {
-			continue
-		}
 		var any bool
 		s.Open(Titleize(section.Title, len(section.Outcome)), section.Tally)
 		{

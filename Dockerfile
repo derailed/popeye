@@ -9,7 +9,7 @@ COPY internal internal
 COPY cmd cmd
 COPY types types
 COPY pkg pkg
-RUN apk --no-cache add make git gcc libc-dev curl ca-certificates && make build
+RUN apk --no-cache add make git gcc libc-dev curl ca-certificates binutils-gold && make build
 
 # -----------------------------------------------------------------------------
 # Image...
