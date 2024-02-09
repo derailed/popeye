@@ -1,6 +1,8 @@
 # -----------------------------------------------------------------------------
 # Build...
 FROM golang:1.21-alpine3.19 AS build
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /popeye
 
@@ -9,7 +11,8 @@ COPY internal internal
 COPY cmd cmd
 COPY types types
 COPY pkg pkg
-RUN apk --no-cache add make git gcc libc-dev curl ca-certificates binutils-gold && make build
+RUN apk --no-cache add make git gcc libc-dev curl ca-certificates binutils-gold && \
+    CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} make build
 
 # -----------------------------------------------------------------------------
 # Image...
