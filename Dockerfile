@@ -16,7 +16,7 @@ RUN apk --no-cache add make git gcc libc-dev curl ca-certificates binutils-gold 
 
 # -----------------------------------------------------------------------------
 # Image...
-FROM alpine:3.19.0
+FROM alpine:3.19.1
 
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=build /popeye/execs/popeye /bin/popeye
