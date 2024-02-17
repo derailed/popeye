@@ -50,7 +50,7 @@ func TestCronJobLint(t *testing.T) {
 	assert.Equal(t, rules.WarnLevel, ii[0].Level)
 	assert.Equal(t, `[POP-1501] No active jobs detected`, ii[1].Message)
 	assert.Equal(t, rules.InfoLevel, ii[1].Level)
-	assert.Equal(t, `[POP-1502] CronJob has not been ran yet or is failing`, ii[2].Message)
+	assert.Equal(t, `[POP-1502] CronJob has not run yet or is failing`, ii[2].Message)
 	assert.Equal(t, rules.WarnLevel, ii[2].Level)
 	assert.Equal(t, `[POP-307] CronJob references a non existing ServiceAccount: "sa-bozo"`, ii[3].Message)
 	assert.Equal(t, rules.WarnLevel, ii[3].Level)

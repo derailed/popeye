@@ -163,3 +163,22 @@
 | Error Code | Message                                   | Severity | Info / Reference |
 | ---------- | ----------------------------------------- | -------- | ---------------- |
 | 1300       | References a %s (%s) which does not exist | 2        |                  |
+
+## Ingress
+
+| Error Code | Message                                                       | Severity | Info / Reference |
+| ---------- | ------------------------------------------------------------- | -------- | ---------------- |
+| 1400       | Ingress LoadBalancer port reported an error: %s               | 3        |                  |
+| 1401       | Ingress references a service backend which does not exist: %s | 3        |                  |
+| 1402      | Ingress references a service port which is not defined: %s     | 3        |                  |
+| 1403      | Ingress backend uses a port#, prefer a named port: %d          | 1        |                  |
+| 1404      | Invalid Ingress backend spec. Must use port name or number     | 3        |                  |
+
+
+## CronJob
+
+| Error Code | Message                                   | Severity | Info / Reference |
+| ---------- | ----------------------------------------- | -------- | ---------------- |
+| 1500       | %s is suspended                           | 2        |                  |
+| 1501       | No active jobs detected                   | 1        |                  |
+| 1502      | CronJob has not run yet or is failing      | 2        |                  |

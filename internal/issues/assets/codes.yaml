@@ -342,5 +342,5 @@ codes:
     message: No active jobs detected
     severity: 1
   1502:
-    message: CronJob has not been ran yet or is failing
+    message: CronJob has not run yet or is failing
     severity: 2
