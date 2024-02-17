@@ -4,8 +4,7 @@
 package config
 
 import (
-	"fmt"
-	"strconv"
+	"github.com/derailed/popeye/internal/rules"
 )
 
 const (
@@ -16,18 +15,6 @@ const (
 )
 
 type (
-	// ID represents a sanitizer code indentifier.
-	ID int
-
-	// Glossary represents a collection of codes.
-	Glossary map[ID]*Code
-
-	// Code represents a sanitizer code.
-	Code struct {
-		Message  string `yaml:"message"`
-		Severity Level  `yaml:"severity"`
-	}
-
 	// AllocationLimits tracks limit thresholds cpu and memory thresholds.
 	AllocationLimits struct {
 		CPU Allocations `yaml:"cpu"`
@@ -40,14 +27,26 @@ type (
 		OverPerc  int `yanl:"overPercUtilization"`
 	}
 
+	Resources struct {
+		Node Node `yaml:"node"`
+		Pod  Pod  `yaml:"pod"`
+	}
+
 	// Popeye tracks Popeye configuration options.
 	Popeye struct {
+		// AllocationLimits tracks global resource allocations.
 		AllocationLimits `yaml:"allocations"`
-		Excludes         `yaml:"excludes"`
 
-		Node       Node     `yaml:"node"`
-		Pod        Pod      `yaml:"pod"`
-		Codes      Glossary `yaml:"codes"`
+		// Excludes tracks linter exclusions.
+		Exclusions rules.Exclusions `yaml:"excludes"`
+
+		// Resources tracks cpu/mem limits.
+		Resources Resources `yaml:"resources"`
+
+		// Codes provides to override codes severity.
+		Overrides rules.Overrides `yaml:"overrides"`
+
+		// Registries tracks allowed docker registries.
 		Registries []string `yaml:"registries"`
 	}
 )
@@ -56,21 +55,23 @@ type (
 func NewPopeye() Popeye {
 	return Popeye{
 		AllocationLimits: AllocationLimits{
-			CPU: Allocations{UnderPerc: defaultUnderPerc, OverPerc: defaultOverPerc},
-			MEM: Allocations{UnderPerc: defaultUnderPerc, OverPerc: defaultOverPerc},
+			CPU: Allocations{
+				UnderPerc: defaultUnderPerc,
+				OverPerc:  defaultOverPerc,
+			},
+			MEM: Allocations{
+				UnderPerc: defaultUnderPerc,
+				OverPerc:  defaultOverPerc,
+			},
 		},
-		Excludes:   newExcludes(),
-		Node:       newNode(),
-		Pod:        newPod(),
-		Registries: []string{},
+		Exclusions: rules.NewExclusions(),
+		Resources: Resources{
+			Node: newNode(),
+			Pod:  newPod(),
+		},
 	}
 }
 
-// Format hydrates a message with arguments.
-func (c *Code) Format(code ID, args ...interface{}) string {
-	msg := "[POP-" + strconv.Itoa(int(code)) + "] "
-	if len(args) == 0 {
-		return msg + c.Message
-	}
-	return msg + fmt.Sprintf(c.Message, args...)
+func (p Popeye) Match(spec rules.Spec) bool {
+	return p.Exclusions.Match(spec)
 }

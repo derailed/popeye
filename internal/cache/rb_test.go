@@ -9,41 +9,31 @@ import (
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal/db"
+	"github.com/derailed/popeye/internal/test"
 	"github.com/stretchr/testify/assert"
 	rbacv1 "k8s.io/api/rbac/v1"
 )
 
 func TestRoleRef(t *testing.T) {
-	cr := cache.NewRoleBinding(makeRBMap())
+	dba, err := test.NewTestDB()
+	assert.NoError(t, err)
+	l := db.NewLoader(dba)
+
+	ctx := test.MakeCtx(t)
+	assert.NoError(t, test.LoadDB[*rbacv1.RoleBinding](ctx, l.DB, "auth/rob/1.yaml", internal.Glossary[internal.ROB]))
+
+	cr := cache.NewRoleBinding(dba)
 	var refs sync.Map
 	cr.RoleRefs(&refs)
 
-	m, ok := refs.Load("clusterrole:cr1")
+	m, ok := refs.Load("clusterrole:cr-bozo")
 	assert.True(t, ok)
-	_, ok = m.(internal.StringSet)["rb1"]
+	_, ok = m.(internal.StringSet)["default/rb3"]
 	assert.True(t, ok)
 
-	m, ok = refs.Load("role:blee/r1")
+	m, ok = refs.Load("role:default/r1")
 	assert.True(t, ok)
-	_, ok = m.(internal.StringSet)["rb2"]
+	_, ok = m.(internal.StringSet)["default/rb1"]
 	assert.True(t, ok)
-}
-
-// Helpers...
-
-func makeRBMap() map[string]*rbacv1.RoleBinding {
-	return map[string]*rbacv1.RoleBinding{
-		"rb1": makeRB("", "r1", "ClusterRole", "cr1"),
-		"rb2": makeRB("blee", "r2", "Role", "r1"),
-	}
-}
-
-func makeRB(ns, name, kind, refName string) *rbacv1.RoleBinding {
-	return &rbacv1.RoleBinding{
-		ObjectMeta: makeObjMeta(ns, name),
-		RoleRef: rbacv1.RoleRef{
-			Kind: kind,
-			Name: refName,
-		},
-	}
 }

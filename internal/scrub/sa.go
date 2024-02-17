@@ -6,61 +6,47 @@ package scrub
 import (
 	"context"
 
-	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/sanitize"
+	"github.com/derailed/popeye/internal/lint"
+	v1 "k8s.io/api/core/v1"
+	netv1 "k8s.io/api/networking/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 )
 
 // ServiceAccount represents a ServiceAccount scruber.
 type ServiceAccount struct {
 	*issues.Collector
-	*cache.ServiceAccount
-	*cache.Pod
-	*cache.ClusterRoleBinding
-	*cache.RoleBinding
-	*cache.Secret
-	*cache.Ingress
+	*Cache
 }
 
-// NewServiceAccount return a new ServiceAccount scruber.
-func NewServiceAccount(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
-	s := ServiceAccount{Collector: issues.NewCollector(codes, c.config)}
-
-	var err error
-	s.ServiceAccount, err = c.serviceaccounts()
-	if err != nil {
-		s.AddErr(ctx, err)
+// NewServiceAccount returns a new instance.
+func NewServiceAccount(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+	return &ServiceAccount{
+		Collector: issues.NewCollector(codes, c.Config),
+		Cache:     c,
 	}
-
-	s.Pod, err = c.pods()
-	if err != nil {
-		s.AddErr(ctx, err)
-	}
-
-	s.ClusterRoleBinding, err = c.clusterrolebindings()
-	if err != nil {
-		s.AddErr(ctx, err)
-	}
-
-	s.RoleBinding, err = c.rolebindings()
-	if err != nil {
-		s.AddErr(ctx, err)
-	}
-
-	s.Secret, err = c.secrets()
-	if err != nil {
-		s.AddErr(ctx, err)
-	}
-
-	s.Ingress, err = c.ingresses()
-	if err != nil {
-		s.AddErr(ctx, err)
-	}
-
-	return &s
 }
 
-// Sanitize all available ServiceAccounts.
-func (s *ServiceAccount) Sanitize(ctx context.Context) error {
-	return sanitize.NewServiceAccount(s.Collector, s).Sanitize(ctx)
+func (s *ServiceAccount) Preloads() Preloads {
+	return Preloads{
+		internal.SA:  db.LoadResource[*v1.ServiceAccount],
+		internal.PO:  db.LoadResource[*v1.Pod],
+		internal.ROB: db.LoadResource[*rbacv1.RoleBinding],
+		internal.CRB: db.LoadResource[*rbacv1.ClusterRoleBinding],
+		internal.SEC: db.LoadResource[*v1.Secret],
+		internal.ING: db.LoadResource[*netv1.Ingress],
+	}
+}
+
+// Lint all available ServiceAccounts.
+func (s *ServiceAccount) Lint(ctx context.Context) error {
+	for k, f := range s.Preloads() {
+		if err := f(ctx, s.Loader, internal.Glossary[k]); err != nil {
+			return err
+		}
+	}
+
+	return lint.NewServiceAccount(s.Collector, s.DB).Lint(ctx)
 }

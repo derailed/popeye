@@ -45,7 +45,7 @@ type APIClient struct {
 	mxsClient      *versioned.Clientset
 	cachedClient   *disk.CachedDiscoveryClient
 	config         types.Config
-	mx             sync.Mutex
+	mx             sync.RWMutex
 	cache          *cache.LRUExpireCache
 }
 
@@ -71,19 +71,18 @@ func InitConnectionOrDie(config types.Config) (*APIClient, error) {
 	return &a, nil
 }
 
-func makeSAR(ns, gvr string) *authorizationv1.SelfSubjectAccessReview {
+func makeSAR(ns string, gvr types.GVR) *authorizationv1.SelfSubjectAccessReview {
 	if ns == "-" {
 		ns = ""
 	}
-	spec := NewGVR(gvr)
-	res := spec.GVR()
+	res := gvr.GVR()
 	return &authorizationv1.SelfSubjectAccessReview{
 		Spec: authorizationv1.SelfSubjectAccessReviewSpec{
 			ResourceAttributes: &authorizationv1.ResourceAttributes{
 				Namespace:   ns,
 				Group:       res.Group,
 				Resource:    res.Resource,
-				Subresource: spec.SubResource(),
+				Subresource: gvr.SubResource(),
 			},
 		},
 	}
@@ -100,7 +99,19 @@ func (a *APIClient) ActiveContext() string {
 		log.Error().Msgf("Unable to located active context")
 		return ""
 	}
+
 	return c
+}
+
+// ActiveCluster returns the current cluster name.
+func (a *APIClient) ActiveCluster() string {
+	cl, err := a.config.CurrentClusterName()
+	if err != nil {
+		log.Error().Msgf("Unable to located active cluster")
+		return ""
+	}
+
+	return cl
 }
 
 // IsActiveNamespace returns true if namespaces matches.
@@ -115,8 +126,9 @@ func (a *APIClient) IsActiveNamespace(ns string) bool {
 func (a *APIClient) ActiveNamespace() string {
 	ns, err := a.CurrentNamespaceName()
 	if err != nil {
-		return AllNamespaces
+		return DefaultNamespace
 	}
+
 	return ns
 }
 
@@ -126,12 +138,19 @@ func (a *APIClient) clearCache() {
 	}
 }
 
+// ConnectionOK checks api server connection status.
+func (a *APIClient) ConnectionOK() bool {
+	_, err := a.Dial()
+
+	return err == nil
+}
+
 // CanI checks if user has access to a certain resource.
-func (a *APIClient) CanI(ns, gvr string, verbs []string) (auth bool, err error) {
+func (a *APIClient) CanI(ns string, gvr types.GVR, verbs ...string) (auth bool, err error) {
 	if IsClusterWide(ns) {
 		ns = AllNamespaces
 	}
-	key := makeCacheKey(ns, gvr, verbs)
+	key := makeCacheKey(ns, gvr.String(), verbs)
 	if v, ok := a.cache.Get(key); ok {
 		if auth, ok = v.(bool); ok {
 			return auth, nil
@@ -291,10 +310,15 @@ func (a *APIClient) CachedDiscovery() (*disk.CachedDiscoveryClient, error) {
 
 // DynDial returns a handle to a dynamic interface.
 func (a *APIClient) DynDial() (dynamic.Interface, error) {
+	a.mx.RLock()
 	if a.dClient != nil {
+		a.mx.RUnlock()
 		return a.dClient, nil
 	}
+	a.mx.RUnlock()
 
+	a.mx.Lock()
+	defer a.mx.Unlock()
 	rc, err := a.RestConfig()
 	if err != nil {
 		return nil, err

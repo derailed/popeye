@@ -7,29 +7,24 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/magiconair/properties/assert"
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/db"
+	"github.com/derailed/popeye/internal/test"
+	"github.com/stretchr/testify/assert"
 	netv1 "k8s.io/api/networking/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestIngressRefs(t *testing.T) {
-	ing := NewIngress(map[string]*netv1.Ingress{
-		"default/ing1": {
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-			},
-			Spec: netv1.IngressSpec{
-				TLS: []netv1.IngressTLS{
-					{
-						SecretName: "foo",
-					},
-				},
-			},
-		},
-	})
+	dba, err := test.NewTestDB()
+	assert.NoError(t, err)
+	l := db.NewLoader(dba)
+
+	ctx := test.MakeCtx(t)
+	assert.NoError(t, test.LoadDB[*netv1.Ingress](ctx, l.DB, "net/ingress/1.yaml", internal.Glossary[internal.ING]))
 
 	var refs sync.Map
-	ing.IngressRefs(&refs)
+	ing := NewIngress(dba)
+	assert.NoError(t, ing.IngressRefs(&refs))
 
 	_, ok := refs.Load("sec:default/foo")
 	assert.Equal(t, ok, true)

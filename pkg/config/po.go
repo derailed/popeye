@@ -9,7 +9,6 @@ const defaultRestarts = 5
 type Pod struct {
 	Restarts int    `yaml:"restarts"`
 	Limits   Limits `yaml:"limits"`
-	Excludes `yaml:"exclude"`
 }
 
 // NewPod create a new pod configuration.

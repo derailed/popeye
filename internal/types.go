@@ -3,34 +3,35 @@
 
 package internal
 
-type (
-	GVR  int
-	GVRs map[GVR]string
-)
+// !!BOZO!!
+// type (
+// 	Linter  int
+// 	Linters map[Linter]types.GVR
+// )
 
-const (
-	LrGVR GVR = iota
-	SvcGVR
-	EpGVR
-	NoGVR
-	NsGVR
-	PoGVR
-	CmGVR
-	SecGVR
-	SaGVR
-	PvGVR
-	PvcGVR
-	DpGVR
-	RsGVR
-	DsGVR
-	StsGVR
-	NpGVR
-	CrGVR
-	CrbGVR
-	RoGVR
-	RobGVR
-	IngGVR
-	PdbGVR
-	PspGVR
-	HpaGVR
-)
+// const (
+// 	LR Linter = iota
+// 	SVC
+// 	EP
+// 	NO
+// 	NS
+// 	PO
+// 	CM
+// 	SEC
+// 	SA
+// 	PV
+// 	PVC
+// 	DP
+// 	RS
+// 	DS
+// 	STS
+// 	NP
+// 	CR
+// 	CRB
+// 	RO
+// 	ROB
+// 	ING
+// 	PDB
+// 	PSP
+// 	HPA
+// )

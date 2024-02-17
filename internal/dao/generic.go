@@ -42,6 +42,7 @@ func (g *Generic) List(ctx context.Context) ([]runtime.Object, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if client.IsClusterScoped(ns) {
 		ll, err = dial.List(ctx, metav1.ListOptions{LabelSelector: labelSel})
 	} else {
@@ -80,5 +81,6 @@ func (g *Generic) dynClient() (dynamic.NamespaceableResourceInterface, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return dial.Resource(g.gvr.GVR()), nil
 }

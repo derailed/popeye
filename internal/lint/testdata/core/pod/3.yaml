@@ -1,0 +1,124 @@
+---
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    name: p1
+    namespace: ns1
+    labels:
+      app: p1
+    ownerReferences:
+    - apiVersion: apps/v1
+      controller: true
+      kind: DaemonSet
+      name: rs3
+  spec:
+    serviceAccountName: sa1
+    tolerations:
+    - key: t1
+      operator: Exists
+      effect: NoSchedule
+    containers:
+    - name: c1
+      image: alpine:v1.0
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: http
+        initialDelaySeconds: 3
+        periodSeconds: 3
+      readinessProbe:
+        httpGet:
+          path: /healthz
+          port: http
+        initialDelaySeconds: 3
+        periodSeconds: 3
+      resources:
+        requests:
+          cpu: 1
+          memory: 1Mi
+        limits:
+          cpu: 1
+          memory: 1Mi
+      ports:
+      - containerPort: 9090
+        name: http
+        protocol: TCP
+      env:
+        - name: env1
+          valueFrom:
+            configMapKeyRef:
+              name: cm1
+              key: ns
+        - name: env2
+          valueFrom:
+            secretKeyRef:
+              name: sec1
+              key: k1
+  status:
+    conditions:
+    phase: Running
+    podIPs:
+    - ip: 172.1.0.3
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    name: p2
+    namespace: ns2
+    labels:
+      app: p2
+    ownerReferences:
+    - apiVersion: apps/v1
+      controller: true
+      kind: DaemonSet
+      name: rs3
+  spec:
+    serviceAccountName: sa2
+    tolerations:
+    - key: t1
+      operator: Exists
+      effect: NoSchedule
+    containers:
+    - name: c1
+      image: alpine:v1.0
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: http
+        initialDelaySeconds: 3
+        periodSeconds: 3
+      readinessProbe:
+        httpGet:
+          path: /healthz
+          port: http
+        initialDelaySeconds: 3
+        periodSeconds: 3
+      resources:
+        requests:
+          cpu: 1
+          memory: 1Mi
+        limits:
+          cpu: 1
+          memory: 1Mi
+      ports:
+      - containerPort: 9090
+        name: http
+        protocol: TCP
+      env:
+        - name: env1
+          valueFrom:
+            configMapKeyRef:
+              name: cm1
+              key: ns
+        - name: env2
+          valueFrom:
+            secretKeyRef:
+              name: sec1
+              key: k1
+  status:
+    conditions:
+    phase: Running
+    podIPs:
+    - ip: 172.1.0.3

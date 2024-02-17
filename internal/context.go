@@ -6,42 +6,46 @@ package internal
 import (
 	"context"
 
-	"github.com/derailed/popeye/internal/client"
+	"github.com/derailed/popeye/internal/rules"
+	"github.com/derailed/popeye/types"
 )
 
-// RunInfo describes a sanitizer run.
+// RunInfo describes a scan run.
 type RunInfo struct {
 	Section    string
-	SectionGVR client.GVR
-	FQN        string
+	SectionGVR types.GVR
 	Group      string
-	GroupGVR   client.GVR
+	GroupGVR   types.GVR
+	Spec       rules.Spec
+	Total      int
+}
+
+func NewRunInfo(gvr types.GVR) RunInfo {
+	return RunInfo{
+		Section:    gvr.R(),
+		SectionGVR: gvr,
+	}
 }
 
 // WithGroup adds a group to the context.
-func WithGroup(ctx context.Context, gvr client.GVR, grp string) context.Context {
+func WithGroup(ctx context.Context, gvr types.GVR, grp string) context.Context {
 	r := MustExtractRunInfo(ctx)
 	r.Group, r.GroupGVR = grp, gvr
+
 	return context.WithValue(ctx, KeyRunInfo, r)
 }
 
-// WithFQN adds a fqn to the context.
-func WithFQN(ctx context.Context, fqn string) context.Context {
+func WithSpec(ctx context.Context, spec rules.Spec) context.Context {
 	r := MustExtractRunInfo(ctx)
-	r.FQN = fqn
-	return context.WithValue(ctx, KeyRunInfo, r)
-}
+	r.Spec = spec
 
-// MustExtractFQN extract fqn from context or die.
-func MustExtractFQN(ctx context.Context) string {
-	r := MustExtractRunInfo(ctx)
-	return r.FQN
+	return context.WithValue(ctx, KeyRunInfo, r)
 }
 
 // MustExtractSectionGVR extract section gvr from context or die.
-func MustExtractSectionGVR(ctx context.Context) string {
+func MustExtractSectionGVR(ctx context.Context) types.GVR {
 	r := MustExtractRunInfo(ctx)
-	return r.SectionGVR.String()
+	return r.SectionGVR
 }
 
 // MustExtractRunInfo extracts runinfo from context or die.
@@ -51,4 +55,12 @@ func MustExtractRunInfo(ctx context.Context) RunInfo {
 		panic("Doh! No RunInfo in context")
 	}
 	return r
+}
+
+func MustExtractFactory(ctx context.Context) types.Factory {
+	f, ok := ctx.Value(KeyFactory).(types.Factory)
+	if !ok {
+		panic("Doh! No factory in context")
+	}
+	return f
 }

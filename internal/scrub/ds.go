@@ -6,54 +6,46 @@ package scrub
 import (
 	"context"
 
-	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/sanitize"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
+	"github.com/derailed/popeye/internal/lint"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
 // DaemonSet represents a DaemonSet scruber.
 type DaemonSet struct {
 	*issues.Collector
-	*cache.DaemonSet
-	*cache.PodsMetrics
-	*cache.Pod
-	*cache.ServiceAccount
-	*config.Config
-
-	client types.Connection
+	*Cache
 }
 
-// NewDaemonSet return a new DaemonSet scruber.
-func NewDaemonSet(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
-	d := DaemonSet{
-		client:    c.factory.Client(),
-		Config:    c.config,
-		Collector: issues.NewCollector(codes, c.config),
+// NewDaemonSet return a new instance.
+func NewDaemonSet(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+	return &DaemonSet{
+		Collector: issues.NewCollector(codes, c.Config),
+		Cache:     c,
 	}
 
-	var err error
-	d.DaemonSet, err = c.daemonSets()
-	if err != nil {
-		d.AddErr(ctx, err)
-	}
-
-	d.Pod, err = c.pods()
-	if err != nil {
-		d.AddErr(ctx, err)
-	}
-	d.PodsMetrics, _ = c.podsMx()
-
-	d.ServiceAccount, err = c.serviceaccounts()
-	if err != nil {
-		d.AddErr(ctx, err)
-	}
-
-	return &d
 }
 
-// Sanitize all available DaemonSets.
-func (d *DaemonSet) Sanitize(ctx context.Context) error {
-	return sanitize.NewDaemonSet(d.Collector, d).Sanitize(ctx)
+func (s *DaemonSet) Preloads() Preloads {
+	return Preloads{
+		internal.DS:  db.LoadResource[*appsv1.DaemonSet],
+		internal.PO:  db.LoadResource[*v1.Pod],
+		internal.SA:  db.LoadResource[*v1.ServiceAccount],
+		internal.PMX: db.LoadResource[*mv1beta1.PodMetrics],
+	}
+}
+
+// Lint all available DaemonSets.
+func (s *DaemonSet) Lint(ctx context.Context) error {
+	for k, f := range s.Preloads() {
+		if err := f(ctx, s.Loader, internal.Glossary[k]); err != nil {
+			return err
+		}
+	}
+
+	return lint.NewDaemonSet(s.Collector, s.DB).Lint(ctx)
 }

@@ -4,62 +4,37 @@
 package cache
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/client"
+	"github.com/derailed/popeye/internal/db"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 // Pod represents a Pod cache.
 type Pod struct {
-	pods map[string]*v1.Pod
+	db *db.DB
 }
 
 // NewPod returns a Pod cache.
-func NewPod(pods map[string]*v1.Pod) *Pod {
-	return &Pod{pods: pods}
-}
-
-// ListPods return available pods.
-func (p *Pod) ListPods() map[string]*v1.Pod {
-	return p.pods
-}
-
-// ListPodsBySelector list all pods matching the given selector.
-func (p *Pod) ListPodsBySelector(ns string, sel *metav1.LabelSelector) map[string]*v1.Pod {
-	res := map[string]*v1.Pod{}
-	if sel == nil || sel.Size() == 0 {
-		return res
-	}
-	for fqn, po := range p.pods {
-		if po.Namespace != ns {
-			continue
-		}
-		if s, err := metav1.LabelSelectorAsSelector(sel); err == nil && s.Matches(labels.Set(po.Labels)) {
-			res[fqn] = po
-		}
-	}
-
-	return res
-}
-
-// GetPod returns a pod via a label query.
-func (p *Pod) GetPod(ns string, sel map[string]string) *v1.Pod {
-	res := p.ListPodsBySelector(ns, &metav1.LabelSelector{MatchLabels: sel})
-	for _, v := range res {
-		return v
-	}
-
-	return nil
+func NewPod(dba *db.DB) *Pod {
+	return &Pod{db: dba}
 }
 
 // PodRefs computes all pods external references.
-func (p *Pod) PodRefs(refs *sync.Map) {
-	for fqn, po := range p.pods {
+func (p *Pod) PodRefs(refs *sync.Map) error {
+	txn, it := p.db.MustITFor(internal.Glossary[internal.PO])
+	defer txn.Abort()
+	for o := it.Next(); o != nil; o = it.Next() {
+		po, ok := o.(*v1.Pod)
+		if !ok {
+			return errors.New("expected a pod")
+		}
+		fqn := client.FQN(po.Namespace, po.Name)
 		p.imagePullSecRefs(po.Namespace, po.Spec.ImagePullSecrets, refs)
-		p.namespaceRefs(po.Namespace, refs)
+		namespaceRefs(po.Namespace, refs)
 		for _, co := range po.Spec.InitContainers {
 			p.containerRefs(fqn, co, refs)
 		}
@@ -68,19 +43,8 @@ func (p *Pod) PodRefs(refs *sync.Map) {
 		}
 		p.volumeRefs(po.Namespace, po.Spec.Volumes, refs)
 	}
-}
 
-func (p *Pod) imagePullSecRefs(ns string, sRefs []v1.LocalObjectReference, refs *sync.Map) {
-	for _, s := range sRefs {
-		key := ResFqn(SecretKey, FQN(ns, s.Name))
-		refs.Store(key, internal.AllKeys)
-	}
-}
-
-func (p *Pod) namespaceRefs(ns string, refs *sync.Map) {
-	if set, ok := refs.LoadOrStore("ns", internal.StringSet{ns: internal.Blank}); ok {
-		set.(internal.StringSet).Add(ns)
-	}
+	return nil
 }
 
 func (p *Pod) containerRefs(pfqn string, co v1.Container, refs *sync.Map) {
@@ -101,6 +65,34 @@ func (p *Pod) containerRefs(pfqn string, co v1.Container, refs *sync.Map) {
 		case e.SecretRef != nil:
 			refs.Store(ResFqn(SecretKey, FQN(ns, e.SecretRef.Name)), internal.AllKeys)
 		}
+	}
+}
+
+func (*Pod) volumeRefs(ns string, vv []v1.Volume, refs *sync.Map) {
+	for _, v := range vv {
+		sv := v.VolumeSource.Secret
+		if sv != nil {
+			addKeys(SecretKey, FQN(ns, sv.SecretName), sv.Items, refs)
+			continue
+		}
+
+		cmv := v.VolumeSource.ConfigMap
+		if cmv != nil {
+			addKeys(ConfigMapKey, FQN(ns, cmv.LocalObjectReference.Name), cmv.Items, refs)
+		}
+	}
+}
+
+func (p *Pod) imagePullSecRefs(ns string, sRefs []v1.LocalObjectReference, refs *sync.Map) {
+	for _, s := range sRefs {
+		key := ResFqn(SecretKey, FQN(ns, s.Name))
+		refs.Store(key, internal.AllKeys)
+	}
+}
+
+func namespaceRefs(ns string, refs *sync.Map) {
+	if set, ok := refs.LoadOrStore("ns", internal.StringSet{ns: internal.Blank}); ok {
+		set.(internal.StringSet).Add(ns)
 	}
 }
 
@@ -128,21 +120,6 @@ func (p *Pod) configMapRefs(ns string, ref *v1.ConfigMapKeySelector, refs *sync.
 			cp := ss.Clone()
 			cp.Add(ref.Key)
 			refs.Store(key, cp)
-		}
-	}
-}
-
-func (*Pod) volumeRefs(ns string, vv []v1.Volume, refs *sync.Map) {
-	for _, v := range vv {
-		sv := v.VolumeSource.Secret
-		if sv != nil {
-			addKeys(SecretKey, FQN(ns, sv.SecretName), sv.Items, refs)
-			continue
-		}
-
-		cmv := v.VolumeSource.ConfigMap
-		if cmv != nil {
-			addKeys(ConfigMapKey, FQN(ns, cmv.LocalObjectReference.Name), cmv.Items, refs)
 		}
 	}
 }

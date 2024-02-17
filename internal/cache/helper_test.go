@@ -78,7 +78,7 @@ func TestMatchLabels(t *testing.T) {
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
-			assert.Equal(t, u.e, matchLabels(u.labels, u.selector))
+			assert.Equal(t, u.e, MatchLabels(u.labels, u.selector))
 		})
 	}
 }

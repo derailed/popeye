@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+      pv.kubernetes.io/bind-completed: "yes"
+      pv.kubernetes.io/bound-by-controller: "yes"
+      volume.kubernetes.io/selected-node: n1
+    finalizers:
+    - kubernetes.io/pvc-protection
+    name: pvc1
+    namespace: default
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 2Gi
+    storageClassName: standard
+    volumeMode: Filesystem
+    volumeName: pvc-5a8a78fd-cc3c-4838-ab0b-2b1a475f555d
+  status:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 2Gi
+    phase: Bound
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+      pv.kubernetes.io/bind-completed: "yes"
+      pv.kubernetes.io/bound-by-controller: "yes"
+      volume.kubernetes.io/selected-node: n2
+    finalizers:
+    - kubernetes.io/pvc-protection
+    labels:
+      app.kubernetes.io/component: server
+      app.kubernetes.io/instance: prom
+      app.kubernetes.io/name: prometheus
+    name: pvc2
+    namespace: default
+    resourceVersion: "861"
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 8Gi
+    storageClassName: standard
+    volumeMode: Filesystem
+    volumeName: pvc-86489da2-08df-4e95-800c-b8537e3ff03b
+  status:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 8Gi
+    phase: Lost
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+      pv.kubernetes.io/bind-completed: "yes"
+      pv.kubernetes.io/bound-by-controller: "yes"
+      volume.kubernetes.io/selected-node: n3
+    finalizers:
+    - kubernetes.io/pvc-protection
+    labels:
+      app.kubernetes.io/component: server
+      app.kubernetes.io/instance: prom
+      app.kubernetes.io/name: prometheus
+    name: pvc3
+    namespace: default
+    resourceVersion: "861"
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 8Gi
+    storageClassName: standard
+    volumeMode: Filesystem
+    volumeName: pvc-86489da2-08df-4e95-800c-b8537e3ff03b
+  status:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 8Gi
+    phase: Pending

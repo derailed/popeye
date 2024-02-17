@@ -6,7 +6,7 @@ package report
 import (
 	"testing"
 
-	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/internal/rules"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,6 +20,6 @@ func TestColorForLevel(t *testing.T) {
 	}
 
 	for k, v := range colors {
-		assert.Equal(t, v, colorForLevel(config.Level(k)))
+		assert.Equal(t, v, colorForLevel(rules.Level(k)))
 	}
 }

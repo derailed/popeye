@@ -1,0 +1,178 @@
+---
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: Pod
+    metadata:
+      name: p1
+      namespace: default
+      labels:
+        app: p1
+      ownerReferences:
+      - apiVersion: apps/v1
+        controller: true
+        kind: ReplicaSet
+        name: rs1
+    spec:
+      serviceAccountName: sa1
+      automountServiceAccountToken: false
+    status:
+      conditions:
+      phase: Running
+  - apiVersion: v1
+    kind: Pod
+    metadata:
+      name: p2
+      namespace: default
+      labels:
+        app: test2
+    spec:
+      serviceAccountName: sa2
+  - apiVersion: v1
+    kind: Pod
+    metadata:
+      name: p3
+      namespace: default
+      labels:
+        app: p3
+      ownerReferences:
+      - apiVersion: apps/v1
+        controller: true
+        kind: DaemonSet
+        name: rs3
+    spec:
+      serviceAccountName: sa3
+      containers:
+      - image: dorker.io/blee:1.0.1
+        name: c1
+        resources:
+          limits:
+            cpu: 1
+            mem: 1Mi
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 3
+    status:
+      conditions:
+        - status: "False"
+          type: Initialized
+        - status: "False"
+          type: Ready
+        - status: "False"
+          type: ContainersReady
+        - status: "False"
+          type: PodScheduled
+      phase: Running
+  - apiVersion: v1
+    kind: Pod
+    metadata:
+      name: p4
+      namespace: default
+      labels:
+        app: test4
+      ownerReferences:
+      - apiVersion: apps/v1
+        controller: false
+        kind: Job
+        name: j4
+    spec:
+      serviceAccountName: default
+      automountServiceAccountToken: true
+      initContainers:
+      - image: zorg
+        imagePullPolicy: IfNotPresent
+        name: ic1
+      containers:
+      - image: blee
+        imagePullPolicy: IfNotPresent
+        name: c1
+        resources:
+          limits:
+            cpu: 1
+            mem: 1Mi
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 3
+        volumeMounts:
+        - mountPath: /etc/config
+          name: config-volume
+          readOnly: true
+        - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          name: kube-api-access-jgtlv
+          readOnly: true
+      - image: zorg:latest
+        imagePullPolicy: IfNotPresent
+        name: c2
+        resources:
+          requests:
+            mem: 1Mi
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: p1
+          initialDelaySeconds: 3
+          periodSeconds: 3
+        volumeMounts:
+        - mountPath: /etc/config
+          name: config-volume
+          readOnly: true
+        - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          name: kube-api-access-jgtlv
+          readOnly: true
+    status:
+      phase: Running
+      conditions:
+      initContainerStatuses:
+      - containerID: ic1
+        image: blee
+        name: ic1
+        ready: false
+        restartCount: 1000
+        started: false
+      containerStatuses:
+      - containerID: c1
+        image: blee
+        name: c1
+        ready: false
+        restartCount: 1000
+        started: false
+      - containerID: c2
+        name: c2
+        ready: true
+        restartCount: 0
+        started: true
+  - apiVersion: v1
+    kind: Pod
+    metadata:
+      name: p5
+      namespace: default
+      labels:
+        app: test5
+      ownerReferences:
+      - apiVersion: apps/v1
+        controller: true
+        kind: ReplicaSet
+        name: rs5
+    spec:
+      serviceAccountName: sa5
+      automountServiceAccountToken: true
+      containers:
+      - image: blee:v1.2
+        imagePullPolicy: IfNotPresent
+        name: c1
+    status:
+      conditions:
+      phase: Running

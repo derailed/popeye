@@ -7,89 +7,50 @@ import (
 	"context"
 
 	"github.com/derailed/popeye/internal"
-	"github.com/derailed/popeye/internal/cache"
-	"github.com/derailed/popeye/internal/client"
-	"github.com/derailed/popeye/internal/dag"
+	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/sanitize"
-	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/internal/lint"
+	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
+	v1 "k8s.io/api/core/v1"
+	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
 // HorizontalPodAutoscaler represents a HorizontalPodAutoscaler scruber.
 type HorizontalPodAutoscaler struct {
 	*issues.Collector
-	*cache.HorizontalPodAutoscaler
-	*cache.Pod
-	*cache.Node
-	*cache.PodsMetrics
-	*cache.NodesMetrics
-	*cache.Deployment
-	*cache.StatefulSet
-	*cache.ServiceAccount
-	*config.Config
+	*Cache
 }
 
-// NewHorizontalPodAutoscaler return a new HorizontalPodAutoscaler scruber.
-func NewHorizontalPodAutoscaler(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
-	h := HorizontalPodAutoscaler{
-		Collector: issues.NewCollector(codes, c.config),
-		Config:    c.config,
+// NewHorizontalPodAutoscaler returns a new instance.
+func NewHorizontalPodAutoscaler(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+	return &HorizontalPodAutoscaler{
+		Collector: issues.NewCollector(codes, c.Config),
+		Cache:     c,
 	}
+}
 
-	ctx = context.WithValue(ctx, internal.KeyFactory, c.factory)
-	ctx = context.WithValue(ctx, internal.KeyConfig, c.config)
-	ctx = context.WithValue(ctx, internal.KeyConfig, c.config)
-	if c.config.Flags.ActiveNamespace != nil {
-		ctx = context.WithValue(ctx, internal.KeyNamespace, *c.config.Flags.ActiveNamespace)
-	} else {
-		ns, err := c.factory.Client().Config().CurrentNamespaceName()
-		if err != nil {
-			ns = client.AllNamespaces
+func (s *HorizontalPodAutoscaler) Preloads() Preloads {
+	return Preloads{
+		internal.HPA: db.LoadResource[*autoscalingv1.HorizontalPodAutoscaler],
+		internal.DP:  db.LoadResource[*appsv1.Deployment],
+		internal.STS: db.LoadResource[*appsv1.StatefulSet],
+		internal.RS:  db.LoadResource[*appsv1.ReplicaSet],
+		internal.NO:  db.LoadResource[*v1.Node],
+		internal.PO:  db.LoadResource[*v1.Pod],
+		internal.SA:  db.LoadResource[*v1.ServiceAccount],
+		internal.PMX: db.LoadResource[*mv1beta1.PodMetrics],
+		internal.NMX: db.LoadResource[*mv1beta1.NodeMetrics],
+	}
+}
+
+// Lint all available HorizontalPodAutoscalers.
+func (s *HorizontalPodAutoscaler) Lint(ctx context.Context) error {
+	for k, f := range s.Preloads() {
+		if err := f(ctx, s.Loader, internal.Glossary[k]); err != nil {
+			return err
 		}
-		ctx = context.WithValue(ctx, internal.KeyNamespace, ns)
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	var err error
-	ss, err := dag.ListHorizontalPodAutoscalers(ctx)
-	if err != nil {
-		h.AddErr(ctx, err)
-	}
-	h.HorizontalPodAutoscaler = cache.NewHorizontalPodAutoscaler(ss)
-
-	h.Deployment, err = c.deployments()
-	if err != nil {
-		h.AddErr(ctx, err)
-	}
-
-	h.StatefulSet, err = c.statefulsets()
-	if err != nil {
-		h.AddErr(ctx, err)
-	}
-
-	h.Node, err = c.nodes()
-	if err != nil {
-		h.AddErr(ctx, err)
-	}
-
-	h.NodesMetrics, _ = c.nodesMx()
-
-	h.Pod, err = c.pods()
-	if err != nil {
-		h.AddErr(ctx, err)
-	}
-	h.PodsMetrics, _ = c.podsMx()
-
-	h.ServiceAccount, err = c.serviceaccounts()
-	if err != nil {
-		h.AddErr(ctx, err)
-	}
-
-	return &h
-}
-
-// Sanitize all available HorizontalPodAutoscalers.
-func (h *HorizontalPodAutoscaler) Sanitize(ctx context.Context) error {
-	return sanitize.NewHorizontalPodAutoscaler(h.Collector, h).Sanitize(ctx)
+	return lint.NewHorizontalPodAutoscaler(s.Collector, s.DB).Lint(ctx)
 }

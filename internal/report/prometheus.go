@@ -4,88 +4,130 @@
 package report
 
 import (
-	"fmt"
+	"strconv"
 	"strings"
 
+	"github.com/derailed/popeye/internal/rules"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
+	"github.com/rs/zerolog/log"
 )
 
 const namespace = "popeye"
 
 // Metrics
 var (
-	score = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	sevGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
-		Name:      "cluster_score_total",
-		Help:      "Popeye's sanitizers overall cluster score.",
+		Name:      "severity_total",
+		Help:      "Popeye's severity scores totals.",
+	},
+		[]string{
+			"cluster",
+			"namespace",
+			"severity",
+		})
+
+	codeGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "code_total",
+		Help:      "Popeye's report codes totals",
+	},
+		[]string{
+			"cluster",
+			"namespace",
+			"linter",
+			"code",
+			"severity",
+		})
+
+	linterGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "linter_tally_total",
+		Help:      "Popeye's linter tally totals",
+	},
+		[]string{
+			"cluster",
+			"linter",
+			"severity",
+		})
+
+	errGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "report_errors_total",
+		Help:      "Popeye's scan errors total.",
+	},
+		[]string{
+			"cluster",
+			"namespace",
+		})
+
+	scoreGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "cluster_score",
+		Help:      "Popeye's scan cluster score.",
 	},
 		[]string{
 			"cluster",
 			"namespace",
 			"grade",
 		})
-	sanitizers = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+
+	reportGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
-		Name:      "sanitizer_reports_count",
-		Help:      "Popeye's sanitizer reports for resource group.",
+		Name:      "report_score",
+		Help:      "Popeye's scan report score.",
 	},
 		[]string{
 			"cluster",
 			"namespace",
-			"resource",
-			"level",
-		})
-	sanitizersScore = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Name:      "sanitizer_score_total",
-		Help:      "Popeye's sanitizer score for resource group.",
-	},
-		[]string{
-			"cluster",
-			"namespace",
-			"resource",
-		})
-	errs = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Name:      "errors_total",
-		Help:      "Popeye's sanitizers errors.",
-	},
-		[]string{
-			"cluster",
-			"namespace",
+			"grade",
+			"scan",
 		})
 )
 
-func prometheusMarshal(b *Builder, gtwy *config.PushGateway, cluster, namespace string) *push.Pusher {
-	pusher := newPusher(gtwy)
+func (b *Builder) promCollect(ns, scanReport string, codes rules.Glossary) {
+	cc := b.Report.Sections.CodeTallies()
+	cc.Compact()
+	cc.Dump()
 
-	score.WithLabelValues(cluster, namespace, b.Report.Grade).Set(float64(b.Report.Score))
-	errs.WithLabelValues(cluster, namespace).Set(float64(len(b.Report.Errors)))
+	cl := b.ClusterName
+	scoreGauge.WithLabelValues(cl, ns, b.Report.Grade).Set(float64(b.Report.Score))
+	reportGauge.WithLabelValues(cl, ns, b.Report.Grade, scanReport).Set(float64(b.Report.Score))
+	errGauge.WithLabelValues(cl, ns).Set(float64(len(b.Report.Errors)))
 
+	for linter, nss := range cc {
+		for ns, st := range nss {
+			for level, count := range st.Rollup(codes) {
+				sevGauge.WithLabelValues(cl, ns, level.ToHumanLevel()).Add(float64(count))
+			}
+			for code, count := range st {
+				cid, _ := strconv.Atoi(code)
+				c := codes[rules.ID(cid)]
+				codeGauge.WithLabelValues(cl, ns, linter, code, c.Severity.ToHumanLevel()).Add(float64(count))
+			}
+		}
+	}
 	for _, section := range b.Report.Sections {
 		for i, v := range section.Tally.counts {
-			sanitizers.WithLabelValues(cluster, namespace, section.Title,
-				strings.ToLower(indexToTally(i))).Set(float64(v))
+			linterGauge.WithLabelValues(cl, section.Title, strings.ToLower(indexToTally(i))).Add(float64(v))
 		}
-		sanitizersScore.WithLabelValues(cluster, namespace, section.Title).Set(float64(section.Tally.score))
 	}
-	return pusher
 }
 
-func newPusher(gtwy *config.PushGateway) *push.Pusher {
+func newPusher(gtwy *config.PushGateway, instance string) *push.Pusher {
 	registry := prometheus.NewRegistry()
-	registry.MustRegister(score, errs, sanitizers, sanitizersScore)
-	p := push.New(*gtwy.Address, "popeye").Gatherer(registry)
-	if isSet(gtwy.BasicAuth.User) && isSet(gtwy.BasicAuth.Password) {
-		fmt.Println("Using auth! ", *gtwy.BasicAuth.User, *gtwy.BasicAuth.Password)
-		p = p.BasicAuth(*gtwy.BasicAuth.User, *gtwy.BasicAuth.Password)
+	registry.MustRegister(scoreGauge, errGauge, linterGauge, sevGauge, codeGauge, reportGauge)
+
+	pusher := push.New(*gtwy.URL, "popeye").
+		Gatherer(registry).
+		Grouping("instance", instance)
+
+	if config.IsStrSet(gtwy.BasicAuth.User) && config.IsStrSet(gtwy.BasicAuth.Password) {
+		log.Debug().Msgf("Using basic auth: %s", *gtwy.BasicAuth.User)
+		pusher = pusher.BasicAuth(*gtwy.BasicAuth.User, *gtwy.BasicAuth.Password)
 	}
 
-	return p
-}
-
-func isSet(s *string) bool {
-	return s != nil && *s != ""
+	return pusher
 }

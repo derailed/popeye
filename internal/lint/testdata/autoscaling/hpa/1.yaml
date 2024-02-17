@@ -1,0 +1,183 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: hpa1
+    namespace: default
+  spec:
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: dp1
+    minReplicas: 1
+    maxReplicas: 10
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+  status:
+    observedGeneration: 1
+    currentReplicas: 1
+    desiredReplicas: 1
+    currentMetrics:
+    - type: Resource
+      resource:
+        name: cpu
+        current:
+          averageUtilization: 0
+          averageValue: 0
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: hpa2
+    namespace: default
+  spec:
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: dp-toast
+    minReplicas: 1
+    maxReplicas: 10
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+  status:
+    observedGeneration: 1
+    currentReplicas: 1
+    desiredReplicas: 1
+    currentMetrics:
+    - type: Resource
+      resource:
+        name: cpu
+        current:
+          averageUtilization: 0
+          averageValue: 0
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: hpa3
+    namespace: default
+  spec:
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: ReplicaSet
+      name: rs-toast
+    minReplicas: 1
+    maxReplicas: 10
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+  status:
+    observedGeneration: 1
+    currentReplicas: 1
+    desiredReplicas: 1
+    currentMetrics:
+    - type: Resource
+      resource:
+        name: cpu
+        current:
+          averageUtilization: 0
+          averageValue: 0
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: hpa4
+    namespace: default
+  spec:
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: sts-toast
+    minReplicas: 1
+    maxReplicas: 10
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+  status:
+    observedGeneration: 1
+    currentReplicas: 1
+    desiredReplicas: 1
+    currentMetrics:
+    - type: Resource
+      resource:
+        name: cpu
+        current:
+          averageUtilization: 0
+          averageValue: 0
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: hpa5
+    namespace: default
+  spec:
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: sts1
+    minReplicas: 1
+    maxReplicas: 10
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+  status:
+    observedGeneration: 1
+    currentReplicas: 1
+    desiredReplicas: 1
+    currentMetrics:
+    - type: Resource
+      resource:
+        name: cpu
+        current:
+          averageUtilization: 0
+          averageValue: 0
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: hpa6
+    namespace: default
+  spec:
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: ReplicaSet
+      name: rs1
+    minReplicas: 1
+    maxReplicas: 10
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+  status:
+    observedGeneration: 1
+    currentReplicas: 1
+    desiredReplicas: 1
+    currentMetrics:
+    - type: Resource
+      resource:
+        name: cpu
+        current:
+          averageUtilization: 0
+          averageValue: 0

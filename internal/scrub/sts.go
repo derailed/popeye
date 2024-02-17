@@ -6,51 +6,45 @@ package scrub
 import (
 	"context"
 
-	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/sanitize"
-	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/internal/lint"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
 // StatefulSet represents a StatefulSet scruber.
 type StatefulSet struct {
 	*issues.Collector
-	*cache.Pod
-	*cache.StatefulSet
-	*cache.PodsMetrics
-	*cache.ServiceAccount
-	*config.Config
+	*Cache
 }
 
 // NewStatefulSet return a new StatefulSet scruber.
-func NewStatefulSet(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
-	s := StatefulSet{
-		Collector: issues.NewCollector(codes, c.config),
-		Config:    c.config,
+func NewStatefulSet(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+	return &StatefulSet{
+		Collector: issues.NewCollector(codes, c.Config),
+		Cache:     c,
 	}
-
-	var err error
-	s.StatefulSet, err = c.statefulsets()
-	if err != nil {
-		s.AddErr(ctx, err)
-	}
-
-	s.Pod, err = c.pods()
-	if err != nil {
-		s.AddErr(ctx, err)
-	}
-
-	s.PodsMetrics, _ = c.podsMx()
-
-	s.ServiceAccount, err = c.serviceaccounts()
-	if err != nil {
-		s.AddErr(ctx, err)
-	}
-
-	return &s
 }
 
-// Sanitize all available StatefulSets.
-func (c *StatefulSet) Sanitize(ctx context.Context) error {
-	return sanitize.NewStatefulSet(c.Collector, c).Sanitize(ctx)
+func (s *StatefulSet) Preloads() Preloads {
+	return Preloads{
+		internal.STS: db.LoadResource[*appsv1.StatefulSet],
+		internal.PO:  db.LoadResource[*v1.Pod],
+		internal.SA:  db.LoadResource[*v1.ServiceAccount],
+		internal.PMX: db.LoadResource[*mv1beta1.PodMetrics],
+	}
+}
+
+// Lint all available StatefulSets.
+func (s *StatefulSet) Lint(ctx context.Context) error {
+	for k, f := range s.Preloads() {
+		if err := f(ctx, s.Loader, internal.Glossary[k]); err != nil {
+			return err
+		}
+	}
+
+	return lint.NewStatefulSet(s.Collector, s.DB).Lint(ctx)
 }

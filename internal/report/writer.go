@@ -11,13 +11,14 @@ import (
 	"unicode/utf8"
 
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/internal/rules"
 )
 
-// Issue represents a sanitizer issues.
+// Issue represents a linter issue.
 type Issue interface {
-	MaxSeverity(string) config.Level
-	Severity() config.Level
+	// MaxSeverity
+	MaxSeverity(string) rules.Level
+	Severity() rules.Level
 	Description() string
 	HasSubIssues() bool
 	SubIssues() map[string][]Issue
@@ -27,14 +28,14 @@ const (
 	// FontBold style
 	FontBold = 1
 
-	// Width denotes the maximum width of the sanitizer report.
+	// Width denotes the maximum width of a report.
 	Width = 100
 
 	tabSize = 2
 )
 
-// Sanitizer represents a sanitizer report.
-type Sanitizer struct {
+// ScanReport represents a scan report.
+type ScanReport struct {
 	io.Writer
 
 	jurassicMode bool
@@ -42,16 +43,16 @@ type Sanitizer struct {
 
 //
 
-// NewSanitizer returns a new sanitizer report writer.
-func NewSanitizer(w io.Writer, jurassic bool) *Sanitizer {
-	return &Sanitizer{
+// New returns a new instance.
+func New(w io.Writer, jurassic bool) *ScanReport {
+	return &ScanReport{
 		Writer:       w,
 		jurassicMode: jurassic,
 	}
 }
 
 // Open begins a new report section.
-func (s *Sanitizer) Open(msg string, t *Tally) {
+func (s *ScanReport) Open(msg string, t *Tally) {
 	fmt.Fprintf(s, "\n%s", s.Color(msg, ColorLighSlate))
 	if t != nil && t.IsValid() {
 		out := t.Dump(s)
@@ -72,11 +73,11 @@ func (s *Sanitizer) Open(msg string, t *Tally) {
 }
 
 // Close a report section.
-func (s *Sanitizer) Close() {
+func (s *ScanReport) Close() {
 	fmt.Fprintln(s)
 }
 
-func (s *Sanitizer) lineBreaks(msg string, width int, color Color) {
+func (s *ScanReport) lineBreaks(msg string, width int, color Color) {
 	for i := 0; len(msg) > width; i++ {
 		fmt.Fprintln(s, s.Color(msg[:width], color))
 		msg = msg[width:]
@@ -88,7 +89,7 @@ func (s *Sanitizer) lineBreaks(msg string, width int, color Color) {
 }
 
 // Error prints out error out.
-func (s *Sanitizer) Error(msg string, err error) {
+func (s *ScanReport) Error(msg string, err error) {
 	fmt.Fprintln(s)
 	msg = msg + ": " + err.Error()
 	width := Width - 3
@@ -97,12 +98,12 @@ func (s *Sanitizer) Error(msg string, err error) {
 }
 
 // Comment writes a comment line.
-func (s *Sanitizer) Comment(msg string) {
+func (s *ScanReport) Comment(msg string) {
 	fmt.Fprintf(s, "  · "+msg+"\n")
 }
 
 // Dump all errors to output.
-func (s *Sanitizer) Dump(l config.Level, ii issues.Issues) {
+func (s *ScanReport) Dump(l rules.Level, ii issues.Issues) {
 	groups := ii.Group()
 	keys := make([]string, 0, len(groups))
 	for k := range groups {
@@ -131,12 +132,12 @@ func (s *Sanitizer) Dump(l config.Level, ii issues.Issues) {
 }
 
 // Print a colorized message.
-func (s *Sanitizer) Print(l config.Level, indent int, msg string) {
+func (s *ScanReport) Print(l rules.Level, indent int, msg string) {
 	s.write(l, indent, msg)
 }
 
 // Write a colorized message to stdout.
-func (s *Sanitizer) write(l config.Level, indent int, msg string) {
+func (s *ScanReport) write(l rules.Level, indent int, msg string) {
 	if msg == "" || msg == "." {
 		return
 	}
@@ -168,7 +169,7 @@ func (s *Sanitizer) write(l config.Level, indent int, msg string) {
 }
 
 // Color or not this message by inject ansi colors.
-func (s *Sanitizer) Color(msg string, c Color) string {
+func (s *ScanReport) Color(msg string, c Color) string {
 	if s.jurassicMode {
 		return msg
 	}

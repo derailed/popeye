@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: gateway.networking.k8s.io/v1
+  kind: HTTPRoute
+  metadata:
+    name: r1
+    namespace: default
+  spec:
+    parentRefs:
+    - name: gw1
+    hostnames:
+    - fred
+    rules:
+    - matches:
+      - path:
+          type: PathPrefix
+          value: /blee
+      backendRefs:
+      - name: svc1
+        port: 9090
+- apiVersion: gateway.networking.k8s.io/v1
+  kind: HTTPRoute
+  metadata:
+    name: r2
+    namespace: default
+  spec:
+    parentRefs:
+    - name: gw-bozo
+    hostnames:
+    - bozo
+    rules:
+    - matches:
+      - path:
+          type: PathPrefix
+          value: /zorg
+      backendRefs:
+      - name: svc2
+        port: 8080
+- apiVersion: gateway.networking.k8s.io/v1
+  kind: HTTPRoute
+  metadata:
+    name: r3
+    namespace: default
+  spec:
+    parentRefs:
+    - kind: Service
+      name: svc-bozo
+    hostnames:
+    - bozo
+    rules:
+    - matches:
+      - path:
+          type: PathPrefix
+          value: /zorg
+      backendRefs:
+      - name: svc2
+        port: 9090

@@ -1,0 +1,60 @@
+popeye:
+  allocations:
+    cpu:
+      overPercUtilization: 200
+      underPercUtilization: 50
+    memory:
+      overPercUtilization: 200
+      underPercUtilization: 50
+
+  excludes:
+    global:
+      fqns: [rx:^gns1, rx:^gns2]
+      labels:
+        l1: [a, aa, aaa]
+        l2: [f, ff, fff]
+      annotations:
+        a1: [a, b,c]
+        a2: [a1, b1, c1]
+
+    linters:
+      configmaps:
+
+      secrets:
+        instances:
+        - fqns: [rx:fred]
+
+      nodes:
+        instances:
+        - annotations:
+            a1: [b1]
+          codes: ["100"]
+
+      pods:
+        instances:
+          - fqns: [rx:^istio]
+          - labels:
+              kube-system: [fred]
+            codes: ["300"]
+          - fqns: [rx:^ns1]
+            containers: [c1, c2, c3]
+
+      services:
+        instances:
+        - labels:
+            default: [dictionary]
+          codes: ["100"]
+
+  resources:
+    node:
+      limits:
+        cpu: 90
+        memory: 80
+    pod:
+      restarts: 3
+      limits:
+        cpu: 80
+        memory: 75
+
+  registries:
+  - docker.io

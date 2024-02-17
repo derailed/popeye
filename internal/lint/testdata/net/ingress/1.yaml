@@ -1,0 +1,109 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: ing1
+    namespace: default
+  spec:
+    ingressClassName: nginx
+    rules:
+    - http:
+        paths:
+        - path: /testpath
+          pathType: Prefix
+          backend:
+            service:
+              name: svc1
+              port:
+                name: http
+- apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: ing2
+    namespace: default
+  spec:
+    ingressClassName: nginx
+    rules:
+    - http:
+        paths:
+        - path: /testpath
+          pathType: Prefix
+          backend:
+            service:
+              name: svc1
+              port:
+                number: 9090
+- apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: ing3
+    namespace: default
+  spec:
+    ingressClassName: nginx
+    rules:
+    - http:
+        paths:
+        - path: /testpath
+          pathType: Prefix
+          backend:
+            service:
+              name: s2
+              port:
+                number: 80
+- apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: ing4
+    namespace: default
+  spec:
+    ingressClassName: nginx
+    rules:
+    - http:
+        paths:
+        - path: /testpath
+          pathType: Prefix
+          backend:
+            service:
+              name: svc2
+- apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: ing5
+    namespace: default
+    annotations:
+  spec:
+    ingressClassName: nginx
+    rules:
+    - http:
+        paths:
+        - path: /testpath
+          pathType: Prefix
+          backend:
+            resource:
+              apiGroup: fred.com
+              kind: Zorg
+              name: zorg
+  status:
+    loadBalancer:
+      ingress:
+        - ports:
+          - error: boom
+- apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: ing6
+    namespace: default
+  spec:
+    ingressClassName: nginx
+    rules:
+    - http:
+        paths:
+        - path: /testpath
+          pathType: Prefix
+          backend:
+            service:
+              name: svc1
+              port:
+                number: 9091

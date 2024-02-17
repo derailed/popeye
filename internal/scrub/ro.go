@@ -6,52 +6,42 @@ package scrub
 import (
 	"context"
 
-	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
-	"github.com/derailed/popeye/internal/sanitize"
-	"github.com/derailed/popeye/pkg/config"
-	"github.com/derailed/popeye/types"
+	"github.com/derailed/popeye/internal/lint"
+	rbacv1 "k8s.io/api/rbac/v1"
 )
 
 // Role represents a Role scruber.
 type Role struct {
-	client types.Connection
-	*config.Config
 	*issues.Collector
-
-	*cache.Role
-	*cache.ClusterRoleBinding
-	*cache.RoleBinding
+	*Cache
 }
 
-// NewRole return a new Role scruber.
-func NewRole(ctx context.Context, c *Cache, codes *issues.Codes) Sanitizer {
-	ro := Role{
-		client:    c.factory.Client(),
-		Config:    c.config,
-		Collector: issues.NewCollector(codes, c.config),
+// NewRole returns a new instance.
+func NewRole(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+	return &Role{
+		Collector: issues.NewCollector(codes, c.Config),
+		Cache:     c,
 	}
-
-	var err error
-	ro.Role, err = c.roles()
-	if err != nil {
-		ro.AddErr(ctx, err)
-	}
-
-	ro.ClusterRoleBinding, err = c.clusterrolebindings()
-	if err != nil {
-		ro.AddErr(ctx, err)
-	}
-
-	ro.RoleBinding, err = c.rolebindings()
-	if err != nil {
-		ro.AddErr(ctx, err)
-	}
-
-	return &ro
 }
 
-// Sanitize all available Roles.
-func (c *Role) Sanitize(ctx context.Context) error {
-	return sanitize.NewRole(c.Collector, c).Sanitize(ctx)
+func (s *Role) Preloads() Preloads {
+	return Preloads{
+		internal.RO:  db.LoadResource[*rbacv1.Role],
+		internal.ROB: db.LoadResource[*rbacv1.RoleBinding],
+		internal.CRB: db.LoadResource[*rbacv1.ClusterRoleBinding],
+	}
+}
+
+// Lint all available Roles.
+func (s *Role) Lint(ctx context.Context) error {
+	for k, f := range s.Preloads() {
+		if err := f(ctx, s.Loader, internal.Glossary[k]); err != nil {
+			return err
+		}
+	}
+
+	return lint.NewRole(s.Collector, s.DB).Lint(ctx)
 }

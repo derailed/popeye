@@ -1,0 +1,37 @@
+---
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: cm1
+    namespace: default
+  data:
+    fred.yaml: |
+      k1: 1
+      k2: blee
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: cm2
+    namespace: default
+  data:
+    k1: apple
+    k2: bee
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: cm3
+    namespace: default
+  data:
+    k1: apple
+    k2: bee
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: cm4
+    namespace: default
+  data:
+    k1: apple
+    k2: bee

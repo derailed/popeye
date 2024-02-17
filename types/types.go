@@ -52,18 +52,33 @@ var (
 	ReadAllAccess = []string{GetVerb, ListVerb, WatchVerb}
 )
 
+// NamespaceNames tracks a collection of namespace names.
+type NamespaceNames map[string]struct{}
+
 // Authorizer checks what a user can or cannot do to a resource.
 type Authorizer interface {
 	// CanI returns true if the user can use these actions for a given resource.
-	CanI(ns, gvr string, verbs []string) (bool, error)
+	CanI(string, GVR, ...string) (bool, error)
 }
 
 // Config represents an api server configuration.
 type Config interface {
+	// CurrentNamespaceName returns the current context namespace.
 	CurrentNamespaceName() (string, error)
+
+	// CurrentContextName returns the current context.
 	CurrentContextName() (string, error)
+
+	// CurrentClusterName returns the current cluster.
+	CurrentClusterName() (string, error)
+
+	// Flags tracks k8s cli flags.
 	Flags() *genericclioptions.ConfigFlags
+
+	// RESTConfig tracks k8s client conn.
 	RESTConfig() (*restclient.Config, error)
+
+	// CallTimeout tracks api server ttl.
 	CallTimeout() time.Duration
 }
 
@@ -73,6 +88,9 @@ type Connection interface {
 
 	// Config returns current config.
 	Config() Config
+
+	// ConnectionOK checks api server connection status.
+	ConnectionOK() bool
 
 	// Dial connects to api server.
 	Dial() (kubernetes.Interface, error)
@@ -95,14 +113,20 @@ type Connection interface {
 	// ServerVersion returns current server version.
 	ServerVersion() (*version.Info, error)
 
+	// CheckConnectivity checks if api server connection is happy or not.
+	CheckConnectivity() bool
+
 	// ActiveContext returns the current context name.
 	ActiveContext() string
+
+	// ActiveCluster returns the current cluster name.
+	ActiveCluster() string
 
 	// ActiveNamespace returns the current namespace.
 	ActiveNamespace() string
 
-	// // IsActiveNamespace checks if given ns is active.
-	// IsActiveNamespace(string) bool
+	// IsActiveNamespace checks if given ns is active.
+	IsActiveNamespace(string) bool
 }
 
 // Factory represents a resource factory.
@@ -111,16 +135,16 @@ type Factory interface {
 	Client() Connection
 
 	// Get fetch a given resource.
-	Get(gvr, path string, wait bool, sel labels.Selector) (runtime.Object, error)
+	Get(GVR, string, bool, labels.Selector) (runtime.Object, error)
 
 	// List fetch a collection of resources.
-	List(gvr, ns string, wait bool, sel labels.Selector) ([]runtime.Object, error)
+	List(GVR, string, bool, labels.Selector) ([]runtime.Object, error)
 
 	// ForResource fetch an informer for a given resource.
-	ForResource(ns, gvr string) (informers.GenericInformer, error)
+	ForResource(string, GVR) (informers.GenericInformer, error)
 
 	// CanForResource fetch an informer for a given resource if authorized
-	CanForResource(ns, gvr string, verbs []string) (informers.GenericInformer, error)
+	CanForResource(string, GVR, ...string) (informers.GenericInformer, error)
 
 	// WaitForCacheSync synchronize the cache.
 	WaitForCacheSync()

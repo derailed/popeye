@@ -1,0 +1,138 @@
+---
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    name: p1
+    namespace: default
+    labels:
+      app: p1
+  spec:
+    serviceAccountName: default
+    tolerations:
+    - key: t1
+      operator: Exists
+      effect: NoSchedule
+    containers:
+    - name: c1
+      image: alpine
+      resources:
+        requests:
+          cpu: 1
+          memory: 1Mi
+        limits:
+          cpu: 1
+          memory: 1Mi
+      ports:
+      - containerPort: 9090
+        name: http
+        protocol: TCP
+      env:
+        - name: env1
+          valueFrom:
+            configMapKeyRef:
+              name: cm1
+              key: ns
+        - name: env2
+          valueFrom:
+            secretKeyRef:
+              name: sec1
+              key: k1
+      volumeMounts:
+      - name: config
+        mountPath: "/config"
+        readOnly: true
+    volumes:
+    - name: mypd
+      persistentVolumeClaim:
+        claimName: pvc1
+    - name: config
+      configMap:
+        name: cm3
+        items:
+        - key: k1
+          path: "game.properties"
+        - key: k2
+          path: "user-interface.properties"
+    - name: secret
+      secret:
+        secretName: sec2
+        optional: false
+        items:
+        - key: fred
+          path: blee
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    name: p2
+    namespace: default
+    labels:
+      app: p2
+  spec:
+    serviceAccountName: default
+    imagePullSecrets:
+    - name: sec3
+    tolerations:
+    - key: t1
+      operator: Exists
+      effect: NoSchedule
+    initContainers:
+    - name: ic1
+      image: fred
+    containers:
+    - name: c1
+      image: alpine
+      resources:
+        requests:
+          cpu: 1
+          memory: 1Mi
+        limits:
+          cpu: 1
+          memory: 1Mi
+      ports:
+      - containerPort: 9090
+        name: http
+        protocol: TCP
+      envFrom:
+        - configMapRef:
+              name: cm4
+        - secretRef:
+              name: sec4
+      env:
+        - name: env1
+          valueFrom:
+            configMapKeyRef:
+              name: cm1
+              key: blee
+        - name: env2
+          valueFrom:
+            secretKeyRef:
+              name: sec2
+              key: k1
+      volumeMounts:
+      - name: config
+        mountPath: "/config"
+        readOnly: true
+    volumes:
+    - name: mypd
+      persistentVolumeClaim:
+        claimName: pvc1
+    - name: config
+      configMap:
+        name: cm3
+        items:
+        - key: k3
+          path: blee
+        - key: k4
+          path: zorg
+    - name: secret
+      secret:
+        secretName: sec2
+        optional: false
+        items:
+        - key: ca.crt
+          path: "game.properties"
+        - key: namespace
+          path: "user-interface.properties"

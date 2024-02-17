@@ -1,0 +1,165 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Popeye spinach schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "popeye": {
+      "additionalProperties": false,
+      "properties": {
+        "allocations": {
+          "additionalProperties": false,
+          "properties": {
+            "cpu": {
+              "additionalProperties": false,
+              "properties": {
+                "underPercUtilization": {"type": "integer"},
+                "overPercUtilization": {"type": "integer"}
+              }
+            },
+            "memory": {
+              "additionalProperties": false,
+              "properties": {
+                "underPercUtilization": {"type": "integer"},
+                "overPercUtilization": {"type": "integer"}
+              }
+            }
+          }
+        },
+        "excludes": {
+          "additionalProperties": false,
+          "properties": {
+            "global": {
+              "additionalProperties": false,
+              "properties": {
+                "fqns": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                },
+                "labels": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": { "type": "string"}
+                  }
+                },
+                "annotations": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": { "type": "string"}
+                  }
+                },
+                "containers": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                },
+                "codes": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                }
+              }
+            },
+            "linters": {
+              "type": "object",
+              "additionalProperties": {
+                "properties": {
+                  "codes": {
+                    "type": "array",
+                    "additionalProperties": false,
+                    "items": {"type": "string"}
+                  },
+                  "instances": {
+                    "properties": {
+                      "additionalProperties": false,
+                      "fqns": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                      },
+                      "labels": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "array",
+                          "additionalProperties": false,
+                          "items": { "type": "string"}
+                        }
+                      },
+                      "annotations": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "array",
+                          "additionalProperties": false,
+                          "items": { "type": "string"}
+                        }
+                      },
+                      "containers": {
+                        "type": "array",
+                        "additionalProperties": false,
+                        "items": {"type": "string"}
+                      },
+                      "codes": {
+                        "type": "array",
+                        "additionalProperties": false,
+                        "items": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "resources": {
+          "additionalProperties": false,
+          "properties": {
+            "node": {
+              "additionalProperties": false,
+              "properties": {
+                "limits": {
+                  "type": "object",
+                  "properties": {
+                    "cpu": {"type": "integer" },
+                    "memory": {"type": "integer" }
+                  }
+                }
+              }
+            },
+            "pod": {
+              "additionalProperties": false,
+              "properties": {
+                "limits": {
+                  "type": "object",
+                  "properties": {
+                    "cpu": {"type": "integer" },
+                    "memory": {"type": "integer" }
+                  }
+                },
+                "restarts": {"type": "integer"}
+              }
+            }
+          }
+        },
+        "overrides": {
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "message": {"type": "string"},
+                "severity": {"type": "integer"}
+              }
+            }
+          }
+        },
+        "registries": {
+          "additionalProperties": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    }
+  },
+  "required": ["popeye"]
+}

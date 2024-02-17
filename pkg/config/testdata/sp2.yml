@@ -3,33 +3,8 @@ popeye:
   # Allocations ratios current to resources.
   allocations:
     cpu:
-      over: 200
-      under: 50
+      overPercUtilization: 200
+      underPercUtilization: 50
     memory:
-      over: 200
-      under: 50
-
-  # Excludes
-  excludes:
-    node:
-      - name: n1
-    namespace:
-      - name: kube-system
-      - name: kube-node-lease
-      - name: kube-public
-      - name: istio-system
-    service:
-      - name: default/dictionary
-
-  # Node...
-  node:
-    limits:
-      cpu: 0
-      memory: 0
-
-  # Pod...
-  pod:
-    limits:
-      cpu: 0
-      memory: 0
-    restarts: 3
+      overPercUtilization: 200
+      underPercUtilization: 50

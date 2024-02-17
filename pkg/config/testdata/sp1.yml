@@ -1,40 +1,45 @@
-# A Sample Popeye configuration.
 popeye:
-  # Allocations ratios current to resources.
   allocations:
     cpu:
-      over: 200
-      under: 50
+      overPercUtilization: 200
+      underPercUtilization: 50
     memory:
-      over: 200
-      under: 50
+      overPercUtilization: 200
+      underPercUtilization: 50
 
-  # Excludes
   excludes:
+    global:
+      fqns: [rx:^ns1, rx:^ns2]
+
+    linters:
+      nodes:
+        instances:
+        - labels:
+            k8s-app: [app1]
+          codes: ["100"]
+
+      namespaces:
+        instances:
+        - labels:
+            group: [ns1]
+          codes: ["100"]
+
+      services:
+        instances:
+        - labels:
+            group: [ns1]
+          codes: ["100"]
+
+  resources:
     node:
-      - name: n1
-        codes:
-          - 100
-    namespace:
-      - name: kube-system
-      - name: kube-node-lease
-      - name: kube-public
-      - name: istio-system
-    service:
-      - name: default/dictionary
-
-  # Node...
-  node:
-    limits:
-      cpu: 90
-      memory: 80
-
-  # Pod...
-  pod:
-    limits:
-      cpu: 80
-      memory: 75
-    restarts: 3
+      limits:
+        cpu: 90
+        memory: 80
+    pod:
+      restarts: 3
+      limits:
+        cpu: 80
+        memory: 75
 
   registries:
-    - docker.io
+  - docker.io

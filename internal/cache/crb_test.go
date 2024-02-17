@@ -9,13 +9,21 @@ import (
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal/db"
+	"github.com/derailed/popeye/internal/test"
 	"github.com/stretchr/testify/assert"
 	rbacv1 "k8s.io/api/rbac/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestClusterRoleRef(t *testing.T) {
-	cr := cache.NewClusterRoleBinding(makeCRBMap())
+	dba, err := test.NewTestDB()
+	assert.NoError(t, err)
+	l := db.NewLoader(dba)
+
+	ctx := test.MakeCtx(t)
+	assert.NoError(t, test.LoadDB[*rbacv1.ClusterRoleBinding](ctx, l.DB, "auth/crb/1.yaml", internal.Glossary[internal.CRB]))
+
+	cr := cache.NewClusterRoleBinding(dba)
 	var refs sync.Map
 	cr.ClusterRoleRefs(&refs)
 
@@ -24,36 +32,9 @@ func TestClusterRoleRef(t *testing.T) {
 	_, ok = m.(internal.StringSet)["crb1"]
 	assert.True(t, ok)
 
-	m, ok = refs.Load("role:blee/r1")
+	m, ok = refs.Load("role:r1")
 	assert.True(t, ok)
-	_, ok = m.(internal.StringSet)["crb2"]
+
+	_, ok = m.(internal.StringSet)["crb3"]
 	assert.True(t, ok)
-}
-
-// Helpers...
-
-func makeCRBMap() map[string]*rbacv1.ClusterRoleBinding {
-	return map[string]*rbacv1.ClusterRoleBinding{
-		"crb1": makeCRB("", "crb1", "ClusterRole", "cr1"),
-		"crb2": makeCRB("blee", "crb2", "Role", "r1"),
-	}
-}
-
-func makeCRB(ns, name, kind, refName string) *rbacv1.ClusterRoleBinding {
-	return &rbacv1.ClusterRoleBinding{
-		ObjectMeta: makeObjMeta(ns, name),
-		RoleRef: rbacv1.RoleRef{
-			Kind: kind,
-			Name: refName,
-		},
-	}
-}
-
-func makeObjMeta(ns, n string) metav1.ObjectMeta {
-	m := metav1.ObjectMeta{Name: n}
-	if ns != "" {
-		m.Namespace = ns
-	}
-
-	return m
 }

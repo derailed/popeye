@@ -4,6 +4,9 @@
 package report
 
 import (
+	_ "embed"
+	"slices"
+
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -12,82 +15,20 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/internal/rules"
 	"github.com/derailed/popeye/pkg/config"
-	"github.com/fvbommel/sortorder"
+	"github.com/derailed/popeye/types"
 	"github.com/prometheus/client_golang/prometheus/push"
+	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v2"
 )
 
-const (
-	// DefaultFormat dumps sanitizer with color, emojis, the works.
-	DefaultFormat = "standard"
-
-	// JurassicFormat dumps sanitizer with 0 fancyness.
-	JurassicFormat = "jurassic"
-
-	// YAMLFormat dumps sanitizer as YAML.
-	YAMLFormat = "yaml"
-
-	// JSONFormat dumps sanitizer as JSON.
-	JSONFormat = "json"
-
-	// HTMLFormat dumps sanitizer as HTML
-	HTMLFormat = "html"
-
-	// JunitFormat dumps sanitizer as JUnit report.
-	JunitFormat = "junit"
-
-	// PrometheusFormat pushes sanitizer as Prometheus metrics.
-	PrometheusFormat = "prometheus"
-
-	// ScoreFormat pushes sanitizer as the value of the Score.
-	ScoreFormat = "score"
-)
-
-// Builder represents sanitizer
+// Builder tracks a scan report output.
 type Builder struct {
 	Report      Report `json:"popeye" yaml:"popeye"`
-	clusterName string
-}
-
-// Report represents the output of a sanitization pass.
-type Report struct {
-	Timestamp     string   `json:"report_time" yaml:"report_time"`
-	Score         int      `json:"score" yaml:"score"`
-	Grade         string   `json:"grade" yaml:"grade"`
-	Sections      Sections `json:"sanitizers,omitempty" yaml:"sanitizers,omitempty"`
-	Errors        []error  `json:"errors,omitempty" yaml:"errors,omitempty"`
-	sectionsCount int
-	totalScore    int
-}
-
-// Sections represents a collection of sections.
-type Sections []Section
-
-// Section represents a sanitizer pass
-type Section struct {
-	Title    string         `json:"sanitizer" yaml:"sanitizer"`
-	GVR      string         `json:"gvr" yaml:"gvr"`
-	Tally    *Tally         `json:"tally" yaml:"tally"`
-	Outcome  issues.Outcome `json:"issues,omitempty" yaml:"issues,omitempty"`
-	singular string
-}
-
-// Len returns the list size.
-func (s Sections) Len() int {
-	return len(s)
-}
-
-// Swap swaps list values.
-func (s Sections) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
-// Less returns true if i < j.
-func (s Sections) Less(i, j int) bool {
-	return sortorder.NaturalLess(s[i].singular, s[j].singular)
+	ClusterName string
+	ContextName string
 }
 
 // NewBuilder returns a new instance.
@@ -95,35 +36,25 @@ func NewBuilder() *Builder {
 	return &Builder{}
 }
 
-// SetClusterName sets the current cluster name.
-func (b *Builder) SetClusterName(s string) {
+// SetClusterContext sets the current cluster name.
+func (b *Builder) SetClusterContext(cl, ct string) {
 	sort.Sort(b.Report.Sections)
-	b.clusterName = s
+	b.ClusterName, b.ContextName = cl, ct
 	b.Report.Timestamp = time.Now().Format(time.RFC3339)
 }
-
-// ClusterName returns the cluster name.
-func (b *Builder) ClusterName() string {
-	return b.clusterName
-}
-
-// // Timestamp returns the report time.
-// func (b *Builder) Timestamp() string {
-// 	return b.timeStamp
-// }
 
 // HasContent checks if we actually have anything to report.
 func (b *Builder) HasContent() bool {
 	return b.Report.sectionsCount != 0
 }
 
-// AddError record an error associted with the report.
+// AddError record an error associated with the report.
 func (b *Builder) AddError(err error) {
 	b.Report.Errors = append(b.Report.Errors, err)
 }
 
-// AddSection adds a sanitizer section to the report.
-func (b *Builder) AddSection(gvr client.GVR, singular string, o issues.Outcome, t *Tally) {
+// AddSection adds a linter section to the report.
+func (b *Builder) AddSection(gvr types.GVR, singular string, o issues.Outcome, t *Tally) {
 	section := Section{
 		Title:    strings.ToLower(gvr.R()),
 		GVR:      gvr.String(),
@@ -138,8 +69,8 @@ func (b *Builder) AddSection(gvr client.GVR, singular string, o issues.Outcome, 
 	}
 }
 
-// ToJunit dumps sanitizer to JUnit.
-func (b *Builder) ToJunit(level config.Level) (string, error) {
+// ToJunit dumps scan to JUnit.
+func (b *Builder) ToJunit(level rules.Level) (string, error) {
 	b.finalize()
 	raw, err := junitMarshal(b, level)
 	if err != nil {
@@ -155,7 +86,7 @@ func (b *Builder) finalize() {
 	b.Report.Grade = Grade(score)
 }
 
-// ToYAML dumps sanitizer to YAML.
+// ToYAML dumps scan to YAML.
 func (b *Builder) ToYAML() (string, error) {
 	b.finalize()
 	raw, err := yaml.Marshal(b)
@@ -166,7 +97,7 @@ func (b *Builder) ToYAML() (string, error) {
 	return string(raw), nil
 }
 
-// ToJSON dumps sanitizer to JSON.
+// ToJSON dumps scan to JSON.
 func (b *Builder) ToJSON() (string, error) {
 	b.finalize()
 	raw, err := json.Marshal(b)
@@ -177,7 +108,7 @@ func (b *Builder) ToJSON() (string, error) {
 	return string(raw), nil
 }
 
-// ToHTML dumps sanitizer to HTML.
+// ToHTML dumps scan to HTML.
 func (b *Builder) ToHTML() (string, error) {
 	b.finalize()
 
@@ -185,8 +116,9 @@ func (b *Builder) ToHTML() (string, error) {
 		"toEmoji": toEmoji,
 		"toTitle": Titleize,
 		"isRoot":  isRoot,
+		"list":    b.Report.ListSections,
 	}
-	tpl, err := template.New("sanitize").Funcs(fMap).Parse(htmlTemplate)
+	tpl, err := template.New("sanitize").Funcs(fMap).Parse(htmlReport)
 	if err != nil {
 		return "", err
 	}
@@ -200,23 +132,27 @@ func (b *Builder) ToHTML() (string, error) {
 }
 
 // ToPrometheus returns prometheus pusher.
-func (b *Builder) ToPrometheus(gtwy *config.PushGateway, namespace string) *push.Pusher {
+func (b *Builder) ToPrometheus(gtwy *config.PushGateway, instance, ns, asset string, cc rules.Glossary) *push.Pusher {
 	b.finalize()
-	if namespace == "" {
-		namespace = "all"
-	}
 
-	return prometheusMarshal(b, gtwy, b.clusterName, namespace)
+	log.Debug().Msgf("Pushing prom metrics from instance: %q", instance)
+	p := newPusher(gtwy, instance)
+	if ns == "" {
+		ns = "all"
+	}
+	b.promCollect(ns, asset, cc)
+
+	return p
 }
 
-// ToScore dumps sanitizer to only the score value.
+// ToScore dumps scan to only the score value.
 func (b *Builder) ToScore() (int, error) {
 	b.finalize()
 	return b.Report.Score, nil
 }
 
 // PrintSummary print outs summary report to screen.
-func (b *Builder) PrintSummary(s *Sanitizer) {
+func (b *Builder) PrintSummary(s *ScanReport) {
 	if b.Report.sectionsCount == 0 {
 		return
 	}
@@ -224,8 +160,7 @@ func (b *Builder) PrintSummary(s *Sanitizer) {
 	b.finalize()
 	s.Open("SUMMARY", nil)
 	{
-		fmt.Fprintf(s, "Generated on: %s\n", b.Report.Timestamp)
-		fmt.Fprintf(s, "Your cluster score: %d -- %s\n", b.Report.Score, b.Report.Grade)
+		fmt.Fprint(s, s.Color(fmt.Sprintf("%-19s %s (%d)\n", "Your cluster score:", b.Report.Grade, b.Report.Score), ColorAqua))
 		for _, l := range s.Badge(b.Report.Score) {
 			fmt.Fprintf(s, "%s%s\n", strings.Repeat(" ", Width-20), l)
 		}
@@ -233,25 +168,29 @@ func (b *Builder) PrintSummary(s *Sanitizer) {
 	s.Close()
 }
 
-// PrintContextInfo displays cluster information.
-func (b *Builder) PrintContextInfo(s *Sanitizer, contextName string, metrics bool) {
-	if contextName == "" {
-		contextName = "n/a"
+// PrintClusterInfo displays cluster information.
+func (b *Builder) PrintClusterInfo(s *ScanReport, metrics bool) {
+	cl, ct := b.ClusterName, b.ContextName
+	if cl == "" {
+		cl = "n/a"
 	}
-	s.Open(Titleize(fmt.Sprintf("General [%s]", contextName), -1), nil)
+	if ct == "" {
+		ct = "n/a"
+	}
+	s.Open(Titleize(fmt.Sprintf("General [%s/%s] (%s)", cl, ct, b.Report.Timestamp), -1), nil)
 	{
-		s.Print(config.OkLevel, 1, "Connectivity")
+		s.Print(rules.OkLevel, 1, "Connectivity")
 		if metrics {
-			s.Print(config.OkLevel, 1, "MetricServer")
+			s.Print(rules.OkLevel, 1, "MetricServer")
 		} else {
-			s.Print(config.ErrorLevel, 1, "MetricServer")
+			s.Print(rules.ErrorLevel, 1, "MetricServer")
 		}
 	}
 	s.Close()
 }
 
 // PrintHeader prints report header to screen.
-func (b *Builder) PrintHeader(s *Sanitizer) {
+func (b *Builder) PrintHeader(s *ScanReport) {
 	fmt.Fprintln(s)
 	for i, l := range Logo {
 		switch {
@@ -269,24 +208,24 @@ func (b *Builder) PrintHeader(s *Sanitizer) {
 	fmt.Fprintln(s, "")
 }
 
-// PrintReport prints out sanitizer report to screen
-func (b *Builder) PrintReport(level config.Level, s *Sanitizer) {
+// PrintReport prints out scan report to screen
+func (b *Builder) PrintReport(level rules.Level, s *ScanReport) {
 	for _, section := range b.Report.Sections {
 		var any bool
 		s.Open(Titleize(section.Title, len(section.Outcome)), section.Tally)
 		{
-			keys := make([]string, 0, len(section.Outcome))
+			kk := make([]string, 0, len(section.Outcome))
 			for k := range section.Outcome {
-				keys = append(keys, k)
+				kk = append(kk, k)
 			}
-			sort.Strings(keys)
+			slices.SortFunc(kk, issues.SortKeys)
 
-			for _, res := range keys {
+			for _, res := range kk {
 				ii := section.Outcome[res]
 				if len(ii) == 0 {
-					if level <= config.OkLevel {
+					if level <= rules.OkLevel {
 						any = true
-						s.Print(config.OkLevel, 1, res)
+						s.Print(rules.OkLevel, 1, res)
 					}
 					continue
 				}
@@ -320,15 +259,15 @@ func isRoot(g string) bool {
 	return g == issues.Root
 }
 
-func toEmoji(level config.Level) (s string) {
+func toEmoji(level rules.Level) (s string) {
 	switch level {
-	case config.ErrorLevel:
+	case rules.ErrorLevel:
 		s = "fas fa-bomb"
-	case config.WarnLevel:
+	case rules.WarnLevel:
 		s = "fas fa-radiation-alt"
-	case config.InfoLevel:
+	case rules.InfoLevel:
 		s = "fas fa-info-circle"
-	case config.OkLevel:
+	case rules.OkLevel:
 		s = "far fa-check-circle"
 	default:
 		s = "fas fa-info-circle"

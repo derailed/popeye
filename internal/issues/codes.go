@@ -4,21 +4,21 @@
 package issues
 
 import (
-	// Pull in asset codes.
 	_ "embed"
 
-	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/internal/rules"
 	"gopkg.in/yaml.v2"
 )
 
-type (
-	// Codes represents a collection of sanitizer codes.
-	Codes struct {
-		Glossary config.Glossary `yaml:"codes"`
-	}
-)
+//go:embed assets/codes.yaml
+var codes string
 
-// LoadCodes retrieves sanitizers codes from yaml file.
+// Codes represents a collection of linter codes.
+type Codes struct {
+	Glossary rules.Glossary `yaml:"codes"`
+}
+
+// LoadCodes retrieves linters codes from yaml file.
 func LoadCodes() (*Codes, error) {
 	var cc Codes
 	if err := yaml.Unmarshal([]byte(codes), &cc); err != nil {
@@ -29,23 +29,23 @@ func LoadCodes() (*Codes, error) {
 }
 
 // Refine overrides code severity based on user input.
-func (c *Codes) Refine(gloss config.Glossary) {
-	for k, v := range gloss {
-		c, ok := c.Glossary[k]
+func (c *Codes) Refine(oo rules.Overrides) {
+	for _, ov := range oo {
+		c, ok := c.Glossary[ov.ID]
 		if !ok {
 			continue
 		}
-		if validSeverity(v.Severity) {
-			c.Severity = v.Severity
+		if validSeverity(ov.Severity) {
+			c.Severity = ov.Severity
+		}
+		if ov.Message != "" {
+			c.Message = ov.Message
 		}
 	}
 }
 
 // Helpers...
 
-func validSeverity(l config.Level) bool {
+func validSeverity(l rules.Level) bool {
 	return l > 0 && l < 4
 }
-
-//go:embed assets/codes.yml
-var codes string

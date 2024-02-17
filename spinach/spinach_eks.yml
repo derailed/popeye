@@ -13,75 +13,77 @@ popeye:
       overPercUtilization: 50
   # Excludes define rules to exampt resources from sanitization
   excludes:
-    rbac.authorization.k8s.io/v1/clusterrolebindings:
-      - name: rx:system
-      - name: rx:eks
-    rbac.authorization.k8s.io/v1/clusterroles:
-      - name: rx:eks
-        codes:
-          - 400
-      - name: aws-node
-        codes:
-          - 400
-      - name: rx:system
-        codes:
-          - 400
-      - name: admin
-        codes:
-          - 400
-      - name: edit
-        codes:
-          - 400
-      - name: view
-        codes:
-          - 400
-      - name: cluster-admin
-        codes:
-          - 400
-    rbac.authorization.k8s.io/v1/rolebindings:
-      - name: rx:kube
-    rbac.authorization.k8s.io/v1/roles:
-      - name: rx:kube
-    apps/v1/daemonsets:
-      - name: rx:kube-system
-    apps/v1/deployments:
-      - name: rx:kube-system
-    apps/v1/replicasets:
-      - name: rx:kube
-    networking.k8s.io/v1/networkpolicies:
-      - name: rx:freddy
-    policy/v1beta1/podsecuritypolicies:
-      - name: rx:eks
-    v1/configmaps:
-      - name: rx:kube
-    v1/namespaces:
-      - name: rx:kube
-    v1/pods:
-      - name: rx:kube
-    v1/serviceaccounts:
-      - name: rx:kube
-    v1/secrets:
-      - name: rx:kube
-    v1/services:
-      - name: rx:kube
-        codes:
-          - 404
+    gvrs:
+      rbac.authorization.k8s.io/v1/clusterrolebindings:
+        - name: rx:system
+        - name: rx:eks
+      rbac.authorization.k8s.io/v1/clusterroles:
+        - name: rx:eks
+          codes:
+            - 400
+        - name: aws-node
+          codes:
+            - 400
+        - name: rx:system
+          codes:
+            - 400
+        - name: admin
+          codes:
+            - 400
+        - name: edit
+          codes:
+            - 400
+        - name: view
+          codes:
+            - 400
+        - name: cluster-admin
+          codes:
+            - 400
+      rbac.authorization.k8s.io/v1/rolebindings:
+        - name: rx:kube
+      rbac.authorization.k8s.io/v1/roles:
+        - name: rx:kube
+      apps/v1/daemonsets:
+        - name: rx:kube-system
+      apps/v1/deployments:
+        - name: rx:kube-system
+      apps/v1/replicasets:
+        - name: rx:kube
+      networking.k8s.io/v1/networkpolicies:
+        - name: rx:freddy
+      policy/v1beta1/podsecuritypolicies:
+        - name: rx:eks
+      v1/configmaps:
+        - name: rx:kube
+      v1/namespaces:
+        - name: rx:kube
+      v1/pods:
+        - name: rx:kube
+      v1/serviceaccounts:
+        - name: rx:kube
+      v1/secrets:
+        - name: rx:kube
+      v1/services:
+        - name: rx:kube
+          codes:
+            - 404
 
-  # Nodes specific sanitization
-  node:
-    limits:
-      cpu: 90
-      memory: 80
+  resources:
+    # Nodes specific sanitization
+    node:
+      limits:
+        cpu: 90
+        memory: 80
 
-  # Pods specific sanitization
-  pod:
-    limits:
-      # Fail if cpu is over 80%
-      cpu: 80
-      # Fail if pod mem is over 75%
-      memory: 75
-    # Fail if more than 3 restarts on any pods
-    restarts: 3
+    # Pods specific sanitization
+    pod:
+      limits:
+        # Fail if cpu is over 80%
+        cpu: 80
+        # Fail if pod mem is over 75%
+        memory: 75
+      # Fail if more than 3 restarts on any pods
+      restarts: 3
 
   # Code specifies a custom severity level ie critical=3, warn=2, info=1
   codes:

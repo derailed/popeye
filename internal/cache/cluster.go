@@ -3,20 +3,22 @@
 
 package cache
 
+import "github.com/Masterminds/semver"
+
 // ClusterKey tracks Cluster resource references
 const ClusterKey = "cl"
 
 // Cluster represents Cluster cache.
 type Cluster struct {
-	major, minor string
+	rev *semver.Version
 }
 
 // NewCluster returns a new Cluster cache.
-func NewCluster(major, minor string) *Cluster {
-	return &Cluster{major: major, minor: minor}
+func NewCluster(v *semver.Version) *Cluster {
+	return &Cluster{rev: v}
 }
 
 // ListVersion returns cluster server version.
-func (c *Cluster) ListVersion() (string, string) {
-	return c.major, c.minor
+func (c *Cluster) ListVersion() *semver.Version {
+	return c.rev
 }

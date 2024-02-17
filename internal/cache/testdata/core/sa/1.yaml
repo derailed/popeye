@@ -1,0 +1,54 @@
+---
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: default
+      namespace: default
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: sa1
+      namespace: default
+    automountServiceAccountToken: false
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: sa2
+      namespace: default
+    automountServiceAccountToken: true
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: sa3
+      namespace: default
+    automountServiceAccountToken: true
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: sa4
+      namespace: default
+    automountServiceAccountToken: false
+    secrets:
+      - kind: Secret
+        namespace: default
+        name: bozo
+        apiVersion: v1
+    imagePullSecrets:
+      - name: s1
+        namespace: fred
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: sa5
+      namespace: default
+    automountServiceAccountToken: false
+    secrets:
+      - kind: Secret
+        namespace: default
+        name: s1
+        apiVersion: v1
+    imagePullSecrets:
+      - name: bozo

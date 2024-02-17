@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    name: svc1
+    namespace: default
+    labels:
+      app: p1
+  subsets:
+  - addresses:
+    - ip: 10.244.1.27
+      nodeName: n1
+      targetRef:
+        kind: Pod
+        name: p1
+        namespace: default
+    ports:
+    - name: http
+      port: 4000
+      protocol: TCP
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    name: svc2
+    namespace: default
+  subsets:
+  - addresses:
+    - ip: 10.244.1.19
+      nodeName: n1
+      targetRef:
+        kind: Pod
+        name: p2
+        namespace: default
+    ports:
+    - name: service
+      port: 3000
+      protocol: TCP
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    name: svc-none
+    namespace: default
+  subsets:
+  - addresses:
+    - ip: 10.244.1.19
+      nodeName: n1
+      targetRef:
+        kind: Pod
+        name: p5
+        namespace: default
+    - ip: 10.244.1.19
+      nodeName: n1
+      targetRef:
+        kind: Pod
+        name: p4
+        namespace: default
+    ports:
+    - name: service
+      port: 3000
+      protocol: TCP
+- apiVersion: v1
+  kind: Endpoints
+  metadata:
+    name: svc4
+    namespace: default
+  subsets:

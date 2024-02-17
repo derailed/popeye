@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: Node
+  metadata:
+    labels:
+      node-role.kubernetes.io/control-plane: ""
+      node-role.kubernetes.io/master: ""
+      node.kubernetes.io/exclude-from-external-load-balancers: ""
+    name: n1
+  spec:
+    podCIDR: 10.244.0.0/24
+    podCIDRs:
+    - 10.244.0.0/24
+  status:
+    addresses:
+    - address: 192.168.228.3
+      type: InternalIP
+    - address: dashb-control-plane
+      type: Hostname
+    allocatable:
+      cpu: 4
+      ephemeral-storage: 816748224Ki
+      memory: 400Mi
+      pods: "110"
+    capacity:
+      cpu: "10"
+      ephemeral-storage: 816748224Ki
+      memory: 8124744Ki
+      pods: "110"
+    conditions:
+    - lastHeartbeatTime: "2024-01-27T15:31:39Z"
+      lastTransitionTime: "2024-01-03T20:35:11Z"
+      message: kubelet has sufficient memory available
+      reason: KubeletHasSufficientMemory
+      status: "False"
+      type: MemoryPressure
+    - lastHeartbeatTime: "2024-01-27T15:31:39Z"
+      lastTransitionTime: "2024-01-03T20:35:11Z"
+      message: kubelet has no disk pressure
+      reason: KubeletHasNoDiskPressure
+      status: "False"
+      type: DiskPressure
+    - lastHeartbeatTime: "2024-01-27T15:31:39Z"
+      lastTransitionTime: "2024-01-03T20:35:11Z"
+      message: kubelet has sufficient PID available
+      reason: KubeletHasSufficientPID
+      status: "False"
+      type: PIDPressure
+    - lastHeartbeatTime: "2024-01-27T15:31:39Z"
+      lastTransitionTime: "2024-01-03T20:35:38Z"
+      message: kubelet is posting ready status
+      reason: KubeletReady
+      status: "True"
+      type: Ready
+    daemonEndpoints:
+      kubeletEndpoint:
+        Port: 10250
+    images:
+    nodeInfo:
+      architecture: arm64
+      bootID: 0836e65d-3091-4cb5-8ad4-8f65425f87e3
+      containerRuntimeVersion: containerd://1.5.1
+      kernelVersion: 6.5.10-orbstack-00110-gbcfe04c86d2f
+      kubeProxyVersion: v1.21.1
+      kubeletVersion: v1.21.1
+      machineID: 6bbc44bb821d48b995092021d706d8e6
+      operatingSystem: linux
+      osImage: Ubuntu 20.10
+      systemUUID: 6bbc44bb821d48b995092021d706d8e6

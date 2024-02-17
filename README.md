@@ -1,8 +1,13 @@
 <img src="https://github.com/derailed/popeye/raw/master/assets/popeye_logo.png" align="right" width="250" height="auto">
 
-# Popeye - A Kubernetes Cluster Sanitizer
+# Popeye - A Kubernetes Live Cluster Resource Linter
 
-Popeye is a utility that scans live Kubernetes cluster and reports potential issues with deployed resources and configurations. It sanitizes your cluster based on what's deployed and not what's sitting on disk. By scanning your cluster, it detects misconfigurations and helps you to ensure that best practices are in place, thus preventing future headaches. It aims at reducing the cognitive *over*load one faces when operating a Kubernetes cluster in the wild. Furthermore, if your cluster employs a metric-server, it reports potential resources over/under allocations and attempts to warn you should your cluster run out of capacity.
+Popeye is a utility that scans live Kubernetes clusters and reports potential issues with deployed resources and configurations.
+As Kubernetes landscapes grows, it is becoming a challenge for a human to track the slew of manifests and policies that orchestrate a cluster.
+Popeye scans your cluster based on what's deployed and not what's sitting on disk. By linting your cluster, it detects misconfigurations,
+stale resources and assists you to ensure that best practices are in place, thus preventing future headaches.
+It aims at reducing the cognitive *over*load one faces when operating a Kubernetes cluster in the wild.
+Furthermore, if your cluster employs a metric-server, it reports potential resources over/under allocations and attempts to warn you should your cluster run out of capacity.
 
 Popeye is a readonly tool, it does not alter any of your Kubernetes resources in any way!
 
@@ -22,7 +27,30 @@ Popeye is a readonly tool, it does not alter any of your Kubernetes resources in
 
 ---
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/derailed/popeye)
+## Screenshots
+
+### Console
+
+<img src="assets/screens/console.png"/>
+
+### JSON
+
+<img src="assets/screens/json.png"/>
+
+### HTML
+
+You can dump the scan report to HTML.
+
+<img src="assets/screens/html.png"/>
+
+### Grafana Dashboard
+
+Popeye publishes [Prometheus](https://prometheus.io) metrics.
+We provided a sample Popeye dashboard to get you started in this repo.
+
+<img src="assets/screens/pop-dash.png"/>
+
+---
 
 ## Installation
 
@@ -44,7 +72,7 @@ Popeye is available on Linux, OSX and Windows platforms.
     ```
 
 * Building from source
-   Popeye was built using go 1.12+. In order to build Popeye from source you must:
+   Popeye was built using go 1.21+. In order to build Popeye from source you must:
    1. Clone the repo
    2. Add the following command in your go.mod file
 
@@ -67,7 +95,7 @@ Popeye is available on Linux, OSX and Windows platforms.
    git clone https://github.com/derailed/popeye
    cd popeye
    # Build and install
-   go install
+   make build
    # Run
    popeye
    ```
@@ -80,24 +108,25 @@ Popeye is available on Linux, OSX and Windows platforms.
     export TERM=xterm-256color
     ```
 
-## Sanitizers
+---
+
+## Linters
 
 Popeye scans your cluster for best practices and potential issues.
-Currently, Popeye only looks at nodes, namespaces, pods and services.
-More will come soon! We are hoping Kubernetes friends will pitch'in
-to make Popeye even better.
+Currently, Popeye only looks for a given set of curated Kubernetes resources.
+More will come soon!
+We are hoping Kubernetes friends will pitch'in to make Popeye even better.
 
-The aim of the sanitizers is to pick up on misconfigurations, i.e. things
+The aim of the linters is to pick up on misconfigurations, i.e. things
 like port mismatches, dead or unused resources, metrics utilization,
 probes, container images, RBAC rules, naked resources, etc...
 
 Popeye is not another static analysis tool. It runs and inspect Kubernetes resources on
-live clusters and sanitize resources as they are in the wild!
+live clusters and lint resources as they are in the wild!
 
-Here is a list of some of the available sanitizers:
+Here is a list of some of the available linters:
 
-
-|    | Resource                | Sanitizers                                                              | Aliases    |
+|    | Resource                | Linters                                                                 | Aliases    |
 |----|-------------------------|-------------------------------------------------------------------------|------------|
 | 🛀 | Node                    |                                                                         | no         |
 |    |                         | Conditions ie not ready, out of mem/disk, network, pids, etc            |            |
@@ -151,41 +180,54 @@ Here is a list of some of the available sanitizers:
 | 🛀 | Ingress                 |                                                                         |            |
 |    |                         | Valid                                                                   | ing        |
 | 🛀 | NetworkPolicy           |                                                                         |            |
-|    |                         | Valid                                                                   | np         |
+|    |                         | Valid, Stale, Guarded                                                   | np         |
 | 🛀 | PodSecurityPolicy       |                                                                         |            |
 |    |                         | Valid                                                                   | psp        |
+| 🛀 | Cronjob                 |                                                                         |            |
+|    |                         | Valid, Suspended, Runs                                                  | cj         |
+| 🛀 | Job                     |                                                                         |            |
+|    |                         | Pod checks                                                              | job        |
+| 🛀 | GatewayClass            |                                                                         |            |
+|    |                         | Valid, Unused                                                           | gwc        |
+| 🛀 | Gateway                 |                                                                         |            |
+|    |                         | Valid, Unused                                                           | gw         |
+| 🛀 | HTTPRoute               |                                                                         |            |
+|    |                         | Valid, Unused                                                           | gwr        |
 
 You can also see the [full list of codes](docs/codes.md)
 
-### Save the report
+---
+
+## Saving Scans
 
 To save the Popeye report to a file pass the `--save` flag to the command.
-By default it will create a temp directory and will store the report there,
-the path of the temp directory will be printed out on STDOUT.
+By default it will create a tmp directory and will store your scan report there.
+The path of the tmp directory will be printed out on STDOUT.
 If you have the need to specify the output directory for the report,
-you can use the environment variable `POPEYE_REPORT_DIR`.
-By default, the name of the output file follow the following format : `sanitizer_<cluster-name>_<time-UnixNano>.<output-extension>` (e.g. : "sanitizer-mycluster-1594019782530851873.html").
-If you have the need to specify the output file name for the report,
-you can pass the `--output-file` flag with the filename you want as parameter.
+you can use this environment variable `POPEYE_REPORT_DIR`.
+By default, the name of the output file follow the following format : `lint_<cluster-name>_<time-UnixNano>.<output-extension>` (e.g. : "lint-mycluster-1594019782530851873.html").
+If you want to also specify the output file name for the report, you can pass the `--output-file` flag with the filename you want as parameter.
 
 Example to save report in working directory:
 
 ```shell
-  $ POPEYE_REPORT_DIR=$(pwd) popeye --save
+POPEYE_REPORT_DIR=$(pwd) popeye --save
 ```
 
 Example to save report in working directory in HTML format under the name "report.html" :
 
 ```shell
-  $ POPEYE_REPORT_DIR=$(pwd) popeye --save --out html --output-file report.html
+POPEYE_REPORT_DIR=$(pwd) popeye --save --out html --output-file report.html
 ```
 
-### Save the report to S3
+### Save To S3
 
-You can also save the generated report to an AWS S3 bucket (or another S3 compatible Object Storage) with providing the flag `--s3-bucket`. As parameter you need to provide the name of the S3 bucket where you want to store the report.
+Alternatively, you can push the generated reports to an AWS S3 bucket (or other S3 compatible Object Storage) by providing the flag `--s3-bucket`.
+For parameters you need to provide the name of the S3 bucket where you want to store the report.
 To save the report in a bucket subdirectory provide the bucket parameter as `bucket/path/to/report`.
 
-Underlying the AWS Go lib is used which is handling the credential loading. For more information check out the official [documentation](https://docs.aws.amazon.com/sdk-for-go/api/aws/session/).
+The AWS Go lib is used which handles your credentials.
+For more information check out the official [documentation](https://docs.aws.amazon.com/sdk-for-go/api/aws/session/).
 
 Example to save report to S3:
 
@@ -193,66 +235,68 @@ Example to save report to S3:
 popeye --s3-bucket=NAME-OF-YOUR-S3-BUCKET/OPTIONAL/SUBDIRECTORY --out=json
 ```
 
-If AWS sS3 is not your bag, you can further define an S3 compatible storage (OVHcloud Object Storage, Minio, Google cloud storage, etc...) using s3-endpoint and s3-region as so:
+If AWS S3 is not your bag, you can further define an S3 compatible storage (OVHcloud Object Storage, Minio, Google cloud storage, etc...) using s3-endpoint and s3-region as so:
 
 ```shell
 popeye --s3-bucket=NAME-OF-YOUR-S3-BUCKET/OPTIONAL/SUBDIRECTORY --s3-region YOUR-REGION --s3-endpoint URL-OF-THE-ENDPOINT
 ```
 
-### Run public Docker image locally
+---
 
-You don't have to build and/or install the binary to run popeye: you can just
-run it directly from the official docker repo on DockerHub. The default command
-when you run the docker container is `popeye`, so you just need to pass
-whatever cli args are normally passed to popeye.  To access your clusters, map
-your local kube config directory into the container with `-v` :
+## Docker Support
 
-```shell
-  docker run --rm -it \
-    -v $HOME/.kube:/root/.kube \
-    derailed/popeye --context foo -n bar
-```
-
-Running the above docker command with `--rm` means that the container gets
-deleted when popeye exits. When you use `--save`, it will write it to /tmp in
-the container and then delete the container when popeye exits, which means you
-lose the output. To get around this, map /tmp to the container's /tmp.
-NOTE: You can override the default output directory location by setting `POPEYE_REPORT_DIR` env variable.
+You can also run Popeye in a container by running it directly from the official docker repo on DockerHub.
+The default command when you run the docker container is `popeye`, so you customize the scan by using the supported cli flags.
+To access your clusters, map your local kubeconfig directory into the container with `-v` :
 
 ```shell
-  docker run --rm -it \
-    -v $HOME/.kube:/root/.kube \
-    -e POPEYE_REPORT_DIR=/tmp/popeye \
-    -v /tmp:/tmp \
-    derailed/popeye --context foo -n bar --save --output-file my_report.txt
-
-  # Docker has exited, and the container has been deleted, but the file
-  # is in your /tmp directory because you mapped it into the container
-  $ cat /tmp/popeye/my_report.txt
-    <snip>
+docker run --rm -it -v $HOME/.kube:/root/.kube derailed/popeye --context foo -n bar
 ```
+
+Running the above docker command with `--rm` means that the container gets deleted when Popeye exits.
+When you use `--save`, it will write it to /tmp in the container and then delete the container when popeye exits, which means you lose the output ;(
+To get around this, map /tmp to the container's /tmp.
+
+> NOTE: You can override the default output directory location by setting `POPEYE_REPORT_DIR` env variable.
+
+```shell
+docker run --rm -it \
+  -v $HOME/.kube:/root/.kube \
+  -e POPEYE_REPORT_DIR=/tmp/popeye \
+  -v /tmp:/tmp \
+  derailed/popeye --context foo -n bar --save --output-file my_report.txt
+
+# Docker has exited, and the container has been deleted, but the file
+# is in your /tmp directory because you mapped it into the container
+cat /tmp/popeye/my_report.txt
+<snip>
+```
+
+---
 
 ## The Command Line
 
-You can use Popeye standalone or using a spinach yaml config to
-tune the sanitizer. Details about the Popeye configuration file are below.
+You can use Popeye wide open or using a spinach yaml config to
+tune your linters. Details about the Popeye configuration file are below.
 
 ```shell
-# Dump version info
+# Dump version info and logs location
 popeye version
 # Popeye a cluster using your current kubeconfig environment.
 popeye
 # Popeye uses a spinach config file of course! aka spinachyaml!
-popeye -f spinach.yml
+popeye -f spinach.yaml
 # Popeye a cluster using a kubeconfig context.
 popeye --context olive
 # Stuck?
 popeye help
 ```
 
+---
+
 ## Output Formats
 
-Popeye can generate sanitizer reports in a variety of formats. You can use the -o cli option and pick your poison from there.
+Popeye can generate linter reports in a variety of formats. You can use the -o cli option and pick your poison from there.
 
 | Format     | Description                                            | Default | Credits                                      |
 |------------|--------------------------------------------------------|---------|----------------------------------------------|
@@ -262,31 +306,85 @@ Popeye can generate sanitizer reports in a variety of formats. You can use the -
 | html       | As HTML                                                |         |                                              |
 | json       | As JSON                                                |         |                                              |
 | junit      | For the Java melancholic                               |         |                                              |
-| prometheus | Dumps report a prometheus scrapable metrics           |         | [dardanel](https://github.com/eminugurkenar) |
-| score      | Returns a single cluster sanitizer score value (0-100) |         | [kabute](https://github.com/kabute)          |
+| prometheus | Dumps report a prometheus metrics                      |         | [dardanel](https://github.com/eminugurkenar) |
+| score      | Returns a single cluster linter score value (0-100)    |         | [kabute](https://github.com/kabute)          |
 
-## The SpinachYAML Configuration
+---
 
-A spinach.yml configuration file can be specified via the `-f` option to further configure the sanitizers. This file may specify
-the container utilization threshold and specific sanitizer configurations as well as resources that will be excluded from the sanitization.
+## The Prom Queen!
 
-NOTE: This file will change as Popeye matures!
+Popeye can publish Prometheus metrics directly from a scan. You will need to have access to a prometheus pushgateway and credentials.
 
-Under the `excludes` key you can configure to skip certain resources, or certain checks by code. Here, resource types are indicated in a group/version/resource notation. Example: to exclude PodDisruptionBugdets, use the notation `policy/v1/poddisruptionbudgets`. Note that the resource name is written in the plural form and everything is spelled in lowercase. For resources without an API group, the group part is omitted (Examples: `v1/pods`, `v1/services`, `v1/configmaps`).
+> NOTE! These are subject to change based on users feedback and usage!!
 
-A resource is identified by a resource kind and a fully qualified resource name, i.e. `namespace/resource_name`.
+In order to publish metrics, additional cli args must be present.
 
-For example, the FQN of a pod named `fred-1234` in the namespace `blee` will be `blee/fred-1234`. This provides for differentiating `fred/p1` and `blee/p1`. For cluster wide resources, the FQN is equivalent to the name. Exclude rules can have either a straight string match or a regular expression. In the latter case the regular expression must be indicated using the `rx:` prefix.
+```shell
+# Run popeye using console output and push prom metrics.
+popeye --push-gtwy-url http://localhost:9091
 
-NOTE! Please be careful with your regex as more resources than expected may get excluded from the report with a *loose* regex rule. When your cluster resources change, this could lead to a sub-optimal sanitization. Once in a while it might be a good idea to run Popeye „configless“ to make sure you will recognize any new issues that may have arisen in your clusters…
+# Run popeye using a saved html output and push prom metrics.
+# NOTE! When scan are dump to disk, popeye_cluster_score metric below includes
+# an additional label to track the persisted artifact so you can aggregate with the scan
+# Don't think it's the correct approach as this changes the metric cardinality on every push.
+# Hence open for suggestions here??
+popeye -o html --save --push-gtwy-url http://localhost:9091
+```
 
-Here is an example spinach file as it stands in this release. There is a fuller eks and aks based spinach file in this repo under `spinach`. (BTW: for new comers into the project, might be a great way to contribute by adding cluster specific spinach file PRs...)
+### PopProm metrics
+
+The following Popeye prometheus metrics are published:
+
+* `popeye_severity_total` [gauge] tracks various counts based on severity.
+* `popeye_code_total` [gauge] tracks counts by Popeye's linter codes.
+* `popeye_linter_tally_total` [gauge] tracks counts per linters.
+* `popeye_report_errors_total` [gauge] tracks scan errors totals.
+* `popeye_cluster_score` [gauge] tracks scan report scores.
+
+
+### PopGraf
+
+A sample [Grafana](https://grafana.com) dashboard can be found in this repo to get you started.
+
+> NOTE! Work in progress, please feel free to contribute if you have UX/grafana/promql chops.
+
+
+---
+
+## SpinachYAML
+
+A spinach YAML configuration file can be specified via the `-f` option to further configure the linters. This file may specify
+the container utilization threshold and specific linter configurations as well as resources and codes that will be excluded from the linter.
+
+> NOTE! This file will change as Popeye matures!
+
+Under the `excludes` key you can configure to skip certain resources, or linter codes.
+Popeye's linters are named after the k8s resource names.
+For example the PodDisruptionBudget linter is named `poddisruptionbudgets` and scans `policy/v1/poddisruptionbudgets`
+
+> NOTE! The linter uses the plural resource `kind` form and everything is spelled in lowercase.
+
+A resource fully qualified name aka `FQN` is used in the spinach file to identity a resource name i.e. `namespace/resource_name`.
+
+For example, the FQN of a pod named `fred-1234` in the namespace `blee` will be `blee/fred-1234`. This provides for differentiating `fred/p1` and `blee/p1`.
+For cluster wide resources, the FQN is equivalent to the name.
+Exclude rules can be either a straight string match or a regular expression. In the latter case the regular expression must be specified via the `rx:` prefix.
+
+> NOTE! Please be careful with your regex as more resources than expected may get excluded from the report with a *loose* regex rule.
+> When your cluster resources change, this could lead to a sub-optimal scans.
+> Thus we recommend running Popeye `wide open` once in a while to make sure you will pick up on any new issues that may have arisen in your clusters…
+
+Here is an example spinach file as it stands in this release.
+There is a fuller eks and aks based spinach file in this repo under `spinach`.
+(BTW: for new comers into the project, might be a great way to contribute by adding cluster specific spinach file PRs...)
 
 ```yaml
+# spinach.yaml
+
 # A Popeye sample configuration file
 popeye:
   # Checks resources against reported metrics usage.
-  # If over/under these thresholds a sanitization warning will be issued.
+  # If over/under these thresholds a linter warning will be issued.
   # Your cluster must run a metrics-server for these to take place!
   allocations:
     cpu:
@@ -298,72 +396,91 @@ popeye:
 
   # Excludes excludes certain resources from Popeye scans
   excludes:
-    v1/pods:
-    # In the monitoring namespace excludes all probes check on pod's containers.
-    - name: rx:monitoring
-      codes:
-      - 102
-    # Excludes all istio-proxy container scans for pods in the icx namespace.
-    - name: rx:icx/.*
-      containers:
-        # Excludes istio init/sidecar container from scan!
-        - istio-proxy
-        - istio-init
-    # ConfigMap sanitizer exclusions...
-    v1/configmaps:
-      # Excludes key must match the singular form of the resource.
-      # For instance this rule will exclude all configmaps named fred.v2.3 and fred.v2.4
-      - name: rx:fred.+\.v\d+
-    # Namespace sanitizer exclusions...
-    v1/namespaces:
-      # Exclude all fred* namespaces if the namespaces are not found (404), other error codes will be reported!
-      - name: rx:fred
-        codes:
-          - 404
-      # Exclude all istio* namespaces from being scanned.
-      - name: rx:istio
-    # Completely exclude horizontal pod autoscalers.
-    autoscaling/v1/horizontalpodautoscalers:
-      - name: rx:.*
+    # [NEW!] Global exclude resources and codes globally of any linters.
+    global:
+      fqns: [rx:^kube-] # => excludes all resources in kube-system, kube-public, etc..
+      # [NEW!] Exclude resources for all linters matching these labels
+      labels:
+        app: [bozo, bono] #=> exclude any resources with labels matching either app=bozo or app=bono
+      # [NEW!] Exclude resources for all linters matching these annotations
+      annotations:
+        fred: [blee, duh] # => exclude any resources with annotations matching either fred=blee or fred=duh
+      # [NEW!] Exclude scan codes globally via straight codes or regex!
+      codes: ["300", "206", "rx:^41"] # => exclude issue codes 300, 206, 410, 415 (Note: regex match!)
 
-  # Configure node resources.
-  node:
-    # Limits set a cpu/mem threshold in % ie if cpu|mem > limit a lint warning is triggered.
-    limits:
-      # CPU checks if current CPU utilization on a node is greater than 90%.
-      cpu:    90
-      # Memory checks if current Memory utilization on a node is greater than 80%.
-      memory: 80
+    # [NEW!] Configure individual resource linters
+    linters:
+      # Configure the namespaces linter for v1/namespaces
+      namespaces:
+        # [NEW!] Exclude these codes for all namespace resources straight up or via regex.
+        codes: ["100", "rx:^22"] # => exclude codes 100, 220, 225, ...
+        # [NEW!] Excludes specific namespaces from the scan
+        instances:
+          - fqns: [kube-public, kube-system] # => skip ns kube-pulbic and kube-system
+          - fqns: [blee-ns]
+            codes: [106] # => skip code 106 for namespace blee-ns
 
-  # Configure pod resources
-  pod:
-    # Restarts check the restarts count and triggers a lint warning if above threshold.
-    restarts:
-      3
-    # Check container resource utilization in percent.
-    # Issues a lint warning if about these threshold.
-    limits:
-      cpu:    80
-      memory: 75
+      # Configure the pods linter for v1/pods.
+      pods:
+        instances:
+          # [NEW!] exclude all pods matching these labels.
+          - labels:
+              app: [fred,blee] # Exclude codes 102, 105 for any pods with labels app=fred or app=blee
+            codes: [102, 105]
 
-  # Configure a list of allowed registries to pull images from
+  resources:
+    # Configure node resources.
+    node:
+      # Limits set a cpu/mem threshold in % ie if cpu|mem > limit a lint warning is triggered.
+      limits:
+        # CPU checks if current CPU utilization on a node is greater than 90%.
+        cpu:    90
+        # Memory checks if current Memory utilization on a node is greater than 80%.
+        memory: 80
+
+    # Configure pod resources
+    pod:
+      # Restarts check the restarts count and triggers a lint warning if above threshold.
+      restarts: 3
+      # Check container resource utilization in percent.
+      # Issues a lint warning if about these threshold.
+      limits:
+        cpu:    80
+        memory: 75
+
+
+  # [New!] overrides code severity
+  overrides:
+    # Code specifies a custom severity level ie critical=3, warn=2, info=1
+    - code: 206
+      severity: 1
+
+  # Configure a list of allowed registries to pull images from.
+  # Any resources not using the following registries will be flagged!
   registries:
     - quay.io
     - docker.io
 ```
 
-## Popeye In Your Clusters!
+---
 
-Alternatively, Popeye is containerized and can be run directly in your Kubernetes clusters as a one-off or CronJob.
+## In Cluster
+
+Popeye is containerized and can be run directly in your Kubernetes clusters as a one-off or CronJob.
 
 Here is a sample setup, please modify per your needs/wants. The manifests for this are in the k8s
 directory in this repo.
 
 ```shell
-kubectl apply -f k8s/popeye/ns.yml && kubectl apply -f k8s/popeye
+kubectl apply -f k8s/popeye
 ```
 
 ```yaml
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name:      popeye
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -381,7 +498,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: popeye
-              image: derailed/popeye
+              image: derailed/popeye:vX.Y.Z
               imagePullPolicy: IfNotPresent
               args:
                 - -o
@@ -395,15 +512,15 @@ spec:
 
 The `--force-exit-zero` should be set. Otherwise, the pods will end up in an error state.
 
-> Note: Popeye exits with a non-zero error code if the report has any errors.
+> NOTE! Popeye exits with a non-zero error code if any lint errors are detected.
 
+### Popeye Got Your RBAC!
 
-## Popeye got your RBAC!
-
-In order for Popeye to do his work, the signed-in user must have enough RBAC oomph to
-get/list the resources mentioned above.
+In order for Popeye to do his work, the signed-in user must have enough RBAC oomph to get/list the resources mentioned above.
 
 Sample Popeye RBAC Rules (please note that those are **subject to change**.)
+
+> NOTE! Please review and tune per your cluster policies.
 
 ```yaml
 ---
@@ -425,7 +542,6 @@ rules:
   resources:
    - configmaps
    - endpoints
-   - limitranges
    - namespaces
    - nodes
    - persistentvolumes
@@ -446,6 +562,17 @@ rules:
   resources:
   - ingresses
   - networkpolicies
+  verbs:     ["get", "list"]
+- apiGroups: ["batch.k8s.io"]
+  resources:
+  - cronjobs
+  - jobs
+  verbs:     ["get", "list"]
+- apiGroups: ["gateway.networking.k8s.io"]
+  resources:
+  - gateway-classes
+  - gateways
+  - httproutes
   verbs:     ["get", "list"]
 - apiGroups: ["autoscaling"]
   resources:
@@ -485,24 +612,16 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-## Screenshots
-
-### Cluster D Score
-
-<img src="assets/d_score.png"/>
-
-### Cluster A Score
-
-<img src="assets/a_score.png"/>
+---
 
 ## Report Morphology
 
-The sanitizer report outputs each resource group scanned and their potential issues.
-The report is color/emoji coded in term of Sanitizer severity levels:
+The lint report outputs each resource group scanned and their potential issues.
+The report is color/emoji coded in term of linter severity levels:
 
 | Level | Icon | Jurassic | Color     | Description     |
 |-------|------|----------|-----------|-----------------|
-| Ok    | ✅    | OK       | Green     | Happy!          |
+| Ok    | ✅   | OK       | Green     | Happy!          |
 | Info  | 🔊   | I        | BlueGreen | FYI             |
 | Warn  | 😱   | W        | Yellow    | Potential Issue |
 | Error | 💥   | E        | Red       | Action required |
@@ -510,20 +629,26 @@ The report is color/emoji coded in term of Sanitizer severity levels:
 The heading section for each scanned Kubernetes resource provides a summary count
 for each of the categories above.
 
-The Summary section provides a **Popeye Score** based on the sanitization pass on the given cluster.
+The Summary section provides a **Popeye Score** based on the linter pass on the given cluster.
+
+---
 
 ## Known Issues
 
 This initial drop is brittle. Popeye will most likely blow up when…
 
-* You're running older versions of Kubernetes. Popeye works best with Kubernetes 1.13+.
+* You're running older versions of Kubernetes. Popeye works best with Kubernetes 1.25.X.
 * You don't have enough RBAC oomph to manage your cluster (see RBAC section)
+
+---
 
 ## Disclaimer
 
 This is work in progress! If there is enough interest in the Kubernetes
-community, we will enhance per your recommendations/contributions. Also if you
-dig this effort, please let us know that too!
+community, we will enhance per your recommendations/contributions.
+Also if you dig this effort, please let us know that too!
+
+---
 
 ## ATTA Girls/Boys!
 
@@ -531,12 +656,12 @@ Popeye sits on top of many of open source projects and libraries. Our *sincere*
 appreciations to all the OSS contributors that work nights and weekends
 to make this project a reality!
 
-## Contact Info
+### Contact Info
 
 1. **Email**:   fernand@imhotep.io
 2. **Twitter**: [@kitesurfer](https://twitter.com/kitesurfer?lang=en)
 
 ---
 
-<img src="https://github.com/derailed/popeye/blob/master/assets/imhotep_logo.png" width="32" height="auto"/>  &nbsp;© 2020 Imhotep Software LLC.
+<img src="https://github.com/derailed/popeye/blob/master/assets/imhotep_logo.png" width="32" height="auto"/>  &nbsp;© 2024 Imhotep Software LLC.
 All materials licensed under [Apache v2.0](http://www.apache.org/licenses/LICENSE-2.0)
