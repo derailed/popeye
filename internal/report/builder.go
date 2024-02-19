@@ -170,14 +170,11 @@ func (b *Builder) PrintSummary(s *ScanReport) {
 
 // PrintClusterInfo displays cluster information.
 func (b *Builder) PrintClusterInfo(s *ScanReport, metrics bool) {
-	cl, ct := b.ClusterName, b.ContextName
+	cl := b.ClusterName
 	if cl == "" {
 		cl = "n/a"
 	}
-	if ct == "" {
-		ct = "n/a"
-	}
-	s.Open(Titleize(fmt.Sprintf("General [%s/%s] (%s)", cl, ct, b.Report.Timestamp), -1), nil)
+	s.Open(Titleize(fmt.Sprintf("General [%s] (%s)", cl, b.Report.Timestamp), -1), nil)
 	{
 		s.Print(rules.OkLevel, 1, "Connectivity")
 		if metrics {

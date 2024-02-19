@@ -8,7 +8,9 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/version"
 
+	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/rules"
 	"github.com/derailed/popeye/internal/test"
@@ -22,6 +24,20 @@ func TestClusterLint(t *testing.T) {
 	}{
 		"good": {
 			major: "1", minor: "29",
+			metrics: true,
+			e: map[string]issues.Issues{
+				"Version": {
+					{
+						GVR:     "clusters",
+						Group:   issues.Root,
+						Message: "[POP-406] K8s version OK",
+						Level:   rules.OkLevel,
+					},
+				},
+			},
+		},
+		"plus": {
+			major: "1", minor: "29+",
 			metrics: true,
 			e: map[string]issues.Issues{
 				"Version": {
@@ -76,9 +92,8 @@ func newMockCluster(major, minor string, metrics bool) mockCluster {
 	return mockCluster{major: major, minor: minor, metrics: metrics}
 }
 
-func (c mockCluster) ListVersion() *semver.Version {
-	v, _ := semver.NewVersion(c.major + "." + c.minor)
-	return v
+func (c mockCluster) ListVersion() (*semver.Version, error) {
+	return dag.ParseVersion(&version.Info{Major: c.major, Minor: c.minor})
 }
 
 func (c mockCluster) HasMetrics() bool {

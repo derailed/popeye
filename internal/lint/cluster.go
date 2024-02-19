@@ -25,7 +25,7 @@ type (
 
 	// ClusterLister list available Clusters on a cluster.
 	ClusterLister interface {
-		ListVersion() *semver.Version
+		ListVersion() (*semver.Version, error)
 		HasMetrics() bool
 	}
 )
@@ -44,7 +44,10 @@ func (c *Cluster) Lint(ctx context.Context) error {
 }
 
 func (c *Cluster) checkVersion(ctx context.Context) error {
-	rev := c.ListVersion()
+	rev, err := c.ListVersion()
+	if err != nil {
+		return err
+	}
 
 	ctx = internal.WithSpec(ctx, specFor("Version", nil))
 	if rev.Major() != tolerableMajor || rev.Minor() < tolerableMinor {
