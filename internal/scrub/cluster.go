@@ -11,6 +11,7 @@ import (
 	"github.com/derailed/popeye/internal/lint"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/derailed/popeye/types"
+	"github.com/rs/zerolog/log"
 )
 
 // Cluster represents a Cluster scruber.
@@ -33,7 +34,7 @@ func NewCluster(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
 	var err error
 	cl.Cluster, err = c.cluster(ctx)
 	if err != nil {
-		cl.AddErr(ctx, err)
+		log.Error().Err(err).Msgf("Unable to gather cluster info")
 	}
 
 	return &cl

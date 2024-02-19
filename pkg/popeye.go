@@ -147,7 +147,7 @@ func (p *Popeye) initFactory() error {
 		}
 		ok, err := clt.CanI(client.AllNamespaces, gvr, types.ReadAllAccess...)
 		if !ok || err != nil {
-			return fmt.Errorf("Current user does not have read access for resource %q -- %w", gvr, err)
+			return fmt.Errorf("current user does not have read access for resource %q -- %w", gvr, err)
 		}
 		if _, err := f.ForResource(client.AllNamespaces, gvr); err != nil {
 			return err
@@ -186,9 +186,6 @@ func (p *Popeye) Lint() (int, int, error) {
 		return 0, 0, err
 	}
 	log.Debug().Msgf("Score [%d]", score)
-
-	if config.IsStrSet(p.flags.S3.Bucket) {
-	}
 
 	return errCount, score, p.dump(true, p.flags.Exhaust())
 }
