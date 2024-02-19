@@ -20,10 +20,6 @@ func ListVersion(ctx context.Context) (*semver.Version, error) {
 	if err != nil {
 		return nil, err
 	}
-	rev, err := semver.NewVersion(info.Major + "." + info.Minor)
-	if err != nil {
-		return nil, err
-	}
 
-	return rev, nil
+	return ParseVersion(info)
 }

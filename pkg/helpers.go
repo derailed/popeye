@@ -8,7 +8,44 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime/debug"
+	"strings"
+
+	"github.com/derailed/popeye/internal/report"
+	"github.com/rs/zerolog/log"
 )
+
+func BailOut(err error) {
+	printMsgLogo("DOH", "X", report.ColorOrangish, report.ColorRed)
+	fmt.Printf("\n\nBoom! %v (see logs)\n", err)
+	log.Error().Msgf("%v", err)
+	log.Error().Msg(string(debug.Stack()))
+	os.Exit(1)
+}
+
+func printMsgLogo(msg, eye string, title, logo report.Color) {
+	for i, s := range report.GraderLogo {
+		switch i {
+		case 0, 1, 2:
+			s = strings.Replace(s, "o", string(msg[i]), 1)
+		case 3:
+			s = strings.Replace(s, "a", eye, 1)
+		}
+
+		if i < len(report.Popeye) {
+			fmt.Printf("%s", report.Colorize(report.Popeye[i], title))
+			fmt.Printf("%s", strings.Repeat(" ", 22))
+		} else {
+			if i == 4 {
+				fmt.Printf("%s", report.Colorize("  Biffs`em and Buffs`em!", logo))
+				fmt.Printf("%s", strings.Repeat(" ", 26))
+			} else {
+				fmt.Printf("%s", strings.Repeat(" ", 50))
+			}
+		}
+		fmt.Println(report.Colorize(s, logo))
+	}
+}
 
 func ensureDir(path string, mod os.FileMode) error {
 	dir, err := filepath.Abs(path)
