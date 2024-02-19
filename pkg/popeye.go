@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"time"
 
 	"github.com/derailed/popeye/internal"
@@ -272,8 +271,7 @@ func (p *Popeye) lint() (int, int, error) {
 func (p *Popeye) runLinter(ctx context.Context, gvr types.GVR, l scrub.Linter, c chan run, cache *scrub.Cache, codes *issues.Codes) {
 	defer func() {
 		if e := recover(); e != nil {
-			log.Error().Msgf("Popeye CHOKED! %#v", e)
-			log.Error().Msgf("%v", string(debug.Stack()))
+			BailOut(e.(error))
 		}
 	}()
 

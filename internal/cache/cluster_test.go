@@ -19,8 +19,9 @@ func init() {
 func TestCluster(t *testing.T) {
 	v, err := semver.NewVersion("1.9")
 	assert.NoError(t, err)
-	c := cache.NewCluster(v)
 
-	v1 := c.ListVersion()
+	c := cache.NewCluster(v)
+	v1, err := c.ListVersion()
+	assert.NoError(t, err)
 	assert.Equal(t, v, v1)
 }

@@ -3,7 +3,11 @@
 
 package cache
 
-import "github.com/Masterminds/semver"
+import (
+	"errors"
+
+	"github.com/Masterminds/semver"
+)
 
 // ClusterKey tracks Cluster resource references
 const ClusterKey = "cl"
@@ -19,6 +23,10 @@ func NewCluster(v *semver.Version) *Cluster {
 }
 
 // ListVersion returns cluster server version.
-func (c *Cluster) ListVersion() *semver.Version {
-	return c.rev
+func (c *Cluster) ListVersion() (*semver.Version, error) {
+	if c.rev == nil {
+		return nil, errors.New("unable to assert cluster version")
+	}
+
+	return c.rev, nil
 }

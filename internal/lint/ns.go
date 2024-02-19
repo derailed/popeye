@@ -10,6 +10,7 @@ import (
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
+	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
 	v1 "k8s.io/api/core/v1"
@@ -18,6 +19,7 @@ import (
 // Namespace represents a Namespace linter.
 type Namespace struct {
 	*issues.Collector
+
 	db *db.DB
 }
 
@@ -27,6 +29,42 @@ func NewNamespace(co *issues.Collector, db *db.DB) *Namespace {
 		Collector: co,
 		db:        db,
 	}
+}
+
+// Lint cleanse the resource.
+func (s *Namespace) Lint(ctx context.Context) error {
+	used := make(map[string]struct{})
+	if err := s.ReferencedNamespaces(used); err != nil {
+		s.AddErr(ctx, err)
+	}
+	txn, it := s.db.MustITFor(internal.Glossary[internal.NS])
+	defer txn.Abort()
+
+	cns, ok := ctx.Value(internal.KeyNamespace).(string)
+	if !ok {
+		cns = client.BlankNamespace
+	}
+
+	for o := it.Next(); o != nil; o = it.Next() {
+		ns, ok := o.(*v1.Namespace)
+		if !ok {
+			return errors.New("expected ns")
+		}
+		fqn := ns.Name
+		if cns != client.BlankNamespace && fqn != cns {
+			continue
+		}
+		s.InitOutcome(fqn)
+		ctx = internal.WithSpec(ctx, specFor(fqn, ns))
+
+		if s.checkActive(ctx, ns.Status.Phase) {
+			if _, ok := used[fqn]; !ok {
+				s.AddCode(ctx, 400)
+			}
+		}
+	}
+
+	return nil
 }
 
 // ReferencedNamespaces fetch all namespaces referenced by pods and service accounts.
@@ -43,34 +81,6 @@ func (s *Namespace) ReferencedNamespaces(res map[string]struct{}) error {
 	if ss, ok := refs.Load("ns"); ok {
 		for ns := range ss.(internal.StringSet) {
 			res[ns] = struct{}{}
-		}
-	}
-
-	return nil
-}
-
-// Lint cleanse the resource.
-func (s *Namespace) Lint(ctx context.Context) error {
-	used := make(map[string]struct{})
-	if err := s.ReferencedNamespaces(used); err != nil {
-		s.AddErr(ctx, err)
-	}
-	txn, it := s.db.MustITFor(internal.Glossary[internal.NS])
-	defer txn.Abort()
-
-	for o := it.Next(); o != nil; o = it.Next() {
-		ns, ok := o.(*v1.Namespace)
-		if !ok {
-			return errors.New("expected ns")
-		}
-		fqn := ns.Name
-		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, ns))
-
-		if s.checkActive(ctx, ns.Status.Phase) {
-			if _, ok := used[fqn]; !ok {
-				s.AddCode(ctx, 400)
-			}
 		}
 	}
 
