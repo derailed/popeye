@@ -30,8 +30,9 @@ func NewDB(db *memdb.MemDB) *DB {
 
 func (db *DB) ITFor(gvr types.GVR) (*memdb.Txn, memdb.ResultIterator, error) {
 	if gvr == types.BlankGVR {
-		panic(fmt.Errorf("invalid table"))
+		return nil, nil, fmt.Errorf("invalid table")
 	}
+
 	txn := db.Txn(false)
 	it, err := txn.Get(gvr.String(), "id")
 	if err != nil {
@@ -45,7 +46,7 @@ func (db *DB) MustITForNS(gvr types.GVR, ns string) (*memdb.Txn, memdb.ResultIte
 	txn := db.Txn(false)
 	it, err := txn.Get(gvr.String(), "ns", ns)
 	if err != nil {
-		panic(fmt.Errorf("Db get failed for %q: %w", gvr, err))
+		panic(fmt.Errorf("db ns iterator failed for %q: %w", gvr, err))
 	}
 
 	return txn, it
@@ -55,7 +56,7 @@ func (db *DB) MustITFor(gvr types.GVR) (*memdb.Txn, memdb.ResultIterator) {
 	txn := db.Txn(false)
 	it, err := txn.Get(gvr.String(), "id")
 	if err != nil {
-		panic(fmt.Errorf("Db get failed for %q: %w", gvr, err))
+		panic(fmt.Errorf("db iterator failed for %q: %w", gvr, err))
 	}
 
 	return txn, it
