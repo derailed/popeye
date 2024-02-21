@@ -125,7 +125,7 @@ func jobResourceUsage(ctx context.Context, dba *db.DB, c Collector, jobs []*batc
 		mx.RequestMEM.Add(mem)
 
 		pmx, err := dba.FindPMX(fqn)
-		if err != nil {
+		if err != nil || pmx == nil {
 			continue
 		}
 		for _, cx := range pmx.Containers {

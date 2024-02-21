@@ -11,6 +11,7 @@ import (
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/rs/zerolog/log"
 	gwv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
@@ -47,9 +48,11 @@ func (s *Gateway) Lint(ctx context.Context) error {
 }
 
 func (s *Gateway) checkRefs(ctx context.Context, gw *gwv1.Gateway) {
-	txn := s.db.Txn(false)
-	defer txn.Abort()
-	txn, it := s.db.MustITFor(internal.Glossary[internal.GWC])
+	txn, it, err := s.db.ITFor(internal.Glossary[internal.GWC])
+	if err != nil {
+		log.Warn().Err(err).Msg("no gateway class located. Skipping gw ref check")
+		return
+	}
 	defer txn.Abort()
 
 	for o := it.Next(); o != nil; o = it.Next() {

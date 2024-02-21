@@ -110,6 +110,31 @@ Popeye is available on Linux, OSX and Windows platforms.
 
 ---
 
+## The Command Line
+
+You can use Popeye wide open or using a spinach yaml config to
+tune your linters. Details about the Popeye configuration file are below.
+
+```shell
+# Dump version info and logs location
+popeye version
+# Popeye a cluster using your current kubeconfig environment.
+# NOTE! This will run Popeye in the context namespace if set or like kubectl will use the default namespace
+popeye
+# Run Popeye in the `fred` namespace
+popeye -n fred
+# Run Popeye in all namespaces
+popeye -A
+# Popeye uses a spinach config file of course! aka spinachyaml!
+popeye -f spinach.yaml
+# Popeye a cluster using a kubeconfig context.
+popeye --context olive
+# Stuck?
+popeye help
+```
+
+---
+
 ## Linters
 
 Popeye scans your cluster for best practices and potential issues.
@@ -270,26 +295,6 @@ docker run --rm -it \
 # is in your /tmp directory because you mapped it into the container
 cat /tmp/popeye/my_report.txt
 <snip>
-```
-
----
-
-## The Command Line
-
-You can use Popeye wide open or using a spinach yaml config to
-tune your linters. Details about the Popeye configuration file are below.
-
-```shell
-# Dump version info and logs location
-popeye version
-# Popeye a cluster using your current kubeconfig environment.
-popeye
-# Popeye uses a spinach config file of course! aka spinachyaml!
-popeye -f spinach.yaml
-# Popeye a cluster using a kubeconfig context.
-popeye --context olive
-# Stuck?
-popeye help
 ```
 
 ---
