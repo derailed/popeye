@@ -190,7 +190,7 @@ func (db *DB) FindJobs(fqn string) ([]*batchv1.Job, error) {
 			continue
 		}
 		for _, o := range jo.OwnerReferences {
-			if o.Controller == nil && !*o.Controller {
+			if o.Controller == nil || !*o.Controller {
 				continue
 			}
 			if o.Name == cn {
