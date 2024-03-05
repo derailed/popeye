@@ -106,7 +106,7 @@ func (s *Service) checkEndpoints(ctx context.Context, fqn string, kind v1.Servic
 	}
 
 	o, err := s.db.Find(internal.Glossary[internal.EP], fqn)
-	if err != nil || o == nil {
+	if err != nil {
 		s.AddCode(ctx, 1105)
 		return
 	}
@@ -115,14 +115,9 @@ func (s *Service) checkEndpoints(ctx context.Context, fqn string, kind v1.Servic
 		s.AddCode(ctx, 1110)
 		return
 	}
-	numEndpointAddresses := 0
-	for _, s := range ep.Subsets {
-		numEndpointAddresses += len(s.Addresses)
-		if numEndpointAddresses > 1 {
-			return
-		}
+	if len(ep.Subsets) == 1 {
+		s.AddCode(ctx, 1109)
 	}
-	s.AddCode(ctx, 1109)
 }
 
 // ----------------------------------------------------------------------------
