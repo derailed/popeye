@@ -5,25 +5,24 @@ package dag
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
-	"github.com/Masterminds/semver"
+	"github.com/blang/semver/v4"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
 )
 
 func TestParseVers(t *testing.T) {
-	v, _ := semver.NewVersion("1.28")
+	v, _ := semver.ParseTolerant("1.28")
 
 	uu := map[string]struct {
 		info version.Info
 		err  error
-		ver  *semver.Version
+		ver  semver.Version
 	}{
 		"empty": {
-			err: fmt.Errorf(`semver parse failed for "." (""|""): %w`, errors.New("Invalid Semantic Version")),
+			err: errors.New(`semver parse failed for "." (""|""): strconv.ParseUint: parsing "": invalid syntax`),
 		},
 		"happy": {
 			info: version.Info{Major: "1", Minor: "28"},
@@ -39,9 +38,10 @@ func TestParseVers(t *testing.T) {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			v, err := ParseVersion(&u.info)
-			assert.Equal(t, u.err, err)
-			if err == nil {
-				assert.Equal(t, u.ver, v)
+			if err != nil {
+				assert.Equal(t, u.err.Error(), err.Error())
+			} else {
+				assert.Equal(t, &u.ver, v)
 			}
 		})
 	}

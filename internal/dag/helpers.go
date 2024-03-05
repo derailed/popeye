@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Masterminds/semver"
+	"github.com/blang/semver/v4"
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,12 +21,12 @@ func ParseVersion(info *version.Info) (*semver.Version, error) {
 		return nil, fmt.Errorf("no cluster version available")
 	}
 	v := strings.TrimSuffix(info.Major+"."+info.Minor, "+")
-	rev, err := semver.NewVersion(v)
+	rev, err := semver.ParseTolerant(v)
 	if err != nil {
 		err = fmt.Errorf("semver parse failed for %q (%q|%q): %w", v, info.Major, info.Minor, err)
 	}
 
-	return rev, err
+	return &rev, err
 }
 
 func mustExtractFactory(ctx context.Context) types.Factory {

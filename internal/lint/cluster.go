@@ -6,7 +6,7 @@ package lint
 import (
 	"context"
 
-	"github.com/Masterminds/semver"
+	"github.com/blang/semver/v4"
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/issues"
 )
@@ -50,7 +50,7 @@ func (c *Cluster) checkVersion(ctx context.Context) error {
 	}
 
 	ctx = internal.WithSpec(ctx, specFor("Version", nil))
-	if rev.Major() != tolerableMajor || rev.Minor() < tolerableMinor {
+	if rev.Major != tolerableMajor || rev.Minor < tolerableMinor {
 		c.AddCode(ctx, 405)
 	} else {
 		c.AddCode(ctx, 406)
