@@ -97,6 +97,7 @@ func (p *Popeye) Init() error {
 			return err
 		}
 	}
+
 	if err := p.aliases.Init(p.client()); err != nil {
 		return err
 	}
@@ -144,7 +145,7 @@ func (p *Popeye) initFactory() error {
 			log.Debug().Msgf("Skipping linter %q", k)
 			continue
 		}
-		ok, err := clt.CanI(client.AllNamespaces, gvr, types.ReadAllAccess...)
+		ok, err := clt.CanI(client.AllNamespaces, gvr, "", types.ReadAllAccess)
 		if !ok || err != nil {
 			return fmt.Errorf("current user does not have read access for resource %q -- %w", gvr, err)
 		}
@@ -198,7 +199,7 @@ func (p *Popeye) buildCtx(ctx context.Context) context.Context {
 	}
 	ns, err := p.client().Config().CurrentNamespaceName()
 	if err != nil {
-		ns = client.AllNamespaces
+		ns = client.DefaultNamespace
 	}
 	ctx = context.WithValue(ctx, internal.KeyNamespace, ns)
 

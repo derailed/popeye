@@ -172,18 +172,10 @@ func (l *Loader) fetchNodesMetrics(c types.Connection) (*mv1beta1.NodeMetricsLis
 
 func loadResource(ctx context.Context, gvr types.GVR) ([]runtime.Object, error) {
 	f := mustExtractFactory(ctx)
-	if strings.Contains(gvr.String(), "metrics") {
-		if !f.Client().HasMetrics() {
-			return nil, nil
-		}
+	if strings.Contains(gvr.String(), "metrics") && !f.Client().HasMetrics() {
+		return nil, nil
 	}
-	if gvr.IsMetricsRes() {
-		var res dao.Generic
-		res.Init(f, gvr)
-		return res.List(ctx)
-	}
-
-	var res dao.Resource
+	var res dao.Generic
 	res.Init(f, gvr)
 
 	return res.List(ctx)

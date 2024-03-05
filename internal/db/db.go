@@ -10,6 +10,7 @@ import (
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
+	"github.com/derailed/popeye/internal/db/schema"
 	"github.com/derailed/popeye/types"
 	"github.com/hashicorp/go-memdb"
 	batchv1 "k8s.io/api/batch/v1"
@@ -146,10 +147,23 @@ func (db *DB) Find(kind types.GVR, fqn string) (any, error) {
 	defer txn.Abort()
 	o, err := txn.First(kind.String(), "id", fqn)
 	if err != nil || o == nil {
+		log.Error().Err(err).Msgf("db.find unable to find object: [%s]%s", kind, fqn)
 		return nil, fmt.Errorf("object not found: %q", fqn)
 	}
 
 	return o, nil
+}
+
+func (db *DB) Dump(gvr types.GVR) {
+	txn, it := db.MustITFor(gvr)
+	defer txn.Abort()
+
+	log.Debug().Msgf("> Dumping %q", gvr)
+	for o := it.Next(); o != nil; o = it.Next() {
+		m := o.(schema.MetaAccessor)
+		log.Debug().Msgf("  o %s/%s", m.GetNamespace(), m.GetName())
+	}
+	log.Debug().Msg("< Done")
 }
 
 func (db *DB) FindPod(ns string, sel map[string]string) (*v1.Pod, error) {
@@ -271,21 +285,6 @@ func (db *DB) FindNSBySel(sel *metav1.LabelSelector) ([]*v1.Namespace, error) {
 	}
 
 	return nss, nil
-}
-
-func (db *DB) DumpNS() error {
-	txn := db.Txn(false)
-	defer txn.Abort()
-	it, err := txn.Get(internal.Glossary[internal.NS].String(), "id")
-	if err != nil {
-		return err
-	}
-	for o := it.Next(); o != nil; o = it.Next() {
-		ns, _ := o.(*v1.Namespace)
-		log.Debug().Msgf("NS %q", ns.Name)
-	}
-
-	return nil
 }
 
 func (db *DB) FindNS(ns string) (*v1.Namespace, error) {

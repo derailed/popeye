@@ -50,7 +50,7 @@ func (f *Factory) Start(ns string) {
 	}
 }
 
-// Terminate stops the factory.
+// Terminate terminates all watchers and forwards.
 func (f *Factory) Terminate() {
 	f.mx.Lock()
 	defer f.mx.Unlock()
@@ -66,48 +66,68 @@ func (f *Factory) Terminate() {
 
 // List returns a resource collection.
 func (f *Factory) List(gvr types.GVR, ns string, wait bool, labels labels.Selector) ([]runtime.Object, error) {
-	inf, err := f.CanForResource(ns, gvr, types.MonitorAccess...)
+	inf, err := f.CanForResource(ns, gvr, types.ListAccess)
 	if err != nil {
 		return nil, err
 	}
-	if wait {
-		f.waitForCacheSync(ns)
-	}
-	if IsClusterScoped(ns) {
-		return inf.Lister().List(labels)
+	if IsAllNamespace(ns) {
+		ns = BlankNamespace
 	}
 
-	if IsAllNamespace(ns) {
-		ns = AllNamespaces
+	var oo []runtime.Object
+	if IsClusterScoped(ns) {
+		oo, err = inf.Lister().List(labels)
+	} else {
+		oo, err = inf.Lister().ByNamespace(ns).List(labels)
+	}
+	if !wait || (wait && inf.Informer().HasSynced()) {
+		return oo, err
+	}
+
+	f.waitForCacheSync(ns)
+	if IsClusterScoped(ns) {
+		return inf.Lister().List(labels)
 	}
 	return inf.Lister().ByNamespace(ns).List(labels)
 }
 
+// HasSynced checks if given informer is up to date.
+func (f *Factory) HasSynced(gvr types.GVR, ns string) (bool, error) {
+	inf, err := f.CanForResource(ns, gvr, types.ListAccess)
+	if err != nil {
+		return false, err
+	}
+
+	return inf.Informer().HasSynced(), nil
+}
+
 // Get retrieves a given resource.
-func (f *Factory) Get(gvr types.GVR, path string, wait bool, sel labels.Selector) (runtime.Object, error) {
-	ns, n := Namespaced(path)
-	inf, err := f.CanForResource(ns, gvr, types.GetVerb)
+func (f *Factory) Get(gvr types.GVR, fqn string, wait bool, sel labels.Selector) (runtime.Object, error) {
+	ns, n := Namespaced(fqn)
+	inf, err := f.CanForResource(ns, gvr, []string{types.GetVerb})
 	if err != nil {
 		return nil, err
 	}
-
-	if wait {
-		f.waitForCacheSync(ns)
+	var o runtime.Object
+	if IsClusterScoped(ns) {
+		o, err = inf.Lister().Get(n)
+	} else {
+		o, err = inf.Lister().ByNamespace(ns).Get(n)
 	}
+	if !wait || (wait && inf.Informer().HasSynced()) {
+		return o, err
+	}
+
+	f.waitForCacheSync(ns)
 	if IsClusterScoped(ns) {
 		return inf.Lister().Get(n)
 	}
-
 	return inf.Lister().ByNamespace(ns).Get(n)
 }
 
 func (f *Factory) waitForCacheSync(ns string) {
 	if IsClusterWide(ns) {
-		ns = AllNamespaces
-	}
-
-	if f.isClusterWide() {
-		ns = AllNamespaces
+		ns = BlankNamespace
 	}
 
 	f.mx.RLock()
@@ -131,7 +151,7 @@ func (f *Factory) WaitForCacheSync() {
 	for ns, fac := range f.factories {
 		m := fac.WaitForCacheSync(f.stopChan)
 		for k, v := range m {
-			log.Debug().Msgf("CACHE %q synched %t:%s", ns, v, k)
+			log.Debug().Msgf("CACHE `%q Loaded %t:%s", ns, v, k)
 		}
 	}
 }
@@ -148,33 +168,24 @@ func (f *Factory) FactoryFor(ns string) di.DynamicSharedInformerFactory {
 
 // SetActiveNS sets the active namespace.
 func (f *Factory) SetActiveNS(ns string) error {
-	if !f.isClusterWide() {
-		if _, err := f.ensureFactory(ns); err != nil {
-			return err
-		}
+	if f.isClusterWide() {
+		return nil
 	}
-
-	return nil
+	_, err := f.ensureFactory(ns)
+	return err
 }
 
 func (f *Factory) isClusterWide() bool {
 	f.mx.RLock()
 	defer f.mx.RUnlock()
+	_, ok := f.factories[BlankNamespace]
 
-	_, ok := f.factories[AllNamespaces]
 	return ok
 }
 
 // CanForResource return an informer is user has access.
-func (f *Factory) CanForResource(ns string, gvr types.GVR, verbs ...string) (informers.GenericInformer, error) {
-	// If user can access resource cluster wide, prefer cluster wide factory.
-	if !IsClusterWide(ns) {
-		auth, err := f.Client().CanI(AllNamespaces, gvr, verbs...)
-		if auth && err == nil {
-			return f.ForResource(AllNamespaces, gvr)
-		}
-	}
-	auth, err := f.Client().CanI(ns, gvr, verbs...)
+func (f *Factory) CanForResource(ns string, gvr types.GVR, verbs []string) (informers.GenericInformer, error) {
+	auth, err := f.Client().CanI(ns, gvr, "", verbs)
 	if err != nil {
 		return nil, err
 	}
@@ -206,13 +217,14 @@ func (f *Factory) ForResource(ns string, gvr types.GVR) (informers.GenericInform
 
 func (f *Factory) ensureFactory(ns string) (di.DynamicSharedInformerFactory, error) {
 	if IsClusterWide(ns) {
-		ns = AllNamespaces
+		ns = BlankNamespace
 	}
 	f.mx.Lock()
 	defer f.mx.Unlock()
 	if fac, ok := f.factories[ns]; ok {
 		return fac, nil
 	}
+
 	dial, err := f.client.DynDial()
 	if err != nil {
 		return nil, err

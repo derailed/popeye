@@ -258,7 +258,7 @@ codes:
     message: Do you mean it? Type NodePort detected
     severity: 1
   1105:
-    message: No associated endpoints
+    message: No associated endpoints found
     severity: 3
   1106:
     message: No target ports match service port %s
@@ -270,7 +270,7 @@ codes:
     message: NodePort detected but service sets externalTrafficPolicy to "Local"
     severity: 1
   1109:
-    message: Only one Pod associated with this endpoint
+    message: Single endpoint is associated with this service
     severity: 2
   1110:
     message: Match EP has no subsets
