@@ -58,7 +58,7 @@ type NamespaceNames map[string]struct{}
 // Authorizer checks what a user can or cannot do to a resource.
 type Authorizer interface {
 	// CanI returns true if the user can use these actions for a given resource.
-	CanI(string, GVR, ...string) (bool, error)
+	CanI(string, GVR, string, []string) (bool, error)
 }
 
 // Config represents an api server configuration.
@@ -144,7 +144,7 @@ type Factory interface {
 	ForResource(string, GVR) (informers.GenericInformer, error)
 
 	// CanForResource fetch an informer for a given resource if authorized
-	CanForResource(string, GVR, ...string) (informers.GenericInformer, error)
+	CanForResource(string, GVR, []string) (informers.GenericInformer, error)
 
 	// WaitForCacheSync synchronize the cache.
 	WaitForCacheSync()

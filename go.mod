@@ -3,8 +3,8 @@ module github.com/derailed/popeye
 go 1.21.1
 
 require (
-	github.com/Masterminds/semver v1.5.0
 	github.com/aws/aws-sdk-go v1.35.21
+	github.com/blang/semver/v4 v4.0.0
 	github.com/fvbommel/sortorder v1.0.1
 	github.com/hashicorp/go-memdb v1.3.4
 	github.com/prometheus/client_golang v1.17.0

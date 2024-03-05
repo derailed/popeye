@@ -64,14 +64,18 @@ func InitConnectionOrDie(config types.Config) (*APIClient, error) {
 		config: config,
 		cache:  cache.NewLRUExpireCache(cacheSize),
 	}
+	_, err := a.serverGroups()
+	if err != nil {
+		return nil, err
+	}
 	if err := a.supportsMetricsResources(); err != nil {
-		log.Warn().Msgf("no metrics server detected %s", err.Error())
+		log.Warn().Err(err).Msgf("no metrics server detected")
 	}
 
 	return &a, nil
 }
 
-func makeSAR(ns string, gvr types.GVR) *authorizationv1.SelfSubjectAccessReview {
+func makeSAR(ns string, gvr types.GVR, n string) *authorizationv1.SelfSubjectAccessReview {
 	if ns == "-" {
 		ns = ""
 	}
@@ -83,13 +87,14 @@ func makeSAR(ns string, gvr types.GVR) *authorizationv1.SelfSubjectAccessReview 
 				Group:       res.Group,
 				Resource:    res.Resource,
 				Subresource: gvr.SubResource(),
+				Name:        n,
 			},
 		},
 	}
 }
 
-func makeCacheKey(ns, gvr string, vv []string) string {
-	return ns + ":" + gvr + "::" + strings.Join(vv, ",")
+func makeCacheKey(ns string, gvr types.GVR, n string, vv []string) string {
+	return ns + ":" + gvr.String() + ":" + n + "::" + strings.Join(vv, ",")
 }
 
 // ActiveContext returns the current context name.
@@ -146,11 +151,11 @@ func (a *APIClient) ConnectionOK() bool {
 }
 
 // CanI checks if user has access to a certain resource.
-func (a *APIClient) CanI(ns string, gvr types.GVR, verbs ...string) (auth bool, err error) {
+func (a *APIClient) CanI(ns string, gvr types.GVR, n string, verbs []string) (auth bool, err error) {
 	if IsClusterWide(ns) {
-		ns = AllNamespaces
+		ns = BlankNamespace
 	}
-	key := makeCacheKey(ns, gvr.String(), verbs)
+	key := makeCacheKey(ns, gvr, n, verbs)
 	if v, ok := a.cache.Get(key); ok {
 		if auth, ok = v.(bool); ok {
 			return auth, nil
@@ -161,7 +166,7 @@ func (a *APIClient) CanI(ns string, gvr types.GVR, verbs ...string) (auth bool, 
 	if err != nil {
 		return false, err
 	}
-	dial, sar := c.AuthorizationV1().SelfSubjectAccessReviews(), makeSAR(ns, gvr)
+	dial, sar := c.AuthorizationV1().SelfSubjectAccessReviews(), makeSAR(ns, gvr, n)
 	ctx, cancel := context.WithTimeout(context.Background(), CallTimeout)
 	defer cancel()
 	for _, v := range verbs {
@@ -357,30 +362,38 @@ func (a *APIClient) checkCacheBool(key string) (state bool, ok bool) {
 	return
 }
 
+func (a *APIClient) serverGroups() (*metav1.APIGroupList, error) {
+	dial, err := a.CachedDiscovery()
+	if err != nil {
+		log.Warn().Err(err).Msgf("Unable to dial discovery API")
+		return nil, err
+	}
+	apiGroups, err := dial.ServerGroups()
+	if err != nil {
+		log.Warn().Err(err).Msgf("Unable to retrieve server groups")
+		return nil, fmt.Errorf("unable to fetch server groups: %w", err)
+	}
+
+	return apiGroups, nil
+}
+
 func (a *APIClient) supportsMetricsResources() error {
 	supported, ok := a.checkCacheBool(cacheMXAPIKey)
 	if ok {
 		if supported {
 			return nil
 		}
-		return errors.New("No metrics-server detected")
+		return errors.New("no metrics-server detected")
 	}
-
 	defer func() {
 		a.cache.Add(cacheMXAPIKey, supported, cacheExpiry)
 	}()
 
-	dial, err := a.CachedDiscovery()
+	gg, err := a.serverGroups()
 	if err != nil {
-		log.Warn().Err(err).Msgf("Unable to dial discovery API")
 		return err
 	}
-	apiGroups, err := dial.ServerGroups()
-	if err != nil {
-		log.Warn().Err(err).Msgf("Unable to retrieve server groups")
-		return err
-	}
-	for _, grp := range apiGroups.Groups {
+	for _, grp := range gg.Groups {
 		if grp.Name != metricsapi.GroupName {
 			continue
 		}
@@ -390,8 +403,9 @@ func (a *APIClient) supportsMetricsResources() error {
 		}
 	}
 
-	return errors.New("No metrics-server detected")
+	return errors.New("no metrics-server detected")
 }
+
 func checkMetricsVersion(grp metav1.APIGroup) bool {
 	for _, version := range grp.Versions {
 		for _, supportedVersion := range supportedMetricsAPIVersions {

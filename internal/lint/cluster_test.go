@@ -6,7 +6,7 @@ package lint
 import (
 	"testing"
 
-	"github.com/Masterminds/semver"
+	"github.com/blang/semver/v4"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/version"
 

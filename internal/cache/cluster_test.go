@@ -6,7 +6,7 @@ package cache_test
 import (
 	"testing"
 
-	"github.com/Masterminds/semver"
+	"github.com/blang/semver/v4"
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -17,11 +17,11 @@ func init() {
 }
 
 func TestCluster(t *testing.T) {
-	v, err := semver.NewVersion("1.9")
+	v, err := semver.ParseTolerant("1.9")
 	assert.NoError(t, err)
 
-	c := cache.NewCluster(v)
+	c := cache.NewCluster(&v)
 	v1, err := c.ListVersion()
 	assert.NoError(t, err)
-	assert.Equal(t, v, v1)
+	assert.Equal(t, &v, v1)
 }

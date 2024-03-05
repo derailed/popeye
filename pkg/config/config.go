@@ -47,7 +47,7 @@ func NewConfig(flags *Flags) (*Config, error) {
 		flags.Namespace = nil
 	}
 	if flags.AllNamespaces != nil && *flags.AllNamespaces {
-		all := client.AllNamespaces
+		all := client.NamespaceAll
 		flags.Namespace = &all
 	}
 	cfg.LintLevel = int(rules.ToIssueLevel(flags.LintLevel))
