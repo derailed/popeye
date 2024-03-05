@@ -84,7 +84,7 @@ func bomb(err error) {
 	if err == nil {
 		return
 	}
-	panic(fmt.Sprintf("💥 %s\n", report.Colorize(err.Error(), report.ColorRed)))
+	panic(fmt.Errorf("💥 %s\n", report.Colorize(err.Error(), report.ColorRed)))
 }
 
 func initPopeyeFlags() {

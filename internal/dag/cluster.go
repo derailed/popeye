@@ -6,7 +6,7 @@ package dag
 import (
 	"context"
 
-	"github.com/Masterminds/semver"
+	"github.com/blang/semver/v4"
 )
 
 // ListVersion return server api version.
