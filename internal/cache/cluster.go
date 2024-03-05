@@ -6,7 +6,7 @@ package cache
 import (
 	"errors"
 
-	"github.com/Masterminds/semver"
+	"github.com/blang/semver/v4"
 )
 
 // ClusterKey tracks Cluster resource references
