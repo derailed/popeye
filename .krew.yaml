@@ -25,7 +25,7 @@ spec:
         matchLabels:
           os: darwin
           arch: amd64
-      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Darwin_x86_64.tar.gz" .TagName | indent 6 }}
+      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Darwin_amd64.tar.gz" .TagName | indent 6 }}
       bin: kubectl-popeye
     - selector:
         matchLabels:
@@ -37,11 +37,23 @@ spec:
         matchLabels:
           os: linux
           arch: amd64
-      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Linux_x86_64.tar.gz" .TagName }}
+      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Linux_amd64.tar.gz" .TagName }}
+      bin: kubectl-popeye
+    - selector:
+        matchLabels:
+          os: linux
+          arch: arm64
+      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Linux_arm64.tar.gz" .TagName }}
       bin: kubectl-popeye
     - selector:
         matchLabels:
           os: windows
           arch: amd64
-      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Windows_x86_64.tar.gz" .TagName }}
+      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Windows_amd64.tar.gz" .TagName }}
+      bin: kubectl-popeye.exe
+    - selector:
+        matchLabels:
+          os: windows
+          arch: arm64
+      {{ addURIAndSha "https://github.com/derailed/popeye/releases/download/{{ .TagName }}/popeye_Windows_arm64.tar.gz" .TagName }}
       bin: kubectl-popeye.exe
