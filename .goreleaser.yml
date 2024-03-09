@@ -28,14 +28,7 @@ builds:
       - -s -w -X github.com/derailed/popeye/cmd.date={{.Date}}
 
 archives:
-  - name_template: >-
-      {{ .ProjectName }}_
-      {{ .Tag }}_
-      {{ .Os }}_
-      {{- if eq .Arch "amd64" }}amd64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
+  - name_template: {{ .ProjectName }}_{{ .Tag }}_{{ .Os }}_{{- if eq .Arch "amd64" }}amd64 {{- else if eq .Arch "386" }}i386 {{- else }}{{ .Arch }}{{ end }} {{- if .Arm }}v{{ .Arm }}{{ end }}
 
 checksum:
   name_template: "checksums.txt"
