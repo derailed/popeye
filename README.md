@@ -425,6 +425,11 @@ popeye:
           - fqns: [blee-ns]
             codes: [106] # => skip code 106 for namespace blee-ns
 
+      # Skip secrets in namespace bozo.
+      secrets:
+        instances:
+          - fqns: [rx:^bozo]
+
       # Configure the pods linter for v1/pods.
       pods:
         instances:
