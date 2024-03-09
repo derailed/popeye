@@ -15,7 +15,7 @@ func TestCodesLoad(t *testing.T) {
 	cc, err := issues.LoadCodes()
 
 	assert.Nil(t, err)
-	assert.Equal(t, 104, len(cc.Glossary))
+	assert.Equal(t, 114, len(cc.Glossary))
 	assert.Equal(t, "No liveness probe", cc.Glossary[103].Message)
 	assert.Equal(t, rules.WarnLevel, cc.Glossary[103].Severity)
 }

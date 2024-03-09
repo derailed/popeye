@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: cilium.io/v2
+  kind: CiliumIdentity
+  metadata:
+    creationTimestamp: "2024-03-07T00:36:02Z"
+    generation: 1
+    labels:
+      batch.kubernetes.io/controller-uid: a40f6e35-61ff-4449-9d3f-3b44d091e90f
+      batch.kubernetes.io/job-name: hello-28496196
+      controller-uid: a40f6e35-61ff-4449-9d3f-3b44d091e90f
+      io.cilium.k8s.policy.cluster: kind-kind
+      io.cilium.k8s.policy.serviceaccount: default
+      io.kubernetes.pod.namespace: default
+      job-name: hello-28496196
+    name: "100"
+    resourceVersion: "9590682"
+    uid: 30592dc9-f028-4565-9896-6209b6431011
+  security-labels:
+    k8s:batch.kubernetes.io/controller-uid: a40f6e35-61ff-4449-9d3f-3b44d091e90f
+    k8s:batch.kubernetes.io/job-name: hello-28496196
+    k8s:controller-uid: a40f6e35-61ff-4449-9d3f-3b44d091e90f
+    k8s:io.cilium.k8s.namespace.labels.kubernetes.io/metadata.name: default
+    k8s:io.cilium.k8s.policy.cluster: kind-kind
+    k8s:io.cilium.k8s.policy.serviceaccount: default
+    k8s:io.kubernetes.pod.namespace: default
+    k8s:job-name: hello-28496196
+- apiVersion: cilium.io/v2
+  kind: CiliumIdentity
+  metadata:
+    annotations:
+      io.cilium.heartbeat: "2024-03-07T00:22:13.094277331Z"
+    creationTimestamp: "2024-03-06T23:26:04Z"
+    generation: 1
+    labels:
+      batch.kubernetes.io/controller-uid: c765ce0d-551f-4409-8957-ab15c3c75793
+      batch.kubernetes.io/job-name: hello-28496126
+      controller-uid: c765ce0d-551f-4409-8957-ab15c3c75793
+      io.cilium.k8s.policy.cluster: kind-kind
+      io.cilium.k8s.policy.serviceaccount: sa1
+      io.kubernetes.pod.namespace: ns1
+      job-name: hello-28496126
+    name: "200"
+    resourceVersion: "9589067"
+    uid: 15161fba-b04a-4f0e-8a24-7bd6d38621d4
+  security-labels:
+    k8s:batch.kubernetes.io/controller-uid: c765ce0d-551f-4409-8957-ab15c3c75793
+    k8s:batch.kubernetes.io/job-name: hello-28496126
+    k8s:controller-uid: c765ce0d-551f-4409-8957-ab15c3c75793
+    k8s:io.cilium.k8s.namespace.labels.kubernetes.io/metadata.name: ns1
+    k8s:io.cilium.k8s.policy.cluster: kind-kind
+    k8s:io.cilium.k8s.policy.serviceaccount: default
+    k8s:io.kubernetes.pod.namespace: ns2
+    k8s:job-name: hello-28496126
+- apiVersion: cilium.io/v2
+  kind: CiliumIdentity
+  metadata:
+    annotations:
+      io.cilium.heartbeat: "2024-03-07T00:22:13.094277331Z"
+    creationTimestamp: "2024-03-06T23:26:04Z"
+    generation: 1
+    labels:
+      batch.kubernetes.io/controller-uid: c765ce0d-551f-4409-8957-ab15c3c75793
+      batch.kubernetes.io/job-name: hello-28496126
+      controller-uid: c765ce0d-551f-4409-8957-ab15c3c75793
+      io.cilium.k8s.policy.cluster: kind-kind
+      io.cilium.k8s.policy.serviceaccount: sa1
+      io.kubernetes.pod.namespace: default
+      job-name: hello-28496126
+    name: "300"
+    resourceVersion: "9589067"
+    uid: 15161fba-b04a-4f0e-8a24-7bd6d38621d4
+  security-labels:
+    k8s:batch.kubernetes.io/controller-uid: c765ce0d-551f-4409-8957-ab15c3c75793
+    k8s:batch.kubernetes.io/job-name: hello-28496126
+    k8s:controller-uid: c765ce0d-551f-4409-8957-ab15c3c75793
+    k8s:io.cilium.k8s.namespace.labels.kubernetes.io/metadata.name: ns1
+    k8s:io.cilium.k8s.policy.cluster: kind-kind
+    k8s:io.cilium.k8s.policy.serviceaccount: default
+    k8s:job-name: hello-28496126

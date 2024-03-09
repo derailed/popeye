@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: cilium.io/v2
+  kind: CiliumClusterwideNetworkPolicy
+  metadata:
+    name: ccnp1
+  spec:
+    endpointSelector:
+      matchLabels:
+        k8s-app: cep1
+    ingress:
+    - fromEndpoints:
+      - matchLabels:
+          k8s-app: cep1
+      toPorts:
+      - ports:
+        - port: "80"
+          protocol: TCP
+    egress:
+    - toEndpoints:
+      - matchLabels:
+          k8s-app: cep1
+      toPorts:
+      - ports:
+        - port: "90"
+          protocol: TCP
+- apiVersion: cilium.io/v2
+  kind: CiliumClusterwideNetworkPolicy
+  metadata:
+    name: ccnp2
+  spec:
+    endpointSelector:
+      matchLabels:
+        app: be
+    ingress:
+    - fromEndpoints:
+      - matchLabels:
+          app: fe
+      toPorts:
+      - ports:
+        - port: "80"
+          protocol: TCP
+    egress:
+    - toEndpoints:
+      - matchLabels:
+          org: fred
+      toPorts:
+      - ports:
+        - port: "90"
+          protocol: TCP
+- apiVersion: cilium.io/v2
+  kind: CiliumClusterwideNetworkPolicy
+  metadata:
+    name: ccnp3
+  spec:
+    nodeSelector:
+      matchLabels:
+        node: n1
+    ingress:
+    - fromEndpoints:
+      - matchLabels:
+          k8s-app: cep1
+      toPorts:
+      - ports:
+        - port: "80"
+          protocol: TCP
+    egress:
+    - toEndpoints:
+      - matchLabels:
+          k8s-app: cep1
+      toPorts:
+      - ports:
+        - port: "90"
+          protocol: TCP
