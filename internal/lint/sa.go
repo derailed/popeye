@@ -52,7 +52,7 @@ func (s *ServiceAccount) Lint(ctx context.Context) error {
 		sa := o.(*v1.ServiceAccount)
 		fqn := client.FQN(sa.Namespace, sa.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, sa))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, sa))
 
 		s.checkMounts(ctx, sa.AutomountServiceAccountToken)
 		s.checkSecretRefs(ctx, fqn, sa.Secrets)

@@ -55,7 +55,7 @@ func (s *Namespace) Lint(ctx context.Context) error {
 			continue
 		}
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, ns))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, ns))
 
 		if s.checkActive(ctx, ns.Status.Phase) {
 			if _, ok := used[fqn]; !ok {

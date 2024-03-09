@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: cilium.io/v2
+  kind: CiliumNetworkPolicy
+  metadata:
+    name: cnp1
+    namespace: default
+  spec:
+    endpointSelector:
+      matchLabels:
+        k8s-app: cep1
+    ingress:
+    - fromEndpoints:
+      - matchLabels:
+          k8s-app: cep1
+      toPorts:
+      - ports:
+        - port: "80"
+          protocol: TCP
+    egress:
+    - toEndpoints:
+      - matchLabels:
+          k8s-app: cep2
+      toPorts:
+      - ports:
+        - port: "90"
+          protocol: TCP
+- apiVersion: cilium.io/v2
+  kind: CiliumNetworkPolicy
+  metadata:
+    name: cnp2
+    namespace: default
+  spec:
+    endpointSelector:
+      matchLabels:
+        blee: bozo
+    ingress:
+    - fromEndpoints:
+      - matchLabels:
+          blee: bozo
+      toPorts:
+      - ports:
+        - port: "80"
+          protocol: TCP
+    egress:
+    - toEndpoints:
+      - matchLabels:
+          blee: bozo
+      toPorts:
+      - ports:
+        - port: "90"
+          protocol: TCP
+- apiVersion: cilium.io/v2
+  kind: CiliumNetworkPolicy
+  metadata:
+    name: cnp3
+    namespace: default
+  spec:
+    endpointSelector:
+      matchExpressions:
+        - key: k8s-app
+          operator: In
+          values: [blee,blah]
+    ingress:
+    - fromEndpoints:
+      - matchLabels:
+          k8s-app: cep1
+      toPorts:
+      - ports:
+        - port: "80"
+          protocol: TCP
+    egress:
+    - toEndpoints:
+      - matchLabels:
+          k8s-app: cep1
+      toPorts:
+      - ports:
+        - port: "90"
+          protocol: TCP
+- apiVersion: cilium.io/v2
+  kind: CiliumNetworkPolicy
+  metadata:
+    name: cnp4
+    namespace: default
+  spec:
+    endpointSelector:
+      matchExpressions:
+        - key: k8s-app
+          operator: NotIn
+          values: [cep3,cep4]
+    ingress:
+    - fromEndpoints:
+      - matchLabels:
+          k8s-app: cep1
+      toPorts:
+      - ports:
+        - port: "80"
+          protocol: TCP
+    egress:
+    - toEndpoints:
+      - matchLabels:
+          k8s-app: cep1
+      toPorts:
+      - ports:
+        - port: "90"
+          protocol: TCP

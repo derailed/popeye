@@ -51,7 +51,7 @@ func (s *PersistentVolumeClaim) Lint(ctx context.Context) error {
 		pvc := o.(*v1.PersistentVolumeClaim)
 		fqn := client.FQN(pvc.Namespace, pvc.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, pvc))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, pvc))
 
 		s.checkBound(ctx, pvc.Status.Phase)
 		if _, ok := refs[fqn]; !ok {

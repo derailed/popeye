@@ -52,7 +52,7 @@ func (s *NetworkPolicy) Lint(ctx context.Context) error {
 		np := o.(*netv1.NetworkPolicy)
 		fqn := client.FQN(np.Namespace, np.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, np))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, np))
 
 		s.checkSelector(ctx, fqn, np.Spec.PodSelector)
 		s.checkIngresses(ctx, fqn, np.Spec.Ingress)

@@ -41,7 +41,7 @@ func (s *HTTPRoute) Lint(ctx context.Context) error {
 		gwr := o.(*gwv1.HTTPRoute)
 		fqn := client.FQN(gwr.Namespace, gwr.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, gwr))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, gwr))
 		s.checkRoute(ctx, fqn, gwr)
 	}
 

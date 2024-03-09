@@ -72,7 +72,7 @@ func (s *ClusterRole) checkStale(ctx context.Context, refs *sync.Map) {
 		cr := o.(*rbacv1.ClusterRole)
 		fqn := client.FQN(cr.Namespace, cr.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, cr))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, cr))
 		if s.system.skip(fqn) {
 			continue
 		}

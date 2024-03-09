@@ -49,7 +49,7 @@ func (c *Cluster) checkVersion(ctx context.Context) error {
 		return err
 	}
 
-	ctx = internal.WithSpec(ctx, specFor("Version", nil))
+	ctx = internal.WithSpec(ctx, SpecFor("Version", nil))
 	if rev.Major != tolerableMajor || rev.Minor < tolerableMinor {
 		c.AddCode(ctx, 405)
 	} else {

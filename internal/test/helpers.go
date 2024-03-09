@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/cilium"
 	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/db/schema"
 	"github.com/derailed/popeye/internal/issues"
@@ -27,12 +28,20 @@ import (
 
 func NewTestDB() (*db.DB, error) {
 	initLinters()
+	initCiliumLinters()
 	d, err := memdb.NewMemDB(schema.Init())
 	if err != nil {
 		return nil, err
 	}
 
 	return db.NewDB(d), nil
+}
+
+func initCiliumLinters() {
+	internal.Glossary[cilium.CID] = types.NewGVR("cilium.io/v2/ciliumidentities")
+	internal.Glossary[cilium.CEP] = types.NewGVR("cilium.io/v2/ciliumendpoints")
+	internal.Glossary[cilium.CNP] = types.NewGVR("cilium.io/v2/ciliumnetworkpolicies")
+	internal.Glossary[cilium.CCNP] = types.NewGVR("cilium.io/v2/ciliumclusterwidenetworkpolicies")
 }
 
 func initLinters() {

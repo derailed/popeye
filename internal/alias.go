@@ -25,6 +25,7 @@ type ResourceMetas map[types.GVR]metav1.APIResource
 type Aliases struct {
 	aliases map[string]types.GVR
 	metas   ResourceMetas
+	cilium  bool
 }
 
 // NewAliases returns a new instance.
@@ -49,25 +50,46 @@ func (a *Aliases) Dump() {
 	}
 }
 
-var customShortNames = map[string][]string{
-	"cluster":             {"cl"},
-	"secrets":             {"sec"},
-	"deployments":         {"dp"},
-	"clusterroles":        {"cr"},
-	"clusterrolebindings": {"crb"},
-	"roles":               {"ro"},
-	"rolebindings":        {"rb"},
-	"networkpolicies":     {"np"},
-	"httproutes":          {"gwr"},
-	"gatewayclassess":     {"gwc"},
-	"gateways":            {"gw"},
+type ShortNames map[R][]string
+
+var customShortNames = ShortNames{
+	CL:  {"cl"},
+	SEC: {"sec"},
+	DP:  {"dp"},
+	CR:  {"cr"},
+	CRB: {"crb"},
+	RO:  {"ro"},
+	ROB: {"rb"},
+	NP:  {"np"},
+	GWR: {"gwr"},
+	GWC: {"gwc"},
+	GW:  {"gw"},
+}
+
+func (a *Aliases) Inject(ss ShortNames) {
+	for gvr, res := range a.metas {
+		if kk, ok := ss[R(res.Name)]; ok {
+			for _, k := range kk {
+				a.aliases[k] = gvr
+			}
+		}
+	}
+}
+
+func (a *Aliases) IsNamespaced(gvr types.GVR) bool {
+	if r, ok := a.metas[gvr]; ok {
+		return r.Namespaced
+	}
+
+	return true
 }
 
 // Init loads the aliases glossary.
 func (a *Aliases) Init(c types.Connection) error {
-	if err := a.loadPreferred(c); err != nil {
-		return err
-	}
+	return a.loadPreferred(c)
+}
+
+func (a *Aliases) Realize() {
 	for gvr, res := range a.metas {
 		a.aliases[res.Name] = gvr
 		if res.SingularName != "" {
@@ -76,7 +98,7 @@ func (a *Aliases) Init(c types.Connection) error {
 		for _, n := range res.ShortNames {
 			a.aliases[n] = gvr
 		}
-		if kk, ok := customShortNames[res.Name]; ok {
+		if kk, ok := customShortNames[R(res.Name)]; ok {
 			for _, k := range kk {
 				a.aliases[k] = gvr
 			}
@@ -91,8 +113,6 @@ func (a *Aliases) Init(c types.Connection) error {
 			}
 		}
 	}
-
-	return nil
 }
 
 func greaterV(v1, v2 string) bool {
@@ -122,7 +142,12 @@ func (a *Aliases) TitleFor(s string, plural bool) string {
 	if plural {
 		return m.Name
 	}
+
 	return m.SingularName
+}
+
+func (a *Aliases) IsCiliumCluster() bool {
+	return a.cilium
 }
 
 func (a *Aliases) loadPreferred(c types.Connection) error {
@@ -141,6 +166,9 @@ func (a *Aliases) loadPreferred(c types.Connection) error {
 		}
 		for _, r := range l.APIResources {
 			gvr := types.NewGVRFromAPIRes(gv, r)
+			if !a.cilium && strings.Contains(gvr.G(), "cilium.io") {
+				a.cilium = true
+			}
 			r.Group, r.Version = gvr.G(), gvr.V()
 			if r.SingularName == "" {
 				r.SingularName = strings.ToLower(r.Kind)

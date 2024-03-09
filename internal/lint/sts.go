@@ -48,7 +48,7 @@ func (s *StatefulSet) Lint(ctx context.Context) error {
 		sts := o.(*appsv1.StatefulSet)
 		fqn := client.FQN(sts.Namespace, sts.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, sts))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, sts))
 
 		s.checkStatefulSet(ctx, sts)
 		s.checkContainers(ctx, fqn, sts)

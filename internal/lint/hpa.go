@@ -49,7 +49,7 @@ func (h *HorizontalPodAutoscaler) Lint(ctx context.Context) error {
 		hpa := o.(*autoscalingv1.HorizontalPodAutoscaler)
 		fqn := client.FQN(hpa.Namespace, hpa.Name)
 		h.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, hpa))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, hpa))
 		var rcpu, rmem resource.Quantity
 		ns, _ := namespaced(fqn)
 		switch hpa.Spec.ScaleTargetRef.Kind {
@@ -121,7 +121,7 @@ func (h *HorizontalPodAutoscaler) checkResources(ctx context.Context, max, curre
 
 func (h *HorizontalPodAutoscaler) checkUtilization(ctx context.Context, tcpu, tmem resource.Quantity, res v1.ResourceList) {
 	acpu, amem := *res.Cpu(), *res.Memory()
-	ctx = internal.WithSpec(ctx, specFor("HPA", nil))
+	ctx = internal.WithSpec(ctx, SpecFor("HPA", nil))
 	if toMC(tcpu) > toMC(acpu) {
 		cpu := tcpu.DeepCopy()
 		cpu.Sub(acpu)

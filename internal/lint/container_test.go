@@ -75,7 +75,7 @@ func TestContainerCheckUtilization(t *testing.T) {
 	}
 
 	ctx := test.MakeContext("containers", "container")
-	ctx = internal.WithSpec(ctx, specFor("default/p1", nil))
+	ctx = internal.WithSpec(ctx, SpecFor("default/p1", nil))
 	for k := range uu {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestContainerCheckResources(t *testing.T) {
 		l := NewContainer("default/p1", newRangeCollector(t))
 
 		t.Run(k, func(t *testing.T) {
-			ctx = internal.WithSpec(ctx, specFor("default/p1", nil))
+			ctx = internal.WithSpec(ctx, SpecFor("default/p1", nil))
 			ctx = internal.WithGroup(ctx, types.NewGVR("containers"), co.Name)
 			l.checkResources(ctx, co)
 
@@ -184,7 +184,7 @@ func TestContainerCheckImageTags(t *testing.T) {
 	}
 
 	ctx := test.MakeContext("containers", "container")
-	ctx = internal.WithSpec(ctx, specFor("default/p1", nil))
+	ctx = internal.WithSpec(ctx, SpecFor("default/p1", nil))
 	ctx = internal.WithGroup(ctx, types.NewGVR("containers"), "c1")
 	for k := range uu {
 		u := uu[k]
@@ -217,7 +217,7 @@ func TestContainerCheckImageRegistry(t *testing.T) {
 	}
 
 	ctx := test.MakeContext("containers", "container")
-	ctx = internal.WithSpec(ctx, specFor("default/p1", nil))
+	ctx = internal.WithSpec(ctx, SpecFor("default/p1", nil))
 	ctx = internal.WithGroup(ctx, types.NewGVR("containers"), "c1")
 	for k := range uu {
 		u := uu[k]
@@ -248,7 +248,7 @@ func TestContainerCheckNamedPorts(t *testing.T) {
 	}
 
 	ctx := test.MakeContext("containers", "container")
-	ctx = internal.WithSpec(ctx, specFor("p1", nil))
+	ctx = internal.WithSpec(ctx, SpecFor("p1", nil))
 	ctx = internal.WithGroup(ctx, types.NewGVR("v1/pods"), "p1")
 	for k := range uu {
 		u := uu[k]

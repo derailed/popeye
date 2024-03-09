@@ -61,7 +61,7 @@ func (s *Secret) checkStale(ctx context.Context, refs *sync.Map) {
 		sec := o.(*v1.Secret)
 		fqn := client.FQN(sec.Namespace, sec.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, sec))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, sec))
 
 		if s.system.skip(fqn) {
 			continue

@@ -42,7 +42,7 @@ func (s *Ingress) Lint(ctx context.Context) error {
 		ing := o.(*netv1.Ingress)
 		fqn := client.FQN(ing.Namespace, ing.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, ing))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, ing))
 
 		for _, ing := range ing.Status.LoadBalancer.Ingress {
 			for _, p := range ing.Ports {

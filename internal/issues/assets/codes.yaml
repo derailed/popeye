@@ -316,7 +316,6 @@ codes:
     message: References a %s (%s) which does not exist
     severity: 2
 
-
   # Ingress
   1400:
     message: "Ingress LoadBalancer port reported an error: %s"
@@ -344,3 +343,37 @@ codes:
   1502:
     message: CronJob has not run yet or is failing
     severity: 2
+
+  # CiliumIdentity
+  1600:
+    message: "Stale? unable to locate matching Cilium Endpoint"
+    severity: 2
+  1601:
+    message: "Unable to assert namespace label: %q"
+    severity: 2
+  1602:
+    message: "References namespace which does not exists: %q"
+    severity: 2
+  1603:
+    message: "Missing security namespace label: %q"
+    severity: 2
+  1604:
+    message: "Namespace mismatch with security labels namespace: %q vs %q"
+    severity: 2
+
+  # CiliumEndpoint
+  1700:
+    message: "No cilium endpoints matched %s selector"
+    severity: 3
+  1701:
+    message: "No nodes matched node selector"
+    severity: 3
+  1702:
+    message: "References an unknown node IP: %q"
+    severity: 3
+  1703:
+    message: "Pod owner is not in a running state: %s (%s)"
+    severity: 3
+  1704:
+    message: "References an unknown owner ref: %q"
+    severity: 3

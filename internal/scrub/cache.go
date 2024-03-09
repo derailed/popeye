@@ -10,7 +10,6 @@ import (
 	"github.com/derailed/popeye/internal/cache"
 	"github.com/derailed/popeye/internal/dag"
 	"github.com/derailed/popeye/internal/db"
-	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/pkg/config"
 	"github.com/derailed/popeye/types"
 )
@@ -48,10 +47,9 @@ func (c *Cache) cluster(ctx context.Context) (*cache.Cluster, error) {
 	return c.cl, nil
 }
 
-type scrubFn func(context.Context, *Cache, *issues.Codes) Linter
-
-func Scrubers() map[internal.R]scrubFn {
-	return map[internal.R]scrubFn{
+// Scrubers return a collection of linter scrubbers.
+func Scrubers() map[internal.R]ScrubFn {
+	return map[internal.R]ScrubFn{
 		internal.CL:   NewCluster,
 		internal.CM:   NewConfigMap,
 		internal.NS:   NewNamespace,

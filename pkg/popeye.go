@@ -17,6 +17,8 @@ import (
 	"time"
 
 	"github.com/derailed/popeye/internal"
+	"github.com/derailed/popeye/internal/cilium"
+	cscrub "github.com/derailed/popeye/internal/cilium/scrub"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/db/schema"
@@ -101,6 +103,7 @@ func (p *Popeye) Init() error {
 	if err := p.aliases.Init(p.client()); err != nil {
 		return err
 	}
+	p.aliases.Realize()
 
 	var err error
 	p.db, err = p.initDB()
@@ -206,6 +209,18 @@ func (p *Popeye) buildCtx(ctx context.Context) context.Context {
 	return ctx
 }
 
+func (p *Popeye) validateSpinach(ss scrub.Scrubs) error {
+	if p.flags.Spinach == nil || *p.flags.Spinach == "" {
+		return nil
+	}
+	for k := range p.config.Exclusions.Linters {
+		if _, ok := ss[internal.R(k)]; !ok {
+			return fmt.Errorf("invalid linter name specified: %q", k)
+		}
+	}
+	return nil
+}
+
 func (p *Popeye) lint() (int, int, error) {
 	defer func(t time.Time) {
 		log.Debug().Msgf("Lint %v", time.Since(t))
@@ -222,14 +237,25 @@ func (p *Popeye) lint() (int, int, error) {
 	codes.Refine(p.config.Overrides)
 	p.codes = codes
 
-	cache := scrub.NewCache(p.db, p.factory, p.config)
+	var (
+		cache    = scrub.NewCache(p.db, p.factory, p.config)
+		runners  = make(map[types.GVR]scrub.Linter)
+		scrubers = scrub.Scrubers()
+	)
 
-	runners := make(map[types.GVR]scrub.Linter)
-	for k, fn := range scrub.Scrubers() {
+	if p.aliases.IsCiliumCluster() {
+		cscrub.Inject(scrubers)
+		p.aliases.Inject(cilium.Aliases)
+	}
+	if err := p.validateSpinach(scrubers); err != nil {
+		return 0, 0, err
+	}
+	for k, fn := range scrubers {
 		gvr, ok := internal.Glossary[k]
 		if !ok || gvr == types.BlankGVR {
 			continue
 		}
+
 		if p.aliases.Exclude(gvr, p.config.Sections()) {
 			continue
 		}
@@ -237,12 +263,15 @@ func (p *Popeye) lint() (int, int, error) {
 		if gvr == internal.Glossary[internal.NO] && p.client().ActiveNamespace() != client.AllNamespaces {
 			continue
 		}
+		if !p.aliases.IsNamespaced(gvr) {
+			ctx = context.WithValue(ctx, internal.KeyNamespace, client.ClusterScope)
+		}
 		runners[gvr] = fn(ctx, cache, codes)
 	}
 
 	total, errCount := len(runners), 0
 	if total == 0 {
-		return 0, 0, nil
+		return 0, 0, fmt.Errorf("no linters matched query. check section selector")
 	}
 	c := make(chan run, 2)
 	for gvr, r := range runners {
@@ -272,7 +301,7 @@ func (p *Popeye) lint() (int, int, error) {
 func (p *Popeye) runLinter(ctx context.Context, gvr types.GVR, l scrub.Linter, c chan run, cache *scrub.Cache, codes *issues.Codes) {
 	defer func() {
 		if e := recover(); e != nil {
-			BailOut(e.(error))
+			BailOut(fmt.Errorf("%s", e))
 		}
 	}()
 

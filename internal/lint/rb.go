@@ -45,7 +45,7 @@ func (r *RoleBinding) checkInUse(ctx context.Context) {
 		rb := o.(*rbacv1.RoleBinding)
 		fqn := client.FQN(rb.Namespace, rb.Name)
 		r.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, rb))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, rb))
 
 		switch rb.RoleRef.Kind {
 		case "ClusterRole":

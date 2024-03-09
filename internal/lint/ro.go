@@ -34,12 +34,15 @@ func NewRole(c *issues.Collector, db *db.DB) *Role {
 
 // Lint cleanse the resource.
 func (s *Role) Lint(ctx context.Context) error {
-	var roRefs sync.Map
+	var refs sync.Map
+
 	crb := cache.NewClusterRoleBinding(s.db)
-	crb.ClusterRoleRefs(&roRefs)
+	crb.ClusterRoleRefs(&refs)
+
 	rb := cache.NewRoleBinding(s.db)
-	rb.RoleRefs(&roRefs)
-	s.checkInUse(ctx, &roRefs)
+	rb.RoleRefs(&refs)
+
+	s.checkInUse(ctx, &refs)
 
 	return nil
 }
@@ -51,10 +54,9 @@ func (s *Role) checkInUse(ctx context.Context, refs *sync.Map) {
 		ro := o.(*rbacv1.Role)
 		fqn := client.FQN(ro.Namespace, ro.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, ro))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, ro))
 
-		_, ok := refs.Load(cache.ResFqn(cache.RoleKey, fqn))
-		if !ok {
+		if _, ok := refs.Load(cache.ResFqn(cache.RoleKey, fqn)); !ok {
 			s.AddCode(ctx, 400)
 		}
 	}
