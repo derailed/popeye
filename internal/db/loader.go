@@ -5,6 +5,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -58,7 +59,6 @@ func LoadResource[T metav1.ObjectMetaAccessor](ctx context.Context, l *Loader, g
 	if l.isLoaded(gvr) || gvr == types.BlankGVR {
 		return nil
 	}
-
 	oo, err := loadResource(ctx, gvr)
 	if err != nil {
 		return err
@@ -83,11 +83,25 @@ func Cast[T any](o runtime.Object) (T, error) {
 func Save[T metav1.ObjectMetaAccessor](ctx context.Context, dba *DB, gvr types.GVR, oo []runtime.Object) error {
 	txn := dba.Txn(true)
 	defer txn.Commit()
-
 	for _, o := range oo {
-		u, err := Cast[T](o)
-		if err != nil {
-			return err
+		var (
+			u   T
+			err error
+		)
+		// !!BOZO!! Dud. Can't hydrate cnp/ccnp from unstructured??
+		if gvr.R() == "ciliumnetworkpolicies" || gvr.R() == "ciliumclusterwidenetworkpolicies" {
+			bb, err := json.Marshal(o.(*unstructured.Unstructured))
+			if err != nil {
+				return err
+			}
+			if err = json.Unmarshal(bb, &u); err != nil {
+				return err
+			}
+		} else {
+			u, err = Cast[T](o)
+			if err != nil {
+				return err
+			}
 		}
 		if err := txn.Insert(gvr.String(), u); err != nil {
 			return err
@@ -156,6 +170,7 @@ func (l *Loader) fetchPodsMetrics(c types.Connection) (*mv1beta1.PodMetricsList,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), client.CallTimeout)
 	defer cancel()
+
 	return vc.MetricsV1beta1().PodMetricses(c.ActiveNamespace()).List(ctx, metav1.ListOptions{})
 }
 
@@ -167,6 +182,7 @@ func (l *Loader) fetchNodesMetrics(c types.Connection) (*mv1beta1.NodeMetricsLis
 
 	ctx, cancel := context.WithTimeout(context.Background(), client.CallTimeout)
 	defer cancel()
+
 	return vc.MetricsV1beta1().NodeMetricses().List(ctx, metav1.ListOptions{})
 }
 

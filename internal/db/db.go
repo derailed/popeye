@@ -382,17 +382,14 @@ func matchSel(labels map[string]string, e metav1.LabelSelectorRequirement) bool 
 
 // MatchLabels check if pod labels match a selector.
 func MatchLabels(labels, sel map[string]string) bool {
-	if len(sel) == 0 {
-		return false
-	}
-
+	var count int
 	for k, v := range sel {
-		if v1, ok := labels[k]; !ok || v1 != v {
-			return false
+		if v1, ok := labels[k]; ok && v == v1 {
+			count++
 		}
 	}
 
-	return true
+	return count > 0
 }
 
 func (db *DB) Exists(kind types.GVR, fqn string) bool {

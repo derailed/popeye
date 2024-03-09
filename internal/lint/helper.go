@@ -28,7 +28,8 @@ const (
 
 type qos = int
 
-func specFor(fqn string, o metav1.ObjectMetaAccessor) rules.Spec {
+// SpecFor construct a new run spec for a given resource.
+func SpecFor(fqn string, o metav1.ObjectMetaAccessor) rules.Spec {
 	spec := rules.Spec{
 		FQN: fqn,
 	}
@@ -196,4 +197,102 @@ func portAsStr(p v1.ServicePort) string {
 		return string(p.Protocol) + ":" + p.Name + ":" + strconv.Itoa(int(p.Port))
 	}
 	return string(p.Protocol) + "::" + strconv.Itoa(int(p.Port))
+}
+
+const (
+	nodeUnreachablePodReason = "NodeLost"
+	completed                = "Completed"
+	running                  = "Running"
+	terminating              = "Terminating"
+)
+
+func Phase(po *v1.Pod) string {
+	status := string(po.Status.Phase)
+	if po.Status.Reason != "" {
+		if po.DeletionTimestamp != nil && po.Status.Reason == nodeUnreachablePodReason {
+			return "Unknown"
+		}
+		status = po.Status.Reason
+	}
+
+	status, ok := initContainerPhase(po, status)
+	if ok {
+		return status
+	}
+
+	status, ok = containerPhase(po.Status, status)
+	if ok && status == completed {
+		status = running
+	}
+	if po.DeletionTimestamp == nil {
+		return status
+	}
+
+	return terminating
+}
+
+func containerPhase(st v1.PodStatus, status string) (string, bool) {
+	var running bool
+	for i := len(st.ContainerStatuses) - 1; i >= 0; i-- {
+		cs := st.ContainerStatuses[i]
+		switch {
+		case cs.State.Waiting != nil && cs.State.Waiting.Reason != "":
+			status = cs.State.Waiting.Reason
+		case cs.State.Terminated != nil && cs.State.Terminated.Reason != "":
+			status = cs.State.Terminated.Reason
+		case cs.State.Terminated != nil:
+			if cs.State.Terminated.Signal != 0 {
+				status = "Signal:" + strconv.Itoa(int(cs.State.Terminated.Signal))
+			} else {
+				status = "ExitCode:" + strconv.Itoa(int(cs.State.Terminated.ExitCode))
+			}
+		case cs.Ready && cs.State.Running != nil:
+			running = true
+		}
+	}
+
+	return status, running
+}
+
+func initContainerPhase(po *v1.Pod, status string) (string, bool) {
+	count := len(po.Spec.InitContainers)
+	rs := make(map[string]bool, count)
+	for _, c := range po.Spec.InitContainers {
+		rs[c.Name] = restartableInitCO(c.RestartPolicy)
+	}
+	for i, cs := range po.Status.InitContainerStatuses {
+		if s := checkInitContainerStatus(cs, i, count, rs[cs.Name]); s != "" {
+			return s, true
+		}
+	}
+
+	return status, false
+}
+
+func restartableInitCO(p *v1.ContainerRestartPolicy) bool {
+	return p != nil && *p == v1.ContainerRestartPolicyAlways
+}
+
+func checkInitContainerStatus(cs v1.ContainerStatus, count, initCount int, restartable bool) string {
+	switch {
+	case cs.State.Terminated != nil:
+		if cs.State.Terminated.ExitCode == 0 {
+			return ""
+		}
+		if cs.State.Terminated.Reason != "" {
+			return "Init:" + cs.State.Terminated.Reason
+		}
+		if cs.State.Terminated.Signal != 0 {
+			return "Init:Signal:" + strconv.Itoa(int(cs.State.Terminated.Signal))
+		}
+		return "Init:ExitCode:" + strconv.Itoa(int(cs.State.Terminated.ExitCode))
+	case restartable && cs.Started != nil && *cs.Started:
+		if cs.Ready {
+			return ""
+		}
+	case cs.State.Waiting != nil && cs.State.Waiting.Reason != "" && cs.State.Waiting.Reason != "PodInitializing":
+		return "Init:" + cs.State.Waiting.Reason
+	}
+
+	return "Init:" + strconv.Itoa(count) + "/" + strconv.Itoa(initCount)
 }

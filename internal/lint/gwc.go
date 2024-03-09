@@ -39,7 +39,7 @@ func (s *GatewayClass) Lint(ctx context.Context) error {
 		gwc := o.(*gwv1.GatewayClass)
 		fqn := client.FQN(gwc.Namespace, gwc.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, gwc))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, gwc))
 		s.checkRefs(ctx, gwc.Name)
 	}
 

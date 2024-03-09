@@ -38,7 +38,7 @@ func (s *Service) Lint(ctx context.Context) error {
 		svc := o.(*v1.Service)
 		fqn := client.FQN(svc.Namespace, svc.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, svc))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, svc))
 
 		if len(svc.Spec.Selector) > 0 {
 			s.checkPorts(ctx, svc.Namespace, svc.Spec.Selector, svc.Spec.Ports)

@@ -37,7 +37,7 @@ func (s *PersistentVolume) Lint(ctx context.Context) error {
 		pv := o.(*v1.PersistentVolume)
 		fqn := client.FQN(pv.Namespace, pv.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, pv))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, pv))
 
 		s.checkBound(ctx, pv.Status.Phase)
 	}

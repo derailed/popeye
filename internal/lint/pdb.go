@@ -36,7 +36,7 @@ func (p *PodDisruptionBudget) Lint(ctx context.Context) error {
 		pdb := o.(*polv1.PodDisruptionBudget)
 		fqn := client.FQN(pdb.Namespace, pdb.Name)
 		p.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, pdb))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, pdb))
 
 		p.checkInUse(ctx, pdb)
 	}

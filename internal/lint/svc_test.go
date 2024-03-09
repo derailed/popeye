@@ -105,7 +105,7 @@ func Test_svcCheckEndpoints(t *testing.T) {
 
 			s := NewService(test.MakeCollector(t), dba)
 			if u.fqn != "" {
-				ctx = internal.WithSpec(ctx, specFor(u.fqn, nil))
+				ctx = internal.WithSpec(ctx, SpecFor(u.fqn, nil))
 			}
 			s.checkEndpoints(ctx, u.fqn, u.kind)
 

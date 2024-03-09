@@ -59,7 +59,7 @@ func (s *Pod) Lint(ctx context.Context) error {
 		s.InitOutcome(fqn)
 		defer s.CloseOutcome(ctx, fqn, nil)
 
-		ctx = internal.WithSpec(ctx, specFor(fqn, po))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, po))
 		s.checkStatus(ctx, po)
 		s.checkContainerStatus(ctx, fqn, po)
 		s.checkContainers(ctx, fqn, po)

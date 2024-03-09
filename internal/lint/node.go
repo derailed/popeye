@@ -48,7 +48,7 @@ func (n *Node) Lint(ctx context.Context) error {
 		no := o.(*v1.Node)
 		fqn := no.Name
 		n.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, no))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, no))
 
 		n.checkConditions(ctx, no)
 		if err := n.checkTaints(ctx, no.Spec.Taints, tt); err != nil {

@@ -51,7 +51,7 @@ func (s *ConfigMap) checkStale(ctx context.Context, refs *sync.Map) error {
 		cm := o.(*v1.ConfigMap)
 		fqn := client.FQN(cm.Namespace, cm.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, cm))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, cm))
 		if s.system.skip(fqn) {
 			continue
 		}

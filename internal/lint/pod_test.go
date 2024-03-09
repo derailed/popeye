@@ -91,7 +91,7 @@ func TestPodCheckSecure(t *testing.T) {
 	}
 
 	ctx := test.MakeContext("v1/pods", "po")
-	ctx = internal.WithSpec(ctx, specFor("default/p1", nil))
+	ctx = internal.WithSpec(ctx, SpecFor("default/p1", nil))
 	ctx = context.WithValue(ctx, internal.KeyConfig, test.MakeConfig(t))
 	dba, err := test.NewTestDB()
 	assert.NoError(t, err)

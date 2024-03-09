@@ -36,7 +36,7 @@ func (s *ReplicaSet) Lint(ctx context.Context) error {
 		rs := o.(*appsv1.ReplicaSet)
 		fqn := client.FQN(rs.Namespace, rs.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, specFor(fqn, rs))
+		ctx = internal.WithSpec(ctx, SpecFor(fqn, rs))
 
 		s.checkHealth(ctx, rs)
 	}
