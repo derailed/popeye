@@ -115,7 +115,11 @@ func (s *Service) checkEndpoints(ctx context.Context, fqn string, kind v1.Servic
 		s.AddCode(ctx, 1110)
 		return
 	}
-	if len(ep.Subsets) == 1 {
+	var eps int
+	for _, s := range ep.Subsets {
+		eps += len(s.Addresses)
+	}
+	if eps == 1 {
 		s.AddCode(ctx, 1109)
 	}
 }
