@@ -31,10 +31,11 @@ func TestCiliumIdentity(t *testing.T) {
 	assert.Nil(t, li.Lint(test.MakeContext("cilium.io/v2/ciliumidentities", "ciliumidentities")))
 	assert.Equal(t, 3, len(li.Outcome()))
 
-	ii := li.Outcome()["100"]
+	li.Outcome().Dump()
+	ii := li.Outcome()["default/100"]
 	assert.Equal(t, 0, len(ii))
 
-	ii = li.Outcome()["200"]
+	ii = li.Outcome()["ns1/200"]
 	assert.Equal(t, 3, len(ii))
 	assert.Equal(t, "[POP-1600] Stale? unable to locate matching Cilium Endpoint", ii[0].Message)
 	assert.Equal(t, rules.WarnLevel, ii[0].Level)
@@ -43,7 +44,7 @@ func TestCiliumIdentity(t *testing.T) {
 	assert.Equal(t, `[POP-307] CiliumIdentity references a non existing ServiceAccount: "ns1/sa1"`, ii[2].Message)
 	assert.Equal(t, rules.WarnLevel, ii[2].Level)
 
-	ii = li.Outcome()["300"]
+	ii = li.Outcome()["default/300"]
 	assert.Equal(t, 1, len(ii))
 	assert.Equal(t, `[POP-1603] Missing security namespace label: "k8s:io.kubernetes.pod.namespace"`, ii[0].Message)
 	assert.Equal(t, rules.WarnLevel, ii[0].Level)
