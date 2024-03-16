@@ -45,13 +45,14 @@ func (s *CiliumIdentity) Lint(ctx context.Context) error {
 	for o := it.Next(); o != nil; o = it.Next() {
 		cid := o.(*v2.CiliumIdentity)
 		fqn := client.FQN(cid.Namespace, cid.Name)
-		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, ilint.SpecFor(fqn, cid))
+		id := client.FQN(extractNS(cid), cid.Name)
+		s.InitOutcome(id)
+		ctx = internal.WithSpec(ctx, ilint.SpecFor(id, cid))
 		if err := s.checkStale(ctx, fqn, &refs); err != nil {
 			return err
 		}
 		s.checkNS(ctx, cid)
-		if err := s.checkSA(ctx, fqn, cid); err != nil {
+		if err := s.checkSA(ctx, cid); err != nil {
 			return err
 		}
 	}
@@ -75,6 +76,17 @@ const (
 	k8sSALabel     = "io.cilium.k8s.policy.serviceaccount"
 )
 
+func extractNS(cid *v2.CiliumIdentity) string {
+	if ns, ok := cid.Labels[k8sNSLabel]; ok {
+		return ns
+	}
+	if ns, ok := cid.SecurityLabels[k8sSecNSLabel]; ok {
+		return ns
+	}
+
+	return client.BlankNamespace
+}
+
 func (s *CiliumIdentity) checkNS(ctx context.Context, cid *v2.CiliumIdentity) {
 	ns, ok := cid.Labels[k8sNSLabel]
 	if !ok {
@@ -95,7 +107,7 @@ func (s *CiliumIdentity) checkNS(ctx context.Context, cid *v2.CiliumIdentity) {
 	}
 }
 
-func (s *CiliumIdentity) checkSA(ctx context.Context, fqn string, cid *v2.CiliumIdentity) error {
+func (s *CiliumIdentity) checkSA(ctx context.Context, cid *v2.CiliumIdentity) error {
 	ns, ok := cid.Labels[k8sNSLabel]
 	if !ok {
 		return fmt.Errorf("unable to locate cid namespace")

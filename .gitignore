@@ -20,3 +20,4 @@ spinach.yml
 /kind
 /spinach-me
 __debug_bin*
+.act-evt
