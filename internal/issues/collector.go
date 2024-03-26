@@ -13,6 +13,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const errCode = 666
+
 // Collector tracks linter issues and codes.
 type Collector struct {
 	*config.Config
@@ -95,8 +97,20 @@ func (c *Collector) AddCode(ctx context.Context, code rules.ID, args ...interfac
 // AddErr adds a collection of errors.
 func (c *Collector) AddErr(ctx context.Context, errs ...error) {
 	run := internal.MustExtractRunInfo(ctx)
+	if c.codes == nil {
+		for _, e := range errs {
+			c.addIssue(run.Spec.FQN, New(run.SectionGVR, Root, rules.ErrorLevel, e.Error()))
+		}
+		return
+	}
+
+	co, ok := c.codes.Glossary[errCode]
+	if !ok {
+		// BOZO!! refact once codes are in!!
+		panic(fmt.Errorf("no codes found with id %d", errCode))
+	}
 	for _, e := range errs {
-		c.addIssue(run.Spec.FQN, New(run.SectionGVR, Root, rules.ErrorLevel, e.Error()))
+		c.addIssue(run.Spec.FQN, New(run.SectionGVR, Root, rules.ErrorLevel, co.Format(errCode, e.Error())))
 	}
 }
 

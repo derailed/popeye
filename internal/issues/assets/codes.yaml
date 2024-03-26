@@ -126,6 +126,10 @@ codes:
   407:
     message: "%s references %s %q which does not exist"
     severity: 3
+  666:
+    message: "Lint internal error: %s"
+    severity: 3
+
 
   # Pod controllers
   500:

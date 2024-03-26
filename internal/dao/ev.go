@@ -11,6 +11,7 @@ import (
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/types"
+	"github.com/rs/zerolog/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -26,7 +27,8 @@ type EventInfo struct {
 }
 
 func (e EventInfo) IsIssue() bool {
-	return e.Kind == WarnEvt || !strings.Contains(e.Reason, "Success")
+	return e.Kind == WarnEvt ||
+		(e.Reason != "Success" && e.Reason != "SawCompletedJob")
 }
 
 type EventInfos []EventInfo
@@ -73,7 +75,8 @@ func EventsFor(ctx context.Context, gvr types.GVR, level, kind, fqn string) (Eve
 		return nil, err
 	}
 	if len(oo) == 0 {
-		return nil, fmt.Errorf("No events found %s", fqn)
+		log.Debug().Msgf("No events found %s: %s", gvr, fqn)
+		return nil, nil
 	}
 
 	tt := oo[0].(*metav1.Table)

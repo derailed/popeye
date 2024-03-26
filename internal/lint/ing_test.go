@@ -52,7 +52,7 @@ func TestIngLint(t *testing.T) {
 	assert.Equal(t, 2, len(ii))
 	assert.Equal(t, `[POP-1400] Ingress LoadBalancer port reported an error: boom`, ii[0].Message)
 	assert.Equal(t, rules.ErrorLevel, ii[0].Level)
-	assert.Equal(t, `Ingress local obj refs not supported`, ii[1].Message)
+	assert.Equal(t, `[POP-666] Lint internal error: Ingress local obj refs not supported`, ii[1].Message)
 	assert.Equal(t, rules.ErrorLevel, ii[1].Level)
 
 	ii = ing.Outcome()["default/ing6"]
