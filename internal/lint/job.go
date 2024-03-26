@@ -82,7 +82,7 @@ func (s *Job) checkUtilization(ctx context.Context, over bool, fqn string) {
 		s.AddErr(ctx, err)
 		return
 	}
-	mx := jobResourceUsage(ctx, s.db, s, jj)
+	mx := jobResourceUsage(s.db, jj)
 	if mx.RequestCPU.IsZero() && mx.RequestMEM.IsZero() {
 		return
 	}

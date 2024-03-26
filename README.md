@@ -1,6 +1,6 @@
 <img src="https://github.com/derailed/popeye/raw/master/assets/popeye_logo.png" align="right" width="250" height="auto">
 
-# Popeye - A Kubernetes Live Cluster Linter
+# Popeye: Kubernetes Live Cluster Linter
 
 Popeye is a utility that scans live Kubernetes clusters and reports potential issues with deployed resources and configurations.
 As Kubernetes landscapes grows, it is becoming a challenge for a human to track the slew of manifests and policies that orchestrate a cluster.

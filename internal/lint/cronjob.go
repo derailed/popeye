@@ -91,7 +91,7 @@ func (s *CronJob) checkUtilization(ctx context.Context, over bool, fqn string) {
 		s.AddErr(ctx, err)
 		return
 	}
-	mx := jobResourceUsage(ctx, s.db, s, jj)
+	mx := jobResourceUsage(s.db, jj)
 	if mx.RequestCPU.IsZero() && mx.RequestMEM.IsZero() {
 		return
 	}
@@ -105,13 +105,15 @@ func checkEvents(ctx context.Context, ii *issues.Collector, r internal.R, kind, 
 	ee, err := dao.EventsFor(ctx, internal.Glossary[r], kind, object, fqn)
 	if err != nil {
 		ii.AddErr(ctx, err)
+		return
 	}
+
 	for _, e := range ee.Issues() {
 		ii.AddErr(ctx, errors.New(e))
 	}
 }
 
-func jobResourceUsage(ctx context.Context, dba *db.DB, c Collector, jobs []*batchv1.Job) ConsumptionMetrics {
+func jobResourceUsage(dba *db.DB, jobs []*batchv1.Job) ConsumptionMetrics {
 	var mx ConsumptionMetrics
 
 	if len(jobs) == 0 {

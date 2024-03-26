@@ -53,6 +53,6 @@ func TestDPLint(t *testing.T) {
 	assert.Equal(t, 2, len(ii))
 	assert.Equal(t, `[POP-500] Zero scale detected`, ii[0].Message)
 	assert.Equal(t, rules.WarnLevel, ii[0].Level)
-	assert.Equal(t, `no pod selector given`, ii[1].Message)
+	assert.Equal(t, `[POP-666] Lint internal error: no pod selector given`, ii[1].Message)
 	assert.Equal(t, rules.ErrorLevel, ii[1].Level)
 }
