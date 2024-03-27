@@ -27,8 +27,7 @@ type EventInfo struct {
 }
 
 func (e EventInfo) IsIssue() bool {
-	return e.Kind == WarnEvt ||
-		(e.Reason != "Success" && e.Reason != "SawCompletedJob")
+	return e.Kind == WarnEvt
 }
 
 type EventInfos []EventInfo
