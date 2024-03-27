@@ -347,6 +347,9 @@ codes:
   1502:
     message: CronJob has not run yet or is failing
     severity: 2
+  1503:
+    message: "Warning found: %s"
+    severity: 2
 
   # CiliumIdentity
   1600:

@@ -5,7 +5,6 @@ package lint
 
 import (
 	"context"
-	"errors"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cache"
@@ -107,9 +106,8 @@ func checkEvents(ctx context.Context, ii *issues.Collector, r internal.R, kind, 
 		ii.AddErr(ctx, err)
 		return
 	}
-
 	for _, e := range ee.Issues() {
-		ii.AddErr(ctx, errors.New(e))
+		ii.AddCode(ctx, 1503, e)
 	}
 }
 
