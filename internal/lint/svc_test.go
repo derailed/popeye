@@ -35,6 +35,27 @@ func TestSVCLint(t *testing.T) {
 
 }
 
+func TestSVCLint2(t *testing.T) {
+	dba, err := test.NewTestDB()
+	assert.NoError(t, err)
+	l := db.NewLoader(dba)
+
+	ctx := test.MakeCtx(t)
+	assert.NoError(t, test.LoadDB[*v1.Service](ctx, l.DB, "core/svc/2.yaml", internal.Glossary[internal.SVC]))
+	assert.NoError(t, test.LoadDB[*v1.Pod](ctx, l.DB, "core/pod/4.yaml", internal.Glossary[internal.PO]))
+	assert.NoError(t, test.LoadDB[*v1.Endpoints](ctx, l.DB, "core/ep/1.yaml", internal.Glossary[internal.EP]))
+
+	svc := NewService(test.MakeCollector(t), dba)
+	assert.Nil(t, svc.Lint(test.MakeContext("v1/pods", "pods")))
+	assert.Equal(t, 1, len(svc.Outcome()))
+
+	ii := svc.Outcome()["default/svc1"]
+	assert.Equal(t, 1, len(ii))
+	assert.Equal(t, `[POP-1109] Single endpoint is associated with this service`, ii[0].Message)
+	assert.Equal(t, rules.WarnLevel, ii[0].Level)
+
+}
+
 func Test_svcCheckEndpoints(t *testing.T) {
 	uu := map[string]struct {
 		kind     v1.ServiceType
