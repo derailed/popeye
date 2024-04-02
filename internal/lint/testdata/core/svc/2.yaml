@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: p1
+    name: svc1
+    namespace: default
+  spec:
+    ports:
+    - name: http
+      port: 9090
+      protocol: TCP
+      targetPort: bbb
+    selector:
+      app: p1
+      instance: bbb
+    sessionAffinity: None
+  status:
+    loadBalancer: {}
