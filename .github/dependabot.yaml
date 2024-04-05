@@ -1,0 +1,8 @@
+version: 2
+updates:
+- package-ecosystem: "gomod"
+  directory: "/"
+  allow:
+  - dependency-type: "all"
+- package-ecosystem: "github-actions"
+  directory: "/"
