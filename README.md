@@ -229,7 +229,7 @@ To save the Popeye report to a file pass the `--save` flag to the command.
 By default it will create a tmp directory and will store your scan report there.
 The path of the tmp directory will be printed out on STDOUT.
 If you have the need to specify the output directory for the report,
-you can use this environment variable `POPEYE_REPORT_DIR`.
+you can use this environment variable `POPEYE_REPORT_DIR`. The final path will be <POPEYE_REPORT_DIR>/<cluster>/<context>.
 By default, the name of the output file follow the following format : `lint_<cluster-name>_<time-UnixNano>.<output-extension>` (e.g. : "lint-mycluster-1594019782530851873.html").
 If you want to also specify the output file name for the report, you can pass the `--output-file` flag with the filename you want as parameter.
 
