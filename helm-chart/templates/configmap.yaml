@@ -1,0 +1,66 @@
+---          
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: popeye-reports
+  name: spinach
+  namespace: {{ .Values.namespace }}
+data:
+{{ if .Values.configMap }}
+{{- with .Values.configMap }}
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- else }}  
+  spinach: |-
+    # A Popeye sample configuration file
+    popeye:
+      allocations:
+        cpu:
+          underPercUtilization: 200 # Checks if cpu is under allocated by more than 200% at current load.
+          overPercUtilization: 50   # Checks if cpu is over allocated by more than 50% at current load.
+        memory:
+          underPercUtilization: 200 # Checks if mem is under allocated by more than 200% at current load.
+          overPercUtilization: 50   # Checks if mem is over allocated by more than 50% usage at current load.
+
+      excludes:
+        v1/pods:
+        - name: rx:kube-system
+          codes:
+          - 102
+          - 105
+          - 106
+          - 107
+          - 206
+          - 301
+          - 302
+          - 306
+          - 206
+          - 104
+        - name: rx:popeye-reports
+        - name: rx:icx/.*
+          containers:
+            - istio-proxy
+            - istio-init
+        v1/configmaps:
+          - name: rx:fred.+\.v\d+
+        v1/namespaces:
+          - name: rx:kube
+            codes:
+              - 404
+          - name: rx:istio
+        autoscaling/v1/horizontalpodautoscalers:
+          - name: rx:.*
+
+      node:
+        limits:
+          cpu:    90
+          memory: 80
+
+      pod:
+        restarts:
+          3
+        limits:
+          cpu:    80
+          memory: 75
+{{- end }}
