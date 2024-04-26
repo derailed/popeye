@@ -55,17 +55,19 @@ func NewClusterRole(c *issues.Collector, db *db.DB) *ClusterRole {
 
 // Lint sanitizes the resource.
 func (s *ClusterRole) Lint(ctx context.Context) error {
-	var crRefs sync.Map
+	var crRefs, agRefs sync.Map
 	crb := cache.NewClusterRoleBinding(s.db)
 	crb.ClusterRoleRefs(&crRefs)
 	rb := cache.NewRoleBinding(s.db)
 	rb.RoleRefs(&crRefs)
-	s.checkStale(ctx, &crRefs)
+	cr := cache.NewClusterRole(s.db)
+	cr.AggregationMatchers(&agRefs)
+	s.checkStale(ctx, &crRefs, &agRefs)
 
 	return nil
 }
 
-func (s *ClusterRole) checkStale(ctx context.Context, refs *sync.Map) {
+func (s *ClusterRole) checkStale(ctx context.Context, refs *sync.Map, agRefs *sync.Map) {
 	txn, it := s.db.MustITFor(internal.Glossary[internal.CR])
 	defer txn.Abort()
 	for o := it.Next(); o != nil; o = it.Next() {
@@ -74,6 +76,16 @@ func (s *ClusterRole) checkStale(ctx context.Context, refs *sync.Map) {
 		s.InitOutcome(fqn)
 		ctx = internal.WithSpec(ctx, SpecFor(fqn, cr))
 		if s.system.skip(fqn) {
+			continue
+		}
+		partialRole := false
+		for key, value := range cr.Labels {
+			expectedValue, ok := agRefs.Load(key)
+			if ok && value == expectedValue {
+				partialRole = true
+			}
+		}
+		if partialRole {
 			continue
 		}
 		if _, ok := refs.Load(cache.ResFqn(cache.ClusterRoleKey, fqn)); !ok {
