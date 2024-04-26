@@ -12,7 +12,7 @@ popeye:
       # Checks if mem is over allocated by more than 50% at current load.
       overPercUtilization: 50
 
-  # Excludes define rules to exampt resources from sanitization
+  # Excludes define rules to exempt resources from sanitization
   excludes:
     global:
       fqns: [rx:^kube-system,rx:^local-path-storage]
