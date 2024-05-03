@@ -178,7 +178,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "popeye_cluster_score{cluster=~\"$cluster\"}",
+          "expr": "avg by(cluster) (popeye_cluster_score{cluster=~\"$cluster\"})",
           "instant": false,
           "legendFormat": "{{cluster}} ({{grade}})",
           "range": true,
