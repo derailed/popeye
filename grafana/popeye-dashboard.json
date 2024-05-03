@@ -562,7 +562,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "topk($topk, popeye_severity_total{severity=\"error\", cluster=~\"$cluster\", namespace=~\"$namespace\"})",
+              "expr": "topk($topk, avg by(cluster,namespace) (popeye_severity_total{severity=\"error\", cluster=~\"$cluster\", namespace=~\"$namespace\"}))",
               "format": "time_series",
               "instant": false,
               "legendFormat": "{{cluster}} ({{namespace}})",
@@ -631,7 +631,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "topk($topk, popeye_severity_total{severity=\"warn\", cluster=~\"$cluster\", namespace=~\"$namespace\"})",
+              "expr": "topk($topk, avg by(cluster,namespace) (popeye_severity_total{severity=\"warn\", cluster=~\"$cluster\", namespace=~\"$namespace\"}))",
               "format": "time_series",
               "instant": false,
               "legendFormat": "{{cluster}} ({{namespace}})",
@@ -700,7 +700,7 @@
                 "uid": "${DS_PROMETHEUS}"
               },
               "editorMode": "code",
-              "expr": "topk($topk, popeye_severity_total{severity=\"info\", cluster=~\"$cluster\", namespace=~\"$namespace\"})",
+              "expr": "topk($topk, avg by(cluster,namespace) (popeye_severity_total{severity=\"info\", cluster=~\"$cluster\", namespace=~\"$namespace\"}))",
               "format": "time_series",
               "instant": false,
               "legendFormat": "{{cluster}} {{namespace}}",
