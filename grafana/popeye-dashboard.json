@@ -85,7 +85,7 @@
       },
       "description": "",
       "gridPos": {
-        "h": 6,
+        "h": 7,
         "w": 15,
         "x": 0,
         "y": 0
@@ -97,7 +97,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "<img style=\"float:left;max-width:175px;border-radius:10px;-webkit-filter:drop-shadow(8px 8px 10px #373831);filter:drop-shadow(8px 8px 10px #373831);\" src=\"https://github.com/derailed/popeye/raw/master/assets/popeye_logo.png\" alt=\"popeye-logo\"/>\n<span style=\"float:left;color:greenyellow;font-size:4em;font-family:Gill Sans\">Popeye K8s Cluster Scan</span>\n<p style=\"font-style:italic;\">Biffs`em and Buffs`em!</p>\n\n",
+        "content": "<img style=\"float:left;max-width:175px;border-radius:10px;-webkit-filter:drop-shadow(8px 8px 10px #373831);filter:drop-shadow(8px 8px 10px #373831);\" src=\"https://github.com/derailed/popeye/raw/master/assets/popeye_logo.png\" alt=\"popeye-logo\"/>\n<span style=\"float:left;color:greenyellow;font-size:4em;font-family:Gill Sans\">Popeye K8s Cluster Scan</span>\n<p style=\"font-style:italic;\">Biffs`em and Buffs`em!</p>\n<p><a href=\"https://popeyecli.io/docs/codes.html\">Popeye error codes</a></p\n",
         "mode": "html"
       },
       "pluginVersion": "10.2.2",
@@ -110,7 +110,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 6
+        "y": 7
       },
       "id": 21,
       "panels": [],
@@ -153,7 +153,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 7
+        "y": 8
       },
       "id": 9,
       "options": {
@@ -193,7 +193,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 12
+        "y": 13
       },
       "id": 14,
       "panels": [],
@@ -264,7 +264,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 13
+        "y": 14
       },
       "id": 11,
       "options": {
@@ -362,7 +362,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 13
+        "y": 14
       },
       "id": 17,
       "options": {
@@ -460,7 +460,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 13
+        "y": 14
       },
       "id": 12,
       "options": {
@@ -500,7 +500,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 21
       },
       "id": 13,
       "panels": [
@@ -536,7 +536,7 @@
             "h": 15,
             "w": 8,
             "x": 0,
-            "y": 21
+            "y": 22
           },
           "id": 7,
           "options": {
@@ -605,7 +605,7 @@
             "h": 15,
             "w": 8,
             "x": 8,
-            "y": 21
+            "y": 22
           },
           "id": 6,
           "options": {
@@ -674,7 +674,7 @@
             "h": 15,
             "w": 8,
             "x": 16,
-            "y": 21
+            "y": 22
           },
           "id": 5,
           "options": {
@@ -721,7 +721,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 22
       },
       "id": 16,
       "panels": [],
@@ -791,7 +791,7 @@
         "h": 12,
         "w": 8,
         "x": 0,
-        "y": 22
+        "y": 23
       },
       "id": 10,
       "options": {
@@ -887,7 +887,7 @@
         "h": 12,
         "w": 8,
         "x": 8,
-        "y": 22
+        "y": 23
       },
       "id": 18,
       "options": {
@@ -983,7 +983,7 @@
         "h": 12,
         "w": 8,
         "x": 16,
-        "y": 22
+        "y": 23
       },
       "id": 19,
       "options": {
