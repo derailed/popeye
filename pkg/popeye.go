@@ -43,7 +43,8 @@ const (
 
 var (
 	// LogFile the path to our logs.
-	LogFile = filepath.Join(os.TempDir(), "popeye.log")
+	//LogFile = filepath.Join(os.TempDir(), "popeye.log")
+	LogFile = filepath.Join("./", "popeye.log") // DAVE
 
 	// DumpDir track scan report directory location.
 	DumpDir = dumpDir()
@@ -229,6 +230,7 @@ func (p *Popeye) lint() (int, int, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	ctx = p.buildCtx(ctx)
+	orig_ns := ctx.Value(internal.KeyNamespace)
 
 	codes, err := issues.LoadCodes()
 	if err != nil {
@@ -255,6 +257,8 @@ func (p *Popeye) lint() (int, int, error) {
 		if !ok || gvr == types.BlankGVR {
 			continue
 		}
+
+		ctx = context.WithValue(ctx, internal.KeyNamespace, orig_ns)
 
 		if p.aliases.Exclude(gvr, p.config.Sections()) {
 			continue
