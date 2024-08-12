@@ -43,8 +43,7 @@ const (
 
 var (
 	// LogFile the path to our logs.
-	//LogFile = filepath.Join(os.TempDir(), "popeye.log")
-	LogFile = filepath.Join("./", "popeye.log") // DAVE
+	LogFile = filepath.Join(os.TempDir(), "popeye.log")
 
 	// DumpDir track scan report directory location.
 	DumpDir = dumpDir()
