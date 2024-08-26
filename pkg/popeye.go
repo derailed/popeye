@@ -425,7 +425,7 @@ func (p *Popeye) dumpPrometheus(ctx context.Context, asset string, persist bool)
 	// Enable saving to file
 	if persist {
 		pusher = pusher.Client(p)
-		pusher = pusher.Format(expfmt.FmtText)
+		pusher = pusher.Format(expfmt.NewFormat(expfmt.TypeTextPlain))
 	}
 
 	return pusher.AddContext(ctx)
