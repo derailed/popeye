@@ -1,3 +1,5 @@
+version: 2
+
 project_name: popeye
 
 before:
@@ -7,19 +9,48 @@ before:
 release:
   prerelease: false
 
+env:
+  - CGO_ENABLED=0
+
 builds:
-  - env:
-      - CGO_ENABLED=0
+  - id: linux
     goos:
       - linux
+      - freebsd
+    goarch:
+      - amd64
+      - arm64
+      - arm
+      - ppc64le
+      - s390x
+    goarm:
+      - 7
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X github.com/derailed/popeye/cmd.version={{.Version}}
+      - -s -w -X github.com/derailed/popeye/cmd.commit={{.Commit}}
+      - -s -w -X github.com/derailed/popeye/cmd.date={{.Date}}
+
+  - id: osx
+    goos:
       - darwin
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X github.com/derailed/popeye/cmd.version={{.Version}}
+      - -s -w -X github.com/derailed/popeye/cmd.commit={{.Commit}}
+      - -s -w -X github.com/derailed/popeye/cmd.date={{.Date}}
+
+  - id: windows
+    goos:
       - windows
     goarch:
       - amd64
-      - arm
       - arm64
-    goarm:
-      - 7
     flags:
       - -trimpath
     ldflags:
@@ -37,7 +68,7 @@ archives:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
 
 checksum:
-  name_template: "checksums.txt"
+  name_template: "checksums.sha256"
 
 snapshot:
   name_template: "{{ .Tag }}-next"
@@ -57,8 +88,29 @@ brews:
     commit_author:
       name: derailed
       email: fernand@imhotep.io
-    folder: Formula
+    directory: Formula
     homepage: https://imhotep.io/popeye
-    description: A Kubernetes Cluster sanitizer and linter.
+    description: A Kubernetes Cluster sanitizer and linter!
     test: |
       system "popeye version"
+
+nfpms:
+  - file_name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
+    maintainer: Fernand Galiana
+    homepage: https://popeyecli.io
+    description: A Kubernetes Cluster sanitizer and linter!
+    license: "Apache-2.0"
+    formats:
+      - deb
+      - rpm
+      - apk
+    bindir: /usr/bin
+    section: utils
+    contents:
+      - src: ./LICENSE
+        dst: /usr/share/doc/nfpm/copyright
+        file_info:
+          mode: 0644
+
+sboms:
+  - artifacts: archive
