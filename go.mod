@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go v1.35.21
 	github.com/blang/semver/v4 v4.0.0
 	github.com/cilium/cilium v1.16.1
-	github.com/fvbommel/sortorder v1.0.1
+	github.com/fvbommel/sortorder v1.1.0
 	github.com/hashicorp/go-memdb v1.3.4
 	github.com/prometheus/client_golang v1.20.0
 	github.com/prometheus/common v0.59.1
