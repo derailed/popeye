@@ -5,6 +5,7 @@ package report
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -31,12 +32,12 @@ func TestError(t *testing.T) {
 		e   string
 	}{
 		{
-			fmt.Errorf("crapola"),
-			"\n💥 \x1b[38;5;196mblee: crapola\x1b[0m\n",
+			err: fmt.Errorf("crapola"),
+			e:   "\n💥 \x1b[38;5;196mblee: crapola\x1b[0m\n",
 		},
 		{
-			fmt.Errorf(strings.Repeat("#", 200)),
-			"\n💥 \x1b[38;5;196mblee: " + strings.Repeat("#", Width-9) + "\x1b[0m\n\x1b[38;5;196m" + strings.Repeat("#", Width-3) + "\x1b[0m\n\x1b[38;5;196m" + strings.Repeat("#", Width-88) + "\x1b[0m\n",
+			err: errors.New(strings.Repeat("#", 200)),
+			e:   "\n💥 \x1b[38;5;196mblee: " + strings.Repeat("#", Width-9) + "\x1b[0m\n\x1b[38;5;196m" + strings.Repeat("#", Width-3) + "\x1b[0m\n\x1b[38;5;196m" + strings.Repeat("#", Width-88) + "\x1b[0m\n",
 		},
 	}
 

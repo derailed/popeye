@@ -99,7 +99,7 @@ func (s *ScanReport) Error(msg string, err error) {
 
 // Comment writes a comment line.
 func (s *ScanReport) Comment(msg string) {
-	fmt.Fprintf(s, "  · "+msg+"\n")
+	fmt.Fprint(s, "  · "+msg+"\n")
 }
 
 // Dump all errors to output.

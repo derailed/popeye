@@ -263,10 +263,9 @@ func (p *Popeye) lint() (int, int, error) {
 		if gvr == internal.Glossary[internal.NO] && p.client().ActiveNamespace() != client.AllNamespaces {
 			continue
 		}
-		if !p.aliases.IsNamespaced(gvr) {
-			ctx = context.WithValue(ctx, internal.KeyNamespace, client.ClusterScope)
-		}
+
 		runners[gvr] = fn(ctx, cache, codes)
+
 	}
 
 	total, errCount := len(runners), 0
@@ -305,7 +304,12 @@ func (p *Popeye) runLinter(ctx context.Context, gvr types.GVR, l scrub.Linter, c
 		}
 	}()
 
-	if err := l.Lint(ctx); err != nil {
+	callCtx := ctx
+	if !p.aliases.IsNamespaced(gvr) {
+		callCtx = context.WithValue(ctx, internal.KeyNamespace, client.ClusterScope)
+	}
+
+	if err := l.Lint(callCtx); err != nil {
 		p.builder.AddError(err)
 	}
 	o := l.Outcome().Filter(rules.Level(p.config.LintLevel))
