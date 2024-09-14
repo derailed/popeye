@@ -507,6 +507,10 @@ func (p *Popeye) ensureOutput() error {
 			DumpDir,
 			p.clusterPath(),
 		)
+		if DumpDir != DefaultDumpDir {
+			dir = DumpDir
+		}
+
 		if err := ensureDir(dir, defaultFileMode); err != nil {
 			return err
 		}
