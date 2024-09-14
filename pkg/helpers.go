@@ -15,6 +15,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var DefaultDumpDir = filepath.Join(os.TempDir(), "popeye")
+
 func BailOut(err error) {
 	printMsgLogo("DOH", "X", report.ColorOrangish, report.ColorRed)
 	fmt.Printf("\n\nBoom! %v (see logs)\n", err)
@@ -68,7 +70,7 @@ func dumpDir() string {
 		return d
 	}
 
-	return filepath.Join(os.TempDir(), "popeye")
+	return DefaultDumpDir
 }
 
 type readWriteCloser struct {

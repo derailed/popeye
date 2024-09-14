@@ -16,6 +16,9 @@ import (
 
 var (
 	ClusterGVR = types.NewGVR("cluster")
+	groups     = map[R]string{
+		NP: "networking.k8s.io",
+	}
 )
 
 // ResourceMetas represents a collection of resource metadata.
@@ -165,6 +168,10 @@ func (a *Aliases) loadPreferred(c types.Connection) error {
 			continue
 		}
 		for _, r := range l.APIResources {
+			if g, ok := groups[R(r.Name)]; ok && g != gv.Group {
+				continue
+			}
+
 			gvr := types.NewGVRFromAPIRes(gv, r)
 			if !a.cilium && strings.Contains(gvr.G(), "cilium.io") {
 				a.cilium = true
