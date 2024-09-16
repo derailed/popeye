@@ -221,6 +221,11 @@ func (p *Popeye) validateSpinach(ss scrub.Scrubs) error {
 	return nil
 }
 
+// Mutate the context by adding a new value
+func mutateContext(ctx context.Context, key, newValue any) context.Context {
+	return context.WithValue(ctx, key, newValue)
+}
+
 func (p *Popeye) lint() (int, int, error) {
 	defer func(t time.Time) {
 		log.Debug().Msgf("Lint %v", time.Since(t))
@@ -229,6 +234,7 @@ func (p *Popeye) lint() (int, int, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	ctx = p.buildCtx(ctx)
+	orig_ns := ctx.Value(internal.KeyNamespace)
 
 	codes, err := issues.LoadCodes()
 	if err != nil {
@@ -254,6 +260,11 @@ func (p *Popeye) lint() (int, int, error) {
 		gvr, ok := internal.Glossary[k]
 		if !ok || gvr == types.BlankGVR {
 			continue
+		}
+
+		// mutate ctx for namespace only if resource is clusterwide
+		if ctx.Value(internal.KeyNamespace) != orig_ns {
+			ctx = mutateContext(ctx, internal.KeyNamespace, orig_ns)
 		}
 
 		if p.aliases.Exclude(gvr, p.config.Sections()) {
