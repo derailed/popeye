@@ -8,7 +8,7 @@ require (
 	github.com/cilium/cilium v1.16.1
 	github.com/fvbommel/sortorder v1.1.0
 	github.com/hashicorp/go-memdb v1.3.4
-	github.com/prometheus/client_golang v1.20.0
+	github.com/prometheus/client_golang v1.20.4
 	github.com/prometheus/common v0.59.1
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cobra v1.8.1
