@@ -30,7 +30,7 @@ type S3Info struct {
 	Endpoint *string
 }
 
-func (s *S3Info) Upload(asset string, rwc io.ReadWriteCloser) error {
+func (s *S3Info) Upload(asset string, contentType string, rwc io.ReadWriteCloser) error {
 	defer rwc.Close()
 
 	log.Debug().Msgf("S3 bucket path: %q", asset)
@@ -54,9 +54,10 @@ func (s *S3Info) Upload(asset string, rwc io.ReadWriteCloser) error {
 	uploader := s3manager.NewUploader(session)
 	// Upload input parameters
 	upParams := s3manager.UploadInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(filepath.Join(key, asset)),
-		Body:   rwc,
+		Bucket:   aws.String(bucket),
+		Key:      aws.String(filepath.Join(key, asset)),
+		Body:     rwc,
+		Metadata: aws.StringMap(map[string]string{"Content-Type": contentType}),
 	}
 	// Perform an upload.
 	if _, err = uploader.Upload(&upParams); err != nil {
