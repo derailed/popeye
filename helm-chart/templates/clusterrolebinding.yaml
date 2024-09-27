@@ -1,0 +1,15 @@
+# Binds Popeye to this ClusterRole.
+apiVersion: rbac.authorization.k8s.io/v1
+kind:       ClusterRoleBinding
+metadata:
+  name: popeye
+subjects:
+- kind:     ServiceAccount
+  name:     {{ include "popeye.serviceAccountName" . }}
+  namespace: {{ .Values.namespace }}
+roleRef:
+  kind:     ClusterRole
+  name:     popeye
+  apiGroup: rbac.authorization.k8s.io
+
+
