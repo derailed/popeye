@@ -5,7 +5,7 @@ go 1.23.0
 require (
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/blang/semver/v4 v4.0.0
-	github.com/cilium/cilium v1.16.1
+	github.com/cilium/cilium v1.16.2
 	github.com/fvbommel/sortorder v1.1.0
 	github.com/hashicorp/go-memdb v1.3.4
 	github.com/prometheus/client_golang v1.20.0
