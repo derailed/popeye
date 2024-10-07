@@ -25,7 +25,7 @@ jobs:
         run: go env -w CGO_ENABLED=0
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@c7bab6f874a90c53ecf7e5c027cf93430c8aac17
+        uses: golangci/golangci-lint-action@0ddaf3ca3f72ecd38179bb39e8f0d56d69b1e8fc
         with:
           version: v1.60.3
           args: --config=.golangci.yml --verbose --out-${NO_FUTURE}format colored-line-number
