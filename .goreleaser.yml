@@ -108,7 +108,7 @@ nfpms:
     section: utils
     contents:
       - src: ./LICENSE
-        dst: /usr/share/doc/nfpm/copyright
+        dst: /usr/share/doc/popeye/copyright
         file_info:
           mode: 0644
 
