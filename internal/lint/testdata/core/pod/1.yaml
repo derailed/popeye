@@ -65,6 +65,23 @@ items:
           path: "game.properties"
         - key: namespace
           path: "user-interface.properties"
+    - name: projected
+      projected:
+        sources:
+          - secret:
+              name: sec2
+              items:
+                - key: admin-user
+                  path: "user"
+                - key: admin-password
+                  path: "password"
+          - configMap:
+              name: cm2
+              items:
+                - key: k1
+                  path: "k1"
+                - key: k2
+                  path: "k2"
   status:
     podIPs:
     - ip: 172.1.0.3

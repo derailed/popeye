@@ -36,9 +36,7 @@ func TestSecretLint(t *testing.T) {
 	assert.Equal(t, rules.InfoLevel, ii[0].Level)
 
 	ii = sec.Outcome()["default/sec2"]
-	assert.Equal(t, 1, len(ii))
-	assert.Equal(t, `[POP-400] Used? Unable to locate resource reference`, ii[0].Message)
-	assert.Equal(t, rules.InfoLevel, ii[0].Level)
+	assert.Equal(t, 0, len(ii))
 
 	ii = sec.Outcome()["default/sec3"]
 	assert.Equal(t, 1, len(ii))
