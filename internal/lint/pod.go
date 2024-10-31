@@ -117,10 +117,10 @@ func (s *Pod) checkNPs(ctx context.Context, pod *v1.Pod) {
 			continue
 		}
 		if labelsMatch(&np.Spec.PodSelector, pod.Labels) {
-			if s.checkIngresses(ctx, pod, np.Spec.Ingress) {
+			if np.Spec.Ingress != nil {
 				matches[0]++
 			}
-			if s.checkEgresses(ctx, pod, np.Spec.Egress) {
+			if np.Spec.Egress != nil {
 				matches[1]++
 			}
 		}

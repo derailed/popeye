@@ -13,3 +13,9 @@ items:
       name: sa2
       namespace: ns2
     automountServiceAccountToken: false
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: sa3
+      namespace: ns3
+    automountServiceAccountToken: false
