@@ -6,7 +6,6 @@ package lint
 import (
 	"context"
 	"fmt"
-	"net"
 	"sort"
 	"strings"
 
@@ -134,64 +133,18 @@ func (s *Pod) checkNPs(ctx context.Context, pod *v1.Pod) {
 	}
 }
 
-type Labels map[string]string
-
-func (s *Pod) isPodTargeted(pod *v1.Pod, nsSel, podSel *metav1.LabelSelector, b *netv1.IPBlock) (bool, error) {
-	nn, err := s.db.FindNSNameBySel(nsSel)
-	if err != nil {
-		return false, err
-	}
-	if len(nn) == 0 && b == nil {
-		if podSel == nil {
-			return false, nil
-		}
-		return labelsMatch(podSel, pod.Labels), nil
-	}
-	for _, sns := range nn {
-		if sns != pod.Namespace {
-			continue
-		}
-		if podSel != nil && podSel.Size() > 0 {
-			if labelsMatch(podSel, pod.Labels) {
-				return true, nil
-			}
-		}
-	}
-
-	if b == nil {
-		return false, nil
-	}
-	_, ipnet, err := net.ParseCIDR(b.CIDR)
-	if err != nil {
-		return false, err
-	}
-	for _, ip := range pod.Status.PodIPs {
-		if ipnet.Contains(net.ParseIP(ip.IP)) {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
 func (s *Pod) checkIngresses(ctx context.Context, pod *v1.Pod, rr []netv1.NetworkPolicyIngressRule) bool {
-	var match int
 	if rr == nil {
 		return false
 	}
+	var match int
 	for _, r := range rr {
 		if r.From == nil {
 			return true
 		}
-		for _, from := range r.From {
-			ok, err := s.isPodTargeted(pod, from.NamespaceSelector, from.PodSelector, from.IPBlock)
-			if err != nil {
-				s.AddErr(ctx, err)
-				return true
-			}
-			if ok {
-				match++
-			}
+
+		if checkTargetPeers(r.From) && checkTargetPorts(r.Ports) {
+			match++
 		}
 	}
 
@@ -207,19 +160,34 @@ func (s *Pod) checkEgresses(ctx context.Context, pod *v1.Pod, rr []netv1.Network
 		if r.To == nil {
 			return true
 		}
-		for _, to := range r.To {
-			ok, err := s.isPodTargeted(pod, to.NamespaceSelector, to.PodSelector, to.IPBlock)
-			if err != nil {
-				s.AddErr(ctx, err)
-				return true
-			}
-			if ok {
-				match++
-			}
+
+		if checkTargetPeers(r.To) && checkTargetPorts(r.Ports) {
+			match++
 		}
 	}
 
 	return match > 0
+}
+
+func checkTargetPeers(polPeers []netv1.NetworkPolicyPeer) bool {
+	var validPeer bool
+	for _, polPeer := range polPeers {
+		if polPeer.NamespaceSelector.Size() > 0 || polPeer.PodSelector.Size() > 0 || polPeer.IPBlock.Size() > 0 {
+			validPeer = true
+		}
+	}
+	return validPeer
+}
+
+func checkTargetPorts(polPorts []netv1.NetworkPolicyPort) bool {
+	var validPort bool
+	for _, polPort := range polPorts {
+		if polPort.Size() > 0 {
+			validPort = true
+		}
+	}
+
+	return validPort
 }
 
 func labelsMatch(sel *metav1.LabelSelector, ll map[string]string) bool {
