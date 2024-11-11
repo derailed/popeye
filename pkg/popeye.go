@@ -178,7 +178,7 @@ func (p *Popeye) Lint() (int, int, error) {
 			}
 		case config.IsStrSet(p.flags.S3.Bucket):
 			asset := filepath.Join(p.clusterPath(), p.scanFileName())
-			if err := p.flags.S3.Upload(asset, p.outputTarget); err != nil {
+			if err := p.flags.S3.Upload(asset, p.fileContentType(), p.outputTarget); err != nil {
 				log.Fatal().Msgf("S3 upload failed: %s", err)
 			}
 		}
@@ -549,5 +549,22 @@ func (p *Popeye) fileExt() string {
 		return *p.flags.Output
 	default:
 		return "txt"
+	}
+}
+
+func (p *Popeye) fileContentType() string {
+	switch *p.flags.Output {
+	case "junit":
+		// https://datatracker.ietf.org/doc/html/rfc7303#section-4.1
+		return "application/xml"
+	case "json":
+		return "application/json"
+	case "yaml":
+		// https://datatracker.ietf.org/doc/html/rfc9512
+		return "application/yaml"
+	case "html":
+		return "text/html"
+	default:
+		return "text/plain"
 	}
 }
