@@ -80,6 +80,21 @@ func (*Pod) volumeRefs(ns string, vv []v1.Volume, refs *sync.Map) {
 		if cmv != nil {
 			addKeys(ConfigMapKey, FQN(ns, cmv.LocalObjectReference.Name), cmv.Items, refs)
 		}
+
+		if v.VolumeSource.Projected != nil {
+			vp := v.VolumeSource.Projected.Sources
+			for _, projection := range vp {
+				ps := projection.Secret
+				if ps != nil {
+					addKeys(SecretKey, FQN(ns, ps.Name), ps.Items, refs)
+				}
+
+				pcm := projection.ConfigMap
+				if pcm != nil {
+					addKeys(ConfigMapKey, FQN(ns, pcm.Name), pcm.Items, refs)
+				}
+			}
+		}
 	}
 }
 
