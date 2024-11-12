@@ -143,7 +143,15 @@ func checkServicePort(port v1.ServicePort, ports map[string]string) bool {
 
 // PortsForPod computes a port map for a given pod.
 func portsForPod(pod *v1.Pod, ports map[string]string) {
-	for _, co := range pod.Spec.Containers {
+	cos := append([]v1.Container{}, pod.Spec.Containers...)
+
+	for _, ico := range pod.Spec.InitContainers {
+		if ico.RestartPolicy != nil && *ico.RestartPolicy == v1.ContainerRestartPolicyAlways {
+			cos = append(cos, ico)
+		}
+	}
+
+	for _, co := range cos {
 		for _, p := range co.Ports {
 			ports[portFQN(p.Protocol, strconv.Itoa(int(p.ContainerPort)))] = co.Name
 			if p.Name != "" {
