@@ -33,13 +33,16 @@ func TestPodNPLint(t *testing.T) {
 
 	po := NewPod(test.MakeCollector(t), dba)
 	assert.Nil(t, po.Lint(test.MakeContext("v1/pods", "pods")))
-	assert.Equal(t, 2, len(po.Outcome()))
+	assert.Equal(t, 3, len(po.Outcome()))
 
 	ii := po.Outcome()["ns1/p1"]
 	assert.Equal(t, 1, len(ii))
 	assert.Equal(t, `[POP-1204] Pod Egress is not secured by a network policy`, ii[0].Message)
 
 	ii = po.Outcome()["ns2/p2"]
+	assert.Equal(t, 0, len(ii))
+
+	ii = po.Outcome()["ns3/p3"]
 	assert.Equal(t, 0, len(ii))
 }
 
@@ -133,25 +136,21 @@ func TestPodLint(t *testing.T) {
 	assert.Equal(t, 0, len(ii))
 
 	ii = po.Outcome()["default/p2"]
-	assert.Equal(t, 6, len(ii))
+	assert.Equal(t, 4, len(ii))
 	assert.Equal(t, `[POP-207] Pod is in an unhappy phase ()`, ii[0].Message)
 	assert.Equal(t, `[POP-208] Unmanaged pod detected. Best to use a controller`, ii[1].Message)
-	assert.Equal(t, `[POP-1204] Pod Ingress is not secured by a network policy`, ii[2].Message)
-	assert.Equal(t, `[POP-1204] Pod Egress is not secured by a network policy`, ii[3].Message)
-	assert.Equal(t, `[POP-206] Pod has no associated PodDisruptionBudget`, ii[4].Message)
-	assert.Equal(t, `[POP-301] Connects to API Server? ServiceAccount token is mounted`, ii[5].Message)
+	assert.Equal(t, `[POP-206] Pod has no associated PodDisruptionBudget`, ii[2].Message)
+	assert.Equal(t, `[POP-301] Connects to API Server? ServiceAccount token is mounted`, ii[3].Message)
 
 	ii = po.Outcome()["default/p3"]
-	assert.Equal(t, 6, len(ii))
+	assert.Equal(t, 4, len(ii))
 	assert.Equal(t, `[POP-105] Liveness uses a port#, prefer a named port`, ii[0].Message)
 	assert.Equal(t, `[POP-105] Readiness uses a port#, prefer a named port`, ii[1].Message)
-	assert.Equal(t, `[POP-1204] Pod Ingress is not secured by a network policy`, ii[2].Message)
-	assert.Equal(t, `[POP-1204] Pod Egress is not secured by a network policy`, ii[3].Message)
-	assert.Equal(t, `[POP-301] Connects to API Server? ServiceAccount token is mounted`, ii[4].Message)
-	assert.Equal(t, `[POP-109] CPU Current/Request (2000m/1000m) reached user 80% threshold (200%)`, ii[5].Message)
+	assert.Equal(t, `[POP-301] Connects to API Server? ServiceAccount token is mounted`, ii[2].Message)
+	assert.Equal(t, `[POP-109] CPU Current/Request (2000m/1000m) reached user 80% threshold (200%)`, ii[3].Message)
 
 	ii = po.Outcome()["default/p4"]
-	assert.Equal(t, 15, len(ii))
+	assert.Equal(t, 13, len(ii))
 	assert.Equal(t, `[POP-204] Pod is not ready [0/1]`, ii[0].Message)
 	assert.Equal(t, `[POP-204] Pod is not ready [0/2]`, ii[1].Message)
 	assert.Equal(t, `[POP-100] Untagged docker image in use`, ii[2].Message)
@@ -163,20 +162,16 @@ func TestPodLint(t *testing.T) {
 	assert.Equal(t, `[POP-113] Container image "zorg:latest" is not hosted on an allowed docker registry`, ii[8].Message)
 	assert.Equal(t, `[POP-107] No resource limits defined`, ii[9].Message)
 	assert.Equal(t, `[POP-208] Unmanaged pod detected. Best to use a controller`, ii[10].Message)
-	assert.Equal(t, `[POP-1204] Pod Ingress is not secured by a network policy`, ii[11].Message)
-	assert.Equal(t, `[POP-1204] Pod Egress is not secured by a network policy`, ii[12].Message)
-	assert.Equal(t, `[POP-300] Uses "default" ServiceAccount`, ii[13].Message)
-	assert.Equal(t, `[POP-301] Connects to API Server? ServiceAccount token is mounted`, ii[14].Message)
+	assert.Equal(t, `[POP-300] Uses "default" ServiceAccount`, ii[11].Message)
+	assert.Equal(t, `[POP-301] Connects to API Server? ServiceAccount token is mounted`, ii[12].Message)
 
 	ii = po.Outcome()["default/p5"]
-	assert.Equal(t, 7, len(ii))
+	assert.Equal(t, 5, len(ii))
 	assert.Equal(t, `[POP-113] Container image "blee:v1.2" is not hosted on an allowed docker registry`, ii[0].Message)
 	assert.Equal(t, `[POP-106] No resources requests/limits defined`, ii[1].Message)
 	assert.Equal(t, `[POP-102] No probes defined`, ii[2].Message)
-	assert.Equal(t, `[POP-1204] Pod Ingress is not secured by a network policy`, ii[3].Message)
-	assert.Equal(t, `[POP-1204] Pod Egress is not secured by a network policy`, ii[4].Message)
-	assert.Equal(t, `[POP-209] Pod is managed by multiple PodDisruptionBudgets (pdb4, pdb4-1)`, ii[5].Message)
-	assert.Equal(t, `[POP-301] Connects to API Server? ServiceAccount token is mounted`, ii[6].Message)
+	assert.Equal(t, `[POP-209] Pod is managed by multiple PodDisruptionBudgets (pdb4, pdb4-1)`, ii[3].Message)
+	assert.Equal(t, `[POP-301] Connects to API Server? ServiceAccount token is mounted`, ii[4].Message)
 }
 
 // ----------------------------------------------------------------------------
