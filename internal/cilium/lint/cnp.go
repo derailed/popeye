@@ -88,6 +88,10 @@ func (s *CiliumNetworkPolicy) checkRule(ctx context.Context, ns string, r *api.R
 }
 
 func (s *CiliumNetworkPolicy) checkEPSel(ns string, sel api.EndpointSelector) (bool, error) {
+	if sel.Size() == 0 {
+		return true, nil
+	}
+
 	mm, err := s.matchCEPsBySel(ns, sel)
 	if err != nil {
 		return false, err
@@ -171,6 +175,8 @@ func matchSel(labels map[string]string, e slimv1.LabelSelectorRequirement) bool 
 
 func matchLabels(labels, sel map[string]string) bool {
 	var count int
+	fmt.Println("LABELS", labels)
+	fmt.Println("SEL", sel)
 	for k, v := range sel {
 		k = strings.TrimPrefix(k, "any.")
 		if v1, ok := labels[k]; ok && v == v1 {

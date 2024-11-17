@@ -57,20 +57,18 @@ func (s *CiliumClusterwideNetworkPolicy) Lint(ctx context.Context) error {
 }
 
 func (s *CiliumClusterwideNetworkPolicy) checkRule(ctx context.Context, r *api.Rule) error {
-	if r.EndpointSelector.Size() > 0 {
-		if ok, err := s.checkEPSel(r.EndpointSelector); err != nil {
-			return err
-		} else if !ok {
-			s.AddCode(ctx, 1700, "endpoint")
-		}
+	if ok, err := s.checkEPSel(r.EndpointSelector); err != nil {
+		return err
+	} else if !ok {
+		s.AddCode(ctx, 1700, "endpoint")
 	}
-	if r.NodeSelector.Size() > 0 {
-		if ok, err := s.checkNodeSel(r.NodeSelector); err != nil {
-			return err
-		} else if !ok {
-			s.AddCode(ctx, 1701)
-		}
+
+	if ok, err := s.checkNodeSel(r.NodeSelector); err != nil {
+		return err
+	} else if !ok {
+		s.AddCode(ctx, 1701)
 	}
+
 	for _, ing := range r.Ingress {
 		for _, sel := range ing.FromEndpoints {
 			if ok, err := s.checkEPSel(sel); err != nil {
@@ -94,6 +92,10 @@ func (s *CiliumClusterwideNetworkPolicy) checkRule(ctx context.Context, r *api.R
 }
 
 func (s *CiliumClusterwideNetworkPolicy) checkEPSel(sel api.EndpointSelector) (bool, error) {
+	if sel.Size() == 0 {
+		return true, nil
+	}
+
 	mm, err := s.matchCEPsBySel(sel)
 	if err != nil {
 		return false, err
@@ -103,6 +105,10 @@ func (s *CiliumClusterwideNetworkPolicy) checkEPSel(sel api.EndpointSelector) (b
 }
 
 func (s *CiliumClusterwideNetworkPolicy) checkNodeSel(sel api.EndpointSelector) (bool, error) {
+	if sel.Size() == 0 {
+		return true, nil
+	}
+
 	mm, err := s.matchNodesBySel(sel)
 	if err != nil {
 		return false, err

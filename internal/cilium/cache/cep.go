@@ -27,7 +27,7 @@ func NewCiliumEndpoint(dba *db.DB) *CiliumEndpoint {
 	return &CiliumEndpoint{db: dba}
 }
 
-// CiliumEndpointRefs computes all CiliumEndpoints external references.
+// CEPRefs computes all CiliumEndpoints external references.
 func (p *CiliumEndpoint) CEPRefs(refs *sync.Map) error {
 	txn, it := p.db.MustITFor(internal.Glossary[cilium.CEP])
 	defer txn.Abort()
