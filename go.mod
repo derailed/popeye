@@ -17,10 +17,10 @@ require (
 	golang.org/x/net v0.31.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.31.1
-	k8s.io/apimachinery v0.31.1
-	k8s.io/cli-runtime v0.31.1
-	k8s.io/client-go v0.31.1
+	k8s.io/api v0.31.2
+	k8s.io/apimachinery v0.31.2
+	k8s.io/cli-runtime v0.31.2
+	k8s.io/client-go v0.31.2
 	k8s.io/metrics v0.31.1
 	sigs.k8s.io/gateway-api v1.2.0
 	sigs.k8s.io/yaml v1.4.0
