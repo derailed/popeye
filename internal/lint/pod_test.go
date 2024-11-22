@@ -9,6 +9,7 @@ import (
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/db"
+	"github.com/derailed/popeye/internal/rules"
 	"github.com/derailed/popeye/internal/test"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -177,6 +178,49 @@ func TestPodLint(t *testing.T) {
 	assert.Equal(t, `[POP-1204] Pod Egress is not secured by a network policy`, ii[4].Message)
 	assert.Equal(t, `[POP-209] Pod is managed by multiple PodDisruptionBudgets (pdb4, pdb4-1)`, ii[5].Message)
 	assert.Equal(t, `[POP-301] Connects to API Server? ServiceAccount token is mounted`, ii[6].Message)
+}
+
+func TestPoSpecFor(t *testing.T) {
+	tests := map[string]struct {
+		fqn  string
+		pod  *v1.Pod
+		want rules.Spec
+	}{
+		"full": {
+			fqn: "default/p1",
+			pod: &v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels:      map[string]string{"p1": "blee"},
+					Annotations: map[string]string{"default": "fred"},
+				},
+				Spec: v1.PodSpec{
+					InitContainers: []v1.Container{
+						{Name: "ic1"},
+					},
+					Containers: []v1.Container{
+						{Name: "c1"},
+						{Name: "c2"},
+					},
+				},
+			},
+			want: rules.Spec{
+				FQN:         "default/p1",
+				Labels:      rules.Labels{"p1": "blee"},
+				Annotations: rules.Labels{"default": "fred"},
+				Containers:  []string{"ic1", "c1", "c2"},
+			},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := PoSpecFor(tc.fqn, tc.pod)
+			assert.Equal(t, tc.want.FQN, got.FQN)
+			assert.Equal(t, tc.want.Labels, got.Labels)
+			assert.Equal(t, tc.want.Annotations, got.Annotations)
+			assert.ElementsMatch(t, tc.want.Containers, got.Containers)
+		})
+	}
 }
 
 // ----------------------------------------------------------------------------
