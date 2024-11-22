@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
@@ -53,4 +54,51 @@ func TestSTSLint(t *testing.T) {
 	assert.Equal(t, rules.WarnLevel, ii[2].Level)
 	assert.Equal(t, `[POP-508] No pods match controller selector: app=p3`, ii[3].Message)
 	assert.Equal(t, rules.ErrorLevel, ii[3].Level)
+}
+
+func TestStsSpecFor(t *testing.T) {
+	tests := map[string]struct {
+		fqn         string
+		statefulSet *appsv1.StatefulSet
+		want        rules.Spec
+	}{
+		"full": {
+			fqn: "default/p1",
+			statefulSet: &appsv1.StatefulSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels:      map[string]string{"p1": "blee"},
+					Annotations: map[string]string{"default": "fred"},
+				},
+				Spec: appsv1.StatefulSetSpec{
+					Template: v1.PodTemplateSpec{
+						Spec: v1.PodSpec{
+							InitContainers: []v1.Container{
+								{Name: "ic1"},
+							},
+							Containers: []v1.Container{
+								{Name: "c1"},
+								{Name: "c2"},
+							},
+						},
+					},
+				},
+			},
+			want: rules.Spec{
+				FQN:         "default/p1",
+				Labels:      rules.Labels{"p1": "blee"},
+				Annotations: rules.Labels{"default": "fred"},
+				Containers:  []string{"ic1", "c1", "c2"},
+			},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := StsSpecFor(tc.fqn, tc.statefulSet)
+			assert.Equal(t, tc.want.FQN, got.FQN)
+			assert.Equal(t, tc.want.Labels, got.Labels)
+			assert.Equal(t, tc.want.Annotations, got.Annotations)
+			assert.ElementsMatch(t, tc.want.Containers, got.Containers)
+		})
+	}
 }

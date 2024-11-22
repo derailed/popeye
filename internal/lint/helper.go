@@ -43,6 +43,18 @@ func SpecFor(fqn string, o metav1.ObjectMetaAccessor) rules.Spec {
 	return spec
 }
 
+func containerList(podTemplate v1.PodSpec) []string {
+	var containers []string
+	for _, co := range podTemplate.InitContainers {
+		containers = append(containers, co.Name)
+	}
+	for _, co := range podTemplate.Containers {
+		containers = append(containers, co.Name)
+	}
+
+	return containers
+}
+
 func resourceUsage(ctx context.Context, dba *db.DB, c Collector, ns string, sel *metav1.LabelSelector) ConsumptionMetrics {
 	var mx ConsumptionMetrics
 

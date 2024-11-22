@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
@@ -58,4 +59,55 @@ func TestCronJobLint(t *testing.T) {
 	assert.Equal(t, rules.ErrorLevel, ii[4].Level)
 	assert.Equal(t, `[POP-106] No resources requests/limits defined`, ii[5].Message)
 	assert.Equal(t, rules.WarnLevel, ii[5].Level)
+}
+
+func TestCjSpecFor(t *testing.T) {
+	tests := map[string]struct {
+		fqn     string
+		cronJob *batchv1.CronJob
+		want    rules.Spec
+	}{
+		"full": {
+			fqn: "default/p1",
+			cronJob: &batchv1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels:      map[string]string{"p1": "blee"},
+					Annotations: map[string]string{"default": "fred"},
+				},
+				Spec: batchv1.CronJobSpec{
+					JobTemplate: batchv1.JobTemplateSpec{
+						Spec: batchv1.JobSpec{
+							Template: v1.PodTemplateSpec{
+								Spec: v1.PodSpec{
+									InitContainers: []v1.Container{
+										{Name: "ic1"},
+									},
+									Containers: []v1.Container{
+										{Name: "c1"},
+										{Name: "c2"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: rules.Spec{
+				FQN:         "default/p1",
+				Labels:      rules.Labels{"p1": "blee"},
+				Annotations: rules.Labels{"default": "fred"},
+				Containers:  []string{"ic1", "c1", "c2"},
+			},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := CjSpecFor(tc.fqn, tc.cronJob)
+			assert.Equal(t, tc.want.FQN, got.FQN)
+			assert.Equal(t, tc.want.Labels, got.Labels)
+			assert.Equal(t, tc.want.Annotations, got.Annotations)
+			assert.ElementsMatch(t, tc.want.Containers, got.Containers)
+		})
+	}
 }

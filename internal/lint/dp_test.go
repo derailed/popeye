@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	mv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
@@ -55,4 +56,51 @@ func TestDPLint(t *testing.T) {
 	assert.Equal(t, rules.WarnLevel, ii[0].Level)
 	assert.Equal(t, `[POP-666] Lint internal error: no pod selector given`, ii[1].Message)
 	assert.Equal(t, rules.ErrorLevel, ii[1].Level)
+}
+
+func TestDpSpecFor(t *testing.T) {
+	tests := map[string]struct {
+		fqn        string
+		deployment *appsv1.Deployment
+		want       rules.Spec
+	}{
+		"full": {
+			fqn: "default/p1",
+			deployment: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels:      map[string]string{"p1": "blee"},
+					Annotations: map[string]string{"default": "fred"},
+				},
+				Spec: appsv1.DeploymentSpec{
+					Template: v1.PodTemplateSpec{
+						Spec: v1.PodSpec{
+							InitContainers: []v1.Container{
+								{Name: "ic1"},
+							},
+							Containers: []v1.Container{
+								{Name: "c1"},
+								{Name: "c2"},
+							},
+						},
+					},
+				},
+			},
+			want: rules.Spec{
+				FQN:         "default/p1",
+				Labels:      rules.Labels{"p1": "blee"},
+				Annotations: rules.Labels{"default": "fred"},
+				Containers:  []string{"ic1", "c1", "c2"},
+			},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := DpSpecFor(tc.fqn, tc.deployment)
+			assert.Equal(t, tc.want.FQN, got.FQN)
+			assert.Equal(t, tc.want.Labels, got.Labels)
+			assert.Equal(t, tc.want.Annotations, got.Annotations)
+			assert.ElementsMatch(t, tc.want.Containers, got.Containers)
+		})
+	}
 }
