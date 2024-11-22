@@ -11,6 +11,7 @@ import (
 	"github.com/derailed/popeye/internal/dao"
 	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/internal/rules"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 )
@@ -30,6 +31,12 @@ func NewJob(co *issues.Collector, db *db.DB) *Job {
 	}
 }
 
+func JSpecFor(fqn string, j *batchv1.Job) rules.Spec {
+	spec := SpecFor(fqn, j)
+	spec.Containers = containerList(j.Spec.Template.Spec)
+	return spec
+}
+
 // Lint cleanse the resource.
 func (s *Job) Lint(ctx context.Context) error {
 	over := pullOverAllocs(ctx)
@@ -39,9 +46,7 @@ func (s *Job) Lint(ctx context.Context) error {
 		j := o.(*batchv1.Job)
 		fqn := client.FQN(j.Namespace, j.Name)
 		s.InitOutcome(fqn)
-		spec := SpecFor(fqn, j)
-		spec.Containers = containerList(j.Spec.Template.Spec)
-		ctx = internal.WithSpec(ctx, spec)
+		ctx = internal.WithSpec(ctx, JSpecFor(fqn, j))
 		s.checkJob(ctx, fqn, j)
 		s.checkContainers(ctx, fqn, j.Spec.Template.Spec)
 		s.checkUtilization(ctx, over, fqn)

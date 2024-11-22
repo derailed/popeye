@@ -10,6 +10,7 @@ import (
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/internal/rules"
 	appsv1 "k8s.io/api/apps/v1"
 )
 
@@ -39,6 +40,12 @@ func NewStatefulSet(co *issues.Collector, db *db.DB) *StatefulSet {
 	}
 }
 
+func StsSpecFor(fqn string, sts *appsv1.StatefulSet) rules.Spec {
+	spec := SpecFor(fqn, sts)
+	spec.Containers = containerList(sts.Spec.Template.Spec)
+	return spec
+}
+
 // Lint cleanse the resource.
 func (s *StatefulSet) Lint(ctx context.Context) error {
 	over := pullOverAllocs(ctx)
@@ -48,9 +55,7 @@ func (s *StatefulSet) Lint(ctx context.Context) error {
 		sts := o.(*appsv1.StatefulSet)
 		fqn := client.FQN(sts.Namespace, sts.Name)
 		s.InitOutcome(fqn)
-		spec := SpecFor(fqn, sts)
-		spec.Containers = containerList(sts.Spec.Template.Spec)
-		ctx = internal.WithSpec(ctx, spec)
+		ctx = internal.WithSpec(ctx, StsSpecFor(fqn, sts))
 
 		s.checkStatefulSet(ctx, sts)
 		s.checkContainers(ctx, fqn, sts)

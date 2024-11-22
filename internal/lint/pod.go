@@ -15,6 +15,7 @@ import (
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/internal/rules"
 	"github.com/derailed/popeye/types"
 	"github.com/rs/zerolog/log"
 	v1 "k8s.io/api/core/v1"
@@ -49,6 +50,12 @@ func NewPod(co *issues.Collector, db *db.DB) *Pod {
 	}
 }
 
+func PoSpecFor(fqn string, po *v1.Pod) rules.Spec {
+	spec := SpecFor(fqn, po)
+	spec.Containers = containerList(po.Spec)
+	return spec
+}
+
 // Lint cleanse the resource..
 func (s *Pod) Lint(ctx context.Context) error {
 	txn, it := s.db.MustITFor(internal.Glossary[internal.PO])
@@ -59,9 +66,7 @@ func (s *Pod) Lint(ctx context.Context) error {
 		s.InitOutcome(fqn)
 		defer s.CloseOutcome(ctx, fqn, nil)
 
-		spec := SpecFor(fqn, po)
-		spec.Containers = containerList(po.Spec)
-		ctx = internal.WithSpec(ctx, spec)
+		ctx = internal.WithSpec(ctx, PoSpecFor(fqn, po))
 		s.checkStatus(ctx, po)
 		s.checkContainerStatus(ctx, fqn, po)
 		s.checkContainers(ctx, fqn, po)

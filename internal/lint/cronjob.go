@@ -12,6 +12,7 @@ import (
 	"github.com/derailed/popeye/internal/dao"
 	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/internal/rules"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 )
@@ -31,6 +32,12 @@ func NewCronJob(co *issues.Collector, db *db.DB) *CronJob {
 	}
 }
 
+func CjSpecFor(fqn string, cj *batchv1.CronJob) rules.Spec {
+	spec := SpecFor(fqn, cj)
+	spec.Containers = containerList(cj.Spec.JobTemplate.Spec.Template.Spec)
+	return spec
+}
+
 // Lint cleanse the resource.
 func (s *CronJob) Lint(ctx context.Context) error {
 	over := pullOverAllocs(ctx)
@@ -40,9 +47,7 @@ func (s *CronJob) Lint(ctx context.Context) error {
 		cj := o.(*batchv1.CronJob)
 		fqn := client.FQN(cj.Namespace, cj.Name)
 		s.InitOutcome(fqn)
-		spec := SpecFor(fqn, cj)
-		spec.Containers = containerList(cj.Spec.JobTemplate.Spec.Template.Spec)
-		ctx = internal.WithSpec(ctx, spec)
+		ctx = internal.WithSpec(ctx, CjSpecFor(fqn, cj))
 		s.checkCronJob(ctx, fqn, cj)
 		s.checkContainers(ctx, fqn, cj.Spec.JobTemplate.Spec.Template.Spec)
 		s.checkUtilization(ctx, over, fqn)

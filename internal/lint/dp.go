@@ -10,6 +10,7 @@ import (
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/internal/rules"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -30,6 +31,12 @@ func NewDeployment(co *issues.Collector, db *db.DB) *Deployment {
 	}
 }
 
+func DpSpecFor(fqn string, dp *appsv1.Deployment) rules.Spec {
+	spec := SpecFor(fqn, dp)
+	spec.Containers = containerList(dp.Spec.Template.Spec)
+	return spec
+}
+
 // Lint cleanse the resource.
 func (s *Deployment) Lint(ctx context.Context) error {
 	over := pullOverAllocs(ctx)
@@ -39,9 +46,7 @@ func (s *Deployment) Lint(ctx context.Context) error {
 		dp := o.(*appsv1.Deployment)
 		fqn := client.FQN(dp.Namespace, dp.Name)
 		s.InitOutcome(fqn)
-		spec := SpecFor(fqn, dp)
-		spec.Containers = containerList(dp.Spec.Template.Spec)
-		ctx = internal.WithSpec(ctx, spec)
+		ctx = internal.WithSpec(ctx, DpSpecFor(fqn, dp))
 		s.checkDeployment(ctx, dp)
 		s.checkContainers(ctx, fqn, dp.Spec.Template.Spec)
 		s.checkUtilization(ctx, over, dp)

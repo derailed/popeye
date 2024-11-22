@@ -10,6 +10,7 @@ import (
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/internal/db"
 	"github.com/derailed/popeye/internal/issues"
+	"github.com/derailed/popeye/internal/rules"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 )
@@ -29,6 +30,12 @@ func NewDaemonSet(co *issues.Collector, db *db.DB) *DaemonSet {
 	}
 }
 
+func DsSpecFor(fqn string, ds *appsv1.DaemonSet) rules.Spec {
+	spec := SpecFor(fqn, ds)
+	spec.Containers = containerList(ds.Spec.Template.Spec)
+	return spec
+}
+
 // Lint cleanse the resource.
 func (s *DaemonSet) Lint(ctx context.Context) error {
 	over := pullOverAllocs(ctx)
@@ -38,9 +45,7 @@ func (s *DaemonSet) Lint(ctx context.Context) error {
 		ds := o.(*appsv1.DaemonSet)
 		fqn := client.FQN(ds.Namespace, ds.Name)
 		s.InitOutcome(fqn)
-		spec := SpecFor(fqn, ds)
-		spec.Containers = containerList(ds.Spec.Template.Spec)
-		ctx = internal.WithSpec(ctx, spec)
+		ctx = internal.WithSpec(ctx, DsSpecFor(fqn, ds))
 
 		s.checkDaemonSet(ctx, ds)
 		s.checkContainers(ctx, fqn, ds.Spec.Template.Spec)
