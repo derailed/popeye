@@ -35,3 +35,25 @@ items:
     policyTypes:
     - Ingress
     - Egress
+- apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    name: pod-selecting-np
+    namespace: ns3
+  spec:
+    podSelector:
+      matchLabels:
+        app: p3
+    ingress:
+      - from:
+          - namespaceSelector:
+              matchLabels:
+                app: p1
+    egress:
+      - to:
+          - namespaceSelector:
+              matchLabels:
+                app: p1
+    policyTypes:
+      - Ingress
+      - Egress
