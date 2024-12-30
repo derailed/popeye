@@ -88,6 +88,10 @@ func (s *CiliumNetworkPolicy) checkRule(ctx context.Context, ns string, r *api.R
 }
 
 func (s *CiliumNetworkPolicy) checkEPSel(ns string, sel api.EndpointSelector) (bool, error) {
+	if sel.Size() == 0 {
+		return true, nil
+	}
+
 	mm, err := s.matchCEPsBySel(ns, sel)
 	if err != nil {
 		return false, err

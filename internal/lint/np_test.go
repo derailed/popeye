@@ -31,46 +31,46 @@ func TestNPLintDenyAll(t *testing.T) {
 
 	ii := np.Outcome()["default/deny-all"]
 	assert.Equal(t, 1, len(ii))
-	assert.Equal(t, `[POP-1203] Deny All policy in effect`, ii[0].Message)
+	assert.Equal(t, `[POP-1203] Deny all policy in effect`, ii[0].Message)
 	assert.Equal(t, rules.InfoLevel, ii[0].Level)
 
 	ii = np.Outcome()["default/deny-all-ing"]
 	assert.Equal(t, 1, len(ii))
-	assert.Equal(t, `[POP-1203] Deny All Ingress policy in effect`, ii[0].Message)
+	assert.Equal(t, `[POP-1203] Deny all ingress policy in effect`, ii[0].Message)
 	assert.Equal(t, rules.InfoLevel, ii[0].Level)
 
 	ii = np.Outcome()["default/deny-all-eg"]
 	assert.Equal(t, 1, len(ii))
-	assert.Equal(t, `[POP-1203] Deny All Egress policy in effect`, ii[0].Message)
+	assert.Equal(t, `[POP-1203] Deny all egress policy in effect`, ii[0].Message)
 	assert.Equal(t, rules.InfoLevel, ii[0].Level)
 
 	ii = np.Outcome()["default/allow-all"]
 	assert.Equal(t, 1, len(ii))
-	assert.Equal(t, `[POP-1203] Allow All policy in effect`, ii[0].Message)
+	assert.Equal(t, `[POP-1203] Allow all policy in effect`, ii[0].Message)
 	assert.Equal(t, rules.InfoLevel, ii[0].Level)
 
 	ii = np.Outcome()["default/allow-all-ing"]
 	assert.Equal(t, 1, len(ii))
-	assert.Equal(t, `[POP-1203] Allow All Ingress policy in effect`, ii[0].Message)
+	assert.Equal(t, `[POP-1203] Allow all ingress policy in effect`, ii[0].Message)
 	assert.Equal(t, rules.InfoLevel, ii[0].Level)
 
 	ii = np.Outcome()["default/allow-all-eg"]
 	assert.Equal(t, 1, len(ii))
-	assert.Equal(t, `[POP-1203] Allow All Egress policy in effect`, ii[0].Message)
+	assert.Equal(t, `[POP-1203] Allow all egress policy in effect`, ii[0].Message)
 	assert.Equal(t, rules.InfoLevel, ii[0].Level)
 
 	ii = np.Outcome()["default/ip-block-all-ing"]
 	assert.Equal(t, 2, len(ii))
-	assert.Equal(t, `[POP-1206] No pods matched Egress IPBlock 172.2.0.0/24`, ii[0].Message)
+	assert.Equal(t, `[POP-1206] No pods matched egress IPBlock 172.2.0.0/24`, ii[0].Message)
 	assert.Equal(t, rules.WarnLevel, ii[0].Level)
-	assert.Equal(t, `[POP-1203] Deny All Ingress policy in effect`, ii[1].Message)
+	assert.Equal(t, `[POP-1203] Deny all ingress policy in effect`, ii[1].Message)
 	assert.Equal(t, rules.InfoLevel, ii[1].Level)
 
 	ii = np.Outcome()["default/ip-block-all-eg"]
 	assert.Equal(t, 2, len(ii))
-	assert.Equal(t, `[POP-1206] No pods matched Ingress IPBlock 172.2.0.0/24`, ii[0].Message)
+	assert.Equal(t, `[POP-1206] No pods matched ingress IPBlock 172.2.0.0/24`, ii[0].Message)
 	assert.Equal(t, rules.WarnLevel, ii[0].Level)
-	assert.Equal(t, `[POP-1203] Deny All Egress policy in effect`, ii[1].Message)
+	assert.Equal(t, `[POP-1203] Deny all egress policy in effect`, ii[1].Message)
 	assert.Equal(t, rules.InfoLevel, ii[1].Level)
 }
 
@@ -93,26 +93,26 @@ func TestNPLint(t *testing.T) {
 
 	ii = np.Outcome()["default/np2"]
 	assert.Equal(t, 3, len(ii))
-	assert.Equal(t, `[POP-1207] No pods matched except Ingress IPBlock 172.1.1.0/24`, ii[0].Message)
+	assert.Equal(t, `[POP-1207] No pods matched except ingress IPBlock 172.1.1.0/24`, ii[0].Message)
 	assert.Equal(t, rules.WarnLevel, ii[0].Level)
-	assert.Equal(t, `[POP-1208] No pods match Ingress pod selector: app=p2 in namespace: ns2`, ii[1].Message)
+	assert.Equal(t, `[POP-1208] No pods match ingress pod selector: app=p2 in namespace: ns2`, ii[1].Message)
 	assert.Equal(t, rules.WarnLevel, ii[1].Level)
-	assert.Equal(t, `[POP-1206] No pods matched Egress IPBlock 172.0.0.0/24`, ii[2].Message)
+	assert.Equal(t, `[POP-1206] No pods matched egress IPBlock 172.0.0.0/24`, ii[2].Message)
 	assert.Equal(t, rules.WarnLevel, ii[2].Level)
 
 	ii = np.Outcome()["default/np3"]
 	assert.Equal(t, 6, len(ii))
 	assert.Equal(t, `[POP-1200] No pods match pod selector: app=p-bozo`, ii[0].Message)
 	assert.Equal(t, rules.WarnLevel, ii[0].Level)
-	assert.Equal(t, `[POP-1206] No pods matched Ingress IPBlock 172.2.0.0/16`, ii[1].Message)
+	assert.Equal(t, `[POP-1206] No pods matched ingress IPBlock 172.2.0.0/16`, ii[1].Message)
 	assert.Equal(t, rules.WarnLevel, ii[1].Level)
-	assert.Equal(t, `[POP-1207] No pods matched except Ingress IPBlock 172.2.1.0/24`, ii[2].Message)
+	assert.Equal(t, `[POP-1207] No pods matched except ingress IPBlock 172.2.1.0/24`, ii[2].Message)
 	assert.Equal(t, rules.WarnLevel, ii[2].Level)
-	assert.Equal(t, `[POP-1201] No namespaces match Ingress namespace selector: app-In-ns-bozo`, ii[3].Message)
+	assert.Equal(t, `[POP-1201] No namespaces match ingress namespace selector: app-In-ns-bozo`, ii[3].Message)
 	assert.Equal(t, rules.WarnLevel, ii[3].Level)
-	assert.Equal(t, `[POP-1202] No pods match Ingress pod selector: app=pod-bozo`, ii[4].Message)
+	assert.Equal(t, `[POP-1202] No pods match ingress pod selector: app=pod-bozo`, ii[4].Message)
 	assert.Equal(t, rules.WarnLevel, ii[4].Level)
-	assert.Equal(t, `[POP-1208] No pods match Egress pod selector: app=p1-missing in namespace: default`, ii[5].Message)
+	assert.Equal(t, `[POP-1208] No pods match egress pod selector: app=p1-missing in namespace: default`, ii[5].Message)
 	assert.Equal(t, rules.WarnLevel, ii[5].Level)
 }
 

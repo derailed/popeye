@@ -5,6 +5,7 @@ package dao
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
@@ -22,7 +23,10 @@ type Generic struct {
 // List returns a collection of resources.
 func (g *Generic) List(ctx context.Context) ([]runtime.Object, error) {
 	labelSel, _ := ctx.Value(internal.KeyLabels).(string)
-	ns, _ := ctx.Value(internal.KeyNamespace).(string)
+	ns, ok := ctx.Value(internal.KeyNamespace).(string)
+	if !ok {
+		return nil, fmt.Errorf("BOOM!! no namespace found in context %s", g.gvr)
+	}
 	if client.IsAllNamespace(ns) {
 		ns = client.AllNamespaces
 	}

@@ -20,7 +20,7 @@ type PersistentVolume struct {
 }
 
 // NewPersistentVolume return a new instance.
-func NewPersistentVolume(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewPersistentVolume(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &PersistentVolume{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

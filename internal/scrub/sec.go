@@ -21,7 +21,7 @@ type Secret struct {
 }
 
 // NewSecret return a new Secret scruber.
-func NewSecret(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewSecret(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &Secret{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

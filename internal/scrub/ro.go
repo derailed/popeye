@@ -20,7 +20,7 @@ type Role struct {
 }
 
 // NewRole returns a new instance.
-func NewRole(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewRole(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &Role{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

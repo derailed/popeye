@@ -21,7 +21,7 @@ type ClusterRoleBinding struct {
 }
 
 // NewClusterRoleBinding returns a new instance.
-func NewClusterRoleBinding(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewClusterRoleBinding(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &ClusterRoleBinding{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

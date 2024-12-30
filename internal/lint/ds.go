@@ -38,7 +38,7 @@ func (s *DaemonSet) Lint(ctx context.Context) error {
 		ds := o.(*appsv1.DaemonSet)
 		fqn := client.FQN(ds.Namespace, ds.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, SpecFor(fqn, ds))
+		ctx = internal.WithSpec(ctx, coSpecFor(fqn, ds, ds.Spec.Template.Spec))
 
 		s.checkDaemonSet(ctx, ds)
 		s.checkContainers(ctx, fqn, ds.Spec.Template.Spec)

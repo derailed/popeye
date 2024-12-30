@@ -1,0 +1,12 @@
+popeye:
+  excludes:
+    linters:
+      pods:
+        instances:
+          - codes:
+              - 100
+              - 106
+              - 113
+              - 204
+            containers:
+              - "rx:c2*"

@@ -40,7 +40,7 @@ func (s *CronJob) Lint(ctx context.Context) error {
 		cj := o.(*batchv1.CronJob)
 		fqn := client.FQN(cj.Namespace, cj.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, SpecFor(fqn, cj))
+		ctx = internal.WithSpec(ctx, coSpecFor(fqn, cj, cj.Spec.JobTemplate.Spec.Template.Spec))
 		s.checkCronJob(ctx, fqn, cj)
 		s.checkContainers(ctx, fqn, cj.Spec.JobTemplate.Spec.Template.Spec)
 		s.checkUtilization(ctx, over, fqn)

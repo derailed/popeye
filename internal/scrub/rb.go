@@ -21,7 +21,7 @@ type RoleBinding struct {
 }
 
 // NewRoleBinding returns a new instance.
-func NewRoleBinding(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewRoleBinding(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &RoleBinding{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

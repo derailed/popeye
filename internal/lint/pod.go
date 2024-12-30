@@ -51,6 +51,7 @@ func NewPod(co *issues.Collector, db *db.DB) *Pod {
 
 // Lint cleanse the resource..
 func (s *Pod) Lint(ctx context.Context) error {
+	boundSA := boundDefaultSA(s.db)
 	txn, it := s.db.MustITFor(internal.Glossary[internal.PO])
 	defer txn.Abort()
 	for o := it.Next(); o != nil; o = it.Next() {
@@ -59,7 +60,7 @@ func (s *Pod) Lint(ctx context.Context) error {
 		s.InitOutcome(fqn)
 		defer s.CloseOutcome(ctx, fqn, nil)
 
-		ctx = internal.WithSpec(ctx, SpecFor(fqn, po))
+		ctx = internal.WithSpec(ctx, coSpecFor(fqn, po, po.Spec))
 		s.checkStatus(ctx, po)
 		s.checkContainerStatus(ctx, fqn, po)
 		s.checkContainers(ctx, fqn, po)
@@ -69,7 +70,7 @@ func (s *Pod) Lint(ctx context.Context) error {
 			s.checkPdb(ctx, po.ObjectMeta.Labels)
 		}
 		s.checkForMultiplePdbMatches(ctx, po.Namespace, po.ObjectMeta.Labels)
-		s.checkSecure(ctx, fqn, po.Spec)
+		s.checkSecure(ctx, fqn, po.Spec, boundSA)
 
 		pmx, err := s.db.FindPMX(fqn)
 		if err != nil {
@@ -96,6 +97,10 @@ func (s *Pod) checkNPs(ctx context.Context, pod *v1.Pod) {
 	txn, it := s.db.MustITForNS(internal.Glossary[internal.NP], pod.Namespace)
 	defer txn.Abort()
 
+	const (
+		in  = 0
+		out = 1
+	)
 	matches := [2]int{}
 	for o := it.Next(); o != nil; o = it.Next() {
 		np := o.(*netv1.NetworkPolicy)
@@ -103,34 +108,41 @@ func (s *Pod) checkNPs(ctx context.Context, pod *v1.Pod) {
 			return
 		}
 		if isDenyAllIngress(&np.Spec) || isAllowAllIngress(&np.Spec) {
-			matches[0]++
+			matches[in]++
 			if s.checkEgresses(ctx, pod, np.Spec.Egress) {
-				matches[1]++
+				matches[out]++
 			}
 			continue
 		}
 		if isDenyAllEgress(&np.Spec) || isAllowAllEgress(&np.Spec) {
-			matches[1]++
+			matches[out]++
 			if s.checkIngresses(ctx, pod, np.Spec.Ingress) {
-				matches[0]++
+				matches[in]++
 			}
 			continue
 		}
 		if labelsMatch(&np.Spec.PodSelector, pod.Labels) {
+			if polInclude(np.Spec.PolicyTypes, dirIn) {
+				matches[in]++
+			}
+			if polInclude(np.Spec.PolicyTypes, dirOut) {
+				matches[out]++
+			}
+		} else {
 			if s.checkIngresses(ctx, pod, np.Spec.Ingress) {
-				matches[0]++
+				matches[out]++
 			}
 			if s.checkEgresses(ctx, pod, np.Spec.Egress) {
-				matches[1]++
+				matches[in]++
 			}
 		}
 	}
 
-	if matches[0] == 0 {
-		s.AddCode(ctx, 1204, dirIn)
+	if matches[in] == 0 {
+		s.AddCode(ctx, 1204, ingress)
 	}
-	if matches[1] == 0 {
-		s.AddCode(ctx, 1204, dirOut)
+	if matches[out] == 0 {
+		s.AddCode(ctx, 1204, egress)
 	}
 }
 
@@ -285,17 +297,21 @@ func (s *Pod) checkUtilization(ctx context.Context, fqn string, po *v1.Pod, cmx 
 	}
 }
 
-func (s *Pod) checkSecure(ctx context.Context, fqn string, spec v1.PodSpec) {
-	if err := s.checkSA(ctx, fqn, spec); err != nil {
+func (s *Pod) checkSecure(ctx context.Context, fqn string, spec v1.PodSpec, boundSA bool) {
+	if err := s.checkSA(ctx, fqn, spec, boundSA); err != nil {
 		s.AddErr(ctx, err)
 	}
 	s.checkSecContext(ctx, fqn, spec)
 }
 
-func (s *Pod) checkSA(ctx context.Context, fqn string, spec v1.PodSpec) error {
+func (s *Pod) checkSA(ctx context.Context, fqn string, spec v1.PodSpec, boundSA bool) error {
 	ns, _ := namespaced(fqn)
 	if spec.ServiceAccountName == "default" {
-		s.AddCode(ctx, 300)
+		if boundSA {
+			s.AddCode(ctx, 308)
+		} else {
+			s.AddCode(ctx, 300)
+		}
 	}
 
 	txn := s.db.Txn(false)

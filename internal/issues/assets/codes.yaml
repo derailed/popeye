@@ -100,6 +100,9 @@ codes:
   307:
     message: "%s references a non existing ServiceAccount: %q"
     severity: 2
+  308:
+    message: Uses "default" bound ServiceAccount. Could be a security risk
+    severity: 3
 
   # General
   400:

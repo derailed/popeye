@@ -20,7 +20,7 @@ type PersistentVolumeClaim struct {
 }
 
 // NewPersistentVolumeClaim returns a new instance.
-func NewPersistentVolumeClaim(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewPersistentVolumeClaim(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &PersistentVolumeClaim{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

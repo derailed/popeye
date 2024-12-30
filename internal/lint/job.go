@@ -39,7 +39,7 @@ func (s *Job) Lint(ctx context.Context) error {
 		j := o.(*batchv1.Job)
 		fqn := client.FQN(j.Namespace, j.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, SpecFor(fqn, j))
+		ctx = internal.WithSpec(ctx, coSpecFor(fqn, j, j.Spec.Template.Spec))
 		s.checkJob(ctx, fqn, j)
 		s.checkContainers(ctx, fqn, j.Spec.Template.Spec)
 		s.checkUtilization(ctx, over, fqn)

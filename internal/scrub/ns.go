@@ -20,7 +20,7 @@ type Namespace struct {
 }
 
 // NewNamespace returns a new instance.
-func NewNamespace(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewNamespace(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &Namespace{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

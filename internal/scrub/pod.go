@@ -23,7 +23,7 @@ type Pod struct {
 }
 
 // NewPod return a new instance.
-func NewPod(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewPod(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &Pod{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

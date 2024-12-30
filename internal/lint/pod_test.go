@@ -5,12 +5,18 @@ package lint
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/db"
+	"github.com/derailed/popeye/internal/issues"
 	"github.com/derailed/popeye/internal/test"
+	"github.com/derailed/popeye/pkg/config"
+	"github.com/derailed/popeye/pkg/config/json"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	polv1 "k8s.io/api/policy/v1"
@@ -37,7 +43,7 @@ func TestPodNPLint(t *testing.T) {
 
 	ii := po.Outcome()["ns1/p1"]
 	assert.Equal(t, 1, len(ii))
-	assert.Equal(t, `[POP-1204] Pod Egress is not secured by a network policy`, ii[0].Message)
+	assert.Equal(t, `[POP-1204] Pod egress is not secured by a network policy`, ii[0].Message)
 
 	ii = po.Outcome()["ns2/p2"]
 	assert.Equal(t, 0, len(ii))
@@ -106,7 +112,7 @@ func TestPodCheckSecure(t *testing.T) {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			p := NewPod(test.MakeCollector(t), dba)
-			p.checkSecure(ctx, "default/p1", u.pod.Spec)
+			p.checkSecure(ctx, "default/p1", u.pod.Spec, true)
 			assert.Equal(t, u.issues, len(p.Outcome()["default/p1"]))
 		})
 	}
@@ -136,8 +142,8 @@ func TestPodLint(t *testing.T) {
 	assert.Equal(t, 6, len(ii))
 	assert.Equal(t, `[POP-207] Pod is in an unhappy phase ()`, ii[0].Message)
 	assert.Equal(t, `[POP-208] Unmanaged pod detected. Best to use a controller`, ii[1].Message)
-	assert.Equal(t, `[POP-1204] Pod Ingress is not secured by a network policy`, ii[2].Message)
-	assert.Equal(t, `[POP-1204] Pod Egress is not secured by a network policy`, ii[3].Message)
+	assert.Equal(t, `[POP-1204] Pod ingress is not secured by a network policy`, ii[2].Message)
+	assert.Equal(t, `[POP-1204] Pod egress is not secured by a network policy`, ii[3].Message)
 	assert.Equal(t, `[POP-206] Pod has no associated PodDisruptionBudget`, ii[4].Message)
 	assert.Equal(t, `[POP-301] Connects to API Server? ServiceAccount token is mounted`, ii[5].Message)
 
@@ -145,8 +151,8 @@ func TestPodLint(t *testing.T) {
 	assert.Equal(t, 6, len(ii))
 	assert.Equal(t, `[POP-105] Liveness uses a port#, prefer a named port`, ii[0].Message)
 	assert.Equal(t, `[POP-105] Readiness uses a port#, prefer a named port`, ii[1].Message)
-	assert.Equal(t, `[POP-1204] Pod Ingress is not secured by a network policy`, ii[2].Message)
-	assert.Equal(t, `[POP-1204] Pod Egress is not secured by a network policy`, ii[3].Message)
+	assert.Equal(t, `[POP-1204] Pod ingress is not secured by a network policy`, ii[2].Message)
+	assert.Equal(t, `[POP-1204] Pod egress is not secured by a network policy`, ii[3].Message)
 	assert.Equal(t, `[POP-301] Connects to API Server? ServiceAccount token is mounted`, ii[4].Message)
 	assert.Equal(t, `[POP-109] CPU Current/Request (2000m/1000m) reached user 80% threshold (200%)`, ii[5].Message)
 
@@ -163,8 +169,8 @@ func TestPodLint(t *testing.T) {
 	assert.Equal(t, `[POP-113] Container image "zorg:latest" is not hosted on an allowed docker registry`, ii[8].Message)
 	assert.Equal(t, `[POP-107] No resource limits defined`, ii[9].Message)
 	assert.Equal(t, `[POP-208] Unmanaged pod detected. Best to use a controller`, ii[10].Message)
-	assert.Equal(t, `[POP-1204] Pod Ingress is not secured by a network policy`, ii[11].Message)
-	assert.Equal(t, `[POP-1204] Pod Egress is not secured by a network policy`, ii[12].Message)
+	assert.Equal(t, `[POP-1204] Pod ingress is not secured by a network policy`, ii[11].Message)
+	assert.Equal(t, `[POP-1204] Pod egress is not secured by a network policy`, ii[12].Message)
 	assert.Equal(t, `[POP-300] Uses "default" ServiceAccount`, ii[13].Message)
 	assert.Equal(t, `[POP-301] Connects to API Server? ServiceAccount token is mounted`, ii[14].Message)
 
@@ -173,9 +179,47 @@ func TestPodLint(t *testing.T) {
 	assert.Equal(t, `[POP-113] Container image "blee:v1.2" is not hosted on an allowed docker registry`, ii[0].Message)
 	assert.Equal(t, `[POP-106] No resources requests/limits defined`, ii[1].Message)
 	assert.Equal(t, `[POP-102] No probes defined`, ii[2].Message)
-	assert.Equal(t, `[POP-1204] Pod Ingress is not secured by a network policy`, ii[3].Message)
-	assert.Equal(t, `[POP-1204] Pod Egress is not secured by a network policy`, ii[4].Message)
+	assert.Equal(t, `[POP-1204] Pod ingress is not secured by a network policy`, ii[3].Message)
+	assert.Equal(t, `[POP-1204] Pod egress is not secured by a network policy`, ii[4].Message)
 	assert.Equal(t, `[POP-209] Pod is managed by multiple PodDisruptionBudgets (pdb4, pdb4-1)`, ii[5].Message)
+	assert.Equal(t, `[POP-301] Connects to API Server? ServiceAccount token is mounted`, ii[6].Message)
+}
+
+func TestPodLintExcludes(t *testing.T) {
+	dba, err := test.NewTestDB()
+	assert.NoError(t, err)
+	l := db.NewLoader(dba)
+
+	ctx := test.MakeCtx(t)
+	assert.NoError(t, test.LoadDB[*v1.Pod](ctx, l.DB, "core/pod/2.yaml", internal.Glossary[internal.PO]))
+	assert.NoError(t, test.LoadDB[*v1.ServiceAccount](ctx, l.DB, "core/sa/1.yaml", internal.Glossary[internal.SA]))
+	assert.NoError(t, test.LoadDB[*polv1.PodDisruptionBudget](ctx, l.DB, "pol/pdb/1.yaml", internal.Glossary[internal.PDB]))
+	assert.NoError(t, test.LoadDB[*netv1.NetworkPolicy](ctx, l.DB, "net/np/1.yaml", internal.Glossary[internal.NP]))
+	assert.NoError(t, test.LoadDB[*mv1beta1.PodMetrics](ctx, l.DB, "mx/pod/1.yaml", internal.Glossary[internal.PMX]))
+
+	bb, err := os.ReadFile(filepath.Join("testdata", "config", "1.yaml"))
+	assert.NoError(t, err)
+	assert.NoError(t, json.NewValidator().Validate(json.SpinachSchema, bb))
+	var cfg config.Config
+	assert.NoError(t, yaml.Unmarshal(bb, &cfg))
+
+	codes, err := issues.LoadCodes()
+	assert.NoError(t, err)
+	cc := issues.NewCollector(codes, &cfg)
+	po := NewPod(cc, dba)
+	po.Collector.Config.Registries = []string{"dorker.io"}
+	assert.Nil(t, po.Lint(test.MakeContext("v1/pods", "pods")))
+	assert.Equal(t, 5, len(po.Outcome()))
+
+	ii := po.Outcome()["default/p4"]
+
+	assert.Equal(t, 7, len(ii))
+	assert.Equal(t, `[POP-101] Image tagged "latest" in use`, ii[0].Message)
+	assert.Equal(t, `[POP-107] No resource limits defined`, ii[1].Message)
+	assert.Equal(t, `[POP-208] Unmanaged pod detected. Best to use a controller`, ii[2].Message)
+	assert.Equal(t, `[POP-1204] Pod ingress is not secured by a network policy`, ii[3].Message)
+	assert.Equal(t, `[POP-1204] Pod egress is not secured by a network policy`, ii[4].Message)
+	assert.Equal(t, `[POP-300] Uses "default" ServiceAccount`, ii[5].Message)
 	assert.Equal(t, `[POP-301] Connects to API Server? ServiceAccount token is mounted`, ii[6].Message)
 }
 

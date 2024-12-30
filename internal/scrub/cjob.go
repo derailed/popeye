@@ -22,7 +22,7 @@ type CronJob struct {
 }
 
 // NewCronJob return a new instance.
-func NewCronJob(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewCronJob(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &CronJob{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

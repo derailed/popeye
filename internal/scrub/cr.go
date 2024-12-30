@@ -21,7 +21,7 @@ type ClusterRole struct {
 }
 
 // NewClusterRole returns a new instance.
-func NewClusterRole(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewClusterRole(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &ClusterRole{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

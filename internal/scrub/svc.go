@@ -20,7 +20,7 @@ type Service struct {
 }
 
 // NewService return a new instance.
-func NewService(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewService(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &Service{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

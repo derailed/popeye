@@ -52,13 +52,14 @@ func Execute() {
 
 // Doit runs the scans and lints pass over the specified cluster.
 func doIt(cmd *cobra.Command, args []string) {
+	bomb(initLogs())
+
 	defer func() {
 		if err := recover(); err != nil {
 			pkg.BailOut(err.(error))
 		}
 	}()
 
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	clearScreen()
 	bomb(flags.Validate())
 	flags.StandAlone = true
@@ -84,7 +85,7 @@ func bomb(err error) {
 	if err == nil {
 		return
 	}
-	panic(fmt.Errorf("💥 %s\n", report.Colorize(err.Error(), report.ColorRed)))
+	panic(fmt.Errorf("💥 %s", report.Colorize(err.Error(), report.ColorRed)))
 }
 
 func initPopeyeFlags() {
@@ -166,6 +167,15 @@ func initPopeyeFlags() {
 		[]string{},
 		"Specify which resources to include in the scan ie -s po,svc",
 	)
+
+	rootCmd.Flags().IntVarP(flags.LogLevel, "log-level", "v",
+		1,
+		"Specify log level. Use 0|1|2|3|4 for disable|info|warn|error|debug",
+	)
+	rootCmd.Flags().StringVarP(flags.LogFile, "logs", "",
+		pkg.LogFile,
+		"Specify log file location. Use `none` for stdout",
+	)
 }
 
 func initKubeConfigFlags() {
@@ -210,6 +220,49 @@ func initKubeConfigFlags() {
 		[]string{},
 		"Group to impersonate for the operation",
 	)
+}
+
+func initLogs() error {
+	var logs string
+	if *flags.LogFile != "none" {
+		logs = *flags.LogFile
+	}
+
+	var file = os.Stdout
+	if logs != "" {
+		mod := os.O_CREATE | os.O_APPEND | os.O_WRONLY
+		var err error
+		file, err = os.OpenFile(logs, mod, 0644)
+		if err != nil {
+			return fmt.Errorf("unable to create Popeye log file: %w", err)
+		}
+	}
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: file})
+
+	if flags.LogLevel == nil {
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	} else {
+		zerolog.SetGlobalLevel(toLogLevel(*flags.LogLevel))
+	}
+
+	return nil
+}
+
+func toLogLevel(level int) zerolog.Level {
+	switch level {
+	case -1:
+		return zerolog.TraceLevel
+	case 0:
+		return zerolog.Disabled
+	case 1:
+		return zerolog.InfoLevel
+	case 2:
+		return zerolog.WarnLevel
+	case 3:
+		return zerolog.ErrorLevel
+	default:
+		return zerolog.DebugLevel
+	}
 }
 
 func initFlags() {

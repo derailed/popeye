@@ -61,8 +61,7 @@ func (s *CiliumIdentity) Lint(ctx context.Context) error {
 }
 
 func (s *CiliumIdentity) checkStale(ctx context.Context, fqn string, refs *sync.Map) error {
-	_, ok := refs.Load(icache.ResFqn(cache.CIDKey, fqn))
-	if !ok {
+	if _, ok := refs.Load(icache.ResFqn(cache.CIDKey, fqn)); !ok {
 		s.AddCode(ctx, 1600)
 	}
 
