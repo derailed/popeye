@@ -23,8 +23,8 @@ builds:
       - arm
       - ppc64le
       - s390x
-    goarm:
-      - 7
+    # goarm:
+    #   - 7
     flags:
       - -trimpath
     ldflags:
