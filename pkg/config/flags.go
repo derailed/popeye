@@ -42,6 +42,8 @@ type Flags struct {
 	ActiveNamespace *string
 	ForceExitZero   *bool
 	MinScore        *int
+	LogLevel        *int
+	LogFile         *string
 }
 
 // NewFlags returns new configuration flags.
@@ -62,15 +64,17 @@ func NewFlags() *Flags {
 		PushGateway:     newPushGateway(),
 		ForceExitZero:   boolPtr(false),
 		MinScore:        intPtr(0),
+		LogLevel:        intPtr(0),
+		LogFile:         strPtr(""),
 	}
 }
 
 func (f *Flags) Validate() error {
 	if !IsBoolSet(f.Save) && IsStrSet(f.OutputFile) {
-		return errors.New("'--save' must be used in conjunction with 'output-file'.")
+		return errors.New("'--save' must be used in conjunction with 'output-file'")
 	}
 	if IsBoolSet(f.Save) && IsStrSet(f.S3.Bucket) {
-		return errors.New("'--save' cannot be used in conjunction with 's3-bucket'.")
+		return errors.New("'--save' cannot be used in conjunction with 's3-bucket'")
 	}
 
 	if !in(outputs, f.Output) {

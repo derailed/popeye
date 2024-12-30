@@ -202,11 +202,11 @@ func (p *Popeye) buildCtx(ctx context.Context) context.Context {
 	}
 	ns, err := p.client().Config().CurrentNamespaceName()
 	if err != nil {
+		log.Warn().Msgf("Unable to determine current namespace: %v. Using `default` namespace", err)
 		ns = client.DefaultNamespace
 	}
-	ctx = context.WithValue(ctx, internal.KeyNamespace, ns)
 
-	return ctx
+	return context.WithValue(ctx, internal.KeyNamespace, ns)
 }
 
 func (p *Popeye) validateSpinach(ss scrub.Scrubs) error {
@@ -225,10 +225,6 @@ func (p *Popeye) lint() (int, int, error) {
 	defer func(t time.Time) {
 		log.Debug().Msgf("Lint %v", time.Since(t))
 	}(time.Now())
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	ctx = p.buildCtx(ctx)
 
 	codes, err := issues.LoadCodes()
 	if err != nil {
@@ -250,22 +246,18 @@ func (p *Popeye) lint() (int, int, error) {
 	if err := p.validateSpinach(scrubers); err != nil {
 		return 0, 0, err
 	}
+
+	ctx := p.buildCtx(context.Background())
+	sections, ans := p.config.Sections(), p.client().ActiveNamespace()
 	for k, fn := range scrubers {
 		gvr, ok := internal.Glossary[k]
 		if !ok || gvr == types.BlankGVR {
 			continue
 		}
-
-		if p.aliases.Exclude(gvr, p.config.Sections()) {
+		if client.IsNamespaced(ans) && p.aliases.IsNamespaced(gvr) || p.aliases.Exclude(gvr, sections) {
 			continue
 		}
-		// Skip node linter if active namespace is set.
-		if gvr == internal.Glossary[internal.NO] && p.client().ActiveNamespace() != client.AllNamespaces {
-			continue
-		}
-
 		runners[gvr] = fn(ctx, cache, codes)
-
 	}
 
 	total, errCount := len(runners), 0
@@ -304,12 +296,10 @@ func (p *Popeye) runLinter(ctx context.Context, gvr types.GVR, l scrub.Linter, c
 		}
 	}()
 
-	callCtx := ctx
 	if !p.aliases.IsNamespaced(gvr) {
-		callCtx = context.WithValue(ctx, internal.KeyNamespace, client.ClusterScope)
+		ctx = context.WithValue(ctx, internal.KeyNamespace, client.ClusterScope)
 	}
-
-	if err := l.Lint(callCtx); err != nil {
+	if err := l.Lint(ctx); err != nil {
 		p.builder.AddError(err)
 	}
 	o := l.Outcome().Filter(rules.Level(p.config.LintLevel))
