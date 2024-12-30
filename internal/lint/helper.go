@@ -28,6 +28,25 @@ const (
 
 type qos = int
 
+func coSpecFor(fqn string, o metav1.ObjectMetaAccessor, spec v1.PodSpec) rules.Spec {
+	rule := SpecFor(fqn, o)
+	rule.Containers = fetchContainers(spec)
+
+	return rule
+}
+
+func fetchContainers(podTemplate v1.PodSpec) []string {
+	containers := make([]string, 0, len(podTemplate.InitContainers)+len(podTemplate.Containers))
+	for _, co := range podTemplate.InitContainers {
+		containers = append(containers, co.Name)
+	}
+	for _, co := range podTemplate.Containers {
+		containers = append(containers, co.Name)
+	}
+
+	return containers
+}
+
 // SpecFor construct a new run spec for a given resource.
 func SpecFor(fqn string, o metav1.ObjectMetaAccessor) rules.Spec {
 	spec := rules.Spec{
@@ -146,7 +165,7 @@ func asMB(q resource.Quantity) string {
 	return fmt.Sprintf("%vMi", toMB(q))
 }
 
-// PodResources computes pod resouces as sum of containers allocations.
+// PodResources computes pod resources as sum of containers allocations.
 func podResources(spec v1.PodSpec) (cpu, mem resource.Quantity) {
 	for _, co := range spec.InitContainers {
 		c, m, _ := containerResources(co)

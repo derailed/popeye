@@ -44,3 +44,47 @@ func TestRBLint(t *testing.T) {
 	assert.Equal(t, `[POP-1300] References a ClusterRole (cr-bozo) which does not exist`, ii[0].Message)
 	assert.Equal(t, rules.WarnLevel, ii[0].Level)
 }
+
+func TestRB_boundDefaultSA(t *testing.T) {
+	uu := map[string]struct {
+		roPath, robPath string
+		crPath, crbPath string
+		e               bool
+	}{
+		"happy": {
+			roPath:  "auth/ro/1.yaml",
+			robPath: "auth/rob/1.yaml",
+			crPath:  "auth/cr/1.yaml",
+			crbPath: "auth/crb/1.yaml",
+		},
+		"role-bound": {
+			roPath:  "auth/ro/1.yaml",
+			robPath: "auth/rob/2.yaml",
+			crPath:  "auth/cr/1.yaml",
+			crbPath: "auth/crb/1.yaml",
+		},
+		"cluster-role-bound": {
+			roPath:  "auth/ro/1.yaml",
+			robPath: "auth/rob/1.yaml",
+			crPath:  "auth/cr/1.yaml",
+			crbPath: "auth/crb/2.yaml",
+		},
+	}
+
+	for k, u := range uu {
+		t.Run(k, func(t *testing.T) {
+			dba, err := test.NewTestDB()
+			assert.NoError(t, err)
+			l := db.NewLoader(dba)
+
+			ctx := test.MakeCtx(t)
+			assert.NoError(t, test.LoadDB[*rbacv1.RoleBinding](ctx, l.DB, u.robPath, internal.Glossary[internal.ROB]))
+			assert.NoError(t, test.LoadDB[*rbacv1.Role](ctx, l.DB, u.roPath, internal.Glossary[internal.RO]))
+			assert.NoError(t, test.LoadDB[*rbacv1.ClusterRole](ctx, l.DB, u.crPath, internal.Glossary[internal.CR]))
+			assert.NoError(t, test.LoadDB[*rbacv1.ClusterRoleBinding](ctx, l.DB, u.crbPath, internal.Glossary[internal.CRB]))
+			assert.NoError(t, test.LoadDB[*v1.ServiceAccount](ctx, l.DB, "core/sa/1.yaml", internal.Glossary[internal.SA]))
+
+			assert.Equal(t, u.e, boundDefaultSA(dba))
+		})
+	}
+}

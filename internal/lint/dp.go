@@ -39,7 +39,7 @@ func (s *Deployment) Lint(ctx context.Context) error {
 		dp := o.(*appsv1.Deployment)
 		fqn := client.FQN(dp.Namespace, dp.Name)
 		s.InitOutcome(fqn)
-		ctx = internal.WithSpec(ctx, SpecFor(fqn, dp))
+		ctx = internal.WithSpec(ctx, coSpecFor(fqn, dp, dp.Spec.Template.Spec))
 		s.checkDeployment(ctx, dp)
 		s.checkContainers(ctx, fqn, dp.Spec.Template.Spec)
 		s.checkUtilization(ctx, over, dp)

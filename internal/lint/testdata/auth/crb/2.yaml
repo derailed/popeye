@@ -1,0 +1,43 @@
+---
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: crb1
+    subjects:
+    - kind: ServiceAccount
+      name: default
+      namespace: default
+      apiGroup: rbac.authorization.k8s.io
+    roleRef:
+      kind: ClusterRole
+      name: cr1
+      apiGroup: rbac.authorization.k8s.io
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: crb2
+    subjects:
+    - kind: ServiceAccount
+      name: sa2
+      namespace: default
+      apiGroup: rbac.authorization.k8s.io
+    roleRef:
+      kind: ClusterRole
+      name: cr-bozo
+      apiGroup: rbac.authorization.k8s.io
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: crb3
+    subjects:
+    - kind: ServiceAccount
+      name: sa-bozo
+      namespace: default
+      apiGroup: rbac.authorization.k8s.io
+    roleRef:
+      kind: Role
+      name: r-bozo
+      apiGroup: rbac.authorization.k8s.io

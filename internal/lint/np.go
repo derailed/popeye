@@ -23,11 +23,13 @@ type direction string
 const (
 	dirIn    direction = "Ingress"
 	dirOut   direction = "Egress"
-	bothPols           = "All"
+	bothPols           = "all"
 	noPols             = ""
+	ingress            = "ingress"
+	egress             = "egress"
 )
 
-// NetworkPolicy tracks NetworkPolicy sanitizatios.
+// NetworkPolicy tracks NetworkPolicy linting.
 type NetworkPolicy struct {
 	*issues.Collector
 
@@ -57,13 +59,13 @@ func (s *NetworkPolicy) Lint(ctx context.Context) error {
 		s.checkSelector(ctx, fqn, np.Spec.PodSelector)
 		s.checkIngresses(ctx, fqn, np.Spec.Ingress)
 		s.checkEgresses(ctx, fqn, np.Spec.Egress)
-		s.checkRuleType(ctx, fqn, &np.Spec)
+		s.checkRuleType(ctx, &np.Spec)
 	}
 
 	return nil
 }
 
-func (s *NetworkPolicy) checkRuleType(ctx context.Context, fqn string, spec *netv1.NetworkPolicySpec) {
+func (s *NetworkPolicy) checkRuleType(ctx context.Context, spec *netv1.NetworkPolicySpec) {
 	if spec.PodSelector.Size() > 0 {
 		return
 	}
@@ -72,15 +74,15 @@ func (s *NetworkPolicy) checkRuleType(ctx context.Context, fqn string, spec *net
 	case isAllowAll(spec):
 		s.AddCode(ctx, 1203, "Allow", bothPols)
 	case isAllowAllIngress(spec):
-		s.AddCode(ctx, 1203, "Allow All", dirIn)
+		s.AddCode(ctx, 1203, "Allow all", ingress)
 	case isAllowAllEgress(spec):
-		s.AddCode(ctx, 1203, "Allow All", dirOut)
+		s.AddCode(ctx, 1203, "Allow all", egress)
 	case isDenyAll(spec):
 		s.AddCode(ctx, 1203, "Deny", bothPols)
 	case isDenyAllIngress(spec):
-		s.AddCode(ctx, 1203, "Deny All", dirIn)
+		s.AddCode(ctx, 1203, "Deny all", ingress)
 	case isDenyAllEgress(spec):
-		s.AddCode(ctx, 1203, "Deny All", dirOut)
+		s.AddCode(ctx, 1203, "Deny all", egress)
 	}
 }
 
@@ -157,7 +159,7 @@ func (s *NetworkPolicy) checkIPBlocks(ctx context.Context, fqn string, b *netv1.
 		s.AddErr(ctx, err)
 	}
 	if !s.matchPips(ns, ipnet) {
-		s.AddCode(ctx, 1206, d, b.CIDR)
+		s.AddCode(ctx, 1206, strings.ToLower(string(d)), b.CIDR)
 	}
 	for _, ex := range b.Except {
 		_, ipnet, err := net.ParseCIDR(ex)
@@ -166,7 +168,7 @@ func (s *NetworkPolicy) checkIPBlocks(ctx context.Context, fqn string, b *netv1.
 			continue
 		}
 		if !s.matchPips(ns, ipnet) {
-			s.AddCode(ctx, 1207, d, ex)
+			s.AddCode(ctx, 1207, strings.ToLower(string(d)), ex)
 		}
 	}
 }
@@ -210,16 +212,16 @@ func (s *NetworkPolicy) checkPodSelector(ctx context.Context, nss []*v1.Namespac
 	}
 	if !found {
 		if len(nn) > 0 {
-			s.AddCode(ctx, 1208, d, dumpSel(sel), strings.Join(nn, ","))
+			s.AddCode(ctx, 1208, strings.ToLower(string(d)), dumpSel(sel), strings.Join(nn, ","))
 		} else {
-			s.AddCode(ctx, 1202, d, dumpSel(sel))
+			s.AddCode(ctx, 1202, strings.ToLower(string(d)), dumpSel(sel))
 		}
 	}
 }
 
 func (s *NetworkPolicy) checkNSSelector(ctx context.Context, sel *metav1.LabelSelector, nss []*v1.Namespace, d direction) bool {
 	if len(nss) == 0 {
-		s.AddCode(ctx, 1201, d, dumpSel(sel))
+		s.AddCode(ctx, 1201, strings.ToLower(string(d)), dumpSel(sel))
 		return false
 	}
 

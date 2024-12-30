@@ -60,3 +60,31 @@ func (r *RoleBinding) checkInUse(ctx context.Context) {
 		}
 	}
 }
+
+func boundDefaultSA(db *db.DB) bool {
+	txn, it := db.MustITFor(internal.Glossary[internal.ROB])
+	defer txn.Abort()
+	for o := it.Next(); o != nil; o = it.Next() {
+		rb := o.(*rbacv1.RoleBinding)
+		if rb.Namespace != client.DefaultNamespace || rb.RoleRef.Kind == "ClusterRole" {
+			continue
+		}
+		if rb.RoleRef.APIGroup == "" && rb.RoleRef.Kind == "ServiceAccount" && rb.RoleRef.Name == "default" {
+			return true
+		}
+	}
+
+	txn, it = db.MustITFor(internal.Glossary[internal.CRB])
+	defer txn.Abort()
+	for o := it.Next(); o != nil; o = it.Next() {
+		rb := o.(*rbacv1.ClusterRoleBinding)
+		if rb.RoleRef.Kind == "ClusterRole" {
+			continue
+		}
+		if rb.RoleRef.APIGroup == "" && rb.RoleRef.Kind == "ServiceAccount" && rb.RoleRef.Name == "default" {
+			return true
+		}
+	}
+
+	return false
+}
