@@ -22,7 +22,7 @@ type DaemonSet struct {
 }
 
 // NewDaemonSet return a new instance.
-func NewDaemonSet(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewDaemonSet(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &DaemonSet{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

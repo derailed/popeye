@@ -20,7 +20,7 @@ type ConfigMap struct {
 }
 
 // NewConfigMap returns a new instance.
-func NewConfigMap(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewConfigMap(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &ConfigMap{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

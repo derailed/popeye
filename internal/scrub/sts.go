@@ -22,7 +22,7 @@ type StatefulSet struct {
 }
 
 // NewStatefulSet return a new StatefulSet scruber.
-func NewStatefulSet(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewStatefulSet(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &StatefulSet{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

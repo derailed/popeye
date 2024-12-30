@@ -20,7 +20,7 @@ type GatewayClass struct {
 }
 
 // NewGatewayClass return a new instance.
-func NewGatewayClass(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewGatewayClass(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &GatewayClass{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

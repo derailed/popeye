@@ -175,8 +175,6 @@ func matchSel(labels map[string]string, e slimv1.LabelSelectorRequirement) bool 
 
 func matchLabels(labels, sel map[string]string) bool {
 	var count int
-	fmt.Println("LABELS", labels)
-	fmt.Println("SEL", sel)
 	for k, v := range sel {
 		k = strings.TrimPrefix(k, "any.")
 		if v1, ok := labels[k]; ok && v == v1 {

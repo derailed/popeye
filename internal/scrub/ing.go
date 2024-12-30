@@ -21,7 +21,7 @@ type Ingress struct {
 }
 
 // NewIngress return a new instance.
-func NewIngress(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewIngress(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &Ingress{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

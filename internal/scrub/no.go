@@ -21,7 +21,7 @@ type Node struct {
 }
 
 // NewNode return a new instance.
-func NewNode(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewNode(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &Node{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

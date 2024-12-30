@@ -249,7 +249,7 @@ func (c *Config) CurrentNamespaceName() (string, error) {
 		return ct.Namespace, nil
 	}
 
-	return DefaultNamespace, nil
+	return DefaultNamespace, fmt.Errorf("invalid context specified: %q", cfg.CurrentContext)
 }
 
 // NamespaceNames fetch all available namespaces on current cluster.

@@ -100,9 +100,9 @@ func (s *CiliumEndpoint) checkNode(ctx context.Context, cep *v2.CiliumEndpoint) 
 	if err != nil {
 		return err
 	}
+	nodeIP := cep.Status.Networking.NodeIP
 	for _, n := range nn {
-		ip, _ := getIPs(n.Status.Addresses)
-		if ip != "" && ip == cep.Status.Networking.NodeIP {
+		if matchIP(n.Status.Addresses, nodeIP) {
 			return nil
 		}
 	}
@@ -113,15 +113,15 @@ func (s *CiliumEndpoint) checkNode(ctx context.Context, cep *v2.CiliumEndpoint) 
 
 // Helpers...
 
-func getIPs(addrs []v1.NodeAddress) (iIP, eIP string) {
+func matchIP(addrs []v1.NodeAddress, ip string) bool {
 	for _, a := range addrs {
-		switch a.Type {
-		case v1.NodeExternalIP:
-			eIP = a.Address
-		case v1.NodeInternalIP:
-			iIP = a.Address
+		if a.Type != v1.NodeInternalIP {
+			continue
+		}
+		if a.Address == ip {
+			return true
 		}
 	}
 
-	return
+	return false
 }

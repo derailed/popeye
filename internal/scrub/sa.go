@@ -22,7 +22,7 @@ type ServiceAccount struct {
 }
 
 // NewServiceAccount returns a new instance.
-func NewServiceAccount(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewServiceAccount(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &ServiceAccount{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

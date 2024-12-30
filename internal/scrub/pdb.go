@@ -21,7 +21,7 @@ type PodDisruptionBudget struct {
 }
 
 // NewPodDisruptionBudget return a new PodDisruptionBudget scruber.
-func NewPodDisruptionBudget(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewPodDisruptionBudget(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &PodDisruptionBudget{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

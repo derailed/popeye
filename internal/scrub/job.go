@@ -22,7 +22,7 @@ type Job struct {
 }
 
 // NewJob return a new instance.
-func NewJob(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewJob(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &Job{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

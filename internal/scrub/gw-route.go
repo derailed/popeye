@@ -20,7 +20,7 @@ type HTTPRoute struct {
 }
 
 // NewHTTPRoute return a new instance.
-func NewHTTPRoute(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewHTTPRoute(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &HTTPRoute{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

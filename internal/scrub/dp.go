@@ -22,7 +22,7 @@ type Deployment struct {
 }
 
 // NewDeployment returns a new instance.
-func NewDeployment(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewDeployment(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &Deployment{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

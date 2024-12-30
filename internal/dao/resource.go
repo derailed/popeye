@@ -29,7 +29,7 @@ func (r *Resource) List(ctx context.Context) ([]runtime.Object, error) {
 	}
 	ns, ok := ctx.Value(internal.KeyNamespace).(string)
 	if !ok {
-		panic(fmt.Sprintf("BOOM no namespace in context %s", r.gvr))
+		return nil, fmt.Errorf("BOOM!! no namespace found in context %s", r.gvr)
 	}
 	if r.gvr == internal.Glossary[internal.NS] {
 		ns = client.AllNamespaces

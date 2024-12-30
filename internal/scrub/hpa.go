@@ -23,7 +23,7 @@ type HorizontalPodAutoscaler struct {
 }
 
 // NewHorizontalPodAutoscaler returns a new instance.
-func NewHorizontalPodAutoscaler(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewHorizontalPodAutoscaler(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &HorizontalPodAutoscaler{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

@@ -21,7 +21,7 @@ type ReplicaSet struct {
 }
 
 // NewReplicaSet returns a new instance.
-func NewReplicaSet(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewReplicaSet(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &ReplicaSet{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,

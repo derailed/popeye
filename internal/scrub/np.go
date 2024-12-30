@@ -21,7 +21,7 @@ type NetworkPolicy struct {
 }
 
 // NewNetworkPolicy return a new instance.
-func NewNetworkPolicy(ctx context.Context, c *Cache, codes *issues.Codes) Linter {
+func NewNetworkPolicy(_ context.Context, c *Cache, codes *issues.Codes) Linter {
 	return &NetworkPolicy{
 		Collector: issues.NewCollector(codes, c.Config),
 		Cache:     c,
