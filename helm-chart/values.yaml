@@ -1,0 +1,125 @@
+# Default values for popeye.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Rotation in seconds popeye will be execute scan, feed pushgateway/prometheus and create new html report
+# this is the same time of cronjob will be executed
+# e.g.
+# 2 hours of rescan =
+# rotation: 7200
+# schedule: "0 */2 * * *"
+#            |  |  | | |
+#            |  |  | | -- 0-7   = day of week (0 or 7 is Sun)
+#            |  |  | ---- 1-12  = month
+#            |  |  ------ 1-31  = day of month
+#            |  --------- 0-23  = hour 
+#            ------------ 0-59  = minute
+rotation: 7200   
+schedule: "0 */2 * * *"
+
+# How many Pods will be keep to tell history of executions
+successfulJobsHistoryLimit: 15
+failedJobsHistoryLimit: 10
+
+nameOverride: ""
+fullnameOverride: ""
+
+namespace: popeye
+
+image:
+  web:
+    name: nginx
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: stable-alpine
+  recycle:
+    name: alpine
+    pullPolicy: IfNotPresent
+    tag: latest
+  popeye:
+    name: quay.io/derailed/popeye
+    pullPolicy: Always
+
+# Instaladed from helm chart prometheus-community/prometheus-pushgateway 
+# https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-pushgateway
+
+pushgateway:
+  enabled: true
+  url: http://pushgateway-prometheus-pushgateway.monitoring.svc:9091
+
+configMap: {}
+#  spinach: |-
+#    # A Popeye sample configuration file
+#    popeye:
+#      allocations:
+#        cpu:
+#          underPercUtilization: 200 # Checks if cpu is under allocated by more than 200% at current load.
+#          overPercUtilization: 50   # Checks if cpu is over allocated by more than 50% at current load.
+#        memory:
+#          underPercUtilization: 200 # Checks if mem is under allocated by more than 200% at current load.
+#          overPercUtilization: 50   # Checks if mem is over allocated by more than 50% usage at current load.
+# 
+#      excludes:
+#        v1/pods:
+#        - name: rx:kube-system
+#          codes:
+#          - 102
+#          - 105
+#          - 106
+#          - 107
+#          - 206
+#          - 301
+#          - 302
+#          - 306
+#          - 206
+#          - 104
+#        - name: rx:popeye-reports
+#        - name: rx:icx/.*
+#          containers:
+#            - istio-proxy
+#            - istio-init
+#        v1/configmaps:
+#          - name: rx:fred.+\.v\d+
+#        v1/namespaces:
+#          - name: rx:kube
+#            codes:
+#              - 404
+#          - name: rx:istio
+#        autoscaling/v1/horizontalpodautoscalers:
+#          - name: rx:.*
+# 
+#      node:
+#        limits:
+#          cpu:    90
+#          memory: 80
+# 
+#      pod:
+#        restarts:
+#          3
+#        limits:
+#          cpu:    80
+#          memory: 75
+
+ingress:
+  enabled: enabled
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  host: popeye.domain.com
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+nodeSelector: {}
+
+tolerations: []
