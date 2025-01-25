@@ -128,9 +128,12 @@ func (s *CiliumClusterwideNetworkPolicy) matchNodesBySel(sel api.EndpointSelecto
 		if !ok {
 			return nil, fmt.Errorf("expecting node but got %s", o)
 		}
-		fqn := client.FQN("", no.Name)
-		if matchSelector(no.Labels, sel) {
-			mm = append(mm, fqn)
+		ll := make([]string, 0, len(no.Labels))
+		for k, v := range no.Labels {
+			ll = append(ll, k+"="+v)
+		}
+		if matchSelector(client.AllNamespaces, ll, sel) {
+			mm = append(mm, client.FQN("", no.Name))
 		}
 	}
 
@@ -148,9 +151,11 @@ func (s *CiliumClusterwideNetworkPolicy) matchCEPsBySel(sel api.EndpointSelector
 		if !ok {
 			return nil, fmt.Errorf("expecting cilium endpoint but got %s", o)
 		}
-		fqn := client.FQN(cep.Namespace, cep.Name)
-		if matchSelector(cep.Labels, sel) {
-			mm = append(mm, fqn)
+		if cep.Status.Identity == nil {
+			continue
+		}
+		if matchSelector(cep.Namespace, cep.Status.Identity.Labels, sel) {
+			mm = append(mm, client.FQN(cep.Namespace, cep.Name))
 		}
 	}
 

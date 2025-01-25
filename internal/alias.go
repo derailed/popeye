@@ -219,6 +219,7 @@ func (a *Aliases) Exclude(gvr types.GVR, sections []string) bool {
 	if len(sections) == 0 {
 		return false
 	}
+
 	var matches int
 	for _, s := range sections {
 		agvr, ok := a.aliases[s]

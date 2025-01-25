@@ -28,7 +28,6 @@ func TestCiliumNetworkPolicy(t *testing.T) {
 	assert.Nil(t, li.Lint(test.MakeContext("cilium.io/v2/ciliumnetworkpolicies", "ciliumnetworkpolicies")))
 	assert.Equal(t, 4, len(li.Outcome()))
 
-	li.Outcome().Dump()
 	ii := li.Outcome()["default/cnp1"]
 	assert.Equal(t, 0, len(ii))
 

@@ -34,18 +34,26 @@ func (s *S3Info) Upload(asset string, contentType string, rwc io.ReadWriteCloser
 	defer rwc.Close()
 
 	log.Debug().Msgf("S3 bucket path: %q", asset)
-	bucket, key, err := s.parse()
+	host, bucket, key, err := s.parse()
 	if err != nil {
 		return err
 	}
 
-	// Create a single AWS session (we can re use this if we're uploading many files)
-	session, err := session.NewSession(&aws.Config{
+	cfg := aws.Config{
 		Logger:   &s3Logger{},
 		LogLevel: aws.LogLevel(aws.LogDebugWithRequestErrors),
-		Endpoint: s.Endpoint,
 		Region:   s.Region,
-	})
+		Endpoint: s.Endpoint,
+	}
+
+	if host != "" {
+		cfg.Endpoint = aws.String(host)
+		cfg.S3ForcePathStyle = aws.Bool(true)
+		cfg.DisableSSL = aws.Bool(true)
+	}
+
+	// Create a single AWS session (we can re use this if we're uploading many files)
+	session, err := session.NewSession(&cfg)
 	if err != nil {
 		return err
 	}
@@ -67,35 +75,43 @@ func (s *S3Info) Upload(asset string, contentType string, rwc io.ReadWriteCloser
 	return nil
 }
 
-func (s *S3Info) parse() (string, string, error) {
+func (s *S3Info) parse() (string, string, string, error) {
 	if !IsStrSet(s.Bucket) {
-		return "", "", fmt.Errorf("invalid S3 bucket URI: %q", *s.Bucket)
+		return "", "", "", fmt.Errorf("invalid S3 bucket URI: %q", *s.Bucket)
 	}
 	u, err := url.Parse(*s.Bucket)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	switch u.Scheme {
-	// s3://bucket or s3://bucket/
 	case "s3":
+		// s3://bucket or s3://bucket/
 		var key string
 		if u.Path != "" {
 			key = strings.Trim(u.Path, "/")
 		}
-		return u.Host, key, nil
-	// bucket/ or bucket/path/to/key
+		return "", u.Host, key, nil
+	case "minio":
+		var key, bucket string
+		if u.Path != "" {
+			bucketpath := strings.SplitN(u.Path[1:], "/", 2)
+			bucket = bucketpath[0]
+			key = bucketpath[1]
+		}
+		return u.Host, bucket, key, nil
 	case "":
+		// bucket/ or bucket/path/to/key
 		tokens := strings.SplitAfterN(strings.Trim(u.Path, "/"), "/", 2)
 		if len(tokens) == 0 {
-			return "", "", fmt.Errorf("invalid S3 bucket URI: %q", u.String())
+			return "", "", "", fmt.Errorf("invalid S3 bucket URI: %q", u.String())
 		}
 		key, bucket := "", strings.Trim(tokens[0], "/")
 		if len(tokens) > 1 {
 			key = tokens[1]
 		}
-		return bucket, key, nil
+		return u.Host, bucket, key, nil
 	default:
-		return "", "", fmt.Errorf("invalid S3 bucket URI: %q", u.String())
+		return "", "", "", fmt.Errorf("invalid S3 bucket URI: %q", u.String())
 	}
 }
 

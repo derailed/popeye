@@ -30,17 +30,16 @@ var (
 	}
 )
 
+func init() {
+	initFlags()
+}
+
 func execName() string {
 	n := "popeye"
 	if strings.HasPrefix(filepath.Base(os.Args[0]), "kubectl-") {
 		return "kubectl-" + n
 	}
 	return n
-}
-
-func init() {
-	rootCmd.AddCommand(versionCmd())
-	initFlags()
 }
 
 // Execute root command
