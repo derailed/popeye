@@ -52,8 +52,6 @@
 | 304        | References a secret which does not exist                             | 3        |                  |
 | 305        | References a docker-image "%s" pull secret which does not exist      | 3        |                  |
 | 306        | Container could be running as root user. Check SecurityContext/Image | 2        |                  |
-| 307        | %s references a non existing ServiceAccount: %q                      | 2        |                  |
-| 308        | Uses "default" bound ServiceAccount. Could be a security risk        | 3        |                  |
 
 ## General
 
@@ -66,8 +64,6 @@
 | 404        | Deprecation check failed. %v                                | 1        |                  |
 | 405        | Is this a jurassic cluster? Might want to upgrade K8s a bit | 2        |                  |
 | 406        | K8s version OK                                              | 0        |                  |
-| 407        | %s references %s %q which does not exist                    | 3        |                  |
-| 666        | Lint internal error: %s                                     | 3        |                  |
 
 ## Workloads (Deployment and StatefulSet)
 
@@ -81,7 +77,6 @@
 | 505        | At current load, Memory under allocated. Current:%s vs Requested:%s (%s) | 2        |                  |
 | 506        | At current load, Memory over allocated. Current:%s vs Requested:%s (%s)  | 2        |                  |
 | 507        | Deployment references ServiceAccount %q which does not exist             | 3        |                  |
-| 508        | No pods match controller selector: %s                                    | 3        |                  |
 
 ## HorizontalPodAutoscaler
 
@@ -149,7 +144,6 @@
 | 1107       | LoadBalancer detected but service sets externalTrafficPolicy to "Cluster" | 1        |                  |
 | 1108       | NodePort detected but service sets externalTrafficPolicy to "Local"       | 1        |                  |
 | 1109       | Only one Pod associated with this endpoint                                | 2        |                  |
-| 1110       | Match EP has no subsets                                                   | 2        |                  |
 
 ## ReplicaSet
 
@@ -159,17 +153,10 @@
 
 ## NetworkPolicies
 
-| Error Code | Message                                                    | Severity | Info / Reference |
-| ---------- | ---------------------------------------------------------- | -------- | ---------------- |
-| 1200       | No pods match %s pod selector                              | 2        |                  |
-| 1201       | No namespaces match %s namespace selector                  | 2        |                  |
-| 1202       | No pods match %s pod selector: %s                          | 2        |                  |
-| 1203       | %s %s policy in effect                                     | 1        |                  |
-| 1204       | Pod %s is not secured by a network policy                  | 2        |                  |
-| 1205       | Pod ingress and egress are not secured by a network policy | 2        |                  |
-| 1206       | No pods matched %s IPBlock %s                              | 2        |                  |
-| 1207       | No pods matched except %s IPBlock %s                       | 2        |                  |
-| 1208       | No pods match %s pod selector: %s in namespace: %s         | 2        |                  |
+| Error Code | Message                                   | Severity | Info / Reference |
+| ---------- | ----------------------------------------- | -------- | ---------------- |
+| 1200       | No pods match %s pod selector             | 2        |                  |
+| 1201       | No namespaces match %s namespace selector | 2        |                  |
 
 ## RBAC
 
@@ -187,31 +174,11 @@
 | 1403      | Ingress backend uses a port#, prefer a named port: %d          | 1        |                  |
 | 1404      | Invalid Ingress backend spec. Must use port name or number     | 3        |                  |
 
+
 ## CronJob
 
 | Error Code | Message                                   | Severity | Info / Reference |
 | ---------- | ----------------------------------------- | -------- | ---------------- |
 | 1500       | %s is suspended                           | 2        |                  |
 | 1501       | No active jobs detected                   | 1        |                  |
-| 1502       | CronJob has not run yet or is failing     | 2        |                  |
-| 1503       | Warning found: %s                         | 2        |                  |
-
-## CiliumIdentity
-
-| Error Code | Message                                                     | Severity | Info / Reference |
-| ---------- | ----------------------------------------------------------- | -------- | ---------------- |
-| 1600       | Stale? unable to locate matching Cilium Endpoint            | 2        |                  |
-| 1601       | Unable to assert namespace label: %q                        | 2        |                  |
-| 1602       | References namespace which does not exists: %q              | 2        |                  |
-| 1603       | Missing security namespace label: %q                        | 2        |                  |
-| 1604       | Namespace mismatch with security labels namespace: %q vs %q | 2        |                  |
-
-## CiliumEndpoint
-
-| Error Code | Message                                      | Severity | Info / Reference |
-| ---------- | -------------------------------------------- | -------- | ---------------- |
-| 1700       | No cilium endpoints matched %s selector      | 3        |                  |
-| 1701       | No nodes matched node selector               | 3        |                  |
-| 1702       | References an unknown node IP: %q            | 3        |                  |
-| 1703       | Pod owner is not in a running state: %s (%s) | 3        |                  |
-| 1704       | References an unknown owner ref: %q          | 3        |                  |
+| 1502      | CronJob has not run yet or is failing      | 2        |                  |

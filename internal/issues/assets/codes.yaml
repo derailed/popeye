@@ -1,6 +1,3 @@
-# Note: Remember to add the codes to the documentation if you add new ones
-# docs/codes.md
-
 codes:
   # Container
   100:
@@ -43,7 +40,7 @@ codes:
     message: Memory Current/Limit (%s/%s) reached user %d%% threshold (%d%%)
     severity: 3
   113:
-    message: Container image %q is not hosted on an allowed docker registry
+    message:  Container image %q is not hosted on an allowed docker registry
     severity: 3
 
   # Pod
@@ -135,6 +132,7 @@ codes:
   666:
     message: "Lint internal error: %s"
     severity: 3
+
 
   # Pod controllers
   500:
