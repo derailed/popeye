@@ -6,10 +6,10 @@ package lint
 import (
 	"context"
 	"fmt"
-	"strings"
 
+	ciliumio "github.com/cilium/cilium/pkg/k8s/apis/cilium.io"
 	v2 "github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2"
-	slimv1 "github.com/cilium/cilium/pkg/k8s/slim/k8s/apis/meta/v1"
+	"github.com/cilium/cilium/pkg/labels"
 	"github.com/cilium/cilium/pkg/policy/api"
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/cilium"
@@ -111,76 +111,36 @@ func (s *CiliumNetworkPolicy) matchCEPsBySel(ns string, sel api.EndpointSelector
 		if !ok {
 			return nil, fmt.Errorf("expecting cilium endpoint but got %s", o)
 		}
-		fqn := client.FQN(cep.Namespace, cep.Name)
-		if matchSelector(cep.Labels, sel) {
-			mm = append(mm, fqn)
+		if cep.Status.Identity == nil {
+			continue
+		}
+
+		if matchSelector(cep.Namespace, cep.Status.Identity.Labels, sel) {
+			mm = append(mm, client.FQN(cep.Namespace, cep.Name))
 		}
 	}
 
 	return mm, nil
 }
 
-func matchSelector(labels map[string]string, sel api.EndpointSelector) bool {
-	if len(labels) == 0 || sel.Size() == 0 {
-		return false
-	}
-	if matchLabels(labels, sel.MatchLabels) {
+func matchSelector(ns string, ll []string, s api.EndpointSelector) bool {
+	if s.Size() == 0 {
 		return true
 	}
 
-	return matchExp(labels, sel.MatchExpressions)
-}
-
-func matchExp(labels map[string]string, ee []slimv1.LabelSelectorRequirement) bool {
-	for _, e := range ee {
-		if matchSel(labels, e) {
-			return true
+	sel := labels.NewLabelsFromModel(ll)
+	if !client.IsAllNamespace(ns) {
+		sel[ciliumio.PodNamespaceMetaNameLabel] = labels.Label{
+			Key:    ciliumio.PodNamespaceMetaNameLabel,
+			Value:  ns,
+			Source: labels.LabelSourceK8s,
+		}
+		sel[ciliumio.PodNamespaceLabel] = labels.Label{
+			Key:    ciliumio.PodNamespaceLabel,
+			Value:  ns,
+			Source: labels.LabelSourceK8s,
 		}
 	}
 
-	return false
-}
-
-func matchSel(labels map[string]string, e slimv1.LabelSelectorRequirement) bool {
-	key := strings.TrimPrefix(e.Key, "any.")
-	_, ok := labels[key]
-	if e.Operator == slimv1.LabelSelectorOpDoesNotExist && !ok {
-		return true
-	}
-	if !ok {
-		return false
-	}
-
-	switch e.Operator {
-	case slimv1.LabelSelectorOpNotIn:
-		for _, v := range e.Values {
-			if v1, ok := labels[key]; ok && v1 == v {
-				return false
-			}
-		}
-		return true
-	case slimv1.LabelSelectorOpIn:
-		for _, v := range e.Values {
-			if v == labels[key] {
-				return true
-			}
-		}
-		return false
-	case slimv1.LabelSelectorOpExists:
-		return true
-	}
-
-	return false
-}
-
-func matchLabels(labels, sel map[string]string) bool {
-	var count int
-	for k, v := range sel {
-		k = strings.TrimPrefix(k, "any.")
-		if v1, ok := labels[k]; ok && v == v1 {
-			count++
-		}
-	}
-
-	return count > 0
+	return s.Matches(sel.LabelArray())
 }

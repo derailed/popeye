@@ -64,9 +64,8 @@ func InitConnectionOrDie(config types.Config) (*APIClient, error) {
 		config: config,
 		cache:  cache.NewLRUExpireCache(cacheSize),
 	}
-	_, err := a.serverGroups()
-	if err != nil {
-		return nil, err
+	if _, err := a.serverGroups(); err != nil {
+		return nil, fmt.Errorf("init connection fail: %w", err)
 	}
 	if err := a.supportsMetricsResources(); err != nil {
 		log.Warn().Err(err).Msgf("no metrics server detected")
@@ -366,7 +365,7 @@ func (a *APIClient) serverGroups() (*metav1.APIGroupList, error) {
 	dial, err := a.CachedDiscovery()
 	if err != nil {
 		log.Warn().Err(err).Msgf("Unable to dial discovery API")
-		return nil, err
+		return nil, fmt.Errorf("unable to dial discovery: %w", err)
 	}
 	apiGroups, err := dial.ServerGroups()
 	if err != nil {
@@ -391,7 +390,7 @@ func (a *APIClient) supportsMetricsResources() error {
 
 	gg, err := a.serverGroups()
 	if err != nil {
-		return err
+		return fmt.Errorf("supportmetricsResources call fail: %w", err)
 	}
 	for _, grp := range gg.Groups {
 		if grp.Name != metricsapi.GroupName {

@@ -31,7 +31,6 @@ func TestCiliumIdentity(t *testing.T) {
 	assert.Nil(t, li.Lint(test.MakeContext("cilium.io/v2/ciliumidentities", "ciliumidentities")))
 	assert.Equal(t, 3, len(li.Outcome()))
 
-	li.Outcome().Dump()
 	ii := li.Outcome()["default/100"]
 	assert.Equal(t, 0, len(ii))
 
