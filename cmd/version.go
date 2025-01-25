@@ -8,9 +8,12 @@ import (
 	"strings"
 
 	"github.com/derailed/popeye/internal/report"
-	"github.com/derailed/popeye/pkg"
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	rootCmd.AddCommand(versionCmd())
+}
 
 func versionCmd() *cobra.Command {
 	return &cobra.Command{
@@ -28,7 +31,6 @@ func printVersion() {
 	printTuple("Version", version)
 	printTuple("Commit", commit)
 	printTuple("Date", date)
-	printTuple("Logs", pkg.LogFile)
 }
 
 func printTuple(section, value string) {
