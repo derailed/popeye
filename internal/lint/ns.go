@@ -37,21 +37,21 @@ func (s *Namespace) Lint(ctx context.Context) error {
 	if err := s.ReferencedNamespaces(used); err != nil {
 		s.AddErr(ctx, err)
 	}
-	txn, it := s.db.MustITFor(internal.Glossary[internal.NS])
-	defer txn.Abort()
 
-	cns, ok := ctx.Value(internal.KeyNamespace).(string)
+	cns, ok := ctx.Value(internal.KeyNamespaceName).(string)
 	if !ok {
-		cns = client.BlankNamespace
+		cns = client.AllNamespaces
 	}
 
+	txn, it := s.db.MustITFor(internal.Glossary[internal.NS])
+	defer txn.Abort()
 	for o := it.Next(); o != nil; o = it.Next() {
 		ns, ok := o.(*v1.Namespace)
 		if !ok {
 			return errors.New("expected ns")
 		}
 		fqn := ns.Name
-		if cns != client.BlankNamespace && fqn != cns {
+		if client.IsNamespaced(cns) && fqn != cns {
 			continue
 		}
 		s.InitOutcome(fqn)

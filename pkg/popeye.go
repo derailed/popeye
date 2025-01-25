@@ -205,6 +205,7 @@ func (p *Popeye) buildCtx(ctx context.Context) context.Context {
 		log.Warn().Msgf("Unable to determine current namespace: %v. Using `default` namespace", err)
 		ns = client.DefaultNamespace
 	}
+	ctx = context.WithValue(ctx, internal.KeyNamespaceName, ns)
 
 	return context.WithValue(ctx, internal.KeyNamespace, ns)
 }
@@ -249,12 +250,13 @@ func (p *Popeye) lint() (int, int, error) {
 
 	ctx := p.buildCtx(context.Background())
 	sections, ans := p.config.Sections(), p.client().ActiveNamespace()
+	nsGVR := types.NewGVR("v1/namespaces")
 	for k, fn := range scrubers {
 		gvr, ok := internal.Glossary[k]
-		if !ok || gvr == types.BlankGVR {
+		if !ok || gvr == types.BlankGVR || p.aliases.Exclude(gvr, sections) {
 			continue
 		}
-		if client.IsNamespaced(ans) && p.aliases.IsNamespaced(gvr) || p.aliases.Exclude(gvr, sections) {
+		if gvr.String() != nsGVR.String() && client.IsNamespaced(ans) && !p.aliases.IsNamespaced(gvr) {
 			continue
 		}
 		runners[gvr] = fn(ctx, cache, codes)
