@@ -18,10 +18,9 @@ Popeye is a readonly tool, it does not alter any of your Kubernetes resources in
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/derailed/popeye?)](https://goreportcard.com/report/github.com/derailed/popeye)
 [![codebeat badge](https://codebeat.co/badges/827e5642-3ccc-4ecc-b22b-5707dbc34cf1)](https://codebeat.co/projects/github-com-derailed-popeye-master)
-[![Build Status](https://travis-ci.com/derailed/popeye.svg?branch=master)](https://travis-ci.com/derailed/popeye)
 [![release](https://img.shields.io/github/release-pre/derailed/popeye.svg)](https://github.com/derailed/popeye/releases)
-[![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/derailed/popeye/blob/master/LICENSE)
-[![docker](https://img.shields.io/docker/cloud/build/derailed/popeye?label=Docker&style=flat)](https://hub.docker.com/r/derailed/popeye/builds)
+[![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/derailed/popeye/blob/master/LICENSE)x
+[![Docker Repository on Quay](https://quay.io/repository/derailed/popeye/status "Docker Repository on Quay")](https://quay.io/repository/derailed/popeye)
 ![GitHub stars](https://img.shields.io/github/stars/derailed/popeye.svg?label=github%20stars)
 [![Releases](https://img.shields.io/github/downloads/derailed/popeye/total.svg)]()
 
@@ -274,12 +273,12 @@ popeye --s3-bucket=NAME-OF-YOUR-S3-BUCKET/OPTIONAL/SUBDIRECTORY --s3-region YOUR
 
 ## Docker Support
 
-You can also run Popeye in a container by running it directly from the official docker repo on DockerHub.
+You can also run Popeye in a container by running it directly from the official docker repo on Quay.
 The default command when you run the docker container is `popeye`, so you customize the scan by using the supported cli flags.
 To access your clusters, map your local kubeconfig directory into the container with `-v` :
 
 ```shell
-docker run --rm -it -v $HOME/.kube:/root/.kube derailed/popeye --context foo -n bar
+docker run --rm -it -v $HOME/.kube:/root/.kube quay.io/derailed/popeye --context foo -n bar
 ```
 
 Running the above docker command with `--rm` means that the container gets deleted when Popeye exits.
@@ -293,7 +292,7 @@ docker run --rm -it \
   -v $HOME/.kube:/root/.kube \
   -e POPEYE_REPORT_DIR=/tmp/popeye \
   -v /tmp:/tmp \
-  derailed/popeye --context foo -n bar --save --output-file my_report.txt
+  quay.io/derailed/popeye --context foo -n bar --save --output-file my_report.txt
 
 # Docker has exited, and the container has been deleted, but the file
 # is in your /tmp directory because you mapped it into the container
