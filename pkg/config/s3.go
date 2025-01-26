@@ -16,7 +16,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/smithy-go/logging"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -117,7 +116,7 @@ func (s *S3Info) awsUpload(ctx context.Context, bucket, key string, rwc io.ReadW
 
 	clt := s3.NewFromConfig(cfg)
 	_, err = clt.CreateBucket(ctx, &s3.CreateBucketInput{
-		Bucket: aws.String(bucket),
+		Bucket: &bucket,
 		CreateBucketConfiguration: &types.CreateBucketConfiguration{
 			LocationConstraint: types.BucketLocationConstraint(*s.Region),
 		},
@@ -140,8 +139,8 @@ func (s *S3Info) awsUpload(ctx context.Context, bucket, key string, rwc io.ReadW
 
 	uploader := manager.NewUploader(clt)
 	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
+		Bucket: &bucket,
+		Key:    &key,
 		Body:   rwc,
 	})
 	if err != nil {

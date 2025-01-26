@@ -21,3 +21,4 @@ spinach.yml
 /spinach-me
 __debug_bin*
 .act-evt
+/Dockerfile.cross
