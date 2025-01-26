@@ -248,25 +248,24 @@ Example to save report in working directory in HTML format under the name "repor
 POPEYE_REPORT_DIR=$(pwd) popeye --save --out html --output-file report.html
 ```
 
-### Save To S3
+### Save To S3 Object Store
 
-Alternatively, you can push the generated reports to an AWS S3 bucket (or other S3 compatible Object Storage) by providing the flag `--s3-bucket`.
+Alternatively, you can push the generated reports to an AWS S3 or Minio object store by providing the flag `--s3-bucket`.
 For parameters you need to provide the name of the S3 bucket where you want to store the report.
 To save the report in a bucket subdirectory provide the bucket parameter as `bucket/path/to/report`.
-
-The AWS Go lib is used which handles your credentials.
-For more information check out the official [documentation](https://docs.aws.amazon.com/sdk-for-go/api/aws/session/).
 
 Example to save report to S3:
 
 ```shell
-popeye --s3-bucket=NAME-OF-YOUR-S3-BUCKET/OPTIONAL/SUBDIRECTORY --out=json
-```
+# AWS S3
+# NOTE: You must provide env vars for AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+# This will create bucket my-popeye if not present and upload a popeye json report to /fred/popeye.json
+popeye --s3-bucket s3://my-popeye/fred/popeye.json --s3-region us-west-2 --out json
 
-If AWS S3 is not your bag, you can further define an S3 compatible storage (OVHcloud Object Storage, Minio, Google cloud storage, etc...) using s3-endpoint and s3-region as so:
-
-```shell
-popeye --s3-bucket=NAME-OF-YOUR-S3-BUCKET/OPTIONAL/SUBDIRECTORY --s3-region YOUR-REGION --s3-endpoint URL-OF-THE-ENDPOINT
+# Minio Object Store
+# NOTE: You must provide env vars for AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and a minio server URI
+# This will create bucket my-popeye if not present and upload a popeye json report to /fred/popeye.json
+popeye --s3-bucket minio://my-popeye/fred/popeye.json --s3-region us-east --s3-endpoint localhost:9000
 ```
 
 ---

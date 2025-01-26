@@ -14,7 +14,7 @@ import (
 func TestParseBucket(t *testing.T) {
 	var uu = map[string]struct {
 		uri    string
-		host   string
+		kind   bucketKind
 		bucket string
 		key    string
 		err    error
@@ -22,43 +22,56 @@ func TestParseBucket(t *testing.T) {
 		"empty": {
 			err: errors.New(`invalid S3 bucket URI: ""`),
 		},
+
 		"no-scheme": {
 			uri: ":bozo",
 			err: &url.Error{Op: "parse", URL: ":bozo", Err: errors.New("missing protocol scheme")},
 		},
+
 		"s3_bucket": {
 			uri:    "s3://bucketName/",
+			kind:   s3Bucket,
 			bucket: "bucketName",
 		},
+
 		"s3-toast": {
 			uri: "s4://bucketName/",
 			err: errors.New(`invalid S3 bucket URI: "s4://bucketName/"`),
 		},
+
 		"s3-with_full_key": {
 			uri:    "s3://bucketName/fred/blee",
 			bucket: "bucketName",
+			kind:   s3Bucket,
 			key:    "fred/blee",
 		},
+
 		"s3-with_key": {
 			uri:    "bucket/with/subkey",
 			bucket: "bucket",
+			kind:   s3Bucket,
 			key:    "with/subkey",
 		},
+
 		"s3-with_trailer": {
 			uri:    "/bucket/with/leading/slashes/",
 			bucket: "bucket",
+			kind:   s3Bucket,
 			key:    "with/leading/slashes",
 		},
+
 		"minio": {
-			uri:    "minio://hostname:9000/bucketName/",
-			bucket: "bucketName",
-			host:   "hostname:9000",
+			uri:    "minio://fred/blee/",
+			bucket: "fred",
+			kind:   minioBucket,
+			key:    "blee",
 		},
+
 		"minio-with_key": {
-			uri:    "minio://hostname:9000/bucketName/with/subkey/to/test",
-			bucket: "bucketName",
-			key:    "with/subkey/to/test",
-			host:   "hostname:9000",
+			uri:    "minio://fred/blee/a/b.json",
+			bucket: "fred",
+			key:    "blee/a/b.json",
+			kind:   minioBucket,
 		},
 	}
 
@@ -66,10 +79,10 @@ func TestParseBucket(t *testing.T) {
 		u := uu[k]
 		t.Run(k, func(t *testing.T) {
 			s3 := S3Info{Bucket: &u.uri}
-			h, b, k, err := s3.parse()
+			kind, b, k, err := s3.parse()
 
 			assert.Equal(t, u.err, err)
-			assert.Equal(t, u.host, h)
+			assert.Equal(t, u.kind, kind)
 			assert.Equal(t, u.bucket, b)
 			assert.Equal(t, u.key, k)
 		})
