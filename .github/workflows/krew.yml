@@ -1,9 +1,6 @@
 name: Krew
 on:
-  workflow_dispatch:
-  push:
-    tags:
-      - "v*.*.*"
+  release:
 
 jobs:
   krew:
