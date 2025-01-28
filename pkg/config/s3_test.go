@@ -60,6 +60,13 @@ func TestParseBucket(t *testing.T) {
 			key:    "with/leading/slashes",
 		},
 
+		"blee": {
+			uri:    "my-bucket/popeye/my-cluster/2025/01/27/",
+			bucket: "my-bucket",
+			kind:   s3Bucket,
+			key:    "popeye/my-cluster/2025/01/27",
+		},
+
 		"minio": {
 			uri:    "minio://fred/blee/",
 			bucket: "fred",
