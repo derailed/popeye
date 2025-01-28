@@ -675,5 +675,5 @@ to make this project a reality!
 
 ---
 
-<img src="https://github.com/derailed/popeye/blob/master/assets/imhotep_logo.png" width="32" height="auto"/>  &nbsp;© 2024 Imhotep Software LLC.
+<img src="https://github.com/derailed/popeye/blob/master/assets/imhotep_logo.png" width="32" height="auto"/>  &nbsp;© 2025 Imhotep Software LLC.
 All materials licensed under [Apache v2.0](http://www.apache.org/licenses/LICENSE-2.0)
