@@ -259,13 +259,13 @@ Example to save report to S3:
 ```shell
 # AWS S3
 # NOTE: You must provide env vars for AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
-# This will create bucket my-popeye if not present and upload a popeye json report to /fred/popeye.json
-popeye --s3-bucket s3://my-popeye/fred/popeye.json --s3-region us-west-2 --out json
+# This will create bucket my-popeye if not present and upload a popeye json report to /fred/scan.json
+popeye --s3-bucket s3://my-popeye/fred --s3-region us-west-2 --out json --save --output-file scan.json
 
 # Minio Object Store
 # NOTE: You must provide env vars for AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and a minio server URI
-# This will create bucket my-popeye if not present and upload a popeye json report to /fred/popeye.json
-popeye --s3-bucket minio://my-popeye/fred/popeye.json --s3-region us-east --s3-endpoint localhost:9000
+# This will create bucket my-popeye if not present and upload a popeye json report to /fred/scan.json
+popeye --s3-bucket minio://my-popeye/fred --s3-region us-east --s3-endpoint localhost:9000 --out json --save --output-file scan.json
 ```
 
 ---
@@ -675,5 +675,5 @@ to make this project a reality!
 
 ---
 
-<img src="https://github.com/derailed/popeye/blob/master/assets/imhotep_logo.png" width="32" height="auto"/>  &nbsp;© 2024 Imhotep Software LLC.
+<img src="https://github.com/derailed/popeye/blob/master/assets/imhotep_logo.png" width="32" height="auto"/>  &nbsp;© 2025 Imhotep Software LLC.
 All materials licensed under [Apache v2.0](http://www.apache.org/licenses/LICENSE-2.0)

@@ -1,6 +1,6 @@
 <img src="https://raw.githubusercontent.com/derailed/popeye/master/assets/popeye_logo.png" align="right" width="200" height="auto"/>
 
-# Release v0.22.0
+# Release v0.22.1
 
 ## Notes
 
@@ -12,11 +12,12 @@ Also if you dig this tool, please make some noise on social! [@kitesurfer](https
 
 ---
 
-## Feature Release
-
-* Update AWS S3 SDK to V2
-* Add support for Minio object storage
+## Maintenance Release
 
 ---
+
+## Resolved Issues
+
+* [#425](https://github.com/derailed/popeye/issues/425) Upload to s3 failing in v0.22.0
 
 <img src="https://raw.githubusercontent.com/derailed/popeye/master/assets/imhotep_logo.png" width="32" height="auto"/>&nbsp; © 2025 Imhotep Software LLC. All materials licensed under [Apache v2.0](http://www.apache.org/licenses/LICENSE-2.0)

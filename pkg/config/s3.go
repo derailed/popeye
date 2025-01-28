@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -58,15 +59,15 @@ func (s *S3Info) Upload(ctx context.Context, asset string, contentType string, r
 
 	switch kind {
 	case s3Bucket:
-		return s.awsUpload(ctx, bucket, key, rwc)
+		return s.awsUpload(ctx, bucket, key, asset, rwc)
 	case minioBucket:
-		return s.minioUpload(ctx, bucket, key, rwc)
+		return s.minioUpload(ctx, bucket, key, asset, rwc)
 	default:
 		return fmt.Errorf("unsupported S3 storage: %s", kind)
 	}
 }
 
-func (s *S3Info) minioUpload(ctx context.Context, bucket, key string, rwc io.ReadWriteCloser) error {
+func (s *S3Info) minioUpload(ctx context.Context, bucket, key, asset string, rwc io.ReadWriteCloser) error {
 	minioClient, err := minio.New(*s.Endpoint, &minio.Options{
 		Creds: credentials.NewStaticV4(
 			os.Getenv("AWS_ACCESS_KEY_ID"),
@@ -91,7 +92,7 @@ func (s *S3Info) minioUpload(ctx context.Context, bucket, key string, rwc io.Rea
 	contentType := "application/octet-stream"
 	info, err := minioClient.PutObject(ctx,
 		bucket,
-		key,
+		filepath.Join(key, asset),
 		rwc,
 		-1,
 		minio.PutObjectOptions{ContentType: contentType},
@@ -104,7 +105,7 @@ func (s *S3Info) minioUpload(ctx context.Context, bucket, key string, rwc io.Rea
 	return nil
 }
 
-func (s *S3Info) awsUpload(ctx context.Context, bucket, key string, rwc io.ReadWriteCloser) error {
+func (s *S3Info) awsUpload(ctx context.Context, bucket, key, asset string, rwc io.ReadWriteCloser) error {
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion(*s.Region),
 		config.WithLogConfigurationWarnings(true),
@@ -115,13 +116,13 @@ func (s *S3Info) awsUpload(ctx context.Context, bucket, key string, rwc io.ReadW
 	}
 
 	clt := s3.NewFromConfig(cfg)
-	_, err = clt.CreateBucket(ctx, &s3.CreateBucketInput{
+	opts := s3.CreateBucketInput{
 		Bucket: &bucket,
 		CreateBucketConfiguration: &types.CreateBucketConfiguration{
 			LocationConstraint: types.BucketLocationConstraint(*s.Region),
 		},
-	})
-	if err != nil {
+	}
+	if _, err = clt.CreateBucket(ctx, &opts); err != nil {
 		var (
 			exists *types.BucketAlreadyExists
 			owned  *types.BucketAlreadyOwnedByYou
@@ -138,15 +139,16 @@ func (s *S3Info) awsUpload(ctx context.Context, bucket, key string, rwc io.ReadW
 	}
 
 	uploader := manager.NewUploader(clt)
+	path := filepath.Join(key, asset)
 	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: &bucket,
-		Key:    &key,
+		Key:    &path,
 		Body:   rwc,
 	})
 	if err != nil {
-		log.Err(err).Msgf("failed to upload to bucket: %s//%s", bucket, key)
+		log.Err(err).Msgf("failed to upload to bucket: %s//%s", bucket, path)
 	} else {
-		log.Info().Msgf("Success: uploaded to bucket: %s//%s", bucket, key)
+		log.Info().Msgf("Success: uploaded to bucket: %s//%s", bucket, path)
 	}
 
 	return err
