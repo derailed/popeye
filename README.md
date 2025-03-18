@@ -126,7 +126,7 @@ popeye -n fred
 popeye -A
 # Run Popeye uses a spinach config file of course! aka spinachyaml!
 popeye -f spinach.yaml
-# Run Popeye a cluster using a kubeconfig context.
+# Popeye a cluster using a kubeconfig context.
 popeye --context olive
 # Run Popeye with specific linters and log to the console
 popeye -n ns1 -s pod,svc --logs none
