@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.78.2
 	github.com/aws/smithy-go v1.22.2
 	github.com/blang/semver/v4 v4.0.0
-	github.com/cilium/cilium v1.16.6
+	github.com/cilium/cilium v1.16.8
 	github.com/fvbommel/sortorder v1.1.0
 	github.com/hashicorp/go-memdb v1.3.4
 	github.com/minio/minio-go/v7 v7.0.84
