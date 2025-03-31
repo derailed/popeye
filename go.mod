@@ -2,6 +2,8 @@ module github.com/derailed/popeye
 
 go 1.23.0
 
+toolchain go1.24.1
+
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.29.9
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.66
@@ -12,7 +14,7 @@ require (
 	github.com/fvbommel/sortorder v1.1.0
 	github.com/hashicorp/go-memdb v1.3.4
 	github.com/minio/minio-go/v7 v7.0.84
-	github.com/prometheus/client_golang v1.20.5
+	github.com/prometheus/client_golang v1.21.1
 	github.com/prometheus/common v0.62.0
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cobra v1.8.1
