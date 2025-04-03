@@ -336,6 +336,12 @@ func initFlags() {
 		"",
 		"Prometheus pushgateway auth password",
 	)
+	rootCmd.Flags().StringVar(
+		flags.PushGateway.Format,
+		"push-gtwy-format",
+		"",
+		"Prometheus pushgateway format",
+	)
 }
 
 // ----------------------------------------------------------------------------
