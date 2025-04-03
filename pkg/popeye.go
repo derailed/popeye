@@ -11,9 +11,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/derailed/popeye/internal"
@@ -408,6 +411,27 @@ func (p *Popeye) dumpPrometheus(ctx context.Context, asset string, persist bool)
 		instance += "-" + *p.flags.InClusterName
 	}
 
+	validFormats := map[string]expfmt.Format{
+		"protocompact": expfmt.NewFormat(expfmt.TypeProtoCompact),
+		"protodelim":   expfmt.NewFormat(expfmt.TypeProtoDelim),
+		"prototext":    expfmt.NewFormat(expfmt.TypeProtoText),
+		"textplain":    expfmt.NewFormat(expfmt.TypeTextPlain),
+		"openmetrics":  expfmt.NewFormat(expfmt.TypeOpenMetrics),
+	}
+
+	format := validFormats["textplain"]
+	if config.IsStrSet(p.flags.PushGateway.Format) {
+		if f, exists := validFormats[*p.flags.PushGateway.Format]; exists {
+			format = f
+		} else {
+			validFormatsList := slices.Collect(maps.Keys(validFormats))
+			return fmt.Errorf(
+				"'--push-gtwy-format' must be one of: %s",
+				strings.Join(validFormatsList, ", "),
+			)
+		}
+	}
+
 	pusher := p.builder.ToPrometheus(
 		p.flags.PushGateway,
 		instance,
@@ -415,10 +439,13 @@ func (p *Popeye) dumpPrometheus(ctx context.Context, asset string, persist bool)
 		asset,
 		p.codes.Glossary,
 	)
-	// Enable saving to file
+
+	pusher = pusher.Format(format)
+	// Persist is used when prometheus output format is selected...
+	// ...custom p.Do func intercepts push output and prints it...
+	// ...to stdout, while replying to pusher with stub HTTP 200
 	if persist {
 		pusher = pusher.Client(p)
-		pusher = pusher.Format(expfmt.NewFormat(expfmt.TypeTextPlain))
 	}
 
 	return pusher.AddContext(ctx)

@@ -6,6 +6,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -84,6 +85,13 @@ func (f *Flags) Validate() error {
 	if IsStrSet(f.Output) && *f.Output == "prometheus" {
 		if f.PushGateway == nil || !IsStrSet(f.PushGateway.URL) {
 			return errors.New("you must set --push-gtwy-url when prometheus report is enabled")
+		}
+	}
+	if IsStrSet(f.PushGateway.URL) && IsStrSet(f.PushGateway.Format) {
+		validFormats := []string{"protocompact", "protodelim", "prototext", "textplain", "openmetrics"}
+
+		if !slices.Contains(validFormats, *f.PushGateway.Format) {
+			return fmt.Errorf("'--push-gtwy-format' must be one of: %s", strings.Join(validFormats, ", "))
 		}
 	}
 
