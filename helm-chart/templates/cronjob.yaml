@@ -1,0 +1,111 @@
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  labels:
+    app: popeye-reports
+  name: popeye-reports
+  namespace: {{ .Values.namespace }}
+spec:
+  schedule: {{ .Values.schedule }}
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: {{ .Values.failedJobsHistoryLimit | default "20" }}
+  successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit | default "20" }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: popeye-reports
+        spec:
+          containers:
+          - image: "{{ .Values.image.web.name }}:{{ .Values.image.web.tag }}"
+            imagePullPolicy: {{ .Values.image.web.pullPolicy }}
+            name: nginx
+            ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+            resources: {}
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            volumeMounts:
+            - mountPath: /usr/share/nginx/html
+              name: www
+          - image: "{{ .Values.image.recycle.name }}:{{ .Values.image.recycle.tag }}"
+            imagePullPolicy: {{ .Values.image.recycle.pullPolicy }}
+            name: popeye-recycle
+            resources: {}
+            command:
+            - sh
+            - -c
+            - |
+              sleep {{ .Values.rotation }}  && kill $(pgrep nginx) && exit 0
+          dnsPolicy: ClusterFirst
+          initContainers:
+{{- if .Values.pushgateway.enabled }}          
+          - args:
+            - -A
+            - -f
+            - /etc/config/popeye/spinach.yml
+            - -o
+            - prometheus
+            - --pushgateway-address
+            - {{ .Values.pushgateway.url }}
+            - --force-exit-zero
+            volumeMounts:
+            - name: spinach
+              mountPath: /etc/config/popeye
+            image: {{ .Values.image.popeye.name }}
+            imagePullPolicy: {{ .Values.image.popeye.pullPolicy }}
+            name: popeye
+            resources: {}
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+{{- end }}            
+          - args:
+            - -A
+            - -f
+            - /etc/config/popeye/spinach.yml
+            - -o
+            - html
+            - --save
+            - --output-file
+            - index.html
+            - --force-exit-zero
+            image: {{ .Values.image.popeye.name }}
+            imagePullPolicy: {{ .Values.image.popeye.pullPolicy }}
+            name: popeye-report
+            resources: {}
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            volumeMounts:
+            - mountPath: /tmp
+              name: www
+            - mountPath: /etc/config/popeye
+              name: spinach
+          securityContext: {}
+          serviceAccount: {{ include "popeye.serviceAccountName" . }}
+          serviceAccountName: {{ include "popeye.serviceAccountName" . }}
+          shareProcessNamespace: true
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+          restartPolicy: OnFailure
+          terminationGracePeriodSeconds: 30
+          volumes:
+          - emptyDir: {}
+            name: www
+          - name: spinach
+            configMap:
+              name: spinach
+              items:
+              - key: spinach
+                path: spinach.yml
+    
+    
