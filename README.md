@@ -64,6 +64,12 @@ Popeye is available on Linux, OSX and Windows platforms.
    brew install derailed/popeye/popeye
    ```
 
+* Using [Krew](https://krew.sigs.k8s.io/) (kubectl plugin manager)
+
+   ```shell
+   kubectl krew install popeye
+   ```
+
 * Using `go install`
 
     ```shell
