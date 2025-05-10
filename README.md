@@ -513,9 +513,14 @@ spec:
               image: derailed/popeye:vX.Y.Z
               imagePullPolicy: IfNotPresent
               args:
-                - -o
+                - --out
                 - yaml
                 - --force-exit-zero
+                - --logs
+                - none
+                - --cluster-name
+                - my-cluster
+                - --all-namespaces
               resources:
                 limits:
                   cpu:    500m
