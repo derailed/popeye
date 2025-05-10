@@ -91,9 +91,6 @@ func (s *S3Info) minioUpload(ctx context.Context, bucket, key, asset string, rwc
 
 	contentType := "application/octet-stream"
 	fileExtension := filepath.Ext(asset)
-	log.Debug().Msgf("s3 local report file: %q", asset)
-	log.Debug().Msgf("s3 local report file extension: %q", fileExtension)
-	log.Debug().Msgf("s3 local report file path: %q", filepath.Join(key, asset))
 
 	switch fileExtension {
 	case ".html":
