@@ -90,6 +90,17 @@ func (s *S3Info) minioUpload(ctx context.Context, bucket, key, asset string, rwc
 	}
 
 	contentType := "application/octet-stream"
+	fileExtension := filepath.Ext(asset)
+
+	switch fileExtension {
+	case ".html":
+		contentType = "text/html"
+	case ".json":
+		contentType = "application/json"
+	case ".yaml", ".yml":
+		contentType = "application/yaml"
+	}
+
 	info, err := minioClient.PutObject(ctx,
 		bucket,
 		filepath.Join(key, asset),
