@@ -513,9 +513,14 @@ spec:
               image: derailed/popeye:vX.Y.Z
               imagePullPolicy: IfNotPresent
               args:
-                - -o
+                - --out
                 - yaml
                 - --force-exit-zero
+                - --logs
+                - none
+                - --cluster-name
+                - my-cluster
+                - --all-namespaces
               resources:
                 limits:
                   cpu:    500m
@@ -523,6 +528,9 @@ spec:
 ```
 
 The `--force-exit-zero` should be set. Otherwise, the pods will end up in an error state.
+The `--logs none` argument must be set to output the log to stdout. Otherwise `kubectl logs -f` will return an empty result.
+The `--cluster-name` should be set to the name of your cluster for in-cluster usage.
+
 
 > NOTE! Popeye exits with a non-zero error code if any lint errors are detected.
 

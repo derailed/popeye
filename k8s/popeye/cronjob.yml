@@ -20,10 +20,16 @@ spec:
               imagePullPolicy: IfNotPresent
               command: ["/bin/popeye"]
               args:
-                - -f
+                - --file
                 - /etc/config/popeye/spinach.yml
-                - -o
+                - --out
                 - yaml
+                - --force-exit-zero
+                - --logs
+                - none
+                - --cluster-name
+                - my-cluster
+                - --all-namespaces
               resources:
                 limits:
                   cpu: 500m
