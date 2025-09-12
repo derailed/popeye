@@ -5,8 +5,8 @@ package lint
 
 import (
 	"context"
-	"strings"
 
+	dockref "github.com/docker/distribution/reference"
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	"github.com/derailed/popeye/types"
@@ -53,27 +53,30 @@ func (c *Container) sanitize(ctx context.Context, co v1.Container, checkProbes b
 }
 
 func (c *Container) checkImageTags(ctx context.Context, image string) {
-	tokens := strings.Split(image, ":")
-	if len(tokens) < 2 {
+	ref, _ := dockref.ParseNormalizedNamed(image)
+	if dockref.IsNameOnly(ref) {
 		c.AddSubCode(ctx, 100)
 		return
 	}
 
-	if tokens[1] == imageTagLatest {
+	taggedRef := ref.(dockref.NamedTagged)
+
+	if taggedRef.Tag() == imageTagLatest {
 		c.AddSubCode(ctx, 101)
 	}
 }
 
 func (c *Container) checkImageRegistry(ctx context.Context, image string) {
 	registries := c.LimitCollector.AllowedRegistries()
-	tokens := strings.Split(image, "/")
+	ref, _ := dockref.ParseNormalizedNamed(image)
+	domain := dockref.Domain(ref)
 
-	if len(tokens) == 1 {
-		tokens[0] = defaultRegistry
+	if domain == "" {
+		domain = defaultRegistry
 	}
 
 	for i := 0; i < len(registries); i++ {
-		if tokens[0] == registries[i] {
+		if domain == registries[i] {
 			return
 		}
 	}
