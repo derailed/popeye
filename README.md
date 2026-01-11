@@ -64,6 +64,12 @@ Popeye is available on Linux, OSX and Windows platforms.
    brew install derailed/popeye/popeye
    ```
 
+* For Linux/MacOS/Windows using [mise](https://mise.jdx.dev)
+
+   ```shell
+   mise use -g popeye@latest
+   ```
+
 * Using `go install`
 
     ```shell
