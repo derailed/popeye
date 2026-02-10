@@ -179,7 +179,8 @@ func (p *Popeye) Lint() (int, int, error) {
 		case config.IsStrSet(p.flags.S3.Bucket):
 			asset := filepath.Join(p.clusterPath(), p.scanFileName())
 			if err := p.flags.S3.Upload(context.Background(), asset, p.fileContentType(), p.outputTarget); err != nil {
-				log.Fatal().Msgf("S3 upload failed: %s", err)
+				fmt.Fprintf(os.Stderr, "S3 upload failed: %s\n", err)
+				os.Exit(1)
 			}
 		}
 	}()
