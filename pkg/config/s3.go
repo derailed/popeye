@@ -116,26 +116,34 @@ func (s *S3Info) awsUpload(ctx context.Context, bucket, key, asset string, rwc i
 	}
 
 	clt := s3.NewFromConfig(cfg)
-	opts := s3.CreateBucketInput{
-		Bucket: &bucket,
-		CreateBucketConfiguration: &types.CreateBucketConfiguration{
-			LocationConstraint: types.BucketLocationConstraint(*s.Region),
-		},
-	}
-	if _, err = clt.CreateBucket(ctx, &opts); err != nil {
-		var (
-			exists *types.BucketAlreadyExists
-			owned  *types.BucketAlreadyOwnedByYou
-		)
-		switch {
-		case errors.As(err, &exists):
-			log.Info().Msgf("bucket %s already exists", bucket)
-		case errors.As(err, &owned):
-			log.Info().Msgf("bucket %s already owned by you", bucket)
-		default:
-			log.Err(err).Msgf("failed to create bucket %s", bucket)
-			return err
+	_, err = clt.HeadBucket(ctx, &s3.HeadBucketInput{Bucket: &bucket})
+	if err != nil {
+		log.Debug().Msgf("bucket %s not found or not accessible, attempting to create", bucket)
+		opts := s3.CreateBucketInput{
+			Bucket: &bucket,
+			CreateBucketConfiguration: &types.CreateBucketConfiguration{
+				LocationConstraint: types.BucketLocationConstraint(*s.Region),
+			},
 		}
+		if _, err = clt.CreateBucket(ctx, &opts); err != nil {
+			var (
+				exists *types.BucketAlreadyExists
+				owned  *types.BucketAlreadyOwnedByYou
+			)
+			switch {
+			case errors.As(err, &exists):
+				log.Info().Msgf("bucket %s already exists", bucket)
+			case errors.As(err, &owned):
+				log.Info().Msgf("bucket %s already owned by you", bucket)
+			default:
+				log.Err(err).Msgf("failed to create bucket %s", bucket)
+				return err
+			}
+		} else {
+			log.Info().Msgf("successfully created bucket %s", bucket)
+ 		}
+	} else {
+		log.Info().Msgf("bucket %s already exists", bucket)
 	}
 
 	uploader := manager.NewUploader(clt)
