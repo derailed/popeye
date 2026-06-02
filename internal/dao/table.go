@@ -10,7 +10,6 @@ import (
 	"github.com/derailed/popeye/internal"
 	"github.com/derailed/popeye/internal/client"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/rest"
@@ -99,8 +98,8 @@ func (t *Table) codec() (serializer.CodecFactory, runtime.ParameterCodec) {
 	scheme := runtime.NewScheme()
 	gv := t.gvr.GV()
 	metav1.AddToGroupVersion(scheme, gv)
-	scheme.AddKnownTypes(gv, &metav1.Table{}, &metav1.TableOptions{IncludeObject: v1.IncludeObject})
-	scheme.AddKnownTypes(metav1.SchemeGroupVersion, &metav1.Table{}, &metav1.TableOptions{IncludeObject: v1.IncludeObject})
+	scheme.AddKnownTypes(gv, &metav1.Table{}, &metav1.TableOptions{IncludeObject: metav1.IncludeObject})
+	scheme.AddKnownTypes(metav1.SchemeGroupVersion, &metav1.Table{}, &metav1.TableOptions{IncludeObject: metav1.IncludeObject})
 
 	return serializer.NewCodecFactory(scheme), runtime.NewParameterCodec(scheme)
 }
