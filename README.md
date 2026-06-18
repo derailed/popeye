@@ -401,7 +401,7 @@ popeye:
       underPercUtilization: 200 # Checks if mem is under allocated by more than 200% at current load.
       overPercUtilization: 50   # Checks if mem is over allocated by more than 50% usage at current load.
 
-  # Excludes excludes certain resources from Popeye scans
+  # Excludes certain resources from Popeye scans
   excludes:
     # [NEW!] Global exclude resources and codes globally of any linters.
     global:
