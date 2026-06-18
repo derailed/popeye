@@ -204,6 +204,38 @@ func TestContainerCheckImageTags(t *testing.T) {
 	}
 }
 
+func TestContainerCheckImageTagsPortedRegistry(t *testing.T) {
+	uu := map[string]struct {
+		image   string
+		pissues int
+		issues  int
+	}{
+		// registry with port + explicit latest tag -> must flag 101
+		"portedLatest": {pissues: 1, image: "myreg.io:5000/app:latest", issues: 1},
+		// registry with port + no tag -> must flag 100
+		"portedNoTag": {pissues: 1, image: "myreg.io:5000/app", issues: 1},
+	}
+
+	ctx := test.MakeContext("containers", "container")
+	ctx = internal.WithSpec(ctx, SpecFor("default/p1", nil))
+	ctx = internal.WithGroup(ctx, types.NewGVR("containers"), "c1")
+	for k := range uu {
+		u := uu[k]
+		co := makeContainer("c1", coOpts{})
+		co.Image = u.image
+
+		l := NewContainer("default/p1", newRangeCollector(t))
+		t.Run(k, func(t *testing.T) {
+			l.checkImageTags(ctx, co.Image)
+
+			assert.Equal(t, u.pissues, len(l.Outcome()["default/p1"]))
+			if len(l.Outcome()["default/p1"]) != 0 {
+				assert.Equal(t, u.issues, len(l.Outcome().For("default/p1", "c1")))
+			}
+		})
+	}
+}
+
 func TestContainerCheckImageRegistry(t *testing.T) {
 	uu := map[string]struct {
 		image    string

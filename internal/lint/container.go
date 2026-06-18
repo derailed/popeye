@@ -53,13 +53,20 @@ func (c *Container) sanitize(ctx context.Context, co v1.Container, checkProbes b
 }
 
 func (c *Container) checkImageTags(ctx context.Context, image string) {
-	tokens := strings.Split(image, ":")
+	// Only consider the last path segment so a registry port (e.g.
+	// reg.io:5000/app:tag) is not mistaken for the image tag separator.
+	ref := image
+	if idx := strings.LastIndex(image, "/"); idx >= 0 {
+		ref = image[idx+1:]
+	}
+
+	tokens := strings.Split(ref, ":")
 	if len(tokens) < 2 {
 		c.AddSubCode(ctx, 100)
 		return
 	}
 
-	if tokens[1] == imageTagLatest {
+	if tokens[len(tokens)-1] == imageTagLatest {
 		c.AddSubCode(ctx, 101)
 	}
 }
