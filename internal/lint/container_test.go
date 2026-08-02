@@ -134,6 +134,7 @@ func TestContainerCheckProbes(t *testing.T) {
 		liveness  bool
 		readiness bool
 		namedPort bool
+		grpcProbe bool
 		issues    int
 		severity  rules.Level
 	}{
@@ -142,6 +143,7 @@ func TestContainerCheckProbes(t *testing.T) {
 		"noLive":     {readiness: true, issues: 1, severity: rules.WarnLevel},
 		"noneProbes": {issues: 1, severity: rules.WarnLevel},
 		"Unnamed":    {liveness: true, readiness: true, namedPort: true, issues: 2, severity: rules.InfoLevel},
+		"GRPCNoIssue": {liveness: true, readiness: true, grpcProbe: true},
 	}
 
 	ctx := test.MakeContext("containers", "container")
@@ -151,6 +153,9 @@ func TestContainerCheckProbes(t *testing.T) {
 		probe := &v1.Probe{}
 		if u.namedPort {
 			probe.ProbeHandler = v1.ProbeHandler{HTTPGet: &v1.HTTPGetAction{Port: intstr.Parse("80")}}
+		}
+		if u.grpcProbe {
+			probe.ProbeHandler = v1.ProbeHandler{GRPC: &v1.GRPCAction{Port: 80}}
 		}
 		if u.liveness {
 			co.LivenessProbe = probe

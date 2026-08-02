@@ -99,7 +99,16 @@ func (c *Container) checkProbes(ctx context.Context, co v1.Container) {
 }
 
 func (c *Container) checkNamedProbe(ctx context.Context, p *v1.Probe, liveness bool) {
-	if p == nil || p.ProbeHandler.HTTPGet == nil {
+	if p == nil {
+		return
+	}
+	// GRPC probes must use port numbers (not named ports).
+	// Skip POP-105 check for GRPC to avoid false positives.
+	// https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.35/#grpcaction-v1-core
+	if p.ProbeHandler.GRPC != nil {
+		return
+	}
+	if p.ProbeHandler.HTTPGet == nil {
 		return
 	}
 	kind := "Readiness"
