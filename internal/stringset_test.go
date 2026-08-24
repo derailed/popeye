@@ -74,3 +74,21 @@ func TestSetDiff(t *testing.T) {
 		assert.Equal(t, u.e, ss)
 	}
 }
+
+func TestSetAddAll(t *testing.T) {
+	ss := internal.StringSet{"a": internal.Blank}
+	ss.AddAll(internal.StringSet{"b": internal.Blank, "c": internal.Blank})
+	assert.True(t, ss.Has("a"))
+	assert.True(t, ss.Has("b"))
+	assert.True(t, ss.Has("c"))
+}
+
+func TestSetClone(t *testing.T) {
+	ss := internal.StringSet{"a": internal.Blank, "b": internal.Blank}
+	clone := ss.Clone()
+	assert.True(t, clone.Has("a"))
+	assert.True(t, clone.Has("b"))
+	delete(clone, "a")
+	assert.True(t, ss.Has("a"))
+	assert.False(t, clone.Has("a"))
+}
