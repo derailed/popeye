@@ -1,10 +1,12 @@
 NAME     := popeye
 PACKAGE  := github.com/derailed/$(NAME)
-VERSION  := v0.11.3
+VERSION  := v0.11.3-2
 GIT      := $(shell git rev-parse --short HEAD)
 DATE     := $(shell date +%FT%T%Z)
-IMG_NAME := derailed/popeye
+IMG_NAME := gru.ocir.io/grq1iurfepyg/popeye
 IMAGE    := ${IMG_NAME}:${VERSION}
+PLATFORMS:= linux/arm64,linux/amd64
+
 
 default: help
 
