@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/go-memdb"
+
 	ciliumio "github.com/cilium/cilium/pkg/k8s/apis/cilium.io"
 	v2 "github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2"
 	"github.com/cilium/cilium/pkg/labels"
@@ -59,7 +61,7 @@ func (s *CiliumNetworkPolicy) Lint(ctx context.Context) error {
 
 func (s *CiliumNetworkPolicy) checkRule(ctx context.Context, ns string, r *api.Rule) error {
 	if r.EndpointSelector.Size() > 0 {
-		if ok, err := s.checkEPSel(ns, r.EndpointSelector); err != nil {
+		if ok, err := s.checkEPSel(ns, r.EndpointSelector, false); err != nil {
 			return err
 		} else if !ok {
 			s.AddCode(ctx, 1700, "endpoint")
@@ -67,7 +69,7 @@ func (s *CiliumNetworkPolicy) checkRule(ctx context.Context, ns string, r *api.R
 	}
 	for _, ing := range r.Ingress {
 		for _, sel := range ing.FromEndpoints {
-			if ok, err := s.checkEPSel(ns, sel); err != nil {
+			if ok, err := s.checkEPSel(ns, sel, selSpansNamespaces(sel)); err != nil {
 				return err
 			} else if !ok {
 				s.AddCode(ctx, 1700, "ingress")
@@ -76,7 +78,7 @@ func (s *CiliumNetworkPolicy) checkRule(ctx context.Context, ns string, r *api.R
 	}
 	for _, eg := range r.Egress {
 		for _, sel := range eg.ToEndpoints {
-			if ok, err := s.checkEPSel(ns, sel); err != nil {
+			if ok, err := s.checkEPSel(ns, sel, selSpansNamespaces(sel)); err != nil {
 				return err
 			} else if !ok {
 				s.AddCode(ctx, 1700, "egress")
@@ -87,12 +89,12 @@ func (s *CiliumNetworkPolicy) checkRule(ctx context.Context, ns string, r *api.R
 	return nil
 }
 
-func (s *CiliumNetworkPolicy) checkEPSel(ns string, sel api.EndpointSelector) (bool, error) {
+func (s *CiliumNetworkPolicy) checkEPSel(ns string, sel api.EndpointSelector, allNS bool) (bool, error) {
 	if sel.Size() == 0 {
 		return true, nil
 	}
 
-	mm, err := s.matchCEPsBySel(ns, sel)
+	mm, err := s.matchCEPsBySel(ns, sel, allNS)
 	if err != nil {
 		return false, err
 	}
@@ -100,11 +102,24 @@ func (s *CiliumNetworkPolicy) checkEPSel(ns string, sel api.EndpointSelector) (b
 	return len(mm) > 0, nil
 }
 
-func (s *CiliumNetworkPolicy) matchCEPsBySel(ns string, sel api.EndpointSelector) ([]string, error) {
+func (s *CiliumNetworkPolicy) matchCEPsBySel(ns string, sel api.EndpointSelector, allNS bool) ([]string, error) {
 	txn := s.db.Txn(false)
 	defer txn.Abort()
+	if allNS {
+		// A peer selector constraining a namespace label itself resolves
+		// cluster-wide; Cilium enforces it against endpoints in that
+		// namespace, not the policy's own.
+		txn, it := s.db.MustITFor(internal.Glossary[cilium.CEP])
+		defer txn.Abort()
+		return matchCEPs(it, sel)
+	}
+
 	txn, it := s.db.MustITForNS(internal.Glossary[cilium.CEP], ns)
 	defer txn.Abort()
+	return matchCEPs(it, sel)
+}
+
+func matchCEPs(it memdb.ResultIterator, sel api.EndpointSelector) ([]string, error) {
 	mm := make([]string, 0, 10)
 	for o := it.Next(); o != nil; o = it.Next() {
 		cep, ok := o.(*v2.CiliumEndpoint)
@@ -121,6 +136,21 @@ func (s *CiliumNetworkPolicy) matchCEPsBySel(ns string, sel api.EndpointSelector
 	}
 
 	return mm, nil
+}
+
+// selSpansNamespaces returns true when an endpoint selector constrains a
+// namespace label by itself. Such selectors resolve across namespaces while
+// plain ones stay scoped to the policy namespace.
+func selSpansNamespaces(sel api.EndpointSelector) bool {
+	for _, src := range []string{labels.LabelSourceAny, labels.LabelSourceK8s} {
+		prefix := src + labels.PathDelimiter
+		if sel.HasKey(prefix+ciliumio.PodNamespaceLabel) ||
+			sel.HasKey(prefix+ciliumio.PodNamespaceMetaNameLabel) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func matchSelector(ns string, ll []string, s api.EndpointSelector) bool {
