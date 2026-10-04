@@ -22,11 +22,13 @@ func TestCiliumNetworkPolicy(t *testing.T) {
 
 	ctx := test.MakeCtx(t)
 	assert.NoError(t, test.LoadDB[*v2.CiliumNetworkPolicy](ctx, l.DB, "cnp/1.yaml", internal.Glossary[cilium.CNP]))
+	assert.NoError(t, test.LoadDB[*v2.CiliumNetworkPolicy](ctx, l.DB, "cnp/2.yaml", internal.Glossary[cilium.CNP]))
 	assert.NoError(t, test.LoadDB[*v2.CiliumEndpoint](ctx, l.DB, "cep/1.yaml", internal.Glossary[cilium.CEP]))
+	assert.NoError(t, test.LoadDB[*v2.CiliumEndpoint](ctx, l.DB, "cep/2.yaml", internal.Glossary[cilium.CEP]))
 
 	li := NewCiliumNetworkPolicy(test.MakeCollector(t), dba)
 	assert.Nil(t, li.Lint(test.MakeContext("cilium.io/v2/ciliumnetworkpolicies", "ciliumnetworkpolicies")))
-	assert.Equal(t, 4, len(li.Outcome()))
+	assert.Equal(t, 6, len(li.Outcome()))
 
 	ii := li.Outcome()["default/cnp1"]
 	assert.Equal(t, 0, len(ii))
@@ -47,4 +49,14 @@ func TestCiliumNetworkPolicy(t *testing.T) {
 
 	ii = li.Outcome()["default/cnp4"]
 	assert.Equal(t, 0, len(ii))
+
+	ii = li.Outcome()["ns1/cnp5"]
+	assert.Equal(t, 0, len(ii))
+
+	ii = li.Outcome()["ns1/cnp6"]
+	assert.Equal(t, 2, len(ii))
+	assert.Equal(t, `[POP-1700] No cilium endpoints matched ingress selector`, ii[0].Message)
+	assert.Equal(t, rules.ErrorLevel, ii[0].Level)
+	assert.Equal(t, `[POP-1700] No cilium endpoints matched egress selector`, ii[1].Message)
+	assert.Equal(t, rules.ErrorLevel, ii[1].Level)
 }

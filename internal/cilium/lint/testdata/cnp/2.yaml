@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: cilium.io/v2
+  kind: CiliumNetworkPolicy
+  metadata:
+    name: cnp5
+    namespace: ns1
+  spec:
+    endpointSelector: {}
+    ingress:
+    - fromEndpoints:
+      - matchLabels:
+          k8s:io.kubernetes.pod.namespace: ns2
+          k8s:app: db
+      toPorts:
+      - ports:
+        - port: "5432"
+          protocol: TCP
+    egress:
+    - toEndpoints:
+      - matchLabels:
+          k8s:io.kubernetes.pod.namespace: kube-system
+          k8s:k8s-app: kube-dns
+      toPorts:
+      - ports:
+        - port: "53"
+          protocol: ANY
+- apiVersion: cilium.io/v2
+  kind: CiliumNetworkPolicy
+  metadata:
+    name: cnp6
+    namespace: ns1
+  spec:
+    endpointSelector: {}
+    ingress:
+    - fromEndpoints:
+      - matchLabels:
+          k8s-app: cep1
+      toPorts:
+      - ports:
+        - port: "80"
+          protocol: TCP
+    egress:
+    - toEndpoints:
+      - matchLabels:
+          k8s:io.kubernetes.pod.namespace: ns3
+          k8s:app: ghost
+      toPorts:
+      - ports:
+        - port: "80"
+          protocol: TCP
