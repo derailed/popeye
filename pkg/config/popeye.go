@@ -24,7 +24,7 @@ type (
 	// Allocations track under/over allocation limits.
 	Allocations struct {
 		UnderPerc int `yaml:"underPercUtilization"`
-		OverPerc  int `yanl:"overPercUtilization"`
+		OverPerc  int `yaml:"overPercUtilization"`
 	}
 
 	Resources struct {
