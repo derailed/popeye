@@ -277,6 +277,8 @@ func TestNewConfigWithFile(t *testing.T) {
 	assert.Equal(t, 80.0, cfg.NodeMEMLimit())
 	assert.Equal(t, 80.0, cfg.PodCPULimit())
 	assert.Equal(t, 75.0, cfg.PodMEMLimit())
+	assert.Equal(t, config.Allocations{UnderPerc: 50, OverPerc: 200}, cfg.CPUResourceLimits())
+	assert.Equal(t, config.Allocations{UnderPerc: 50, OverPerc: 200}, cfg.MEMResourceLimits())
 	assert.Equal(t, 0, cfg.LintLevel)
 	assert.Equal(t, ss, cfg.Sections())
 	f.Sections = nil
